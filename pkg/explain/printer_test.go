@@ -37,6 +37,10 @@ Servers should convert recognized schemas to the latest internal value, and
 may reject unrecognized values.
 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
 
+    arbiter <object>
+      Arbiter is the configuration for the machines that comprise the
+arbiter nodes.
+
     baseDomain <string> -required-
       BaseDomain is the base domain to which the cluster should belong.
 

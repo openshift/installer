@@ -197,7 +197,7 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 
 		var dhcpAllowList []string
 		for _, host := range config.Hosts {
-			if host.IsMaster() {
+			if host.IsMaster() || host.IsArbiter() {
 				dhcpAllowList = append(dhcpAllowList, host.BootMACAddress)
 			}
 		}

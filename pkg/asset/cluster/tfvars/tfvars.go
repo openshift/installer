@@ -105,7 +105,9 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 		new(rhcos.BootstrapImage),
 		&bootstrap.Bootstrap{},
 		&machine.Master{},
+		&machine.Arbiter{},
 		&machines.Master{},
+		&machines.Arbiter{},
 		&machines.Worker{},
 		&baremetalbootstrap.IronicCreds{},
 		&installconfig.PlatformProvisionCheck{},
@@ -121,14 +123,16 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 	installConfig := &installconfig.InstallConfig{}
 	bootstrapIgnAsset := &bootstrap.Bootstrap{}
 	masterIgnAsset := &machine.Master{}
+	arbiterIgnAsset := &machine.Arbiter{}
 	mastersAsset := &machines.Master{}
+	arbiterAsset := &machines.Arbiter{}
 	workersAsset := &machines.Worker{}
 	manifestsAsset := &manifests.Manifests{}
 	rhcosImage := new(rhcos.Image)
 	rhcosRelease := new(rhcos.Release)
 	rhcosBootstrapImage := new(rhcos.BootstrapImage)
 	ironicCreds := &baremetalbootstrap.IronicCreds{}
-	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, mastersAsset, workersAsset, manifestsAsset, rhcosImage, rhcosRelease, rhcosBootstrapImage, ironicCreds)
+	parents.Get(clusterID, installConfig, bootstrapIgnAsset, arbiterIgnAsset, arbiterAsset, masterIgnAsset, mastersAsset, workersAsset, manifestsAsset, rhcosImage, rhcosRelease, rhcosBootstrapImage, ironicCreds)
 
 	platform := installConfig.Config.Platform.Name()
 	switch platform {

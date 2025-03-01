@@ -127,6 +127,7 @@ func (a *Common) Dependencies() []asset.Asset {
 		&mcign.MasterIgnitionCustomizations{},
 		&mcign.WorkerIgnitionCustomizations{},
 		&machines.Master{},
+		&machines.Arbiter{},
 		&machines.Worker{},
 		&manifests.Manifests{},
 		&manifests.Openshift{},
@@ -315,6 +316,10 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 	// Generate platform-specific bootstrap data
 	var platformData platformTemplateData
 
+	controlPlaneReplicas := *installConfig.Config.ControlPlane.Replicas
+	if installConfig.Config.Arbiter != nil {
+		controlPlaneReplicas += *installConfig.Config.Arbiter.Replicas
+	}
 	switch installConfig.Config.Platform.Name() {
 	case awstypes.Name:
 		platformData.AWS = aws.GetTemplateData(installConfig.Config.Platform.AWS)
@@ -322,7 +327,7 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		platformData.BareMetal = baremetal.GetTemplateData(
 			installConfig.Config.Platform.BareMetal,
 			installConfig.Config.MachineNetwork,
-			*installConfig.Config.ControlPlane.Replicas,
+			controlPlaneReplicas,
 			ironicCreds.Username,
 			ironicCreds.Password,
 			dependencies,
@@ -600,6 +605,7 @@ func (a *Common) addParentFiles(dependencies asset.Parents) {
 		&manifests.Manifests{},
 		&manifests.Openshift{},
 		&machines.Master{},
+		&machines.Arbiter{},
 		&machines.Worker{},
 		&mcign.MasterIgnitionCustomizations{},
 		&mcign.WorkerIgnitionCustomizations{},

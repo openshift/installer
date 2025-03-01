@@ -20,6 +20,8 @@ const (
 	MachinePoolEdgeRoleName = "edge"
 	// MachinePoolControlPlaneRoleName name associated with the control plane machinepool.
 	MachinePoolControlPlaneRoleName = "master"
+	// MachinePoolArbiterRoleName name associated with the control plane machinepool for smaller sized limited nodes.
+	MachinePoolArbiterRoleName = "arbiter"
 )
 
 // HyperthreadingMode is the mode of hyperthreading for a machine.
@@ -53,6 +55,7 @@ type MachinePool struct {
 	// Name is the name of the machine pool.
 	// For the control plane machine pool, the name will always be "master".
 	// For the compute machine pools, the only valid name is "worker".
+	// For the arbiter machine pools, the only valid name is "arbiter".
 	Name string `json:"name"`
 
 	// Replicas is the machine count for the machine pool.
