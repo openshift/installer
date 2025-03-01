@@ -21,7 +21,6 @@ import (
 	"strings"
 
 	"github.com/google/go-cmp/cmp"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -89,6 +88,16 @@ func (r *GCPManagedControlPlane) ValidateCreate() (admission.Warnings, error) {
 		allErrs = append(allErrs, field.Required(field.NewPath("spec", "ReleaseChannel"), "Release channel is required for an autopilot enabled cluster"))
 	}
 
+	if r.Spec.EnableAutopilot && r.Spec.LoggingService != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "LoggingService"),
+			r.Spec.LoggingService, "can't be set when autopilot is enabled"))
+	}
+
+	if r.Spec.EnableAutopilot && r.Spec.MonitoringService != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "MonitoringService"),
+			r.Spec.LoggingService, "can't be set when autopilot is enabled"))
+	}
+
 	if len(allErrs) == 0 {
 		return nil, nil
 	}
@@ -128,6 +137,32 @@ func (r *GCPManagedControlPlane) ValidateUpdate(oldRaw runtime.Object) (admissio
 			field.Invalid(field.NewPath("spec", "EnableAutopilot"),
 				r.Spec.EnableAutopilot, "field is immutable"),
 		)
+	}
+
+	if old.Spec.EnableAutopilot && r.Spec.LoggingService != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "LoggingService"),
+			r.Spec.LoggingService, "can't be set when autopilot is enabled"))
+	}
+
+	if old.Spec.EnableAutopilot && r.Spec.MonitoringService != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "MonitoringService"),
+			r.Spec.LoggingService, "can't be set when autopilot is enabled"))
+	}
+
+	if r.Spec.LoggingService != nil {
+		err := r.Spec.LoggingService.Validate()
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "LoggingService"),
+				r.Spec.LoggingService, err.Error()))
+		}
+	}
+
+	if r.Spec.MonitoringService != nil {
+		err := r.Spec.MonitoringService.Validate()
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "MonitoringService"),
+				r.Spec.MonitoringService, err.Error()))
+		}
 	}
 
 	if len(allErrs) == 0 {
