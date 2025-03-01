@@ -43,7 +43,7 @@ type Volume struct {
 	// crn
 	Crn CRN `json:"crn,omitempty"`
 
-	// Indicates if the volume should be deleted when the server terminates
+	// Indicates if the volume should be deleted when the server terminates. Only returned when querying a server's attached volumes
 	DeleteOnTermination *bool `json:"deleteOnTermination,omitempty"`
 
 	// Type of Disk

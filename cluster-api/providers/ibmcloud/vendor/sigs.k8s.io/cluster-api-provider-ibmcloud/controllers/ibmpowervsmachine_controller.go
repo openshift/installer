@@ -39,7 +39,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	capiv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	capierrors "sigs.k8s.io/cluster-api/errors"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/cluster-api/util/predicates"
@@ -272,7 +271,7 @@ func (r *IBMPowerVSMachineReconciler) reconcileNormal(machineScope *scope.PowerV
 				msg = instance.Fault.Details
 			}
 			machineScope.SetNotReady()
-			machineScope.SetFailureReason(capierrors.UpdateMachineError)
+			machineScope.SetFailureReason(infrav1beta2.UpdateMachineError)
 			machineScope.SetFailureMessage(msg)
 			conditions.MarkFalse(machineScope.IBMPowerVSMachine, infrav1beta2.InstanceReadyCondition, infrav1beta2.InstanceErroredReason, capiv1beta1.ConditionSeverityError, "%s", msg)
 			capibmrecord.Warnf(machineScope.IBMPowerVSMachine, "FailedBuildInstance", "Failed to build the instance - %s", msg)
@@ -357,7 +356,7 @@ func (r *IBMPowerVSMachineReconciler) IBMPowerVSClusterToIBMPowerVSMachines(ctx 
 func (r *IBMPowerVSMachineReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
 	controller, err := ctrl.NewControllerManagedBy(mgr).
 		For(&infrav1beta2.IBMPowerVSMachine{}).
-		WithEventFilter(predicates.ResourceNotPaused(ctrl.LoggerFrom(ctx))).
+		WithEventFilter(predicates.ResourceNotPaused(r.Scheme, ctrl.LoggerFrom(ctx))).
 		Watches(
 			&capiv1beta1.Machine{},
 			handler.EnqueueRequestsFromMapFunc(util.MachineToInfrastructureMapFunc(infrav1beta2.GroupVersion.WithKind("IBMPowerVSMachine"))),
@@ -379,7 +378,7 @@ func (r *IBMPowerVSMachineReconciler) SetupWithManager(ctx context.Context, mgr 
 	if err := controller.Watch(
 		source.Kind[client.Object](mgr.GetCache(), &capiv1beta1.Cluster{},
 			handler.EnqueueRequestsFromMapFunc(clusterToObjectFunc),
-			predicates.ClusterUnpausedAndInfrastructureReady(ctrl.LoggerFrom(ctx)),
+			predicates.ClusterPausedTransitionsOrInfrastructureReady(r.Scheme, ctrl.LoggerFrom(ctx)),
 		)); err != nil {
 		return errors.Wrap(err, "failed adding a watch for ready clusters")
 	}
