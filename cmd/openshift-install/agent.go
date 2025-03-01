@@ -12,6 +12,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/image"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/password"
 )
@@ -114,7 +115,28 @@ var (
 		},
 	}
 
-	agentTargets = []target{agentConfigTarget, agentManifestsTarget, agentImageTarget, agentPXEFilesTarget, agentConfigImageTarget, agentUnconfiguredIgnitionTarget}
+	agentInteractiveDisconnectedIgnitionTarget = target{
+		name: "Agent interactive disconnected install ignition",
+		command: &cobra.Command{
+			Use:    "interactive-disconnected-ignition",
+			Short:  "Generates the agent ignition required to support the interactive disconnected installation",
+			Args:   cobra.ExactArgs(0),
+			Hidden: true,
+		}, assets: []asset.WritableAsset{
+			&workflow.AgentWorkflowInstallInteractiveDisconnected{},
+			&image.InteractiveDisconnectedIgnition{},
+		},
+	}
+
+	agentTargets = []target{
+		agentConfigTarget,
+		agentManifestsTarget,
+		agentImageTarget,
+		agentPXEFilesTarget,
+		agentConfigImageTarget,
+		agentUnconfiguredIgnitionTarget,
+		agentInteractiveDisconnectedIgnitionTarget,
+	}
 )
 
 func newAgentCreateCmd(ctx context.Context) *cobra.Command {
