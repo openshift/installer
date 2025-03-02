@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"strings"
 	"sync"
 	"time"
 
@@ -257,6 +258,14 @@ func (m *Metadata) IsVPCPermittedNetwork(ctx context.Context, vpcName string, ba
 	}
 
 	return false, nil
+}
+
+// EnsureVPCNameIsSpecifiedForInternal checks if platform.powervs.vpcName is specified when the publishing strategy is Internal.
+func (m *Metadata) EnsureVPCNameIsSpecifiedForInternal(vpcName string) error {
+	if strings.Compare(vpcName, "") == 0 {
+		return fmt.Errorf("a pre-existing VPC is required when deploying with an Internal publishing strategy")
+	}
+	return nil
 }
 
 // EnsureVPCIsPermittedNetwork checks if a VPC is permitted to the DNS zone and adds it if it is not.
