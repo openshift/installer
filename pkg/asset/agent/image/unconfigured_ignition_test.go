@@ -3,6 +3,8 @@ package image
 import (
 	"context"
 	"encoding/base64"
+	"os"
+	"path"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,13 +14,23 @@ import (
 	"github.com/openshift/assisted-service/models"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/common"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 )
 
 func TestUnconfiguredIgnition_Generate(t *testing.T) {
 	skipTestIfnmstatectlIsMissing(t)
+
+	// This patch currently allows testing the Ignition asset using the embedded resources.
+	// TODO: Replace it by mocking the filesystem in bootstrap.AddStorageFiles()
+	workingDirectory, err := os.Getwd()
+	assert.NoError(t, err)
+	err = os.Chdir(path.Join(workingDirectory, "../../../../data"))
+	assert.NoError(t, err)
+	defer os.Chdir(workingDirectory)
 
 	nmStateConfig := getTestNMStateConfig()
 
@@ -114,6 +126,7 @@ func buildUnconfiguredIgnitionAssetDefaultDependencies(t *testing.T) []asset.Ass
 	clusterImageSet := getTestClusterImageSet()
 
 	return []asset.Asset{
+		&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 		&infraEnv,
 		&agentPullSecret,
 		&clusterImageSet,
@@ -121,11 +134,12 @@ func buildUnconfiguredIgnitionAssetDefaultDependencies(t *testing.T) []asset.Ass
 		&mirror.RegistriesConf{},
 		&mirror.CaBundle{},
 		&common.InfraEnvID{},
+		&agentconfig.AgentConfig{},
 	}
 }
 
-func getTestInfraEnv() manifests.InfraEnv {
-	return manifests.InfraEnv{
+func getTestInfraEnv() manifests.InfraEnvFile {
+	return manifests.InfraEnvFile{
 		Config: &aiv1beta1.InfraEnv{
 			Spec: aiv1beta1.InfraEnvSpec{
 				SSHAuthorizedKey: "my-ssh-key",

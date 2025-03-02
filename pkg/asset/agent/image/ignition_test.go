@@ -416,6 +416,7 @@ func TestIgnition_Generate(t *testing.T) {
 	assert.NoError(t, err)
 	err = os.Chdir(path.Join(workingDirectory, "../../../../data"))
 	assert.NoError(t, err)
+	defer os.Chdir(workingDirectory)
 
 	cases := []struct {
 		name                string
