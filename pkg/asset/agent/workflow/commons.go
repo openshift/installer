@@ -1,6 +1,8 @@
 package workflow
 
-import wr "github.com/openshift/installer/pkg/asset/agent/workflow/report"
+import (
+	wr "github.com/openshift/installer/pkg/asset/agent/workflow/report"
+)
 
 // AgentWorkflowType defines the supported
 // agent workflows.
@@ -11,6 +13,11 @@ const (
 	AgentWorkflowTypeInstall AgentWorkflowType = "install"
 	// AgentWorkflowTypeAddNodes identifies the add nodes workflow.
 	AgentWorkflowTypeAddNodes AgentWorkflowType = "addnodes"
+	// AgentWorkflowTypeInstallInteractiveDisconnected identifies a specific kind of
+	// disconnected install workflow. The installation details will be provided through
+	// a dedicated UI running on the rendezvous node, and in addition no external registry
+	// will be required for an air-gapped deployment.
+	AgentWorkflowTypeInstallInteractiveDisconnected = "install-interactive-disconnected"
 
 	agentWorkflowFilename = ".agentworkflow"
 )
