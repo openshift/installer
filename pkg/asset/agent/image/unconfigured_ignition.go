@@ -6,15 +6,18 @@ import (
 	"path/filepath"
 	"strings"
 
+	ignutil "github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/coreos/stream-metadata-go/arch"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/common"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/types"
@@ -73,7 +76,9 @@ func (a *UnconfiguredIgnition) Name() string {
 // Dependencies returns the assets on which the UnconfiguredIgnition asset depends.
 func (a *UnconfiguredIgnition) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		&manifests.InfraEnv{},
+		&workflow.AgentWorkflow{},
+		&agentconfig.AgentConfig{},
+		&manifests.InfraEnvFile{},
 		&manifests.AgentPullSecret{},
 		&manifests.ClusterImageSet{},
 		&manifests.NMStateConfig{},
@@ -85,12 +90,14 @@ func (a *UnconfiguredIgnition) Dependencies() []asset.Asset {
 
 // Generate generates the agent installer unconfigured ignition.
 func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Parents) error {
-	infraEnvAsset := &manifests.InfraEnv{}
+	agentWorkflow := &workflow.AgentWorkflow{}
+	infraEnvAsset := &manifests.InfraEnvFile{}
 	infraEnvIDAsset := &common.InfraEnvID{}
 	clusterImageSetAsset := &manifests.ClusterImageSet{}
 	pullSecretAsset := &manifests.AgentPullSecret{}
 	nmStateConfigs := &manifests.NMStateConfig{}
-	dependencies.Get(infraEnvAsset, clusterImageSetAsset, pullSecretAsset, nmStateConfigs, infraEnvIDAsset)
+	agentConfig := &agentconfig.AgentConfig{}
+	dependencies.Get(agentWorkflow, infraEnvAsset, clusterImageSetAsset, pullSecretAsset, nmStateConfigs, infraEnvIDAsset, agentConfig)
 
 	infraEnv := infraEnvAsset.Config
 	clusterImageSet := clusterImageSetAsset.Config
@@ -99,7 +106,10 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 		Ignition: igntypes.Ignition{
 			Version: igntypes.MaxVersion.String(),
 		},
-		Passwd: igntypes.Passwd{
+	}
+	// Add the ssh key for the "core" user only if configured.
+	if infraEnv.Spec.SSHAuthorizedKey != "" {
+		config.Passwd = igntypes.Passwd{
 			Users: []igntypes.PasswdUser{
 				{
 					Name: "core",
@@ -108,7 +118,7 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 					},
 				},
 			},
-		},
+		}
 	}
 
 	// Default to x86_64
@@ -138,8 +148,6 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 	}
 	a.CPUArch = *osImage.CPUArchitecture
 
-	configImageFiles := strings.Join(GetConfigImageFiles(), ",")
-
 	agentTemplateData := &agentTemplateData{
 		PullSecret:                pullSecretAsset.GetPullSecretData(),
 		ReleaseImages:             releaseImageList,
@@ -150,7 +158,55 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 		InfraEnvID:                infraEnvID,
 		OSImage:                   osImage,
 		Proxy:                     infraEnv.Spec.Proxy,
-		ConfigImageFiles:          configImageFiles,
+	}
+
+	enabledServices := getDefaultEnabledServices()
+
+	switch agentWorkflow.Workflow {
+	case workflow.AgentWorkflowTypeInstall:
+		agentTemplateData.ConfigImageFiles = strings.Join(GetConfigImageFiles(), ",")
+
+		if len(nmStateConfigs.StaticNetworkConfig) > 0 {
+			err = addStaticNetworkConfig(&config, nmStateConfigs.StaticNetworkConfig)
+			if err != nil {
+				return err
+			}
+
+			enabledServices = append(enabledServices, "pre-network-manager-config.service")
+		} else {
+			// Include the script in case it is needed in config step
+			nmStateScriptFilePath := "/usr/local/bin/pre-network-manager-config.sh"
+			nmStateScript := ignition.FileFromBytes(nmStateScriptFilePath, "root", 0755, []byte(manifests.PreNetworkConfigScript))
+			config.Storage.Files = append(config.Storage.Files, nmStateScript)
+		}
+
+		// Enable the agent-check-config-image.service for the current workflow.
+		enabledServices = append(enabledServices, "agent-check-config-image.service")
+
+	case workflow.AgentWorkflowTypeInstallInteractiveDisconnected:
+		// Add the rendezvous host file. Agent TUI will interact with that file in case
+		// the rendezvous IP wasn't previously configured.
+		rendezvousIP := ""
+		if agentConfig.Config != nil {
+			rendezvousIP = agentConfig.Config.RendezvousIP
+		}
+		rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath,
+			"root", 0644,
+			getRendezvousHostEnv("http", rendezvousIP, "none", "none", agentWorkflow.Workflow))
+		config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
+
+		// Explicitly disable the load-config-iso service, not required in the current flow
+		// (even though disabled by default, the udev rule may require it).
+		config.Storage.Files = append(config.Storage.Files, ignition.FileFromString("/etc/assisted/no-config-image", "root", 0644, ""))
+
+		// Enable the UI service.
+		enabledServices = append(enabledServices, "agent-start-ui.service")
+
+		// Let's disable the assisted-service authentication.
+		agentTemplateData.AuthType = "none"
+
+		// Required by assisted-service.
+		a.ignAddFolders(&config, "/opt/agent/tls", "/etc/assisted/extra-manifests")
 	}
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
@@ -161,21 +217,6 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 	err = addBootstrapScripts(&config, clusterImageSetAsset.Config.Spec.ReleaseImage)
 	if err != nil {
 		return err
-	}
-
-	enabledServices := getDefaultEnabledServices()
-	if len(nmStateConfigs.StaticNetworkConfig) > 0 {
-		err = addStaticNetworkConfig(&config, nmStateConfigs.StaticNetworkConfig)
-		if err != nil {
-			return err
-		}
-
-		enabledServices = append(enabledServices, "pre-network-manager-config.service")
-	} else {
-		// Include the script in case it is needed in config step
-		nmStateScriptFilePath := "/usr/local/bin/pre-network-manager-config.sh"
-		nmStateScript := ignition.FileFromBytes(nmStateScriptFilePath, "root", 0755, []byte(manifests.PreNetworkConfigScript))
-		config.Storage.Files = append(config.Storage.Files, nmStateScript)
 	}
 
 	ztpManifestsToInclude := [...]asset.File{
@@ -190,8 +231,6 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 		config.Storage.Files = append(config.Storage.Files, manifestFile)
 	}
 
-	// the agent-check-config-image.service added only to the unconfigured ignition
-	enabledServices = append(enabledServices, "agent-check-config-image.service")
 	err = bootstrap.AddSystemdUnits(&config, "agent/systemd/units", agentTemplateData, enabledServices)
 	if err != nil {
 		return err
@@ -206,6 +245,19 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 	}
 
 	return nil
+}
+
+func (a *UnconfiguredIgnition) ignAddFolders(config *igntypes.Config, paths ...string) {
+	for _, p := range paths {
+		config.Storage.Directories = append(config.Storage.Directories, igntypes.Directory{
+			Node: igntypes.Node{
+				Path:      p,
+				User:      igntypes.NodeUser{Name: ignutil.StrToPtr("root")},
+				Overwrite: ignutil.BoolToPtr(true),
+			},
+			DirectoryEmbedded1: igntypes.DirectoryEmbedded1{Mode: ignutil.IntToPtr(0644)},
+		})
+	}
 }
 
 // PersistToFile writes the unconfigured ignition in the assets folder.
