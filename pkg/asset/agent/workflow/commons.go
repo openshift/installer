@@ -22,6 +22,12 @@ const (
 	agentWorkflowFilename = ".agentworkflow"
 )
 
+// ContextKey is used as a type for storing a context value.
+type ContextKey string
+
+// WorkflowTypeKey is used as a context key to store a value.
+const WorkflowTypeKey ContextKey = "workflow"
+
 var (
 	// StageClusterInspection represents cluster inspection stage.
 	StageClusterInspection wr.StageID = wr.NewStageID("add-nodes-cluster-inspection", "Gathering additional information from the target cluster")
