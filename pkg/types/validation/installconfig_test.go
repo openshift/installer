@@ -18,6 +18,7 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/common"
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
@@ -153,7 +154,7 @@ func validBareMetalPlatform() *baremetal.Platform {
 				Name:           "host1",
 				Role:           "master",
 				BootMACAddress: "CA:FE:CA:FE:00:00",
-				BMC: baremetal.BMC{
+				BMC: common.BMC{
 					Username: "root",
 					Password: "password",
 					Address:  "ipmi://192.168.111.1",
@@ -163,7 +164,7 @@ func validBareMetalPlatform() *baremetal.Platform {
 				Name:           "host2",
 				Role:           "worker",
 				BootMACAddress: "CA:FE:CA:FE:00:01",
-				BMC: baremetal.BMC{
+				BMC: common.BMC{
 					Username: "root",
 					Password: "password",
 					Address:  "ipmi://192.168.111.2",

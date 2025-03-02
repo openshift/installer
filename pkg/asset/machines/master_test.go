@@ -20,6 +20,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/common"
 )
 
 func TestMasterGenerateMachineConfigs(t *testing.T) {
@@ -255,7 +256,7 @@ func TestBaremetalGeneratedAssetFiles(t *testing.T) {
 						{
 							Name: "master-0",
 							Role: "master",
-							BMC: baremetal.BMC{
+							BMC: common.BMC{
 								Username: "usr-0",
 								Password: "pwd-0",
 							},
@@ -264,7 +265,7 @@ func TestBaremetalGeneratedAssetFiles(t *testing.T) {
 						{
 							Name: "worker-0",
 							Role: "worker",
-							BMC: baremetal.BMC{
+							BMC: common.BMC{
 								Username: "usr-1",
 								Password: "pwd-1",
 							},

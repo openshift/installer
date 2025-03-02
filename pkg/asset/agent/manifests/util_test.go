@@ -20,6 +20,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	agenttypes "github.com/openshift/installer/pkg/types/agent"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/common"
 )
 
 var (
@@ -415,7 +416,7 @@ func getAgentHostsWithBMCConfig() *agentconfig.AgentHosts {
 						MacAddress: "98:af:65:a5:8d:01",
 					},
 				},
-				BMC: baremetal.BMC{
+				BMC: common.BMC{
 					Username:                       "bmc-user",
 					Password:                       "password",
 					Address:                        "172.22.0.10",
@@ -431,7 +432,7 @@ func getAgentHostsWithBMCConfig() *agentconfig.AgentHosts {
 						MacAddress: "98:af:65:a5:8d:02",
 					},
 				},
-				BMC: baremetal.BMC{
+				BMC: common.BMC{
 					Username:                       "user2",
 					Password:                       "foo",
 					Address:                        "172.22.0.11",
@@ -447,7 +448,7 @@ func getAgentHostsWithBMCConfig() *agentconfig.AgentHosts {
 						MacAddress: "98:af:65:a5:8d:03",
 					},
 				},
-				BMC: baremetal.BMC{
+				BMC: common.BMC{
 					Username:                       "admin",
 					Password:                       "bar",
 					Address:                        "172.22.0.12",

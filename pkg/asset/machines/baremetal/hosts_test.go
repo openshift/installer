@@ -13,6 +13,7 @@ import (
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/common"
 )
 
 func TestHosts(t *testing.T) {
@@ -557,7 +558,7 @@ func (htb *hostTypeBuilder) role(role string) *hostTypeBuilder {
 }
 
 func (htb *hostTypeBuilder) bmc(user, password string) *hostTypeBuilder {
-	htb.BMC = baremetaltypes.BMC{
+	htb.BMC = common.BMC{
 		Username: user,
 		Password: password,
 	}

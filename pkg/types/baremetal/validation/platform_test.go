@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/baremetal/defaults"
+	"github.com/openshift/installer/pkg/types/common"
 )
 
 /*
@@ -774,7 +775,7 @@ func host1() *hostBuilder {
 		baremetal.Host{
 			Name:           "host1",
 			BootMACAddress: "CA:FE:CA:FE:00:00",
-			BMC: baremetal.BMC{
+			BMC: common.BMC{
 				Username: "root",
 				Password: "password",
 				Address:  "ipmi://192.168.111.1",
@@ -788,7 +789,7 @@ func host2() *hostBuilder {
 		baremetal.Host{
 			Name:           "host2",
 			BootMACAddress: "CA:FE:CA:FE:00:01",
-			BMC: baremetal.BMC{
+			BMC: common.BMC{
 				Username: "root",
 				Password: "password",
 				Address:  "ipmi://192.168.111.2",
@@ -802,7 +803,7 @@ func host3() *hostBuilder {
 		baremetal.Host{
 			Name:           "host3",
 			BootMACAddress: "CA:FE:CA:FE:00:02",
-			BMC: baremetal.BMC{
+			BMC: common.BMC{
 				Username: "root",
 				Password: "password",
 				Address:  "ipmi://192.168.111.3",
@@ -816,7 +817,7 @@ func host4() *hostBuilder {
 		baremetal.Host{
 			Name:           "host4",
 			BootMACAddress: "CA:FE:CA:FE:00:03",
-			BMC: baremetal.BMC{
+			BMC: common.BMC{
 				Username: "root",
 				Password: "password",
 				Address:  "ipmi://192.168.111.4",
@@ -830,7 +831,7 @@ func host5() *hostBuilder {
 		baremetal.Host{
 			Name:           "host5",
 			BootMACAddress: "CA:FE:CA:FE:00:04",
-			BMC: baremetal.BMC{
+			BMC: common.BMC{
 				Username: "root",
 				Password: "password",
 				Address:  "ipmi://192.168.111.5",
