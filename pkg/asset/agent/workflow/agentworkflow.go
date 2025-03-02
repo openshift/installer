@@ -29,9 +29,15 @@ func (*AgentWorkflow) Dependencies() []asset.Asset {
 }
 
 // Generate generates the AgentWorkflow asset.
-func (a *AgentWorkflow) Generate(_ context.Context, dependencies asset.Parents) error {
+func (a *AgentWorkflow) Generate(ctx context.Context, dependencies asset.Parents) error {
 	// Set install workflow as a default
 	a.Workflow = AgentWorkflowTypeInstall
+
+	// Extract the workflow type from the context, if available.
+	if w, ok := ctx.Value(WorkflowTypeKey).(string); ok {
+		a.Workflow = AgentWorkflowType(w)
+	}
+
 	a.File = &asset.File{
 		Filename: agentWorkflowFilename,
 		Data:     []byte(a.Workflow),
