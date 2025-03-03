@@ -4,7 +4,7 @@
 package compat
 
 import (
-	v20231001s "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/pkg/errors"
 )
@@ -17,7 +17,7 @@ type ClusterUpgradeSettings_STATUS struct {
 }
 
 // AssignProperties_From_ClusterUpgradeSettings_STATUS populates our ClusterUpgradeSettings_STATUS from the provided source ClusterUpgradeSettings_STATUS
-func (settings *ClusterUpgradeSettings_STATUS) AssignProperties_From_ClusterUpgradeSettings_STATUS(source *v20231001s.ClusterUpgradeSettings_STATUS) error {
+func (settings *ClusterUpgradeSettings_STATUS) AssignProperties_From_ClusterUpgradeSettings_STATUS(source *storage.ClusterUpgradeSettings_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -54,13 +54,13 @@ func (settings *ClusterUpgradeSettings_STATUS) AssignProperties_From_ClusterUpgr
 }
 
 // AssignProperties_To_ClusterUpgradeSettings_STATUS populates the provided destination ClusterUpgradeSettings_STATUS from our ClusterUpgradeSettings_STATUS
-func (settings *ClusterUpgradeSettings_STATUS) AssignProperties_To_ClusterUpgradeSettings_STATUS(destination *v20231001s.ClusterUpgradeSettings_STATUS) error {
+func (settings *ClusterUpgradeSettings_STATUS) AssignProperties_To_ClusterUpgradeSettings_STATUS(destination *storage.ClusterUpgradeSettings_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
 
 	// OverrideSettings
 	if settings.OverrideSettings != nil {
-		var overrideSetting v20231001s.UpgradeOverrideSettings_STATUS
+		var overrideSetting storage.UpgradeOverrideSettings_STATUS
 		err := settings.OverrideSettings.AssignProperties_To_UpgradeOverrideSettings_STATUS(&overrideSetting)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_UpgradeOverrideSettings_STATUS() to populate field OverrideSettings")
@@ -91,8 +91,8 @@ func (settings *ClusterUpgradeSettings_STATUS) AssignProperties_To_ClusterUpgrad
 }
 
 type augmentConversionForClusterUpgradeSettings_STATUS interface {
-	AssignPropertiesFrom(src *v20231001s.ClusterUpgradeSettings_STATUS) error
-	AssignPropertiesTo(dst *v20231001s.ClusterUpgradeSettings_STATUS) error
+	AssignPropertiesFrom(src *storage.ClusterUpgradeSettings_STATUS) error
+	AssignPropertiesTo(dst *storage.ClusterUpgradeSettings_STATUS) error
 }
 
 // Storage version of v1api20230202preview.UpgradeOverrideSettings_STATUS
@@ -104,7 +104,7 @@ type UpgradeOverrideSettings_STATUS struct {
 }
 
 // AssignProperties_From_UpgradeOverrideSettings_STATUS populates our UpgradeOverrideSettings_STATUS from the provided source UpgradeOverrideSettings_STATUS
-func (settings *UpgradeOverrideSettings_STATUS) AssignProperties_From_UpgradeOverrideSettings_STATUS(source *v20231001s.UpgradeOverrideSettings_STATUS) error {
+func (settings *UpgradeOverrideSettings_STATUS) AssignProperties_From_UpgradeOverrideSettings_STATUS(source *storage.UpgradeOverrideSettings_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -152,7 +152,7 @@ func (settings *UpgradeOverrideSettings_STATUS) AssignProperties_From_UpgradeOve
 }
 
 // AssignProperties_To_UpgradeOverrideSettings_STATUS populates the provided destination UpgradeOverrideSettings_STATUS from our UpgradeOverrideSettings_STATUS
-func (settings *UpgradeOverrideSettings_STATUS) AssignProperties_To_UpgradeOverrideSettings_STATUS(destination *v20231001s.UpgradeOverrideSettings_STATUS) error {
+func (settings *UpgradeOverrideSettings_STATUS) AssignProperties_To_UpgradeOverrideSettings_STATUS(destination *storage.UpgradeOverrideSettings_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
 
@@ -200,6 +200,6 @@ func (settings *UpgradeOverrideSettings_STATUS) AssignProperties_To_UpgradeOverr
 }
 
 type augmentConversionForUpgradeOverrideSettings_STATUS interface {
-	AssignPropertiesFrom(src *v20231001s.UpgradeOverrideSettings_STATUS) error
-	AssignPropertiesTo(dst *v20231001s.UpgradeOverrideSettings_STATUS) error
+	AssignPropertiesFrom(src *storage.UpgradeOverrideSettings_STATUS) error
+	AssignPropertiesTo(dst *storage.UpgradeOverrideSettings_STATUS) error
 }

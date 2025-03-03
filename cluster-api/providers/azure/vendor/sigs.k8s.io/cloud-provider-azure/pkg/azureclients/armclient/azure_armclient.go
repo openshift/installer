@@ -81,6 +81,7 @@ func sender() autorest.Sender {
 			IdleConnTimeout:       90 * time.Second, // the same as default transport
 			TLSHandshakeTimeout:   10 * time.Second, // the same as default transport
 			ExpectContinueTimeout: 1 * time.Second,  // the same as default transport
+			ResponseHeaderTimeout: 60 * time.Second,
 			TLSClientConfig: &tls.Config{
 				MinVersion:    tls.VersionTLS12,     //force to use TLS 1.2
 				Renegotiation: tls.RenegotiateNever, // the same as default transport https://pkg.go.dev/crypto/tls#RenegotiationSupport

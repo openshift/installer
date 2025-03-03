@@ -38,11 +38,11 @@ import (
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 // ASOSecretReconciler reconciles ASO secrets associated with AzureCluster objects.
@@ -61,46 +61,36 @@ func (asos *ASOSecretReconciler) SetupWithManager(ctx context.Context, mgr ctrl.
 	)
 	defer done()
 
-	c, err := ctrl.NewControllerManagedBy(mgr).
+	return ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options).
 		For(&infrav1.AzureCluster{}).
 		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(log, asos.WatchFilterValue)).
 		WithEventFilter(predicates.ResourceIsNotExternallyManaged(log)).
 		Named("ASOSecret").
 		Owns(&corev1.Secret{}).
-		Build(asos)
-	if err != nil {
-		return errors.Wrap(err, "error creating controller")
-	}
-
-	// Add a watch on infrav1.AzureManagedControlPlane.
-	if err = c.Watch(
-		source.Kind(mgr.GetCache(), &infrav1.AzureManagedControlPlane{}),
-		&handler.EnqueueRequestForObject{},
-		predicates.ResourceNotPausedAndHasFilterLabel(log, asos.WatchFilterValue),
-	); err != nil {
-		return errors.Wrap(err, "failed adding a watch for ready AzureManagedControlPlanes")
-	}
-
-	// Add a watch on ASO secrets owned by an AzureManagedControlPlane
-	if err = c.Watch(
-		source.Kind(mgr.GetCache(), &corev1.Secret{}),
-		handler.EnqueueRequestForOwner(asos.Scheme(), asos.RESTMapper(), &infrav1.AzureManagedControlPlane{}, handler.OnlyControllerOwner()),
-	); err != nil {
-		return errors.Wrap(err, "failed adding a watch for secrets")
-	}
-
-	// Add a watch on clusterv1.Cluster object for unpause notifications.
-	if err = c.Watch(
-		source.Kind(mgr.GetCache(), &clusterv1.Cluster{}),
-		handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, infrav1.GroupVersion.WithKind(infrav1.AzureClusterKind), mgr.GetClient(), &infrav1.AzureCluster{})),
-		predicates.ClusterUnpaused(log),
-		predicates.ResourceNotPausedAndHasFilterLabel(log, asos.WatchFilterValue),
-	); err != nil {
-		return errors.Wrap(err, "failed adding a watch for ready clusters")
-	}
-
-	return nil
+		// Add a watch on ASO secrets owned by an AzureManagedControlPlane
+		Watches(
+			&corev1.Secret{},
+			handler.EnqueueRequestForOwner(asos.Scheme(), asos.RESTMapper(), &infrav1.AzureManagedControlPlane{}, handler.OnlyControllerOwner()),
+		).
+		// Add a watch on infrav1.AzureManagedControlPlane.
+		Watches(
+			&infrav1.AzureManagedControlPlane{},
+			&handler.EnqueueRequestForObject{},
+			builder.WithPredicates(
+				predicates.ResourceNotPausedAndHasFilterLabel(log, asos.WatchFilterValue),
+			),
+		).
+		// Add a watch on clusterv1.Cluster object for unpause notifications.
+		Watches(
+			&clusterv1.Cluster{},
+			handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, infrav1.GroupVersion.WithKind(infrav1.AzureClusterKind), mgr.GetClient(), &infrav1.AzureCluster{})),
+			builder.WithPredicates(
+				predicates.ClusterUnpaused(log),
+				predicates.ResourceNotPausedAndHasFilterLabel(log, asos.WatchFilterValue),
+			),
+		).
+		Complete(asos)
 }
 
 // Reconcile reconciles the ASO secrets associated with AzureCluster objects.
