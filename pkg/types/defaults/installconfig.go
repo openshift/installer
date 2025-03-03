@@ -68,6 +68,11 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 	c.ControlPlane.Name = "master"
 	SetMachinePoolDefaults(c.ControlPlane, c.Platform.Name())
 
+	if c.Arbiter != nil {
+		c.Arbiter.Name = "arbiter"
+		SetMachinePoolDefaults(c.Arbiter, c.Platform.Name())
+	}
+
 	defaultComputePoolUndefined := true
 	for _, compute := range c.Compute {
 		if compute.Name == types.MachinePoolComputeRoleName {

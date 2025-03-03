@@ -8,7 +8,7 @@ import (
 // SetMachinePoolDefaults sets the defaults for the machine pool.
 func SetMachinePoolDefaults(p *types.MachinePool, platform string) {
 	defaultReplicaCount := int64(3)
-	if p.Name == types.MachinePoolEdgeRoleName {
+	if p.Name == types.MachinePoolEdgeRoleName || p.Name == types.MachinePoolArbiterRoleName {
 		defaultReplicaCount = 0
 	}
 	if p.Replicas == nil {
