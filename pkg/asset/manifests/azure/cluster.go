@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/pkg/errors"
@@ -130,6 +131,11 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		}
 	}
 
+	azEnv := string(installConfig.Azure.CloudName)
+	if strings.EqualFold(azEnv, string(azure.StackCloud)) {
+		azEnv = azure.HybridEnvironment
+	}
+
 	azureCluster := &capz.AzureCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
@@ -141,7 +147,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				SubscriptionID:   session.Credentials.SubscriptionID,
 				Location:         installConfig.Config.Azure.Region,
 				AdditionalTags:   installConfig.Config.Platform.Azure.UserTags,
-				AzureEnvironment: string(installConfig.Azure.CloudName),
+				AzureEnvironment: azEnv,
 				ARMEndpoint:      session.Environment.ResourceManagerEndpoint,
 				IdentityRef: &corev1.ObjectReference{
 					APIVersion: capz.GroupVersion.String(),

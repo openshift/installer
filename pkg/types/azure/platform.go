@@ -140,6 +140,10 @@ const (
 
 	// StackCloud is the Azure cloud environment used at the edge and on premises.
 	StackCloud CloudEnvironment = "AzureStackCloud"
+
+	// HybridEnvironment is name used by the azure autorest package when referring
+	// to Azure Stack Cloud and is the name expected by cluster-api-provider-azure.
+	HybridEnvironment string = "HybridEnvironment"
 )
 
 // Name returns name that Azure uses for the cloud environment.
