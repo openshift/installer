@@ -26,4 +26,4 @@ RestartSec=30
 RemainAfterExit=true
 
 [Install]
-WantedBy=start-cluster-installation.service
+WantedBy=start-cluster-installation.service agent-start-ui.service
