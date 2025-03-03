@@ -2,6 +2,7 @@ package image
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,6 +13,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
+	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
+	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/common"
@@ -192,7 +195,7 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 		}
 		rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath,
 			"root", 0644,
-			getRendezvousHostEnv("http", rendezvousIP, "none", "none", agentWorkflow.Workflow))
+			getRendezvousHostEnv("http", rendezvousIP, "", "", agentWorkflow.Workflow))
 		config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
 
 		// Explicitly disable the load-config-iso service, not required in the current flow
@@ -207,6 +210,10 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 
 		// Required by assisted-service.
 		a.ignAddFolders(&config, "/opt/agent/tls", "/etc/assisted/extra-manifests")
+
+		if err := a.addMinimalClusterManifests(&config); err != nil {
+			return err
+		}
 	}
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
@@ -243,6 +250,41 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 	if err := a.generateFile(unconfiguredIgnitionFilename); err != nil {
 		return err
 	}
+
+	return nil
+}
+
+// This method adds the minimalistic ClusterDeployment and AgentClusterInstall manifests
+// to the ignition, so that the agent-installer-client will be able to register a basic
+// cluster entry into assisted-service before running the assisted-ui.
+func (a *UnconfiguredIgnition) addMinimalClusterManifests(config *igntypes.Config) error {
+	clusterDeployment := &hivev1.ClusterDeployment{
+		Spec: hivev1.ClusterDeploymentSpec{
+			ClusterName: "generic",
+		},
+	}
+
+	agentClusterInstall := &hiveext.AgentClusterInstall{
+		Spec: hiveext.AgentClusterInstallSpec{
+			ProvisionRequirements: hiveext.ProvisionRequirements{
+				ControlPlaneAgents: 1,
+			},
+		},
+	}
+
+	cdData, err := json.Marshal(clusterDeployment)
+	if err != nil {
+		return err
+	}
+	cdFile := ignition.FileFromBytes(filepath.Join(manifestPath, "cluster-deployment.yaml"), "root", 0600, cdData)
+	config.Storage.Files = append(config.Storage.Files, cdFile)
+
+	aciData, err := json.Marshal(agentClusterInstall)
+	if err != nil {
+		return err
+	}
+	aciFile := ignition.FileFromBytes(filepath.Join(manifestPath, "agent-cluster-install.yaml"), "root", 0600, aciData)
+	config.Storage.Files = append(config.Storage.Files, aciFile)
 
 	return nil
 }
