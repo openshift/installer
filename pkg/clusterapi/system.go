@@ -243,7 +243,7 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 					"AZURE_TENANT_ID":                   session.Credentials.TenantID,
 					"AZURE_SUBSCRIPTION_ID":             session.Credentials.SubscriptionID,
 					"AZURE_RESOURCE_MANAGER_ENDPOINT":   session.Environment.ResourceManagerEndpoint,
-					"AZURE_RESOURCE_MANAGER_AUDIENCE":   session.Environment.ServiceManagementEndpoint,
+					"AZURE_RESOURCE_MANAGER_AUDIENCE":   session.Environment.TokenAudience,
 				},
 			),
 		)
