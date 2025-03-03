@@ -114,7 +114,7 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 		allErrs = append(allErrs, validateNetworking(c.Networking, field.NewPath("networking"))...)
 		allErrs = append(allErrs, validateNetworkingIPVersion(c.Networking, &c.Platform)...)
 		allErrs = append(allErrs, validateNetworkingClusterNetworkMTU(c, field.NewPath("networking", "clusterNetworkMTU"))...)
-		allErrs = append(allErrs, validateVIPsForPlatform(c.Networking, &c.Platform, field.NewPath("platform"))...)
+		allErrs = append(allErrs, validateVIPsForPlatform(c.Networking, &c.Platform, usingAgentMethod, field.NewPath("platform"))...)
 		allErrs = append(allErrs, validateOVNKubernetesConfig(c.Networking, field.NewPath("networking"))...)
 	} else {
 		allErrs = append(allErrs, field.Required(field.NewPath("networking"), "networking is required"))
@@ -823,7 +823,7 @@ type vipFields struct {
 
 // validateVIPsForPlatform validates the VIPs (for API and Ingress) for the
 // given platform
-func validateVIPsForPlatform(network *types.Networking, platform *types.Platform, fldPath *field.Path) field.ErrorList {
+func validateVIPsForPlatform(network *types.Networking, platform *types.Platform, usingAgentMethod bool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	virtualIPs := vips{}
@@ -881,7 +881,11 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 			lbType = platform.VSphere.LoadBalancer.Type
 		}
 
-		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, false, lbType, network, fldPath.Child(vsphere.Name))...)
+		if usingAgentMethod {
+			allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, true, true, lbType, network, fldPath.Child(vsphere.Name))...)
+		} else {
+			allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, false, lbType, network, fldPath.Child(vsphere.Name))...)
+		}
 	case platform.Ovirt != nil:
 		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.Ovirt.APIVIPs, fldPath.Child(ovirt.Name, newVIPsFields.APIVIPs))...)
 		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.Ovirt.IngressVIPs, fldPath.Child(ovirt.Name, newVIPsFields.IngressVIPs))...)
