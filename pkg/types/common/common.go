@@ -72,3 +72,14 @@ func ValidateUniqueAndRequiredFields[T any](elements []T, fldPath *field.Path, f
 	}
 	return errs
 }
+
+// ValidateTwoFencingCredentials in case fencing credentials exists validates there are exactly 2.
+func ValidateTwoFencingCredentials(fencingCredentials []*FencingCredential, fldPath *field.Path) field.ErrorList {
+	errs := field.ErrorList{}
+	fencingCredentialsLength := len(fencingCredentials)
+	if fencingCredentialsLength > 0 && fencingCredentialsLength != 2 {
+		errs = append(errs, field.Forbidden(fldPath, fmt.Sprintf("there should be exactly two fencingCredentials to support the two node cluster, instead %d fencingCredentials were found", fencingCredentialsLength)))
+	}
+
+	return errs
+}

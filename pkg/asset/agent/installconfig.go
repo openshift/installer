@@ -20,6 +20,7 @@ import (
 	baremetalvalidation "github.com/openshift/installer/pkg/types/baremetal/validation"
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/none"
+	nonevalidation "github.com/openshift/installer/pkg/types/none/validation"
 	"github.com/openshift/installer/pkg/types/validation"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -148,6 +149,10 @@ func (a *OptionalInstallConfig) validatePlatformsByName(installConfig *types.Ins
 
 	if installConfig.Platform.Name() == baremetal.Name {
 		allErrs = append(allErrs, a.validateBMCConfig(installConfig)...)
+	}
+
+	if installConfig.Platform.Name() == none.Name {
+		allErrs = append(allErrs, a.validateFencingCredentials(installConfig)...)
 	}
 
 	return allErrs
@@ -357,6 +362,15 @@ func (a *OptionalInstallConfig) validateBMCConfig(installConfig *types.InstallCo
 		fieldPath := field.NewPath("Platform", "BareMetal")
 		allErrs = append(allErrs, baremetalvalidation.ValidateProvisioningNetworking(installConfig.Platform.BareMetal, installConfig.Networking, fieldPath)...)
 	}
+
+	return allErrs
+}
+
+func (a *OptionalInstallConfig) validateFencingCredentials(installConfig *types.InstallConfig) field.ErrorList {
+	var allErrs field.ErrorList
+
+	fieldPath := field.NewPath("Platform", "None")
+	allErrs = append(allErrs, nonevalidation.ValidateFencingCredentials(installConfig.Platform.None.FencingCredentials, fieldPath)...)
 
 	return allErrs
 }
