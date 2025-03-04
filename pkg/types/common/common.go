@@ -9,6 +9,14 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
+// FencingCredential stores the information about a baremetal host's management controller.
+type FencingCredential struct {
+	HostName string `json:"hostName,omitempty" validate:"required,uniqueField"`
+	Username string `json:"username" validate:"required"`
+	Password string `json:"password" validate:"required"`
+	Address  string `json:"address" validate:"required,uniqueField"`
+}
+
 // ValidateUniqueAndRequiredFields validated unique fields are indeed unique and that required fields exist on a generic element.
 func ValidateUniqueAndRequiredFields[T any](elements []T, fldPath *field.Path, filter validator.FilterFunc, fieldName string) field.ErrorList {
 	errs := field.ErrorList{}
