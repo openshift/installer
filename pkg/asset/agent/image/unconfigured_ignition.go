@@ -3,6 +3,7 @@ package image
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -193,9 +194,10 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 		if agentConfig.Config != nil {
 			rendezvousIP = agentConfig.Config.RendezvousIP
 		}
-		rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath,
-			"root", 0644,
-			getRendezvousHostEnv("http", rendezvousIP, "", "", agentWorkflow.Workflow))
+		// Add the AIUI_APP_API_URL env var to the rendezvous host file, since it is
+		// required by the agent-start-ui.service.
+		rendezvousHostContent := fmt.Sprintf("%s\nAIUI_APP_API_URL=%s", getRendezvousHostEnv("http", rendezvousIP, "", "", agentWorkflow.Workflow), rendezvousIP)
+		rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath, "root", 0644, rendezvousHostContent)
 		config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
 
 		// Explicitly disable the load-config-iso service, not required in the current flow
