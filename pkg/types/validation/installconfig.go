@@ -881,11 +881,8 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 			lbType = platform.VSphere.LoadBalancer.Type
 		}
 
-		if usingAgentMethod {
-			allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, true, true, lbType, network, fldPath.Child(vsphere.Name))...)
-		} else {
-			allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, false, lbType, network, fldPath.Child(vsphere.Name))...)
-		}
+		vipIsRequired, reqVIPinMachineCIDR := usingAgentMethod, usingAgentMethod
+		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, vipIsRequired, reqVIPinMachineCIDR, lbType, network, fldPath.Child(vsphere.Name))...)
 	case platform.Ovirt != nil:
 		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.Ovirt.APIVIPs, fldPath.Child(ovirt.Name, newVIPsFields.APIVIPs))...)
 		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.Ovirt.IngressVIPs, fldPath.Child(ovirt.Name, newVIPsFields.IngressVIPs))...)
