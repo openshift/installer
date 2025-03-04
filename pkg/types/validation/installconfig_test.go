@@ -205,6 +205,10 @@ func validNutanixPlatform() *nutanix.Platform {
 	}
 }
 
+func validNonePlatform() *none.Platform {
+	return &none.Platform{}
+}
+
 func validIPv4NetworkingConfig() *types.Networking {
 	return &types.Networking{
 		NetworkType: "OVNKubernetes",
