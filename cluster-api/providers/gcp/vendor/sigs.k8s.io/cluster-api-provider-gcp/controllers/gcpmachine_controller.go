@@ -28,7 +28,6 @@ import (
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/services/compute/instances"
 	"sigs.k8s.io/cluster-api-provider-gcp/util/reconciler"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	capierrors "sigs.k8s.io/cluster-api/errors"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/predicates"
@@ -60,7 +59,7 @@ func (r *GCPMachineReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 	c, err := ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options).
 		For(&infrav1.GCPMachine{}).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(ctrl.LoggerFrom(ctx), r.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), ctrl.LoggerFrom(ctx), r.WatchFilterValue)).
 		Watches(
 			&clusterv1.Machine{},
 			handler.EnqueueRequestsFromMapFunc(util.MachineToInfrastructureMapFunc(infrav1.GroupVersion.WithKind("GCPMachine"))),
@@ -81,10 +80,10 @@ func (r *GCPMachineReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 
 	// Add a watch on clusterv1.Cluster object for unpause & ready notifications.
 	if err := c.Watch(
-		source.Kind(mgr.GetCache(), &clusterv1.Cluster{}),
-		handler.EnqueueRequestsFromMapFunc(clusterToObjectFunc),
-		predicates.ClusterUnpausedAndInfrastructureReady(log),
-	); err != nil {
+		source.Kind[client.Object](mgr.GetCache(), &clusterv1.Cluster{},
+			handler.EnqueueRequestsFromMapFunc(clusterToObjectFunc),
+			predicates.ClusterPausedTransitionsOrInfrastructureReady(mgr.GetScheme(), log),
+		)); err != nil {
 		return errors.Wrap(err, "failed adding a watch for ready clusters")
 	}
 
@@ -244,7 +243,7 @@ func (r *GCPMachineReconciler) reconcile(ctx context.Context, machineScope *scop
 		machineScope.SetReady()
 		return ctrl.Result{}, nil
 	default:
-		machineScope.SetFailureReason(capierrors.UpdateMachineError)
+		machineScope.SetFailureReason("UpdateError")
 		machineScope.SetFailureMessage(errors.Errorf("GCPMachine instance state %s is unexpected", instanceState))
 		return ctrl.Result{Requeue: true}, nil
 	}
