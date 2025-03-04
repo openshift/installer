@@ -108,17 +108,15 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 		return err
 	}
 
+	kernelFileType = "vmlinuz"
+
 	switch a.cpuArch {
 	case arch.RpmArch(types.ArchitectureS390X):
-
-		kernelFileType = "kernel.img"
 
 		err = a.handleAdditionals390xArtifacts(bootArtifactsFullPath)
 		if err != nil {
 			return err
 		}
-	default:
-		kernelFileType = "vmlinuz"
 	}
 
 	agentVmlinuzFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("%s.%s-%s", a.filePrefix, a.cpuArch, kernelFileType))
