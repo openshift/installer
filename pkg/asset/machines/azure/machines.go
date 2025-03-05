@@ -197,6 +197,15 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		}
 		image.ResourceID = imageID
 	}
+	// DNM: Testing, PoC. Need to figure out which image selection logic we need to keep (if any).
+	urn := strings.Split(osImage, ":")
+	image = machineapi.Image{
+		Publisher: urn[0],
+		Offer:     urn[1],
+		SKU:       urn[2],
+		Version:   urn[3],
+		Type:      machineapi.AzureImageTypeMarketplaceNoPlan,
+	}
 
 	networkResourceGroup, virtualNetwork, subnet, err := getNetworkInfo(platform, clusterID, role)
 	if err != nil {
