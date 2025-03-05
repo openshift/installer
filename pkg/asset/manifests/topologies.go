@@ -1,6 +1,8 @@
 package manifests
 
 import (
+	"k8s.io/utils/ptr"
+
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 )
@@ -16,10 +18,9 @@ func determineTopologies(installConfig *types.InstallConfig) (controlPlaneTopolo
 
 	numOfWorkers := int64(0)
 	for _, mp := range installConfig.Compute {
-		if mp.Replicas != nil {
-			numOfWorkers += *mp.Replicas
-		}
+		numOfWorkers += ptr.Deref(mp.Replicas, 0)
 	}
+
 	switch numOfWorkers {
 	case 0:
 		infrastructureTopology = controlPlaneTopology
@@ -34,6 +35,11 @@ func determineTopologies(installConfig *types.InstallConfig) (controlPlaneTopolo
 		infrastructureTopology = configv1.HighlyAvailableTopologyMode
 	}
 
+	if ptr.Deref(installConfig.ControlPlane.Replicas, 0) == 2 &&
+		(installConfig.Arbiter == nil || ptr.Deref(installConfig.Arbiter.Replicas, 0) == 0) {
+		infrastructureTopology = configv1.HighlyAvailableTopologyMode
+		controlPlaneTopology = configv1.DualReplicaTopologyMode
+	}
 	return controlPlaneTopology, infrastructureTopology
 }
 
