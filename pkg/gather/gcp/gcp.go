@@ -12,9 +12,9 @@ import (
 	"github.com/sirupsen/logrus"
 	googleoauth "golang.org/x/oauth2/google"
 	compute "google.golang.org/api/compute/v1"
-	"google.golang.org/api/option"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 
+	configv1 "github.com/openshift/api/config/v1"
 	gcpsession "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/gather"
 	"github.com/openshift/installer/pkg/gather/providers"
@@ -23,15 +23,16 @@ import (
 
 // Gather holds options for resources we want to gather.
 type Gather struct {
-	credentials     *googleoauth.Credentials
-	clusterName     string
-	clusterID       string
-	infraID         string
-	logger          logrus.FieldLogger
-	serialLogBundle string
-	bootstrap       string
-	masters         []string
-	directory       string
+	credentials      *googleoauth.Credentials
+	clusterName      string
+	clusterID        string
+	infraID          string
+	logger           logrus.FieldLogger
+	serialLogBundle  string
+	bootstrap        string
+	masters          []string
+	directory        string
+	serviceEndpoints []configv1.GCPServiceEndpoint
 }
 
 // New returns a GCP Gather from ClusterMetadata.
@@ -45,15 +46,16 @@ func New(logger logrus.FieldLogger, serialLogBundle string, bootstrap string, ma
 	}
 
 	return &Gather{
-		credentials:     session.Credentials,
-		clusterName:     metadata.ClusterName,
-		clusterID:       metadata.ClusterID,
-		infraID:         metadata.InfraID,
-		logger:          logger,
-		serialLogBundle: serialLogBundle,
-		bootstrap:       bootstrap,
-		masters:         masters,
-		directory:       filepath.Dir(serialLogBundle),
+		credentials:      session.Credentials,
+		clusterName:      metadata.ClusterName,
+		clusterID:        metadata.ClusterID,
+		infraID:          metadata.InfraID,
+		logger:           logger,
+		serialLogBundle:  serialLogBundle,
+		bootstrap:        bootstrap,
+		masters:          masters,
+		directory:        filepath.Dir(serialLogBundle),
+		serviceEndpoints: metadata.ClusterPlatformMetadata.GCP.ServiceEndpoints,
 	}, nil
 }
 
@@ -62,7 +64,7 @@ func (g *Gather) Run() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
 
-	svc, err := compute.NewService(ctx, option.WithCredentials(g.credentials))
+	svc, err := gcpsession.GetComputeService(ctx, g.serviceEndpoints)
 	if err != nil {
 		return err
 	}
