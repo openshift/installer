@@ -452,7 +452,7 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 			ServiceAccount:   string(sess.Credentials.JSON),
 		}
 
-		client, err := gcpconfig.NewClient(context.Background())
+		client, err := gcpconfig.NewClient(context.Background(), installConfig.Config.GCP.ServiceEndpoints)
 		if err != nil {
 			return err
 		}
