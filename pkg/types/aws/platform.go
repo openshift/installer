@@ -216,9 +216,9 @@ const (
 	// in Local or Wavelength Zones for edge compute nodes.
 	EdgeNodeSubnetRole SubnetRoleType = "EdgeNode"
 
-	// BootstrapSubnetRole specifies subnets that will be used as subnets for the
+	// BootstrapNodeSubnetRole specifies subnets that will be used as subnets for the
 	// bootstrap node used to create the cluster.
-	BootstrapSubnetRole SubnetRoleType = "Bootstrap"
+	BootstrapNodeSubnetRole SubnetRoleType = "BootstrapNode"
 
 	// IngressControllerLBSubnetRole specifies subnets used by the default IngressController.
 	IngressControllerLBSubnetRole SubnetRoleType = "IngressControllerLB"
