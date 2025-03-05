@@ -110,9 +110,7 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 
 	kernelFileType = "vmlinuz"
 
-	switch a.cpuArch {
-	case arch.RpmArch(types.ArchitectureS390X):
-
+	if a.cpuArch == arch.RpmArch(types.ArchitectureS390X) {
 		err = a.handleAdditionals390xArtifacts(bootArtifactsFullPath)
 		if err != nil {
 			return err
