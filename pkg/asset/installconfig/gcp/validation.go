@@ -456,7 +456,7 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 
 	allErrs := field.ErrorList{}
 
-	client, err := NewClient(context.TODO())
+	client, err := NewClient(context.TODO(), ic.GCP.ServiceEndpoints)
 	if err != nil {
 		return err
 	}
@@ -532,6 +532,11 @@ func validateNetworks(client API, ic *types.InstallConfig, fieldPath *field.Path
 }
 
 func validateServiceEndpoints(_ API, ic *types.InstallConfig, fieldPath *field.Path) field.ErrorList {
+	// if this is not an internal install, skip the validation
+	if ic.Publish != types.InternalPublishingStrategy {
+		return nil
+	}
+
 	allErrs := field.ErrorList{}
 
 	// attempt to resolve all the custom (overridden) endpoints. If any are not reachable,

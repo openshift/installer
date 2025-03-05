@@ -11,7 +11,6 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	configgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	openstackvalidation "github.com/openshift/installer/pkg/asset/installconfig/openstack/validation"
 	configpowervs "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	"github.com/openshift/installer/pkg/asset/machines"
@@ -105,7 +104,7 @@ func (a *PlatformQuotaCheck) Generate(ctx context.Context, dependencies asset.Pa
 		summarizeReport(reports)
 	case typesgcp.Name:
 		services := []string{"compute.googleapis.com", "iam.googleapis.com"}
-		q, err := quotagcp.Load(ctx, ic.Config.Platform.GCP.ProjectID, services...)
+		q, err := quotagcp.Load(ctx, ic.Config.Platform.GCP.ProjectID, ic.Config.Platform.GCP.ServiceEndpoints, services...)
 		if quotagcp.IsUnauthorized(err) {
 			logrus.Warnf("Missing permissions to fetch Quotas and therefore will skip checking them: %v, make sure you have `roles/servicemanagement.quotaViewer` assigned to the user.", err)
 			return nil
@@ -113,11 +112,7 @@ func (a *PlatformQuotaCheck) Generate(ctx context.Context, dependencies asset.Pa
 		if err != nil {
 			return errors.Wrapf(err, "failed to load Quota for services: %s", strings.Join(services, ", "))
 		}
-		session, err := configgcp.GetSession(ctx)
-		if err != nil {
-			return errors.Wrap(err, "failed to load GCP session")
-		}
-		client, err := gcp.NewClient(ctx, session, ic.Config.Platform.GCP.ProjectID)
+		client, err := gcp.NewClient(ctx, ic.Config.Platform.GCP.ProjectID, ic.Config.Platform.GCP.ServiceEndpoints)
 		if err != nil {
 			return errors.Wrap(err, "failed to create client for quota constraints")
 		}

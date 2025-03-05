@@ -35,6 +35,18 @@ type global struct {
 
 // CloudProviderConfig generates the cloud provider config for the GCP platform.
 func CloudProviderConfig(infraID, projectID, subnet, networkProjectID, apiEndpoint, containerAPIEndpoint string) (string, error) {
+
+	// The GCP Cloud Provider sets the endpoint override using the BasePath variable of the Service.
+	// This behavior is different from using options.WithEndpoint. The BasePath appears to require
+	// the https scheme explicitly in the string while the WithEndpoint option does not need nor
+	// want this formatted string.
+	//if !strings.HasPrefix(apiEndpoint, "https://") {
+	//	apiEndpoint = fmt.Sprintf("https://%s", apiEndpoint)
+	//}
+	//if !strings.HasPrefix(containerAPIEndpoint, "https://") {
+	//	containerAPIEndpoint = fmt.Sprintf("https://%s", containerAPIEndpoint)
+	//}
+
 	config := &config{
 		Global: global{
 			ProjectID: projectID,
@@ -56,8 +68,8 @@ func CloudProviderConfig(infraID, projectID, subnet, networkProjectID, apiEndpoi
 			NetworkProjectID: networkProjectID,
 
 			// Used for api endpoint overrides in the cloud provider.
-			APIEndpoint:          apiEndpoint,
-			ContainerAPIEndpoint: containerAPIEndpoint,
+			//APIEndpoint:          apiEndpoint,
+			//ContainerAPIEndpoint: containerAPIEndpoint,
 		},
 	}
 
