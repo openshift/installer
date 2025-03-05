@@ -82,6 +82,29 @@ func (p Provider) PreProvision(ctx context.Context, in infracapi.PreProvisionInp
 	logrus.Infof("created the category value %q with name %q", *respv.Value, *respv.Name)
 
 	if ic.Nutanix.PreloadedOSImageName != "" {
+		// get the preloaded rhcos image object.
+		imgUUID, err := nutanixtypes.FindImageUUIDByName(ctx, nutanixCl, ic.Nutanix.PreloadedOSImageName)
+		if err != nil {
+			return err
+		}
+		imgResp, err := nutanixCl.V3.GetImage(ctx, *imgUUID)
+		if err != nil {
+			return fmt.Errorf("failed to retrieve the preloaded rhcos image %s (uuid %s): %w", ic.Nutanix.PreloadedOSImageName, *imgUUID, err)
+		}
+
+		// update the image object to add the shared category to the image object's metadata.
+		imgReq := &nutanixclientv3.ImageIntentInput{}
+		imgReq.APIVersion = imgResp.APIVersion
+		imgReq.Metadata = imgResp.Metadata
+		imgReq.Spec = imgResp.Spec
+		categoryKey := nutanixtypes.CategoryKey(in.InfraID)
+		imgReq.Metadata.Categories[categoryKey] = nutanixtypes.CategoryValueShared
+		_, err = nutanixCl.V3.UpdateImage(ctx, *imgUUID, imgReq)
+		if err != nil {
+			return fmt.Errorf("failed to add the category (key: %s, value: %s) to the preloaded rhcos image %s (uuid: %s)",
+				categoryKey, nutanixtypes.CategoryValueShared, ic.Nutanix.PreloadedOSImageName, *imgUUID)
+		}
+
 		logrus.Infof("Using the existing rhcos image %q in PC", in.InstallConfig.Config.Nutanix.PreloadedOSImageName)
 	} else {
 		// upload the rhcos image.
