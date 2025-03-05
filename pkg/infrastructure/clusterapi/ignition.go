@@ -1,6 +1,7 @@
 package clusterapi
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -31,6 +32,7 @@ const (
 	mcsCertFile            = "/opt/openshift/tls/machine-config-server.crt"
 	masterUserDataFile     = "/opt/openshift/openshift/99_openshift-cluster-api_master-user-data-secret.yaml"
 	workerUserDataFile     = "/opt/openshift/openshift/99_openshift-cluster-api_worker-user-data-secret.yaml"
+	rootCACertFile         = "/opt/openshift/tls/root-ca.crt"
 
 	// header is the string that precedes the encoded data in the ignition data.
 	// The data must be replaced before decoding the string, and the string must be
@@ -253,6 +255,18 @@ func updateMCSCertKey(in IgnitionInput, platform string, config *igntypes.Config
 				// replace the contents with the edited information
 				config.Storage.Files[i].Contents.Source = &encoded
 				logrus.Debugf("Updated MCSCert file %s with new cert", mcsCertFile)
+			case rootCACertFile:
+				contents := strings.Split(*config.Storage.Files[i].Contents.Source, ",")
+				rawDecodedText, err := base64.StdEncoding.DecodeString(contents[1])
+				if err != nil {
+					return fmt.Errorf("failed to decode contents of ignition file %s: %w", rootCACertFile, err)
+				}
+				// rawDecodedText contains root-CA cert
+				if bytes.Equal(rawDecodedText, in.RootCA.Cert()) {
+					logrus.Infof("Custom-DNS debugging: rootCA cert in bootstrap ignition matches")
+				} else {
+					logrus.Infof("Custom-DNS debugging: rootCA cert in bootstrap ignition DOES NOT match")
+				}
 			}
 		}
 	}
