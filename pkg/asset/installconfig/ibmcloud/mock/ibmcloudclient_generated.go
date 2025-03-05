@@ -119,6 +119,20 @@ func (mr *MockAPIMockRecorder) CreateDNSServicesDNSRecord(ctx, dnsInstanceID, zo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDNSServicesDNSRecord", reflect.TypeOf((*MockAPI)(nil).CreateDNSServicesDNSRecord), ctx, dnsInstanceID, zoneID, recordName, cname)
 }
 
+// CreateDNSServicesPermittedNetwork mocks base method.
+func (m *MockAPI) CreateDNSServicesPermittedNetwork(ctx context.Context, dnsInstanceID, dnsZoneID, vpcCRN string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateDNSServicesPermittedNetwork", ctx, dnsInstanceID, dnsZoneID, vpcCRN)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateDNSServicesPermittedNetwork indicates an expected call of CreateDNSServicesPermittedNetwork.
+func (mr *MockAPIMockRecorder) CreateDNSServicesPermittedNetwork(ctx, dnsInstanceID, dnsZoneID, vpcCRN interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDNSServicesPermittedNetwork", reflect.TypeOf((*MockAPI)(nil).CreateDNSServicesPermittedNetwork), ctx, dnsInstanceID, dnsZoneID, vpcCRN)
+}
+
 // CreateIAMAuthorizationPolicy mocks base method.
 func (m *MockAPI) CreateIAMAuthorizationPolicy(tx context.Context, sourceServiceName, sourceServiceResourceType, targetServiceName, targetServiceInstanceID string, roles []string) error {
 	m.ctrl.T.Helper()
