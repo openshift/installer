@@ -2,8 +2,6 @@ package image
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,8 +12,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
-	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
-	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/common"
@@ -170,34 +166,18 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 	case workflow.AgentWorkflowTypeInstall:
 		agentTemplateData.ConfigImageFiles = strings.Join(GetConfigImageFiles(), ",")
 
-		if len(nmStateConfigs.StaticNetworkConfig) > 0 {
-			err = addStaticNetworkConfig(&config, nmStateConfigs.StaticNetworkConfig)
-			if err != nil {
-				return err
-			}
-
-			enabledServices = append(enabledServices, "pre-network-manager-config.service")
-		} else {
-			// Include the script in case it is needed in config step
-			nmStateScriptFilePath := "/usr/local/bin/pre-network-manager-config.sh"
-			nmStateScript := ignition.FileFromBytes(nmStateScriptFilePath, "root", 0755, []byte(manifests.PreNetworkConfigScript))
-			config.Storage.Files = append(config.Storage.Files, nmStateScript)
-		}
-
 		// Enable the agent-check-config-image.service for the current workflow.
 		enabledServices = append(enabledServices, "agent-check-config-image.service")
 
 	case workflow.AgentWorkflowTypeInstallInteractiveDisconnected:
 		// Add the rendezvous host file. Agent TUI will interact with that file in case
-		// the rendezvous IP wasn't previously configured.
-		rendezvousIP := ""
+		// the rendezvous IP wasn't previously configured, by managing it as a template file.
+		rendezvousIP := "{{.RendezvousIP}}"
 		if agentConfig.Config != nil {
 			rendezvousIP = agentConfig.Config.RendezvousIP
 		}
-		// Add the AIUI_APP_API_URL env var to the rendezvous host file, since it is
-		// required by the agent-start-ui.service.
-		rendezvousHostContent := fmt.Sprintf("%s\nAIUI_APP_API_URL=%s", getRendezvousHostEnv("http", rendezvousIP, "", "", agentWorkflow.Workflow), rendezvousIP)
-		rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath, "root", 0644, rendezvousHostContent)
+		rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath, "root", 0644,
+			getRendezvousHostEnv("http", rendezvousIP, "", "", agentWorkflow.Workflow))
 		config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
 
 		// Explicitly disable the load-config-iso service, not required in the current flow
@@ -206,16 +186,29 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 
 		// Enable the UI service.
 		enabledServices = append(enabledServices, "agent-start-ui.service")
+		interactiveUIFile := ignition.FileFromString("/etc/assisted/interactive-ui", "root", 0644, "")
+		config.Storage.Files = append(config.Storage.Files, interactiveUIFile)
 
 		// Let's disable the assisted-service authentication.
 		agentTemplateData.AuthType = "none"
 
 		// Required by assisted-service.
 		a.ignAddFolders(&config, "/opt/agent/tls", "/etc/assisted/extra-manifests")
+	}
 
-		if err := a.addMinimalClusterManifests(&config); err != nil {
+	// Configure static networking if required.
+	if len(nmStateConfigs.StaticNetworkConfig) > 0 {
+		err = addStaticNetworkConfig(&config, nmStateConfigs.StaticNetworkConfig)
+		if err != nil {
 			return err
 		}
+
+		enabledServices = append(enabledServices, "pre-network-manager-config.service")
+	} else {
+		// Include the script in case it is needed in config step
+		nmStateScriptFilePath := "/usr/local/bin/pre-network-manager-config.sh"
+		nmStateScript := ignition.FileFromBytes(nmStateScriptFilePath, "root", 0755, []byte(manifests.PreNetworkConfigScript))
+		config.Storage.Files = append(config.Storage.Files, nmStateScript)
 	}
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
@@ -252,41 +245,6 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 	if err := a.generateFile(unconfiguredIgnitionFilename); err != nil {
 		return err
 	}
-
-	return nil
-}
-
-// This method adds the minimalistic ClusterDeployment and AgentClusterInstall manifests
-// to the ignition, so that the agent-installer-client will be able to register a basic
-// cluster entry into assisted-service before running the assisted-ui.
-func (a *UnconfiguredIgnition) addMinimalClusterManifests(config *igntypes.Config) error {
-	clusterDeployment := &hivev1.ClusterDeployment{
-		Spec: hivev1.ClusterDeploymentSpec{
-			ClusterName: "generic",
-		},
-	}
-
-	agentClusterInstall := &hiveext.AgentClusterInstall{
-		Spec: hiveext.AgentClusterInstallSpec{
-			ProvisionRequirements: hiveext.ProvisionRequirements{
-				ControlPlaneAgents: 1,
-			},
-		},
-	}
-
-	cdData, err := json.Marshal(clusterDeployment)
-	if err != nil {
-		return err
-	}
-	cdFile := ignition.FileFromBytes(filepath.Join(manifestPath, "cluster-deployment.yaml"), "root", 0600, cdData)
-	config.Storage.Files = append(config.Storage.Files, cdFile)
-
-	aciData, err := json.Marshal(agentClusterInstall)
-	if err != nil {
-		return err
-	}
-	aciFile := ignition.FileFromBytes(filepath.Join(manifestPath, "agent-cluster-install.yaml"), "root", 0600, aciData)
-	config.Storage.Files = append(config.Storage.Files, aciFile)
 
 	return nil
 }

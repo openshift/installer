@@ -4,6 +4,7 @@ Wants=network-online.target assisted-service.service
 PartOf=assisted-service-pod.service
 After=network-online.target assisted-service.service agent-register-cluster.service agent-import-cluster.service
 ConditionPathExists=/etc/assisted/node0
+ConditionPathExists=!/etc/assisted/interactive-ui.env
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
@@ -23,4 +24,4 @@ RestartSec=30
 RemainAfterExit=true
 
 [Install]
-WantedBy=start-cluster-installation.service agent-add-node.service agent-start-ui.service
+WantedBy=start-cluster-installation.service agent-add-node.service
