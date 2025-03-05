@@ -19,7 +19,8 @@ import (
 )
 
 const (
-	masterRole = "master"
+	defaultMachineBootVolumeSizeGB = 100
+	masterRole                     = "master"
 )
 
 // GenerateMachines generates IBM Cloud CAPI VPC Machine manifests.
@@ -47,6 +48,8 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 		if providerSpec.BootVolume.EncryptionKey != "" {
 			bootVolume = &capibmcloud.VPCVolume{
 				EncryptionKeyCRN: providerSpec.BootVolume.EncryptionKey,
+				// NOTE(cjschaef): We will need to make this option configurable, since it must be specified for CAPI Machines.
+				SizeGiB: int64(defaultMachineBootVolumeSizeGB),
 			}
 		}
 
