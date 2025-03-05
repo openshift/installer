@@ -8,7 +8,6 @@ import (
 
 	"github.com/apparentlymart/go-cidr/cidr"
 	"google.golang.org/api/compute/v1"
-	"google.golang.org/api/option"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -50,7 +49,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	if installConfig.Config.GCP.ControlPlaneSubnet != "" {
 		controlPlaneSubnetName = installConfig.Config.GCP.ControlPlaneSubnet
 
-		controlPlaneSubnet, err := getSubnet(context.TODO(), networkProject, installConfig.Config.GCP.Region, controlPlaneSubnetName)
+		controlPlaneSubnet, err := getSubnet(context.TODO(), networkProject, installConfig.Config.GCP.Region, controlPlaneSubnetName, installConfig.Config.GCP.ServiceEndpoints)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get control plane subnet: %w", err)
 		}
@@ -70,7 +69,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	if installConfig.Config.GCP.ComputeSubnet != "" {
 		computeSubnetName = installConfig.Config.GCP.ComputeSubnet
 
-		computeSubnet, err := getSubnet(context.TODO(), networkProject, installConfig.Config.GCP.Region, computeSubnetName)
+		computeSubnet, err := getSubnet(context.TODO(), networkProject, installConfig.Config.GCP.Region, computeSubnetName, installConfig.Config.GCP.ServiceEndpoints)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get compute subnet: %w", err)
 		}
@@ -134,6 +133,8 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		capgLoadBalancerType = capg.Internal
 	}
 
+	formattedEndpoints := gcpic.FormatGCPEndpointList(installConfig.Config.GCP.ServiceEndpoints, gcpic.FormatGCPEndpointInput{SkipPath: false})
+
 	gcpCluster := &capg.GCPCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
@@ -157,7 +158,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				LoadBalancerType:                  ptr.To(capgLoadBalancerType),
 			},
 			ResourceManagerTags: GetTagsFromInstallConfig(installConfig),
-			ServiceEndpoints:    getServiceEndpointsFromInstallConfig(installConfig),
+			ServiceEndpoints:    convertServiceEndpointsToCAPG(formattedEndpoints),
 		},
 	}
 	gcpCluster.SetGroupVersionKind(capg.GroupVersion.WithKind("GCPCluster"))
@@ -228,16 +229,11 @@ func findFailureDomains(installConfig *installconfig.InstallConfig) []string {
 
 // getSubnet will find a subnet in a project by the name. The matching subnet structure will be returned if
 // one is found.
-func getSubnet(ctx context.Context, project, region, subnetName string) (*compute.Subnetwork, error) {
+func getSubnet(ctx context.Context, project, region, subnetName string, serviceEndpoints []configv1.GCPServiceEndpoint) (*compute.Subnetwork, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
 	defer cancel()
 
-	ssn, err := gcpic.GetSession(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get session: %w", err)
-	}
-
-	computeService, err := compute.NewService(ctx, option.WithCredentials(ssn.Credentials))
+	computeService, err := gcpic.GetComputeService(ctx, serviceEndpoints)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create compute service: %w", err)
 	}
@@ -267,11 +263,11 @@ func GetTagsFromInstallConfig(installConfig *installconfig.InstallConfig) []capg
 	return tags
 }
 
-// getServiceEndpointsFromInstallConfig gets the service endpoints for CAPG use.
-func getServiceEndpointsFromInstallConfig(installConfig *installconfig.InstallConfig) *capg.ServiceEndpoints {
+// convertServiceEndpointsToCAPG converts the service endpoint list to a list of CAPG service endpoints.
+func convertServiceEndpointsToCAPG(endpoints []configv1.GCPServiceEndpoint) *capg.ServiceEndpoints {
 	capgServiceEndpoints := &capg.ServiceEndpoints{}
 
-	for _, endpoint := range installConfig.Config.GCP.ServiceEndpoints {
+	for _, endpoint := range endpoints {
 		switch endpoint.Name {
 		case configv1.GCPServiceEndpointNameCompute:
 			capgServiceEndpoints.ComputeServiceEndpoint = endpoint.URL

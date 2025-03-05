@@ -14,12 +14,12 @@ import (
 	compute "google.golang.org/api/compute/v1"
 	dns "google.golang.org/api/dns/v1"
 	"google.golang.org/api/googleapi"
-	iam "google.golang.org/api/iam/v1"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
-	"google.golang.org/api/serviceusage/v1"
+	serviceusage "google.golang.org/api/serviceusage/v1beta1"
 	"k8s.io/apimachinery/pkg/util/sets"
 
+	configv1 "github.com/openshift/api/config/v1"
 	gcpconsts "github.com/openshift/installer/pkg/constants/gcp"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
@@ -61,20 +61,56 @@ type API interface {
 
 // Client makes calls to the GCP API.
 type Client struct {
-	ssn *Session
+	ssn       *Session
+	endpoints []configv1.GCPServiceEndpoint
 }
 
 // NewClient initializes a client with a session.
-func NewClient(ctx context.Context) (*Client, error) {
+func NewClient(ctx context.Context, endpoints []configv1.GCPServiceEndpoint) (*Client, error) {
 	ssn, err := GetSession(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get session")
 	}
 
+	modifiedEndpoints := FormatGCPEndpointList(endpoints, FormatGCPEndpointInput{SkipPath: false})
+
 	client := &Client{
-		ssn: ssn,
+		ssn:       ssn,
+		endpoints: modifiedEndpoints,
 	}
 	return client, nil
+}
+
+func (c *Client) getComputeService(ctx context.Context) (*compute.Service, error) {
+	svc, err := GetComputeService(ctx, c.endpoints)
+	if err != nil {
+		return nil, fmt.Errorf("client failed to create compute service: %w", err)
+	}
+	return svc, nil
+}
+
+func (c *Client) getDNSService(ctx context.Context) (*dns.Service, error) {
+	svc, err := GetDNSService(ctx, c.endpoints)
+	if err != nil {
+		return nil, fmt.Errorf("client failed to create dns service: %w", err)
+	}
+	return svc, nil
+}
+
+func (c *Client) getCloudResourceService(ctx context.Context) (*cloudresourcemanager.Service, error) {
+	svc, err := GetCloudResourceService(ctx, c.endpoints)
+	if err != nil {
+		return nil, fmt.Errorf("client failed to create cloud resource service: %w", err)
+	}
+	return svc, nil
+}
+
+func (c *Client) getServiceUsageService(ctx context.Context) (*serviceusage.APIService, error) {
+	svc, err := GetServiceUsageService(ctx, c.endpoints)
+	if err != nil {
+		return nil, fmt.Errorf("client failed to create service usage service: %w", err)
+	}
+	return svc, nil
 }
 
 // GetMachineType uses the GCP Compute Service API to get the specified machine type.
@@ -309,28 +345,14 @@ func (c *Client) GetSubnetworks(ctx context.Context, network, project, region st
 	return res, nil
 }
 
-func (c *Client) getComputeService(ctx context.Context) (*compute.Service, error) {
-	svc, err := compute.NewService(ctx, option.WithCredentials(c.ssn.Credentials))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create compute service")
-	}
-	return svc, nil
-}
-
-func (c *Client) getDNSService(ctx context.Context) (*dns.Service, error) {
-	svc, err := dns.NewService(ctx, option.WithCredentials(c.ssn.Credentials))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create dns service")
-	}
-	return svc, nil
-}
-
 // GetProjects gets the list of project names and ids associated with the current user in the form
 // of a map whose keys are ids and values are names.
 func (c *Client) GetProjects(ctx context.Context) (map[string]string, error) {
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
+	// Currently, this is only called during the survey. The survey does not require that
+	// custom endpoints are applied to the client. Pass an empty set of endpoints.
 	svc, err := c.getCloudResourceService(ctx)
 	if err != nil {
 		return nil, err
@@ -413,14 +435,6 @@ func (c *Client) GetZones(ctx context.Context, project, region string) ([]*compu
 	return GetZones(ctx, svc, project, region)
 }
 
-func (c *Client) getCloudResourceService(ctx context.Context) (*cloudresourcemanager.Service, error) {
-	svc, err := cloudresourcemanager.NewService(ctx, option.WithCredentials(c.ssn.Credentials))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create cloud resource service")
-	}
-	return svc, nil
-}
-
 // GetEnabledServices gets the list of enabled services for a project.
 func (c *Client) GetEnabledServices(ctx context.Context, project string) ([]string, error) {
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
@@ -448,17 +462,9 @@ func (c *Client) GetEnabledServices(ctx context.Context, project string) ([]stri
 	return services, nil
 }
 
-func (c *Client) getServiceUsageService(ctx context.Context) (*serviceusage.Service, error) {
-	svc, err := serviceusage.NewService(ctx, option.WithCredentials(c.ssn.Credentials))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create service usage service")
-	}
-	return svc, nil
-}
-
 // GetServiceAccount retrieves a service account from a project if it exists.
 func (c *Client) GetServiceAccount(ctx context.Context, project, serviceAccount string) (string, error) {
-	svc, err := iam.NewService(ctx, option.WithCredentials(c.ssn.Credentials))
+	svc, err := GetIAMService(ctx, c.endpoints)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed create IAM service")
 	}

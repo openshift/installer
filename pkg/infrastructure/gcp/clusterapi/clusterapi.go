@@ -62,11 +62,11 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 	} else {
 		// Create ServiceAccount for control plane nodes
 		logrus.Debugf("Creating ServiceAccount for control plane nodes")
-		masterSA, err := CreateServiceAccount(ctx, in.InfraID, projectID, "master")
+		masterSA, err := CreateServiceAccount(ctx, in.InfraID, projectID, "master", in.InstallConfig.Config.GCP.ServiceEndpoints)
 		if err != nil {
 			return fmt.Errorf("failed to create master serviceAccount: %w", err)
 		}
-		if err = AddServiceAccountRoles(ctx, projectID, masterSA, GetMasterRoles()); err != nil {
+		if err = AddServiceAccountRoles(ctx, projectID, masterSA, GetMasterRoles(), in.InstallConfig.Config.GCP.ServiceEndpoints); err != nil {
 			return fmt.Errorf("failed to add master roles: %w", err)
 		}
 
@@ -75,7 +75,7 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 			projID := in.InstallConfig.Config.Platform.GCP.NetworkProjectID
 			// Add roles needed for creating firewalls
 			roles := GetSharedVPCRoles()
-			if err = AddServiceAccountRoles(ctx, projID, masterSA, roles); err != nil {
+			if err = AddServiceAccountRoles(ctx, projID, masterSA, roles, in.InstallConfig.Config.GCP.ServiceEndpoints); err != nil {
 				return fmt.Errorf("failed to add roles for shared VPC: %w", err)
 			}
 		}
@@ -92,11 +92,11 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 	if createSA {
 		// Create ServiceAccount for workers
 		logrus.Debugf("Creating ServiceAccount for compute nodes")
-		workerSA, err := CreateServiceAccount(ctx, in.InfraID, projectID, "worker")
+		workerSA, err := CreateServiceAccount(ctx, in.InfraID, projectID, "worker", in.InstallConfig.Config.GCP.ServiceEndpoints)
 		if err != nil {
 			return fmt.Errorf("failed to create worker serviceAccount: %w", err)
 		}
-		if err = AddServiceAccountRoles(ctx, projectID, workerSA, GetWorkerRoles()); err != nil {
+		if err = AddServiceAccountRoles(ctx, projectID, workerSA, GetWorkerRoles(), in.InstallConfig.Config.GCP.ServiceEndpoints); err != nil {
 			return fmt.Errorf("failed to add worker roles: %w", err)
 		}
 	}
@@ -112,7 +112,7 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	// Create the bucket and presigned url. The url is generated using a known/expected name so that the
 	// url can be retrieved from the api by this name.
 	bucketName := gcp.GetBootstrapStorageName(in.InfraID)
-	storageClient, err := gcp.NewStorageClient(ctx)
+	storageClient, err := icgcp.GetStorageService(ctx, in.InstallConfig.Config.GCP.ServiceEndpoints)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage client: %w", err)
 	}
@@ -181,7 +181,7 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		return fmt.Errorf("failed to add bootstrap firewall rule: %w", err)
 	}
 
-	client, err := icgcp.NewClient(context.TODO())
+	client, err := icgcp.NewClient(context.TODO(), in.InstallConfig.Config.GCP.ServiceEndpoints)
 	if err != nil {
 		return err
 	}
@@ -232,7 +232,7 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 			return fmt.Errorf("failed to create the private managed zone: %w", err)
 		}
 
-		apiIntIPAddress, err := getInternalLBAddress(ctx, in.InstallConfig.Config.GCP.ProjectID, in.InstallConfig.Config.GCP.Region, getAPIAddressName(in.InfraID))
+		apiIntIPAddress, err := getInternalLBAddress(ctx, in.InstallConfig.Config.GCP.ProjectID, in.InstallConfig.Config.GCP.Region, getAPIAddressName(in.InfraID), in.InstallConfig.Config.GCP.ServiceEndpoints)
 		if err != nil {
 			return fmt.Errorf("failed to get the internal load balancer address: %w", err)
 		}
@@ -249,7 +249,12 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 // DestroyBootstrap destroys the temporary bootstrap resources.
 func (p Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapDestroyInput) error {
 	logrus.Warnf("Destroying GCP Bootstrap Resources")
-	if err := gcp.DestroyStorage(ctx, in.Metadata.InfraID); err != nil {
+	storageClient, err := icgcp.GetStorageService(ctx, in.Metadata.GCP.ServiceEndpoints)
+	if err != nil {
+		return fmt.Errorf("failed to create storage client: %w", err)
+	}
+
+	if err := gcp.DestroyStorage(ctx, storageClient, in.Metadata.InfraID); err != nil {
 		return fmt.Errorf("failed to destroy storage: %w", err)
 	}
 
@@ -257,7 +262,7 @@ func (p Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapD
 	if in.Metadata.GCP.NetworkProjectID != "" {
 		projectID = in.Metadata.GCP.NetworkProjectID
 
-		createFwRules, err := hasFirewallPermission(ctx, projectID)
+		createFwRules, err := hasFirewallPermission(ctx, projectID, in.Metadata.GCP.ServiceEndpoints)
 		if err != nil {
 			return fmt.Errorf("failed to remove bootstrap firewall rules: %w", err)
 		}
@@ -265,7 +270,7 @@ func (p Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapD
 			return nil
 		}
 	}
-	if err := removeBootstrapFirewallRules(ctx, in.Metadata.InfraID, projectID); err != nil {
+	if err := removeBootstrapFirewallRules(ctx, in.Metadata.InfraID, projectID, in.Metadata.GCP.ServiceEndpoints); err != nil {
 		return fmt.Errorf("failed to remove bootstrap firewall rules: %w", err)
 	}
 
@@ -273,7 +278,7 @@ func (p Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapD
 		// Remove the overly permissive firewall rules created by CAPG that are redundant with those created by installer
 		// These are not created in a shared VPC installation
 		logrus.Infof("Removing firewall rules created by cluster-api-provider-gcp")
-		if err := removeCAPGFirewallRules(ctx, in.Metadata.InfraID, in.Metadata.GCP.ProjectID); err != nil {
+		if err := removeCAPGFirewallRules(ctx, in.Metadata.InfraID, in.Metadata.GCP.ProjectID, in.Metadata.GCP.ServiceEndpoints); err != nil {
 			return fmt.Errorf("failed to remove firewall rules created by cluster-api-provider-gcp: %w", err)
 		}
 	}

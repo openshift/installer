@@ -456,7 +456,7 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 
 	allErrs := field.ErrorList{}
 
-	client, err := NewClient(context.TODO())
+	client, err := NewClient(context.TODO(), ic.GCP.ServiceEndpoints)
 	if err != nil {
 		return err
 	}

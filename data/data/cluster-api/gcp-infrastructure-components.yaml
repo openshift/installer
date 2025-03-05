@@ -353,26 +353,18 @@ spec:
                   compute:
                     description: ComputeServiceEndpoint is the custom endpoint url
                       for the Compute Service
-                    format: uri
-                    pattern: ^https://
                     type: string
                   container:
                     description: ContainerServiceEndpoint is the custom endpoint url
                       for the Container Service
-                    format: uri
-                    pattern: ^https://
                     type: string
                   iam:
                     description: IAMServiceEndpoint is the custom endpoint url for
                       the IAM Service
-                    format: uri
-                    pattern: ^https://
                     type: string
                   resourceManager:
                     description: ResourceManagerServiceEndpoint is the custom endpoint
                       url for the Resource Manager Service
-                    format: uri
-                    pattern: ^https://
                     type: string
                 type: object
             required:
@@ -849,26 +841,18 @@ spec:
                           compute:
                             description: ComputeServiceEndpoint is the custom endpoint
                               url for the Compute Service
-                            format: uri
-                            pattern: ^https://
                             type: string
                           container:
                             description: ContainerServiceEndpoint is the custom endpoint
                               url for the Container Service
-                            format: uri
-                            pattern: ^https://
                             type: string
                           iam:
                             description: IAMServiceEndpoint is the custom endpoint
                               url for the IAM Service
-                            format: uri
-                            pattern: ^https://
                             type: string
                           resourceManager:
                             description: ResourceManagerServiceEndpoint is the custom
                               endpoint url for the Resource Manager Service
-                            format: uri
-                            pattern: ^https://
                             type: string
                         type: object
                     required:
@@ -2240,26 +2224,18 @@ spec:
                   compute:
                     description: ComputeServiceEndpoint is the custom endpoint url
                       for the Compute Service
-                    format: uri
-                    pattern: ^https://
                     type: string
                   container:
                     description: ContainerServiceEndpoint is the custom endpoint url
                       for the Container Service
-                    format: uri
-                    pattern: ^https://
                     type: string
                   iam:
                     description: IAMServiceEndpoint is the custom endpoint url for
                       the IAM Service
-                    format: uri
-                    pattern: ^https://
                     type: string
                   resourceManager:
                     description: ResourceManagerServiceEndpoint is the custom endpoint
                       url for the Resource Manager Service
-                    format: uri
-                    pattern: ^https://
                     type: string
                 type: object
             required:
@@ -2451,6 +2427,10 @@ spec:
       jsonPath: .status.currentVersion
       name: CurrentVersion
       type: string
+    - description: The Kubernetes version of the GKE control plane
+      jsonPath: .status.version
+      name: Version
+      type: string
     - description: API Endpoint
       jsonPath: .spec.endpoint
       name: Endpoint
@@ -2553,6 +2533,8 @@ spec:
                   ControlPlaneVersion represents the control plane version of the GKE cluster.
                   If not specified, the default version currently supported by GKE will be
                   used.
+
+                  Deprecated: This field will soon be removed and you are expected to use Version instead.
                 type: string
               description:
                 description: Description describe the cluster.
@@ -2637,6 +2619,12 @@ spec:
                 - regular
                 - stable
                 type: string
+              version:
+                description: |-
+                  Version represents the control plane version of the GKE cluster.
+                  If not specified, the default version currently supported by GKE will be
+                  used.
+                type: string
             required:
             - location
             - project
@@ -2692,8 +2680,10 @@ spec:
                   type: object
                 type: array
               currentVersion:
-                description: CurrentVersion shows the current version of the GKE control
-                  plane.
+                description: |-
+                  CurrentVersion shows the current version of the GKE control plane.
+
+                  Deprecated: This field will soon be removed and you are expected to use Version instead.
                 type: string
               initialized:
                 description: |-
@@ -2706,6 +2696,9 @@ spec:
                   Ready denotes that the GCPManagedControlPlane API Server is ready to
                   receive requests.
                 type: boolean
+              version:
+                description: Version represents the version of the GKE control plane.
+                type: string
             required:
             - ready
             type: object
