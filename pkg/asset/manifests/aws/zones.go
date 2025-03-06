@@ -270,12 +270,14 @@ func setSubnetsManagedVPC(in *zonesInput) error {
 	}
 
 	for idxCIDR, zone := range allAvailabilityZones {
-		in.Cluster.Spec.NetworkSpec.Subnets = append(in.Cluster.Spec.NetworkSpec.Subnets, capa.SubnetSpec{
-			AvailabilityZone: zone,
-			CidrBlock:        privateCIDRs[idxCIDR].String(),
-			ID:               fmt.Sprintf("%s-subnet-private-%s", in.ClusterID.InfraID, zone),
-			IsPublic:         false,
-		})
+		if !awstypes.IsPublicOnlySubnetsEnabled() {
+			in.Cluster.Spec.NetworkSpec.Subnets = append(in.Cluster.Spec.NetworkSpec.Subnets, capa.SubnetSpec{
+				AvailabilityZone: zone,
+				CidrBlock:        privateCIDRs[idxCIDR].String(),
+				ID:               fmt.Sprintf("%s-subnet-private-%s", in.ClusterID.InfraID, zone),
+				IsPublic:         false,
+			})
+		}
 		if isPublishingExternal {
 			in.Cluster.Spec.NetworkSpec.Subnets = append(in.Cluster.Spec.NetworkSpec.Subnets, capa.SubnetSpec{
 				AvailabilityZone: zone,

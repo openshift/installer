@@ -921,18 +921,6 @@ func TestValidate(t *testing.T) {
 		publicOnly:     "true",
 		expectErr:      `^publish: Invalid value: \"Internal\": cluster cannot be private with public subnets$`,
 	}, {
-		name: "no subnets specified for public-only subnets cluster",
-		installConfig: func() *types.InstallConfig {
-			c := validInstallConfig()
-			c.Platform.AWS.VPC.Subnets = []aws.Subnet{}
-			return c
-		}(),
-		privateSubnets: validPrivateSubnets(),
-		availZones:     validAvailZones(),
-		availRegions:   validAvailRegions(),
-		publicOnly:     "true",
-		expectErr:      `^platform\.aws\.subnets: Required value: subnets must be specified for public-only subnets clusters$`,
-	}, {
 		name:           "no public subnets specified for public-only subnets cluster",
 		installConfig:  validInstallConfig(),
 		privateSubnets: validPrivateSubnets(),
