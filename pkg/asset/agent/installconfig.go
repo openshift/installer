@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	configv1 "github.com/openshift/api/config/v1"
-	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/releaseimage"
@@ -20,6 +19,8 @@ import (
 	baremetalvalidation "github.com/openshift/installer/pkg/types/baremetal/validation"
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/none"
+	"github.com/openshift/installer/pkg/types/nutanix"
+	nutanixvalidation "github.com/openshift/installer/pkg/types/nutanix/validation"
 	"github.com/openshift/installer/pkg/types/validation"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -146,6 +147,10 @@ func (a *OptionalInstallConfig) validatePlatformsByName(installConfig *types.Ins
 		allErrs = append(allErrs, a.validateVSpherePlatform(installConfig)...)
 	}
 
+	if installConfig.Platform.Name() == nutanix.Name {
+		allErrs = append(allErrs, a.validateNutanixPlatform(installConfig)...)
+	}
+
 	if installConfig.Platform.Name() == baremetal.Name {
 		allErrs = append(allErrs, a.validateBMCConfig(installConfig)...)
 	}
@@ -216,13 +221,9 @@ func (a *OptionalInstallConfig) validateControlPlaneConfiguration(installConfig 
 	var fieldPath *field.Path
 
 	if installConfig.ControlPlane != nil {
-		if *installConfig.ControlPlane.Replicas < 1 || *installConfig.ControlPlane.Replicas > 5 || (installConfig.Arbiter == nil && *installConfig.ControlPlane.Replicas == 2) {
+		if *installConfig.ControlPlane.Replicas < 1 || *installConfig.ControlPlane.Replicas > 5 || *installConfig.ControlPlane.Replicas == 2 {
 			fieldPath = field.NewPath("ControlPlane", "Replicas")
-			supportedControlPlaneRange := "to 5, 4, 3, or 1"
-			if installConfig.EnabledFeatureGates().Enabled(features.FeatureGateHighlyAvailableArbiter) {
-				supportedControlPlaneRange = "between 1 and 5"
-			}
-			allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.ControlPlane.Replicas, fmt.Sprintf("ControlPlane.Replicas can only be set %s. Found %v", supportedControlPlaneRange, *installConfig.ControlPlane.Replicas)))
+			allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.ControlPlane.Replicas, fmt.Sprintf("ControlPlane.Replicas can only be set to 5, 4, 3, or 1. Found %v", *installConfig.ControlPlane.Replicas)))
 		}
 	}
 	return allErrs
@@ -317,6 +318,11 @@ func (a *OptionalInstallConfig) validateVSpherePlatform(installConfig *types.Ins
 	return allErrs
 }
 
+func (a *OptionalInstallConfig) validateNutanixPlatform(installConfig *types.InstallConfig) field.ErrorList {
+	fldPath := field.NewPath("platform", "nutanix")
+	return nutanixvalidation.ValidatePlatform(installConfig.Platform.Nutanix, fldPath, installConfig)
+}
+
 // ClusterName returns the name of the cluster, or a default name if no
 // InstallConfig is supplied.
 func (a *OptionalInstallConfig) ClusterName() string {
@@ -361,6 +367,7 @@ func (a *OptionalInstallConfig) validateBMCConfig(installConfig *types.InstallCo
 	return allErrs
 }
 
+// nolint:gocyclo
 func warnUnusedConfig(installConfig *types.InstallConfig) {
 	for i, compute := range installConfig.Compute {
 		if compute.Hyperthreading != "Enabled" {
@@ -461,7 +468,30 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 			fieldPath := field.NewPath("Platform", "VSphere", "Hosts")
 			logrus.Warnf(fmt.Sprintf("%s: %v is ignored", fieldPath, vspherePlatform.Hosts))
 		}
+	case nutanix.Name:
+		ntxPlatform := installConfig.Platform.Nutanix
+		fieldPath := field.NewPath("Platform", "Nutanix")
+
+		if ntxPlatform.ClusterOSImage != "" {
+			logrus.Warnf("%s: %s is ignored", fieldPath.Child("ClusterOSImage").String(), ntxPlatform.ClusterOSImage)
+		}
+		if ntxPlatform.PreloadedOSImageName != "" {
+			logrus.Warnf("%s: %s is ignored", fieldPath.Child("PreloadedOSImageName").String(), ntxPlatform.PreloadedOSImageName)
+		}
+		if ntxPlatform.DefaultMachinePlatform != nil && !reflect.DeepEqual(*ntxPlatform.DefaultMachinePlatform, nutanix.MachinePool{}) {
+			logrus.Warnf("%s: %v is ignored", fieldPath.Child("DefaultMachinePlatform").String(), *ntxPlatform.DefaultMachinePlatform)
+		}
+		if ntxPlatform.LoadBalancer != nil && !reflect.DeepEqual(*ntxPlatform.LoadBalancer, configv1.NutanixPlatformLoadBalancer{}) {
+			logrus.Warnf("%s: %v is ignored", fieldPath.Child("LoadBalancer").String(), *ntxPlatform.LoadBalancer)
+		}
+		if ntxPlatform.PrismAPICallTimeout != nil {
+			logrus.Warnf("%s: %v is ignored", fieldPath.Child("PrismAPICallTimeout").String(), *ntxPlatform.PrismAPICallTimeout)
+		}
+		if ntxPlatform.FailureDomains != nil {
+			logrus.Warnf("%s: %v is ignored", fieldPath.Child("FailureDomains").String(), ntxPlatform.FailureDomains)
+		}
 	}
+
 	// "External" is the default set from generic install config code
 	if installConfig.Publish != "External" {
 		fieldPath := field.NewPath("Publish")
