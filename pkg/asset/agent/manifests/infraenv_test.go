@@ -22,7 +22,6 @@ import (
 )
 
 func TestInfraEnv_Generate(t *testing.T) {
-
 	_, machineNetCidr, _ := net.ParseCIDR("10.10.11.0/24") //nolint:errcheck
 	machineNetwork := []types.MachineNetworkEntry{
 		{

@@ -78,7 +78,6 @@ func (i *InfraEnvFile) Load(f asset.FileFetcher) (bool, error) {
 }
 
 func (i *InfraEnvFile) finish() error {
-
 	if i.Config == nil {
 		return errors.New("missing configuration or manifest file")
 	}

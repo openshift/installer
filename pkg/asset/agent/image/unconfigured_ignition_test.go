@@ -3,8 +3,6 @@ package image
 import (
 	"context"
 	"encoding/base64"
-	"os"
-	"path"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -24,13 +22,7 @@ import (
 func TestUnconfiguredIgnition_Generate(t *testing.T) {
 	skipTestIfnmstatectlIsMissing(t)
 
-	// This patch currently allows testing the Ignition asset using the embedded resources.
-	// TODO: Replace it by mocking the filesystem in bootstrap.AddStorageFiles()
-	workingDirectory, err := os.Getwd()
-	assert.NoError(t, err)
-	err = os.Chdir(path.Join(workingDirectory, "../../../../data"))
-	assert.NoError(t, err)
-	defer os.Chdir(workingDirectory)
+	defer setupEmbeddedResources(t)()
 
 	nmStateConfig := getTestNMStateConfig()
 
