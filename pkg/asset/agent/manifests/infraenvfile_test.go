@@ -91,7 +91,6 @@ spec:
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 
@@ -117,5 +116,4 @@ spec:
 			}
 		})
 	}
-
 }

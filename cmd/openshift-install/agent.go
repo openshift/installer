@@ -128,7 +128,7 @@ func newAgentCreateCmd(ctx context.Context) *cobra.Command {
 		},
 	}
 
-	agentCtx := agent.NewAgentContext(ctx)
+	agentCtx := agent.NewContextWrapper(ctx)
 	for _, t := range agentTargets {
 		t.command.Args = cobra.ExactArgs(0)
 		t.command.Run = runTargetCmd(agentCtx, t.assets...)
@@ -140,7 +140,7 @@ func newAgentCreateCmd(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-func setUnconfiguredIgnitionFlag(ctx *agent.AgentContext) {
+func setUnconfiguredIgnitionFlag(ctx *agent.ContextWrapper) {
 	agentUnconfiguredIgnitionTarget.command.PersistentFlags().Bool("interactive", false, "Enable the interactive disconnected workflow support")
 	agentUnconfiguredIgnitionTarget.command.PreRun = func(cmd *cobra.Command, args []string) {
 		isInteractive, err := cmd.Flags().GetBool("interactive")
