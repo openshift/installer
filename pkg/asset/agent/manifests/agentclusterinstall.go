@@ -30,6 +30,7 @@ import (
 	"github.com/openshift/installer/pkg/types/defaults"
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/none"
+	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -95,6 +96,9 @@ type agentClusterInstallPlatform struct {
 	// External is the configuration used when installing on external cloud provider.
 	// +optional
 	External *agentClusterInstallOnPremExternalPlatform `json:"external,omitempty"`
+	// Nutanix is the configuration used when installing on nutanix platform.
+	// +optional
+	Nutanix *nutanix.Platform `json:"nutanix,omitempty"`
 }
 
 // Used to generate InstallConfig overrides for Assisted Service to apply
@@ -308,6 +312,13 @@ func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Par
 			}
 			agentClusterInstall.Spec.APIVIPs = installConfig.Config.Platform.VSphere.APIVIPs
 			agentClusterInstall.Spec.IngressVIPs = installConfig.Config.Platform.VSphere.IngressVIPs
+		} else if installConfig.Config.Platform.Nutanix != nil {
+			icOverridden = true
+			icOverrides.Platform = &agentClusterInstallPlatform{
+				Nutanix: installConfig.Config.Platform.Nutanix,
+			}
+			agentClusterInstall.Spec.APIVIPs = installConfig.Config.Platform.Nutanix.APIVIPs
+			agentClusterInstall.Spec.IngressVIPs = installConfig.Config.Platform.Nutanix.IngressVIPs
 		} else if installConfig.Config.Platform.External != nil {
 			icOverridden = true
 			icOverrides.Platform = &agentClusterInstallPlatform{
@@ -394,6 +405,8 @@ func (a *AgentClusterInstall) Load(f asset.FileFetcher) (bool, error) {
 		agentClusterInstall.Spec.PlatformType = hiveext.NonePlatformType
 	case vsphere.Name:
 		agentClusterInstall.Spec.PlatformType = hiveext.VSpherePlatformType
+	case nutanix.Name:
+		agentClusterInstall.Spec.PlatformType = hiveext.NutanixPlatformType
 	}
 
 	// Set the default value for userManagedNetworking, as would be done by the
