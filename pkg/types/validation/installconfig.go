@@ -859,7 +859,8 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 			lbType = platform.Nutanix.LoadBalancer.Type
 		}
 
-		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, false, lbType, network, fldPath.Child(nutanix.Name))...)
+		vipIsRequired, reqVIPinMachineCIDR := usingAgentMethod, usingAgentMethod
+		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, vipIsRequired, reqVIPinMachineCIDR, lbType, network, fldPath.Child(nutanix.Name))...)
 	case platform.OpenStack != nil:
 		virtualIPs = vips{
 			API:     platform.OpenStack.APIVIPs,
@@ -1110,7 +1111,7 @@ func validatePlatform(platform *types.Platform, usingAgentMethod bool, fldPath *
 	}
 	if platform.Nutanix != nil {
 		validate(nutanix.Name, platform.Nutanix, func(f *field.Path) field.ErrorList {
-			return nutanixvalidation.ValidatePlatform(platform.Nutanix, f, c)
+			return nutanixvalidation.ValidatePlatform(platform.Nutanix, f, c, false)
 		})
 	}
 	return allErrs

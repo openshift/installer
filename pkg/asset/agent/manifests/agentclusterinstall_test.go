@@ -865,7 +865,7 @@ spec:
   sshPublicKey: |
     ssh-rsa AAAAmyKey`,
 			expectedFound: false,
-			expectedError: "invalid PlatformType configured: spec.platformType: Unsupported value: \"aws\": supported values: \"BareMetal\", \"VSphere\", \"None\", \"External\"",
+			expectedError: "invalid PlatformType configured: spec.platformType: Unsupported value: \"aws\": supported values: \"BareMetal\", \"VSphere\", \"Nutanix\", \"None\", \"External\"",
 		},
 	}
 	for _, tc := range cases {
