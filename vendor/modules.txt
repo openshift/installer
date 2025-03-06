@@ -338,6 +338,7 @@ github.com/IBM/networking-go-sdk/zonesv1
 # github.com/IBM/platform-services-go-sdk v0.71.0
 ## explicit; go 1.21
 github.com/IBM/platform-services-go-sdk/common
+github.com/IBM/platform-services-go-sdk/globalcatalogv1
 github.com/IBM/platform-services-go-sdk/globalsearchv2
 github.com/IBM/platform-services-go-sdk/iamidentityv1
 github.com/IBM/platform-services-go-sdk/iampolicymanagementv1
