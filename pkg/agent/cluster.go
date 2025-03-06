@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/go-openapi/strfmt"
@@ -55,10 +53,6 @@ type clusterInstallStatusHistory struct {
 	RestAPIHostValidationsPassed                        bool
 	ClusterKubeAPISeen                                  bool
 	ClusterBootstrapComplete                            bool
-	ClusterOperatorsInitialized                         bool
-	ClusterConsoleRouteCreated                          bool
-	ClusterConsoleRouteURLCreated                       bool
-	ClusterInstallComplete                              bool
 	NotReadyTime                                        time.Time
 	ValidationResults                                   *validationResults
 	ClusterInitTime                                     time.Time
@@ -104,18 +98,14 @@ func NewCluster(ctx context.Context, assetDir, rendezvousIP, kubeconfigPath, ssh
 	capi.OpenShift = ocpclient
 
 	cinstallstatushistory := &clusterInstallStatusHistory{
-		RestAPISeen:                   false,
-		RestAPIInfraEnvEventList:      nil,
-		RestAPIPreviousClusterStatus:  "",
-		RestAPIPreviousEventMessage:   "",
-		RestAPIHostValidationsPassed:  false,
-		ClusterKubeAPISeen:            false,
-		ClusterBootstrapComplete:      false,
-		ClusterOperatorsInitialized:   false,
-		ClusterConsoleRouteCreated:    false,
-		ClusterConsoleRouteURLCreated: false,
-		ClusterInstallComplete:        false,
-		ClusterInitTime:               time.Now(),
+		RestAPISeen:                  false,
+		RestAPIInfraEnvEventList:     nil,
+		RestAPIPreviousClusterStatus: "",
+		RestAPIPreviousEventMessage:  "",
+		RestAPIHostValidationsPassed: false,
+		ClusterKubeAPISeen:           false,
+		ClusterBootstrapComplete:     false,
+		ClusterInitTime:              time.Now(),
 	}
 
 	cvalidationresults := &validationResults{
@@ -316,57 +306,6 @@ func (czero *Cluster) MonitorStatusFromAssistedService(ch chan logEntry) (bool, 
 	return false, nil
 }
 
-// IsInstallComplete Determine if the cluster has completed installation.
-func (czero *Cluster) IsInstallComplete() (bool, error) {
-
-	if czero.installHistory.ClusterInstallComplete {
-		logrus.Info("Cluster installation is complete")
-		return true, nil
-	}
-
-	if !czero.installHistory.ClusterOperatorsInitialized {
-		initialized, err := czero.API.OpenShift.AreClusterOperatorsInitialized()
-		if initialized && err == nil {
-			czero.installHistory.ClusterOperatorsInitialized = true
-		}
-		if err != nil {
-			return false, errors.Wrap(err, "Error while initializing cluster operators")
-		}
-
-	}
-
-	if !czero.installHistory.ClusterConsoleRouteCreated {
-		route, err := czero.API.OpenShift.IsConsoleRouteAvailable()
-		if route && err == nil {
-			czero.installHistory.ClusterConsoleRouteCreated = true
-		}
-		if err != nil {
-			return false, errors.Wrap(err, "Error while waiting for console route")
-		}
-
-	}
-
-	if !czero.installHistory.ClusterConsoleRouteURLCreated {
-		available, url, err := czero.API.OpenShift.IsConsoleRouteURLAvailable()
-		if available && url != "" && err == nil {
-			czero.clusterConsoleRouteURL = url
-			czero.installHistory.ClusterConsoleRouteURLCreated = true
-		}
-		if err != nil {
-			return false, errors.Wrap(err, "Error while waiting for console route URL")
-		}
-	}
-
-	if czero.installHistory.ClusterOperatorsInitialized &&
-		czero.installHistory.ClusterConsoleRouteCreated &&
-		czero.installHistory.ClusterConsoleRouteURLCreated {
-		czero.installHistory.ClusterInstallComplete = true
-		return true, nil
-	}
-
-	return false, nil
-}
-
 // IsClusterStuckInReady Determine if the cluster has stopped transitioning out of the Ready state
 func (czero *Cluster) IsClusterStuckInReady() (bool, error) {
 
@@ -445,26 +384,6 @@ func (czero *Cluster) PrintInfraEnvRestAPIEventList() {
 	} else {
 		logrus.Debug("No events logged from the Agent Rest API")
 	}
-}
-
-// PrintInstallationComplete Prints the installation complete information
-func (czero *Cluster) PrintInstallationComplete() error {
-	absDir, err := filepath.Abs(czero.assetDir)
-	if err != nil {
-		return err
-	}
-	kubeconfig := filepath.Join(absDir, "auth", "kubeconfig")
-	pwFile := filepath.Join(absDir, "auth", "kubeadmin-password")
-	pw, err := os.ReadFile(pwFile)
-	if err != nil {
-		return err
-	}
-	logrus.Info("Install complete!")
-	logrus.Infof("To access the cluster as the system:admin user when using 'oc', run\n    export KUBECONFIG=%s", kubeconfig)
-	logrus.Infof("Access the OpenShift web-console here: %s", czero.clusterConsoleRouteURL)
-	logrus.Infof("Login to the console with user: %q, and password: %q", "kubeadmin", pw)
-	return nil
-
 }
 
 // PrintInstallStatus Print a human friendly message using the models from the Agent Rest API.
