@@ -212,11 +212,6 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		publicLB = ""
 	}
 
-	managedIdentity := fmt.Sprintf("%s-identity", clusterID)
-	if platform.IsARO() || platform.CloudName == azure.StackCloud {
-		managedIdentity = ""
-	}
-
 	var diskEncryptionSet *machineapi.DiskEncryptionSetParameters
 	if mpool.OSDisk.DiskEncryptionSet != nil {
 		diskEncryptionSet = &machineapi.DiskEncryptionSetParameters{
@@ -264,7 +259,6 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		UltraSSDCapability:    ultraSSDCapability,
 		Zone:                  az,
 		Subnet:                subnet,
-		ManagedIdentity:       managedIdentity,
 		Vnet:                  virtualNetwork,
 		ResourceGroup:         rg,
 		NetworkResourceGroup:  networkResourceGroup,

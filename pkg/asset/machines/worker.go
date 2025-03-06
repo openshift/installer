@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1"
 	"sigs.k8s.io/yaml"
 
@@ -64,7 +65,6 @@ import (
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 	ibmcloudapi "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis"
 	ibmcloudprovider "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
-	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 )
 
 const (
