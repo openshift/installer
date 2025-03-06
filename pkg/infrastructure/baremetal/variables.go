@@ -88,7 +88,7 @@ func getMasterAddresses(dir string) ([]string, error) {
 
 	data, err := os.ReadFile(filepath.Join(dir, MastersFileName))
 	if err != nil {
-		return masters, err
+		return masters, fmt.Errorf("failed to read masters.json (this can happen when bootstrap didn't run): %w", err)
 	}
 
 	hosts := map[string]baremetalhost.BareMetalHost{}
