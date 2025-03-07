@@ -5,6 +5,8 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/openshift/installer/pkg/asset"
 )
 
@@ -29,6 +31,7 @@ func (c *RootCA) Dependencies() []asset.Asset {
 
 // Generate generates the MCS/Ignition CA.
 func (c *RootCA) Generate(ctx context.Context, parents asset.Parents) error {
+	logrus.Infof("****************Custom-DNS debugging: Generating Root CA")
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "root-ca", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,

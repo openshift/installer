@@ -166,7 +166,7 @@ func (m *Arbiter) Generate(ctx context.Context, dependencies asset.Parents) erro
 		m.NetworkConfigSecretFiles = append(m.NetworkConfigSecretFiles, networkSecrets...)
 	}
 
-	data, err := userDataSecret(arbiterUserDataSecretName, mign.File.Data)
+	data, err := UserDataSecret(arbiterUserDataSecretName, mign.File.Data)
 	if err != nil {
 		return fmt.Errorf("failed to create user-data secret for arbiter machines: %w", err)
 	}
