@@ -7,6 +7,7 @@ import (
 
 	v1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/common"
 	"github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -125,6 +126,37 @@ func TestFeatureGates(t *testing.T) {
 				c.FeatureSet = v1.TechPreviewNoUpgrade
 				c.VSphere = validVSpherePlatform()
 				c.VSphere.VCenters = append(c.VSphere.VCenters, vsphere.VCenter{Server: "Number2"})
+				return c
+			}(),
+		},
+		{
+			name: "None fencingCredentials is not allowed with Feature Gates disabled",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.None = validNonePlatform()
+				c.None.FencingCredentials = append(c.None.FencingCredentials, []*common.FencingCredential{{HostName: "host1"}, {HostName: "host2"}}...)
+				return c
+			}(),
+			// TODO mshitrit GCPCustomAPIEndpoints is place holder, replace with DualReplica once feature gate PR is merged
+			expected: `^platform.none.fencingCredentials: Forbidden: this field is protected by the GCPCustomAPIEndpoints feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
+		},
+		{
+			name: "None fencingCredentials is allowed with TechPreviewNoUpgrade Feature Set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = v1.TechPreviewNoUpgrade
+				c.None = validNonePlatform()
+				c.None.FencingCredentials = append(c.None.FencingCredentials, []*common.FencingCredential{{HostName: "host1"}, {HostName: "host2"}}...)
+				return c
+			}(),
+		},
+		{
+			name: "None fencingCredentials is allowed with DevPreviewNoUpgrade Feature Set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = v1.DevPreviewNoUpgrade
+				c.None = validNonePlatform()
+				c.None.FencingCredentials = append(c.None.FencingCredentials, []*common.FencingCredential{{HostName: "host1"}, {HostName: "host2"}}...)
 				return c
 			}(),
 		},
