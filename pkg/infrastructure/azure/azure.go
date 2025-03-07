@@ -16,7 +16,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/coreos/stream-metadata-go/arch"
 	"github.com/sirupsen/logrus"
@@ -96,7 +95,7 @@ func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionI
 	subscriptionID := session.Credentials.SubscriptionID
 	cloudConfiguration := session.CloudConfig
 	tokenCredential := session.TokenCreds
-	resourceGroupName := platform.ClusterResourceGroupName(in.InfraID)
+	p.ResourceGroupName = platform.ClusterResourceGroupName(in.InfraID)
 
 	userTags := platform.UserTags
 	tags := make(map[string]*string, len(userTags)+1)
@@ -105,41 +104,6 @@ func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionI
 		tags[k] = ptr.To(v)
 	}
 	p.Tags = tags
-
-	// Create resource group
-	resourcesClientFactory, err := armresources.NewClientFactory(
-		subscriptionID,
-		tokenCredential,
-		&arm.ClientOptions{
-			ClientOptions: policy.ClientOptions{
-				Cloud: cloudConfiguration,
-			},
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("failed to get azure resource groups factory: %w", err)
-	}
-	resourceGroupsClient := resourcesClientFactory.NewResourceGroupsClient()
-	_, err = resourceGroupsClient.CreateOrUpdate(
-		ctx,
-		resourceGroupName,
-		armresources.ResourceGroup{
-			Location:  ptr.To(platform.Region),
-			ManagedBy: nil,
-			Tags:      tags,
-		},
-		nil,
-	)
-	if err != nil {
-		return fmt.Errorf("error creating resource group %s: %w", resourceGroupName, err)
-	}
-	resourceGroup, err := resourceGroupsClient.Get(ctx, resourceGroupName, nil)
-	if err != nil {
-		return fmt.Errorf("error getting resource group %s: %w", resourceGroupName, err)
-	}
-
-	logrus.Debugf("ResourceGroup.ID=%s", *resourceGroup.ID)
-	p.ResourceGroupName = resourceGroupName
 
 	// Creating a dummy nsg for existing vnets installation to appease the ingress operator.
 	if in.InstallConfig.Config.Azure.VirtualNetwork != "" {
@@ -159,7 +123,7 @@ func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionI
 		securityGroupsClient := networkClientFactory.NewSecurityGroupsClient()
 		pollerResp, err := securityGroupsClient.BeginCreateOrUpdate(
 			ctx,
-			resourceGroupName,
+			p.ResourceGroupName,
 			securityGroupName,
 			armnetwork.SecurityGroup{
 				Location: to.Ptr(platform.Region),
