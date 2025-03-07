@@ -242,7 +242,7 @@ func (r *AWSMachinePoolReconciler) reconcileNormal(ctx context.Context, machineP
 	// Find existing ASG
 	asg, err := r.findASG(machinePoolScope, asgsvc)
 	if err != nil {
-		conditions.MarkUnknown(machinePoolScope.AWSMachinePool, expinfrav1.ASGReadyCondition, expinfrav1.ASGNotFoundReason, err.Error())
+		conditions.MarkUnknown(machinePoolScope.AWSMachinePool, expinfrav1.ASGReadyCondition, expinfrav1.ASGNotFoundReason, "%s", err.Error())
 		return err
 	}
 
@@ -292,7 +292,7 @@ func (r *AWSMachinePoolReconciler) reconcileNormal(ctx context.Context, machineP
 	if asg == nil {
 		// Create new ASG
 		if err := r.createPool(machinePoolScope, clusterScope); err != nil {
-			conditions.MarkFalse(machinePoolScope.AWSMachinePool, expinfrav1.ASGReadyCondition, expinfrav1.ASGProvisionFailedReason, clusterv1.ConditionSeverityError, err.Error())
+			conditions.MarkFalse(machinePoolScope.AWSMachinePool, expinfrav1.ASGReadyCondition, expinfrav1.ASGProvisionFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
 			return err
 		}
 		return nil
@@ -344,7 +344,7 @@ func (r *AWSMachinePoolReconciler) reconcileNormal(ctx context.Context, machineP
 	machinePoolScope.SetAnnotation("cluster-api-provider-aws", "true")
 
 	machinePoolScope.AWSMachinePool.Spec.ProviderIDList = providerIDList
-	machinePoolScope.AWSMachinePool.Status.Replicas = int32(len(providerIDList))
+	machinePoolScope.AWSMachinePool.Status.Replicas = int32(len(providerIDList)) //#nosec G115
 	machinePoolScope.AWSMachinePool.Status.Ready = true
 	conditions.MarkTrue(machinePoolScope.AWSMachinePool, expinfrav1.ASGReadyCondition)
 
