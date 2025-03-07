@@ -191,10 +191,10 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 
 		// Let's disable the assisted-service authentication.
 		agentTemplateData.AuthType = "none"
-
-		// Required by assisted-service.
-		a.ignAddFolders(&config, "/opt/agent/tls", "/etc/assisted/extra-manifests")
 	}
+
+	// Required by assisted-service.
+	a.ignAddFolders(&config, "/opt/agent/tls")
 
 	// Configure static networking if required.
 	if len(nmStateConfigs.StaticNetworkConfig) > 0 {
