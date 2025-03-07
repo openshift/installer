@@ -74,6 +74,20 @@ func (mr *MockAPIMockRecorder) CheckIPAddressAvailability(ctx, resourceGroupName
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckIPAddressAvailability", reflect.TypeOf((*MockAPI)(nil).CheckIPAddressAvailability), ctx, resourceGroupName, virtualNetwork, ipAddr)
 }
 
+// CheckIfExistsStorageAccount mocks base method.
+func (m *MockAPI) CheckIfExistsStorageAccount(ctx context.Context, resourceGroup, storageAccountName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckIfExistsStorageAccount", ctx, resourceGroup, storageAccountName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CheckIfExistsStorageAccount indicates an expected call of CheckIfExistsStorageAccount.
+func (mr *MockAPIMockRecorder) CheckIfExistsStorageAccount(ctx, resourceGroup, storageAccountName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckIfExistsStorageAccount", reflect.TypeOf((*MockAPI)(nil).CheckIfExistsStorageAccount), ctx, resourceGroup, storageAccountName)
+}
+
 // GetAvailabilityZones mocks base method.
 func (m *MockAPI) GetAvailabilityZones(ctx context.Context, region, instanceType string) ([]string, error) {
 	m.ctrl.T.Helper()
