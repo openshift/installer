@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -11,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/tls"
 )
 
 const (
@@ -53,18 +55,18 @@ type storeImpl struct {
 }
 
 // NewStore returns an asset store that implements the asset.Store interface.
-func NewStore(dir string) (asset.Store, error) {
-	return newStore(dir)
+func NewStore(dir string, validate bool) (asset.Store, error) {
+	return newStore(dir, validate)
 }
 
-func newStore(dir string) (*storeImpl, error) {
+func newStore(dir string, validate bool) (*storeImpl, error) {
 	store := &storeImpl{
 		directory:   dir,
 		fileFetcher: &fileFetcher{directory: dir},
 		assets:      map[reflect.Type]*assetState{},
 	}
 
-	if err := store.loadStateFile(); err != nil {
+	if err := store.loadStateFile(validate); err != nil {
 		return nil, err
 	}
 	return store, nil
@@ -125,9 +127,27 @@ func (s *storeImpl) DestroyState() error {
 	return nil
 }
 
+// validateAssets checks for expired certificates and removes the expired certificates from
+// the installer state file.
+func validateAssets(assets map[string]json.RawMessage) error {
+	for assetName, data := range assets {
+		var assetExpirer tls.AssetExpirer
+		err := json.Unmarshal(data, &assetExpirer)
+		if err != nil {
+			logrus.Warnf("failed to unmarshal asset %s from state file: %s", assetName, err.Error())
+			continue
+		}
+
+		if err := assetExpirer.CheckExpired(); err != nil {
+			return fmt.Errorf("asset %s is expired: %w", assetName, err)
+		}
+	}
+	return nil
+}
+
 // loadStateFile retrieves the state from the state file present in the given directory
 // and returns the assets map
-func (s *storeImpl) loadStateFile() error {
+func (s *storeImpl) loadStateFile(validate bool) error {
 	path := filepath.Join(s.directory, stateFileName)
 	assets := map[string]json.RawMessage{}
 	data, err := os.ReadFile(path)
@@ -141,7 +161,13 @@ func (s *storeImpl) loadStateFile() error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to unmarshal state file %q", path)
 	}
+
 	s.stateFileAssets = assets
+	if validate {
+		if err := validateAssets(s.stateFileAssets); err != nil {
+			return fmt.Errorf("failed to validate assets: %w", err)
+		}
+	}
 	return nil
 }
 
