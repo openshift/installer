@@ -15,7 +15,7 @@ EnvironmentFile=/usr/local/share/assisted-service/agent-images.env
 EnvironmentFile=/etc/assisted/rendezvous-host.env
 ExecStartPre=/bin/rm -f %t/%n.ctr-id
 ExecStartPre=/usr/local/bin/wait-for-assisted-service.sh
-ExecStart=podman run --net host --cidfile=%t/%n.ctr-id --cgroups=no-conmon --log-driver=journald --restart=on-failure:10 --pod-id-file=%t/assisted-service-pod.pod-id --replace --name=agent-installer-ui --env AIUI_APP_API_URL registry.ci.openshift.org/ocp/4.19:assisted-install-ui
+ExecStart=/bin/bash -c "AIUI_APP_API_URL=${SERVICE_BASE_URL} podman run --net host --cidfile=%t/%n.ctr-id --cgroups=no-conmon --log-driver=journald --restart=on-failure:10 --pod-id-file=%t/assisted-service-pod.pod-id --replace --name=agent-installer-ui --env AIUI_APP_API_URL registry.ci.openshift.org/ocp/4.19:assisted-install-ui"
 ExecStop=/usr/bin/podman stop --ignore --cidfile=%t/%n.ctr-id
 ExecStopPost=/usr/bin/podman rm -f --ignore --cidfile=%t/%n.ctr-id
 
