@@ -82,7 +82,6 @@ func (a *AgentPXEFiles) Generate(_ context.Context, dependencies asset.Parents) 
 
 // PersistToFile writes the PXE assets in the assets folder named pxe.
 func (a *AgentPXEFiles) PersistToFile(directory string) error {
-	var kernelFileType string
 	// If the imageReader is not set then it means that either one of the AgentPXEFiles
 	// dependencies or the asset itself failed for some reason
 	if a.imageReader == nil {
@@ -108,8 +107,6 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 		return err
 	}
 
-	kernelFileType = "vmlinuz"
-
 	if a.cpuArch == arch.RpmArch(types.ArchitectureS390X) {
 		err = a.handleAdditionals390xArtifacts(bootArtifactsFullPath)
 		if err != nil {
@@ -117,8 +114,8 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 		}
 	}
 
-	agentVmlinuzFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("%s.%s-%s", a.filePrefix, a.cpuArch, kernelFileType))
-	kernelReader, err := os.Open(filepath.Join(a.tmpPath, "images", "pxeboot", kernelFileType))
+	agentVmlinuzFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("%s.%s-%s", a.filePrefix, a.cpuArch, "vmlinuz"))
+	kernelReader, err := os.Open(filepath.Join(a.tmpPath, "images", "pxeboot", "vmlinuz"))
 	if err != nil {
 		return err
 	}
