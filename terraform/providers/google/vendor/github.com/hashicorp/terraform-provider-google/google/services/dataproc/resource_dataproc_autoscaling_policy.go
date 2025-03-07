@@ -20,9 +20,11 @@ package dataproc
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -45,6 +47,10 @@ func ResourceDataprocAutoscalingPolicy() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"policy_id": {
@@ -298,6 +304,7 @@ func resourceDataprocAutoscalingPolicyCreate(d *schema.ResourceData, meta interf
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -306,6 +313,7 @@ func resourceDataprocAutoscalingPolicyCreate(d *schema.ResourceData, meta interf
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating AutoscalingPolicy: %s", err)
@@ -351,12 +359,14 @@ func resourceDataprocAutoscalingPolicyRead(d *schema.ResourceData, meta interfac
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DataprocAutoscalingPolicy %q", d.Id()))
@@ -432,6 +442,7 @@ func resourceDataprocAutoscalingPolicyUpdate(d *schema.ResourceData, meta interf
 	}
 
 	log.Printf("[DEBUG] Updating AutoscalingPolicy %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -446,6 +457,7 @@ func resourceDataprocAutoscalingPolicyUpdate(d *schema.ResourceData, meta interf
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
+		Headers:   headers,
 	})
 
 	if err != nil {
@@ -478,13 +490,15 @@ func resourceDataprocAutoscalingPolicyDelete(d *schema.ResourceData, meta interf
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting AutoscalingPolicy %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting AutoscalingPolicy %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -493,6 +507,7 @@ func resourceDataprocAutoscalingPolicyDelete(d *schema.ResourceData, meta interf
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "AutoscalingPolicy")
@@ -505,9 +520,9 @@ func resourceDataprocAutoscalingPolicyDelete(d *schema.ResourceData, meta interf
 func resourceDataprocAutoscalingPolicyImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/autoscalingPolicies/(?P<policy_id>[^/]+)",
-		"(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<policy_id>[^/]+)",
-		"(?P<location>[^/]+)/(?P<policy_id>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/autoscalingPolicies/(?P<policy_id>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<policy_id>[^/]+)$",
+		"^(?P<location>[^/]+)/(?P<policy_id>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

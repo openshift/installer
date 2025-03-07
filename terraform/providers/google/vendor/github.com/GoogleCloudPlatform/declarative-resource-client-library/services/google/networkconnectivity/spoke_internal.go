@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import (
 
 func (r *Spoke) validate() error {
 
-	if err := dcl.ValidateExactlyOneOfFieldsSet([]string{"LinkedVpnTunnels", "LinkedInterconnectAttachments", "LinkedRouterApplianceInstances"}, r.LinkedVpnTunnels, r.LinkedInterconnectAttachments, r.LinkedRouterApplianceInstances); err != nil {
+	if err := dcl.ValidateExactlyOneOfFieldsSet([]string{"LinkedVpnTunnels", "LinkedInterconnectAttachments", "LinkedRouterApplianceInstances", "LinkedVPCNetwork"}, r.LinkedVpnTunnels, r.LinkedInterconnectAttachments, r.LinkedRouterApplianceInstances, r.LinkedVPCNetwork); err != nil {
 		return err
 	}
 	if err := dcl.Required(r, "name"); err != nil {
@@ -54,6 +54,11 @@ func (r *Spoke) validate() error {
 	}
 	if !dcl.IsEmptyValueIndirect(r.LinkedRouterApplianceInstances) {
 		if err := r.LinkedRouterApplianceInstances.validate(); err != nil {
+			return err
+		}
+	}
+	if !dcl.IsEmptyValueIndirect(r.LinkedVPCNetwork) {
+		if err := r.LinkedVPCNetwork.validate(); err != nil {
 			return err
 		}
 	}
@@ -87,6 +92,12 @@ func (r *SpokeLinkedRouterApplianceInstances) validate() error {
 	return nil
 }
 func (r *SpokeLinkedRouterApplianceInstancesInstances) validate() error {
+	return nil
+}
+func (r *SpokeLinkedVPCNetwork) validate() error {
+	if err := dcl.Required(r, "uri"); err != nil {
+		return err
+	}
 	return nil
 }
 func (r *Spoke) basePath() string {
@@ -471,22 +482,29 @@ func canonicalizeSpokeInitialState(rawInitial, rawDesired *Spoke) (*Spoke, error
 
 	if !dcl.IsZeroValue(rawInitial.LinkedVpnTunnels) {
 		// Check if anything else is set.
-		if dcl.AnySet(rawInitial.LinkedInterconnectAttachments, rawInitial.LinkedRouterApplianceInstances) {
+		if dcl.AnySet(rawInitial.LinkedInterconnectAttachments, rawInitial.LinkedRouterApplianceInstances, rawInitial.LinkedVPCNetwork) {
 			rawInitial.LinkedVpnTunnels = EmptySpokeLinkedVpnTunnels
 		}
 	}
 
 	if !dcl.IsZeroValue(rawInitial.LinkedInterconnectAttachments) {
 		// Check if anything else is set.
-		if dcl.AnySet(rawInitial.LinkedVpnTunnels, rawInitial.LinkedRouterApplianceInstances) {
+		if dcl.AnySet(rawInitial.LinkedVpnTunnels, rawInitial.LinkedRouterApplianceInstances, rawInitial.LinkedVPCNetwork) {
 			rawInitial.LinkedInterconnectAttachments = EmptySpokeLinkedInterconnectAttachments
 		}
 	}
 
 	if !dcl.IsZeroValue(rawInitial.LinkedRouterApplianceInstances) {
 		// Check if anything else is set.
-		if dcl.AnySet(rawInitial.LinkedVpnTunnels, rawInitial.LinkedInterconnectAttachments) {
+		if dcl.AnySet(rawInitial.LinkedVpnTunnels, rawInitial.LinkedInterconnectAttachments, rawInitial.LinkedVPCNetwork) {
 			rawInitial.LinkedRouterApplianceInstances = EmptySpokeLinkedRouterApplianceInstances
+		}
+	}
+
+	if !dcl.IsZeroValue(rawInitial.LinkedVPCNetwork) {
+		// Check if anything else is set.
+		if dcl.AnySet(rawInitial.LinkedVpnTunnels, rawInitial.LinkedInterconnectAttachments, rawInitial.LinkedRouterApplianceInstances) {
+			rawInitial.LinkedVPCNetwork = EmptySpokeLinkedVPCNetwork
 		}
 	}
 
@@ -508,6 +526,7 @@ func canonicalizeSpokeDesiredState(rawDesired, rawInitial *Spoke, opts ...dcl.Ap
 		rawDesired.LinkedVpnTunnels = canonicalizeSpokeLinkedVpnTunnels(rawDesired.LinkedVpnTunnels, nil, opts...)
 		rawDesired.LinkedInterconnectAttachments = canonicalizeSpokeLinkedInterconnectAttachments(rawDesired.LinkedInterconnectAttachments, nil, opts...)
 		rawDesired.LinkedRouterApplianceInstances = canonicalizeSpokeLinkedRouterApplianceInstances(rawDesired.LinkedRouterApplianceInstances, nil, opts...)
+		rawDesired.LinkedVPCNetwork = canonicalizeSpokeLinkedVPCNetwork(rawDesired.LinkedVPCNetwork, nil, opts...)
 
 		return rawDesired, nil
 	}
@@ -537,6 +556,7 @@ func canonicalizeSpokeDesiredState(rawDesired, rawInitial *Spoke, opts ...dcl.Ap
 	canonicalDesired.LinkedVpnTunnels = canonicalizeSpokeLinkedVpnTunnels(rawDesired.LinkedVpnTunnels, rawInitial.LinkedVpnTunnels, opts...)
 	canonicalDesired.LinkedInterconnectAttachments = canonicalizeSpokeLinkedInterconnectAttachments(rawDesired.LinkedInterconnectAttachments, rawInitial.LinkedInterconnectAttachments, opts...)
 	canonicalDesired.LinkedRouterApplianceInstances = canonicalizeSpokeLinkedRouterApplianceInstances(rawDesired.LinkedRouterApplianceInstances, rawInitial.LinkedRouterApplianceInstances, opts...)
+	canonicalDesired.LinkedVPCNetwork = canonicalizeSpokeLinkedVPCNetwork(rawDesired.LinkedVPCNetwork, rawInitial.LinkedVPCNetwork, opts...)
 	if dcl.NameToSelfLink(rawDesired.Project, rawInitial.Project) {
 		canonicalDesired.Project = rawInitial.Project
 	} else {
@@ -550,22 +570,29 @@ func canonicalizeSpokeDesiredState(rawDesired, rawInitial *Spoke, opts ...dcl.Ap
 
 	if canonicalDesired.LinkedVpnTunnels != nil {
 		// Check if anything else is set.
-		if dcl.AnySet(rawDesired.LinkedInterconnectAttachments, rawDesired.LinkedRouterApplianceInstances) {
+		if dcl.AnySet(rawDesired.LinkedInterconnectAttachments, rawDesired.LinkedRouterApplianceInstances, rawDesired.LinkedVPCNetwork) {
 			canonicalDesired.LinkedVpnTunnels = EmptySpokeLinkedVpnTunnels
 		}
 	}
 
 	if canonicalDesired.LinkedInterconnectAttachments != nil {
 		// Check if anything else is set.
-		if dcl.AnySet(rawDesired.LinkedVpnTunnels, rawDesired.LinkedRouterApplianceInstances) {
+		if dcl.AnySet(rawDesired.LinkedVpnTunnels, rawDesired.LinkedRouterApplianceInstances, rawDesired.LinkedVPCNetwork) {
 			canonicalDesired.LinkedInterconnectAttachments = EmptySpokeLinkedInterconnectAttachments
 		}
 	}
 
 	if canonicalDesired.LinkedRouterApplianceInstances != nil {
 		// Check if anything else is set.
-		if dcl.AnySet(rawDesired.LinkedVpnTunnels, rawDesired.LinkedInterconnectAttachments) {
+		if dcl.AnySet(rawDesired.LinkedVpnTunnels, rawDesired.LinkedInterconnectAttachments, rawDesired.LinkedVPCNetwork) {
 			canonicalDesired.LinkedRouterApplianceInstances = EmptySpokeLinkedRouterApplianceInstances
+		}
+	}
+
+	if canonicalDesired.LinkedVPCNetwork != nil {
+		// Check if anything else is set.
+		if dcl.AnySet(rawDesired.LinkedVpnTunnels, rawDesired.LinkedInterconnectAttachments, rawDesired.LinkedRouterApplianceInstances) {
+			canonicalDesired.LinkedVPCNetwork = EmptySpokeLinkedVPCNetwork
 		}
 	}
 
@@ -626,6 +653,12 @@ func canonicalizeSpokeNewState(c *Client, rawNew, rawDesired *Spoke) (*Spoke, er
 		rawNew.LinkedRouterApplianceInstances = rawDesired.LinkedRouterApplianceInstances
 	} else {
 		rawNew.LinkedRouterApplianceInstances = canonicalizeNewSpokeLinkedRouterApplianceInstances(c, rawDesired.LinkedRouterApplianceInstances, rawNew.LinkedRouterApplianceInstances)
+	}
+
+	if dcl.IsEmptyValueIndirect(rawNew.LinkedVPCNetwork) && dcl.IsEmptyValueIndirect(rawDesired.LinkedVPCNetwork) {
+		rawNew.LinkedVPCNetwork = rawDesired.LinkedVPCNetwork
+	} else {
+		rawNew.LinkedVPCNetwork = canonicalizeNewSpokeLinkedVPCNetwork(c, rawDesired.LinkedVPCNetwork, rawNew.LinkedVPCNetwork)
 	}
 
 	if dcl.IsEmptyValueIndirect(rawNew.UniqueId) && dcl.IsEmptyValueIndirect(rawDesired.UniqueId) {
@@ -1144,6 +1177,130 @@ func canonicalizeNewSpokeLinkedRouterApplianceInstancesInstancesSlice(c *Client,
 	return items
 }
 
+func canonicalizeSpokeLinkedVPCNetwork(des, initial *SpokeLinkedVPCNetwork, opts ...dcl.ApplyOption) *SpokeLinkedVPCNetwork {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &SpokeLinkedVPCNetwork{}
+
+	if dcl.IsZeroValue(des.Uri) || (dcl.IsEmptyValueIndirect(des.Uri) && dcl.IsEmptyValueIndirect(initial.Uri)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.Uri = initial.Uri
+	} else {
+		cDes.Uri = des.Uri
+	}
+	if dcl.StringArrayCanonicalize(des.ExcludeExportRanges, initial.ExcludeExportRanges) {
+		cDes.ExcludeExportRanges = initial.ExcludeExportRanges
+	} else {
+		cDes.ExcludeExportRanges = des.ExcludeExportRanges
+	}
+
+	return cDes
+}
+
+func canonicalizeSpokeLinkedVPCNetworkSlice(des, initial []SpokeLinkedVPCNetwork, opts ...dcl.ApplyOption) []SpokeLinkedVPCNetwork {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]SpokeLinkedVPCNetwork, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeSpokeLinkedVPCNetwork(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]SpokeLinkedVPCNetwork, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeSpokeLinkedVPCNetwork(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewSpokeLinkedVPCNetwork(c *Client, des, nw *SpokeLinkedVPCNetwork) *SpokeLinkedVPCNetwork {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for SpokeLinkedVPCNetwork while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	if dcl.StringArrayCanonicalize(des.ExcludeExportRanges, nw.ExcludeExportRanges) {
+		nw.ExcludeExportRanges = des.ExcludeExportRanges
+	}
+
+	return nw
+}
+
+func canonicalizeNewSpokeLinkedVPCNetworkSet(c *Client, des, nw []SpokeLinkedVPCNetwork) []SpokeLinkedVPCNetwork {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []SpokeLinkedVPCNetwork
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareSpokeLinkedVPCNetworkNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewSpokeLinkedVPCNetwork(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewSpokeLinkedVPCNetworkSlice(c *Client, des, nw []SpokeLinkedVPCNetwork) []SpokeLinkedVPCNetwork {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []SpokeLinkedVPCNetwork
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewSpokeLinkedVPCNetwork(c, &d, &n))
+	}
+
+	return items
+}
+
 // The differ returns a list of diffs, along with a list of operations that should be taken
 // to remedy them. Right now, it does not attempt to consolidate operations - if several
 // fields can be fixed with a patch update, it will perform the patch several times.
@@ -1219,6 +1376,13 @@ func diffSpoke(c *Client, desired, actual *Spoke, opts ...dcl.ApplyOption) ([]*d
 	}
 
 	if ds, err := dcl.Diff(desired.LinkedRouterApplianceInstances, actual.LinkedRouterApplianceInstances, dcl.DiffInfo{ObjectFunction: compareSpokeLinkedRouterApplianceInstancesNewStyle, EmptyObject: EmptySpokeLinkedRouterApplianceInstances, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("LinkedRouterApplianceInstances")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		newDiffs = append(newDiffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.LinkedVPCNetwork, actual.LinkedVPCNetwork, dcl.DiffInfo{ObjectFunction: compareSpokeLinkedVPCNetworkNewStyle, EmptyObject: EmptySpokeLinkedVPCNetwork, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("LinkedVpcNetwork")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -1402,6 +1566,42 @@ func compareSpokeLinkedRouterApplianceInstancesInstancesNewStyle(d, a interface{
 	return diffs, nil
 }
 
+func compareSpokeLinkedVPCNetworkNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*SpokeLinkedVPCNetwork)
+	if !ok {
+		desiredNotPointer, ok := d.(SpokeLinkedVPCNetwork)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a SpokeLinkedVPCNetwork or *SpokeLinkedVPCNetwork", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*SpokeLinkedVPCNetwork)
+	if !ok {
+		actualNotPointer, ok := a.(SpokeLinkedVPCNetwork)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a SpokeLinkedVPCNetwork", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Uri, actual.Uri, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Uri")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.ExcludeExportRanges, actual.ExcludeExportRanges, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ExcludeExportRanges")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
 // urlNormalized returns a copy of the resource struct with values normalized
 // for URL substitutions. For instance, it converts long-form self-links to
 // short-form so they can be substituted in.
@@ -1495,6 +1695,11 @@ func expandSpoke(c *Client, f *Spoke) (map[string]interface{}, error) {
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["linkedRouterApplianceInstances"] = v
 	}
+	if v, err := expandSpokeLinkedVPCNetwork(c, f.LinkedVPCNetwork, res); err != nil {
+		return nil, fmt.Errorf("error expanding LinkedVPCNetwork into linkedVpcNetwork: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["linkedVpcNetwork"] = v
+	}
 	if v, err := dcl.EmptyValue(); err != nil {
 		return nil, fmt.Errorf("error expanding Project into project: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
@@ -1530,6 +1735,7 @@ func flattenSpoke(c *Client, i interface{}, res *Spoke) *Spoke {
 	resultRes.LinkedVpnTunnels = flattenSpokeLinkedVpnTunnels(c, m["linkedVpnTunnels"], res)
 	resultRes.LinkedInterconnectAttachments = flattenSpokeLinkedInterconnectAttachments(c, m["linkedInterconnectAttachments"], res)
 	resultRes.LinkedRouterApplianceInstances = flattenSpokeLinkedRouterApplianceInstances(c, m["linkedRouterApplianceInstances"], res)
+	resultRes.LinkedVPCNetwork = flattenSpokeLinkedVPCNetwork(c, m["linkedVpcNetwork"], res)
 	resultRes.UniqueId = dcl.FlattenString(m["uniqueId"])
 	resultRes.State = flattenSpokeStateEnum(m["state"])
 	resultRes.Project = dcl.FlattenString(m["project"])
@@ -2012,6 +2218,124 @@ func flattenSpokeLinkedRouterApplianceInstancesInstances(c *Client, i interface{
 	return r
 }
 
+// expandSpokeLinkedVPCNetworkMap expands the contents of SpokeLinkedVPCNetwork into a JSON
+// request object.
+func expandSpokeLinkedVPCNetworkMap(c *Client, f map[string]SpokeLinkedVPCNetwork, res *Spoke) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandSpokeLinkedVPCNetwork(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandSpokeLinkedVPCNetworkSlice expands the contents of SpokeLinkedVPCNetwork into a JSON
+// request object.
+func expandSpokeLinkedVPCNetworkSlice(c *Client, f []SpokeLinkedVPCNetwork, res *Spoke) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandSpokeLinkedVPCNetwork(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenSpokeLinkedVPCNetworkMap flattens the contents of SpokeLinkedVPCNetwork from a JSON
+// response object.
+func flattenSpokeLinkedVPCNetworkMap(c *Client, i interface{}, res *Spoke) map[string]SpokeLinkedVPCNetwork {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]SpokeLinkedVPCNetwork{}
+	}
+
+	if len(a) == 0 {
+		return map[string]SpokeLinkedVPCNetwork{}
+	}
+
+	items := make(map[string]SpokeLinkedVPCNetwork)
+	for k, item := range a {
+		items[k] = *flattenSpokeLinkedVPCNetwork(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenSpokeLinkedVPCNetworkSlice flattens the contents of SpokeLinkedVPCNetwork from a JSON
+// response object.
+func flattenSpokeLinkedVPCNetworkSlice(c *Client, i interface{}, res *Spoke) []SpokeLinkedVPCNetwork {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []SpokeLinkedVPCNetwork{}
+	}
+
+	if len(a) == 0 {
+		return []SpokeLinkedVPCNetwork{}
+	}
+
+	items := make([]SpokeLinkedVPCNetwork, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenSpokeLinkedVPCNetwork(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandSpokeLinkedVPCNetwork expands an instance of SpokeLinkedVPCNetwork into a JSON
+// request object.
+func expandSpokeLinkedVPCNetwork(c *Client, f *SpokeLinkedVPCNetwork, res *Spoke) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.Uri; !dcl.IsEmptyValueIndirect(v) {
+		m["uri"] = v
+	}
+	if v := f.ExcludeExportRanges; v != nil {
+		m["excludeExportRanges"] = v
+	}
+
+	return m, nil
+}
+
+// flattenSpokeLinkedVPCNetwork flattens an instance of SpokeLinkedVPCNetwork from a JSON
+// response object.
+func flattenSpokeLinkedVPCNetwork(c *Client, i interface{}, res *Spoke) *SpokeLinkedVPCNetwork {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &SpokeLinkedVPCNetwork{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptySpokeLinkedVPCNetwork
+	}
+	r.Uri = dcl.FlattenString(m["uri"])
+	r.ExcludeExportRanges = dcl.FlattenStringSlice(m["excludeExportRanges"])
+
+	return r
+}
+
 // flattenSpokeStateEnumMap flattens the contents of SpokeStateEnum from a JSON
 // response object.
 func flattenSpokeStateEnumMap(c *Client, i interface{}, res *Spoke) map[string]SpokeStateEnum {
@@ -2190,6 +2514,17 @@ func extractSpokeFields(r *Spoke) error {
 	if !dcl.IsEmptyValueIndirect(vLinkedRouterApplianceInstances) {
 		r.LinkedRouterApplianceInstances = vLinkedRouterApplianceInstances
 	}
+	vLinkedVPCNetwork := r.LinkedVPCNetwork
+	if vLinkedVPCNetwork == nil {
+		// note: explicitly not the empty object.
+		vLinkedVPCNetwork = &SpokeLinkedVPCNetwork{}
+	}
+	if err := extractSpokeLinkedVPCNetworkFields(r, vLinkedVPCNetwork); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vLinkedVPCNetwork) {
+		r.LinkedVPCNetwork = vLinkedVPCNetwork
+	}
 	return nil
 }
 func extractSpokeLinkedVpnTunnelsFields(r *Spoke, o *SpokeLinkedVpnTunnels) error {
@@ -2202,6 +2537,9 @@ func extractSpokeLinkedRouterApplianceInstancesFields(r *Spoke, o *SpokeLinkedRo
 	return nil
 }
 func extractSpokeLinkedRouterApplianceInstancesInstancesFields(r *Spoke, o *SpokeLinkedRouterApplianceInstancesInstances) error {
+	return nil
+}
+func extractSpokeLinkedVPCNetworkFields(r *Spoke, o *SpokeLinkedVPCNetwork) error {
 	return nil
 }
 
@@ -2239,6 +2577,17 @@ func postReadExtractSpokeFields(r *Spoke) error {
 	if !dcl.IsEmptyValueIndirect(vLinkedRouterApplianceInstances) {
 		r.LinkedRouterApplianceInstances = vLinkedRouterApplianceInstances
 	}
+	vLinkedVPCNetwork := r.LinkedVPCNetwork
+	if vLinkedVPCNetwork == nil {
+		// note: explicitly not the empty object.
+		vLinkedVPCNetwork = &SpokeLinkedVPCNetwork{}
+	}
+	if err := postReadExtractSpokeLinkedVPCNetworkFields(r, vLinkedVPCNetwork); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vLinkedVPCNetwork) {
+		r.LinkedVPCNetwork = vLinkedVPCNetwork
+	}
 	return nil
 }
 func postReadExtractSpokeLinkedVpnTunnelsFields(r *Spoke, o *SpokeLinkedVpnTunnels) error {
@@ -2251,5 +2600,8 @@ func postReadExtractSpokeLinkedRouterApplianceInstancesFields(r *Spoke, o *Spoke
 	return nil
 }
 func postReadExtractSpokeLinkedRouterApplianceInstancesInstancesFields(r *Spoke, o *SpokeLinkedRouterApplianceInstancesInstances) error {
+	return nil
+}
+func postReadExtractSpokeLinkedVPCNetworkFields(r *Spoke, o *SpokeLinkedVPCNetwork) error {
 	return nil
 }

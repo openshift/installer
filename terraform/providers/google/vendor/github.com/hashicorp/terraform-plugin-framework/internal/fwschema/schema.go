@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fwschema
 
 import (
@@ -11,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/internal/totftypes"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 // Schema is the core interface required for data sources, providers, and
@@ -128,7 +132,7 @@ func SchemaAttributeAtTerraformPath(ctx context.Context, s Schema, p *tftypes.At
 	rawType, remaining, err := tftypes.WalkAttributePath(s, p)
 
 	if err != nil {
-		return nil, fmt.Errorf("%v still remains in the path: %w", remaining, err)
+		return nil, checkErrForDynamic(rawType, remaining, err)
 	}
 
 	switch typ := rawType.(type) {
@@ -197,7 +201,7 @@ func SchemaTypeAtTerraformPath(ctx context.Context, s Schema, p *tftypes.Attribu
 	rawType, remaining, err := tftypes.WalkAttributePath(s, p)
 
 	if err != nil {
-		return nil, fmt.Errorf("%v still remains in the path: %w", remaining, err)
+		return nil, checkErrForDynamic(rawType, remaining, err)
 	}
 
 	switch typ := rawType.(type) {
@@ -234,4 +238,33 @@ func SchemaType(s Schema) attr.Type {
 	}
 
 	return types.ObjectType{AttrTypes: attrTypes}
+}
+
+// checkErrForDynamic is a helper function that will always return an error. It will return
+// an `ErrPathInsideDynamicAttribute` error if rawType:
+//   - Is a dynamic type
+//   - Is an attribute that has a dynamic type
+func checkErrForDynamic(rawType any, remaining *tftypes.AttributePath, err error) error {
+	if rawType == nil {
+		return fmt.Errorf("%v still remains in the path: %w", remaining, err)
+	}
+
+	// Check to see if we tried walking into a dynamic type (types.DynamicType)
+	_, isDynamic := rawType.(basetypes.DynamicTypable)
+	if isDynamic {
+		// If the type is dynamic there is no schema information underneath it, return an error to allow calling logic to safely skip
+		return ErrPathInsideDynamicAttribute
+	}
+
+	// Check to see if we tried walking into an attribute with a dynamic type (schema.DynamicAttribute)
+	attr, ok := rawType.(Attribute)
+	if ok {
+		_, isDynamic := attr.GetType().(basetypes.DynamicTypable)
+		if isDynamic {
+			// If the attribute is dynamic there are no nested attributes underneath it, return an error to allow calling logic to safely skip
+			return ErrPathInsideDynamicAttribute
+		}
+	}
+
+	return fmt.Errorf("%v still remains in the path: %w", remaining, err)
 }

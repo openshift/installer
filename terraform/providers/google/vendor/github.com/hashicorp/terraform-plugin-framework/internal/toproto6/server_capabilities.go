@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package toproto6
 
 import (
@@ -15,6 +18,7 @@ func ServerCapabilities(ctx context.Context, fw *fwserver.ServerCapabilities) *t
 	}
 
 	return &tfprotov6.ServerCapabilities{
-		PlanDestroy: fw.PlanDestroy,
+		GetProviderSchemaOptional: fw.GetProviderSchemaOptional,
+		PlanDestroy:               fw.PlanDestroy,
 	}
 }

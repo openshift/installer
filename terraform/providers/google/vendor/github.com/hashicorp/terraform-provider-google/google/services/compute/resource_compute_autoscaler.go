@@ -20,9 +20,11 @@ package compute
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -46,6 +48,11 @@ func ResourceComputeAutoscaler() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+			tpgresource.DefaultProviderZone,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"autoscaling_policy": {
@@ -186,11 +193,10 @@ Stackdriver Monitoring metric. Possible values: ["GAUGE", "DELTA_PER_SECOND", "D
 							},
 						},
 						"mode": {
-							Type:         schema.TypeString,
-							Optional:     true,
-							ValidateFunc: verify.ValidateEnum([]string{"OFF", "ONLY_UP", "ON", ""}),
-							Description:  `Defines operating mode for this policy. Default value: "ON" Possible values: ["OFF", "ONLY_UP", "ON"]`,
-							Default:      "ON",
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: `Defines operating mode for this policy.`,
+							Default:     "ON",
 						},
 						"scale_in_control": {
 							Type:     schema.TypeList,
@@ -391,6 +397,7 @@ func resourceComputeAutoscalerCreate(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -399,6 +406,7 @@ func resourceComputeAutoscalerCreate(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Autoscaler: %s", err)
@@ -451,18 +459,28 @@ func resourceComputeAutoscalerRead(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeAutoscaler %q", d.Id()))
 	}
 
 	if err := d.Set("project", project); err != nil {
+		return fmt.Errorf("Error reading Autoscaler: %s", err)
+	}
+
+	zone, err := tpgresource.GetZone(d, config)
+	if err != nil {
+		return err
+	}
+	if err := d.Set("zone", zone); err != nil {
 		return fmt.Errorf("Error reading Autoscaler: %s", err)
 	}
 
@@ -479,9 +497,6 @@ func resourceComputeAutoscalerRead(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("Error reading Autoscaler: %s", err)
 	}
 	if err := d.Set("target", flattenComputeAutoscalerTarget(res["target"], d, config)); err != nil {
-		return fmt.Errorf("Error reading Autoscaler: %s", err)
-	}
-	if err := d.Set("zone", flattenComputeAutoscalerZone(res["zone"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Autoscaler: %s", err)
 	}
 	if err := d.Set("self_link", tpgresource.ConvertSelfLinkToV1(res["selfLink"].(string))); err != nil {
@@ -544,6 +559,7 @@ func resourceComputeAutoscalerUpdate(d *schema.ResourceData, meta interface{}) e
 	}
 
 	log.Printf("[DEBUG] Updating Autoscaler %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -558,6 +574,7 @@ func resourceComputeAutoscalerUpdate(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
+		Headers:   headers,
 	})
 
 	if err != nil {
@@ -598,13 +615,15 @@ func resourceComputeAutoscalerDelete(d *schema.ResourceData, meta interface{}) e
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Autoscaler %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Autoscaler %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -613,6 +632,7 @@ func resourceComputeAutoscalerDelete(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Autoscaler")
@@ -633,10 +653,10 @@ func resourceComputeAutoscalerDelete(d *schema.ResourceData, meta interface{}) e
 func resourceComputeAutoscalerImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/zones/(?P<zone>[^/]+)/autoscalers/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<zone>[^/]+)/(?P<name>[^/]+)",
-		"(?P<zone>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/zones/(?P<zone>[^/]+)/autoscalers/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<zone>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<zone>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -981,13 +1001,6 @@ func flattenComputeAutoscalerTarget(v interface{}, d *schema.ResourceData, confi
 	return tpgresource.ConvertSelfLinkToV1(v.(string))
 }
 
-func flattenComputeAutoscalerZone(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return v
-	}
-	return tpgresource.ConvertSelfLinkToV1(v.(string))
-}
-
 func expandComputeAutoscalerName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
@@ -1015,7 +1028,7 @@ func expandComputeAutoscalerAutoscalingPolicy(v interface{}, d tpgresource.Terra
 	transformedMaxReplicas, err := expandComputeAutoscalerAutoscalingPolicyMaxReplicas(original["max_replicas"], d, config)
 	if err != nil {
 		return nil, err
-	} else if val := reflect.ValueOf(transformedMaxReplicas); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+	} else {
 		transformed["maxNumReplicas"] = transformedMaxReplicas
 	}
 

@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -77,6 +77,16 @@ func (r *TriggerDestination) validate() error {
 			return err
 		}
 	}
+	if !dcl.IsEmptyValueIndirect(r.HttpEndpoint) {
+		if err := r.HttpEndpoint.validate(); err != nil {
+			return err
+		}
+	}
+	if !dcl.IsEmptyValueIndirect(r.NetworkConfig) {
+		if err := r.NetworkConfig.validate(); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 func (r *TriggerDestinationCloudRunService) validate() error {
@@ -99,6 +109,18 @@ func (r *TriggerDestinationGke) validate() error {
 		return err
 	}
 	if err := dcl.Required(r, "service"); err != nil {
+		return err
+	}
+	return nil
+}
+func (r *TriggerDestinationHttpEndpoint) validate() error {
+	if err := dcl.Required(r, "uri"); err != nil {
+		return err
+	}
+	return nil
+}
+func (r *TriggerDestinationNetworkConfig) validate() error {
+	if err := dcl.Required(r, "networkAttachment"); err != nil {
 		return err
 	}
 	return nil
@@ -877,6 +899,8 @@ func canonicalizeTriggerDestination(des, initial *TriggerDestination, opts ...dc
 	} else {
 		cDes.Workflow = des.Workflow
 	}
+	cDes.HttpEndpoint = canonicalizeTriggerDestinationHttpEndpoint(des.HttpEndpoint, initial.HttpEndpoint, opts...)
+	cDes.NetworkConfig = canonicalizeTriggerDestinationNetworkConfig(des.NetworkConfig, initial.NetworkConfig, opts...)
 
 	return cDes
 }
@@ -931,6 +955,8 @@ func canonicalizeNewTriggerDestination(c *Client, des, nw *TriggerDestination) *
 	if dcl.PartialSelfLinkToSelfLink(des.Workflow, nw.Workflow) {
 		nw.Workflow = des.Workflow
 	}
+	nw.HttpEndpoint = canonicalizeNewTriggerDestinationHttpEndpoint(c, des.HttpEndpoint, nw.HttpEndpoint)
+	nw.NetworkConfig = canonicalizeNewTriggerDestinationNetworkConfig(c, des.NetworkConfig, nw.NetworkConfig)
 
 	return nw
 }
@@ -1256,6 +1282,239 @@ func canonicalizeNewTriggerDestinationGkeSlice(c *Client, des, nw []TriggerDesti
 	for i, d := range des {
 		n := nw[i]
 		items = append(items, *canonicalizeNewTriggerDestinationGke(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeTriggerDestinationHttpEndpoint(des, initial *TriggerDestinationHttpEndpoint, opts ...dcl.ApplyOption) *TriggerDestinationHttpEndpoint {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &TriggerDestinationHttpEndpoint{}
+
+	if dcl.StringCanonicalize(des.Uri, initial.Uri) || dcl.IsZeroValue(des.Uri) {
+		cDes.Uri = initial.Uri
+	} else {
+		cDes.Uri = des.Uri
+	}
+
+	return cDes
+}
+
+func canonicalizeTriggerDestinationHttpEndpointSlice(des, initial []TriggerDestinationHttpEndpoint, opts ...dcl.ApplyOption) []TriggerDestinationHttpEndpoint {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]TriggerDestinationHttpEndpoint, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeTriggerDestinationHttpEndpoint(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]TriggerDestinationHttpEndpoint, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeTriggerDestinationHttpEndpoint(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewTriggerDestinationHttpEndpoint(c *Client, des, nw *TriggerDestinationHttpEndpoint) *TriggerDestinationHttpEndpoint {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for TriggerDestinationHttpEndpoint while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	if dcl.StringCanonicalize(des.Uri, nw.Uri) {
+		nw.Uri = des.Uri
+	}
+
+	return nw
+}
+
+func canonicalizeNewTriggerDestinationHttpEndpointSet(c *Client, des, nw []TriggerDestinationHttpEndpoint) []TriggerDestinationHttpEndpoint {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []TriggerDestinationHttpEndpoint
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareTriggerDestinationHttpEndpointNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewTriggerDestinationHttpEndpoint(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewTriggerDestinationHttpEndpointSlice(c *Client, des, nw []TriggerDestinationHttpEndpoint) []TriggerDestinationHttpEndpoint {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []TriggerDestinationHttpEndpoint
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewTriggerDestinationHttpEndpoint(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeTriggerDestinationNetworkConfig(des, initial *TriggerDestinationNetworkConfig, opts ...dcl.ApplyOption) *TriggerDestinationNetworkConfig {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &TriggerDestinationNetworkConfig{}
+
+	if dcl.IsZeroValue(des.NetworkAttachment) || (dcl.IsEmptyValueIndirect(des.NetworkAttachment) && dcl.IsEmptyValueIndirect(initial.NetworkAttachment)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.NetworkAttachment = initial.NetworkAttachment
+	} else {
+		cDes.NetworkAttachment = des.NetworkAttachment
+	}
+
+	return cDes
+}
+
+func canonicalizeTriggerDestinationNetworkConfigSlice(des, initial []TriggerDestinationNetworkConfig, opts ...dcl.ApplyOption) []TriggerDestinationNetworkConfig {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]TriggerDestinationNetworkConfig, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeTriggerDestinationNetworkConfig(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]TriggerDestinationNetworkConfig, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeTriggerDestinationNetworkConfig(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewTriggerDestinationNetworkConfig(c *Client, des, nw *TriggerDestinationNetworkConfig) *TriggerDestinationNetworkConfig {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for TriggerDestinationNetworkConfig while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	return nw
+}
+
+func canonicalizeNewTriggerDestinationNetworkConfigSet(c *Client, des, nw []TriggerDestinationNetworkConfig) []TriggerDestinationNetworkConfig {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []TriggerDestinationNetworkConfig
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareTriggerDestinationNetworkConfigNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewTriggerDestinationNetworkConfig(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewTriggerDestinationNetworkConfigSlice(c *Client, des, nw []TriggerDestinationNetworkConfig) []TriggerDestinationNetworkConfig {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []TriggerDestinationNetworkConfig
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewTriggerDestinationNetworkConfig(c, &d, &n))
 	}
 
 	return items
@@ -1610,7 +1869,7 @@ func diffTrigger(c *Client, desired, actual *Trigger, opts ...dcl.ApplyOption) (
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.EventDataContentType, actual.EventDataContentType, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateTriggerUpdateTriggerOperation")}, fn.AddNest("EventDataContentType")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.EventDataContentType, actual.EventDataContentType, dcl.DiffInfo{ServerDefault: true, OperationSelector: dcl.TriggersOperation("updateTriggerUpdateTriggerOperation")}, fn.AddNest("EventDataContentType")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -1712,6 +1971,20 @@ func compareTriggerDestinationNewStyle(d, a interface{}, fn dcl.FieldName) ([]*d
 		}
 		diffs = append(diffs, ds...)
 	}
+
+	if ds, err := dcl.Diff(desired.HttpEndpoint, actual.HttpEndpoint, dcl.DiffInfo{ObjectFunction: compareTriggerDestinationHttpEndpointNewStyle, EmptyObject: EmptyTriggerDestinationHttpEndpoint, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("HttpEndpoint")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.NetworkConfig, actual.NetworkConfig, dcl.DiffInfo{ObjectFunction: compareTriggerDestinationNetworkConfigNewStyle, EmptyObject: EmptyTriggerDestinationNetworkConfig, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NetworkConfig")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
 	return diffs, nil
 }
 
@@ -1807,6 +2080,64 @@ func compareTriggerDestinationGkeNewStyle(d, a interface{}, fn dcl.FieldName) ([
 	}
 
 	if ds, err := dcl.Diff(desired.Path, actual.Path, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateTriggerUpdateTriggerOperation")}, fn.AddNest("Path")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareTriggerDestinationHttpEndpointNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*TriggerDestinationHttpEndpoint)
+	if !ok {
+		desiredNotPointer, ok := d.(TriggerDestinationHttpEndpoint)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a TriggerDestinationHttpEndpoint or *TriggerDestinationHttpEndpoint", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*TriggerDestinationHttpEndpoint)
+	if !ok {
+		actualNotPointer, ok := a.(TriggerDestinationHttpEndpoint)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a TriggerDestinationHttpEndpoint", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Uri, actual.Uri, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Uri")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareTriggerDestinationNetworkConfigNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*TriggerDestinationNetworkConfig)
+	if !ok {
+		desiredNotPointer, ok := d.(TriggerDestinationNetworkConfig)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a TriggerDestinationNetworkConfig or *TriggerDestinationNetworkConfig", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*TriggerDestinationNetworkConfig)
+	if !ok {
+		actualNotPointer, ok := a.(TriggerDestinationNetworkConfig)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a TriggerDestinationNetworkConfig", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.NetworkAttachment, actual.NetworkAttachment, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NetworkAttachment")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -2254,6 +2585,16 @@ func expandTriggerDestination(c *Client, f *TriggerDestination, res *Trigger) (m
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["workflow"] = v
 	}
+	if v, err := expandTriggerDestinationHttpEndpoint(c, f.HttpEndpoint, res); err != nil {
+		return nil, fmt.Errorf("error expanding HttpEndpoint into httpEndpoint: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["httpEndpoint"] = v
+	}
+	if v, err := expandTriggerDestinationNetworkConfig(c, f.NetworkConfig, res); err != nil {
+		return nil, fmt.Errorf("error expanding NetworkConfig into networkConfig: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["networkConfig"] = v
+	}
 
 	return m, nil
 }
@@ -2275,6 +2616,8 @@ func flattenTriggerDestination(c *Client, i interface{}, res *Trigger) *TriggerD
 	r.CloudFunction = dcl.FlattenString(m["cloudFunction"])
 	r.Gke = flattenTriggerDestinationGke(c, m["gke"], res)
 	r.Workflow = dcl.FlattenString(m["workflow"])
+	r.HttpEndpoint = flattenTriggerDestinationHttpEndpoint(c, m["httpEndpoint"], res)
+	r.NetworkConfig = flattenTriggerDestinationNetworkConfig(c, m["networkConfig"], res)
 
 	return r
 }
@@ -2531,6 +2874,234 @@ func flattenTriggerDestinationGke(c *Client, i interface{}, res *Trigger) *Trigg
 	r.Namespace = dcl.FlattenString(m["namespace"])
 	r.Service = dcl.FlattenString(m["service"])
 	r.Path = dcl.FlattenString(m["path"])
+
+	return r
+}
+
+// expandTriggerDestinationHttpEndpointMap expands the contents of TriggerDestinationHttpEndpoint into a JSON
+// request object.
+func expandTriggerDestinationHttpEndpointMap(c *Client, f map[string]TriggerDestinationHttpEndpoint, res *Trigger) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandTriggerDestinationHttpEndpoint(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandTriggerDestinationHttpEndpointSlice expands the contents of TriggerDestinationHttpEndpoint into a JSON
+// request object.
+func expandTriggerDestinationHttpEndpointSlice(c *Client, f []TriggerDestinationHttpEndpoint, res *Trigger) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandTriggerDestinationHttpEndpoint(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenTriggerDestinationHttpEndpointMap flattens the contents of TriggerDestinationHttpEndpoint from a JSON
+// response object.
+func flattenTriggerDestinationHttpEndpointMap(c *Client, i interface{}, res *Trigger) map[string]TriggerDestinationHttpEndpoint {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]TriggerDestinationHttpEndpoint{}
+	}
+
+	if len(a) == 0 {
+		return map[string]TriggerDestinationHttpEndpoint{}
+	}
+
+	items := make(map[string]TriggerDestinationHttpEndpoint)
+	for k, item := range a {
+		items[k] = *flattenTriggerDestinationHttpEndpoint(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenTriggerDestinationHttpEndpointSlice flattens the contents of TriggerDestinationHttpEndpoint from a JSON
+// response object.
+func flattenTriggerDestinationHttpEndpointSlice(c *Client, i interface{}, res *Trigger) []TriggerDestinationHttpEndpoint {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []TriggerDestinationHttpEndpoint{}
+	}
+
+	if len(a) == 0 {
+		return []TriggerDestinationHttpEndpoint{}
+	}
+
+	items := make([]TriggerDestinationHttpEndpoint, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenTriggerDestinationHttpEndpoint(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandTriggerDestinationHttpEndpoint expands an instance of TriggerDestinationHttpEndpoint into a JSON
+// request object.
+func expandTriggerDestinationHttpEndpoint(c *Client, f *TriggerDestinationHttpEndpoint, res *Trigger) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.Uri; !dcl.IsEmptyValueIndirect(v) {
+		m["uri"] = v
+	}
+
+	return m, nil
+}
+
+// flattenTriggerDestinationHttpEndpoint flattens an instance of TriggerDestinationHttpEndpoint from a JSON
+// response object.
+func flattenTriggerDestinationHttpEndpoint(c *Client, i interface{}, res *Trigger) *TriggerDestinationHttpEndpoint {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &TriggerDestinationHttpEndpoint{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyTriggerDestinationHttpEndpoint
+	}
+	r.Uri = dcl.FlattenString(m["uri"])
+
+	return r
+}
+
+// expandTriggerDestinationNetworkConfigMap expands the contents of TriggerDestinationNetworkConfig into a JSON
+// request object.
+func expandTriggerDestinationNetworkConfigMap(c *Client, f map[string]TriggerDestinationNetworkConfig, res *Trigger) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandTriggerDestinationNetworkConfig(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandTriggerDestinationNetworkConfigSlice expands the contents of TriggerDestinationNetworkConfig into a JSON
+// request object.
+func expandTriggerDestinationNetworkConfigSlice(c *Client, f []TriggerDestinationNetworkConfig, res *Trigger) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandTriggerDestinationNetworkConfig(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenTriggerDestinationNetworkConfigMap flattens the contents of TriggerDestinationNetworkConfig from a JSON
+// response object.
+func flattenTriggerDestinationNetworkConfigMap(c *Client, i interface{}, res *Trigger) map[string]TriggerDestinationNetworkConfig {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]TriggerDestinationNetworkConfig{}
+	}
+
+	if len(a) == 0 {
+		return map[string]TriggerDestinationNetworkConfig{}
+	}
+
+	items := make(map[string]TriggerDestinationNetworkConfig)
+	for k, item := range a {
+		items[k] = *flattenTriggerDestinationNetworkConfig(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenTriggerDestinationNetworkConfigSlice flattens the contents of TriggerDestinationNetworkConfig from a JSON
+// response object.
+func flattenTriggerDestinationNetworkConfigSlice(c *Client, i interface{}, res *Trigger) []TriggerDestinationNetworkConfig {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []TriggerDestinationNetworkConfig{}
+	}
+
+	if len(a) == 0 {
+		return []TriggerDestinationNetworkConfig{}
+	}
+
+	items := make([]TriggerDestinationNetworkConfig, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenTriggerDestinationNetworkConfig(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandTriggerDestinationNetworkConfig expands an instance of TriggerDestinationNetworkConfig into a JSON
+// request object.
+func expandTriggerDestinationNetworkConfig(c *Client, f *TriggerDestinationNetworkConfig, res *Trigger) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.NetworkAttachment; !dcl.IsEmptyValueIndirect(v) {
+		m["networkAttachment"] = v
+	}
+
+	return m, nil
+}
+
+// flattenTriggerDestinationNetworkConfig flattens an instance of TriggerDestinationNetworkConfig from a JSON
+// response object.
+func flattenTriggerDestinationNetworkConfig(c *Client, i interface{}, res *Trigger) *TriggerDestinationNetworkConfig {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &TriggerDestinationNetworkConfig{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyTriggerDestinationNetworkConfig
+	}
+	r.NetworkAttachment = dcl.FlattenString(m["networkAttachment"])
 
 	return r
 }
@@ -2912,12 +3483,40 @@ func extractTriggerDestinationFields(r *Trigger, o *TriggerDestination) error {
 	if !dcl.IsEmptyValueIndirect(vGke) {
 		o.Gke = vGke
 	}
+	vHttpEndpoint := o.HttpEndpoint
+	if vHttpEndpoint == nil {
+		// note: explicitly not the empty object.
+		vHttpEndpoint = &TriggerDestinationHttpEndpoint{}
+	}
+	if err := extractTriggerDestinationHttpEndpointFields(r, vHttpEndpoint); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vHttpEndpoint) {
+		o.HttpEndpoint = vHttpEndpoint
+	}
+	vNetworkConfig := o.NetworkConfig
+	if vNetworkConfig == nil {
+		// note: explicitly not the empty object.
+		vNetworkConfig = &TriggerDestinationNetworkConfig{}
+	}
+	if err := extractTriggerDestinationNetworkConfigFields(r, vNetworkConfig); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vNetworkConfig) {
+		o.NetworkConfig = vNetworkConfig
+	}
 	return nil
 }
 func extractTriggerDestinationCloudRunServiceFields(r *Trigger, o *TriggerDestinationCloudRunService) error {
 	return nil
 }
 func extractTriggerDestinationGkeFields(r *Trigger, o *TriggerDestinationGke) error {
+	return nil
+}
+func extractTriggerDestinationHttpEndpointFields(r *Trigger, o *TriggerDestinationHttpEndpoint) error {
+	return nil
+}
+func extractTriggerDestinationNetworkConfigFields(r *Trigger, o *TriggerDestinationNetworkConfig) error {
 	return nil
 }
 func extractTriggerTransportFields(r *Trigger, o *TriggerTransport) error {
@@ -2989,12 +3588,40 @@ func postReadExtractTriggerDestinationFields(r *Trigger, o *TriggerDestination) 
 	if !dcl.IsEmptyValueIndirect(vGke) {
 		o.Gke = vGke
 	}
+	vHttpEndpoint := o.HttpEndpoint
+	if vHttpEndpoint == nil {
+		// note: explicitly not the empty object.
+		vHttpEndpoint = &TriggerDestinationHttpEndpoint{}
+	}
+	if err := extractTriggerDestinationHttpEndpointFields(r, vHttpEndpoint); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vHttpEndpoint) {
+		o.HttpEndpoint = vHttpEndpoint
+	}
+	vNetworkConfig := o.NetworkConfig
+	if vNetworkConfig == nil {
+		// note: explicitly not the empty object.
+		vNetworkConfig = &TriggerDestinationNetworkConfig{}
+	}
+	if err := extractTriggerDestinationNetworkConfigFields(r, vNetworkConfig); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vNetworkConfig) {
+		o.NetworkConfig = vNetworkConfig
+	}
 	return nil
 }
 func postReadExtractTriggerDestinationCloudRunServiceFields(r *Trigger, o *TriggerDestinationCloudRunService) error {
 	return nil
 }
 func postReadExtractTriggerDestinationGkeFields(r *Trigger, o *TriggerDestinationGke) error {
+	return nil
+}
+func postReadExtractTriggerDestinationHttpEndpointFields(r *Trigger, o *TriggerDestinationHttpEndpoint) error {
+	return nil
+}
+func postReadExtractTriggerDestinationNetworkConfigFields(r *Trigger, o *TriggerDestinationNetworkConfig) error {
 	return nil
 }
 func postReadExtractTriggerTransportFields(r *Trigger, o *TriggerTransport) error {

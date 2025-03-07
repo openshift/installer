@@ -20,10 +20,12 @@ package identityplatform
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -46,6 +48,10 @@ func ResourceIdentityPlatformTenantInboundSamlConfig() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"display_name": {
@@ -215,6 +221,7 @@ func resourceIdentityPlatformTenantInboundSamlConfigCreate(d *schema.ResourceDat
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -223,6 +230,7 @@ func resourceIdentityPlatformTenantInboundSamlConfigCreate(d *schema.ResourceDat
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating TenantInboundSamlConfig: %s", err)
@@ -265,12 +273,14 @@ func resourceIdentityPlatformTenantInboundSamlConfigRead(d *schema.ResourceData,
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("IdentityPlatformTenantInboundSamlConfig %q", d.Id()))
@@ -346,6 +356,7 @@ func resourceIdentityPlatformTenantInboundSamlConfigUpdate(d *schema.ResourceDat
 	}
 
 	log.Printf("[DEBUG] Updating TenantInboundSamlConfig %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("display_name") {
@@ -375,20 +386,25 @@ func resourceIdentityPlatformTenantInboundSamlConfigUpdate(d *schema.ResourceDat
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating TenantInboundSamlConfig %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating TenantInboundSamlConfig %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating TenantInboundSamlConfig %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating TenantInboundSamlConfig %q: %#v", d.Id(), res)
+		}
+
 	}
 
 	return resourceIdentityPlatformTenantInboundSamlConfigRead(d, meta)
@@ -415,13 +431,15 @@ func resourceIdentityPlatformTenantInboundSamlConfigDelete(d *schema.ResourceDat
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting TenantInboundSamlConfig %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting TenantInboundSamlConfig %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -430,6 +448,7 @@ func resourceIdentityPlatformTenantInboundSamlConfigDelete(d *schema.ResourceDat
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "TenantInboundSamlConfig")
@@ -442,9 +461,9 @@ func resourceIdentityPlatformTenantInboundSamlConfigDelete(d *schema.ResourceDat
 func resourceIdentityPlatformTenantInboundSamlConfigImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/tenants/(?P<tenant>[^/]+)/inboundSamlConfigs/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<tenant>[^/]+)/(?P<name>[^/]+)",
-		"(?P<tenant>[^/]+)/(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/tenants/(?P<tenant>[^/]+)/inboundSamlConfigs/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<tenant>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<tenant>[^/]+)/(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

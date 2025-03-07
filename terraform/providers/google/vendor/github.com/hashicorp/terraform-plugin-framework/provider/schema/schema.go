@@ -1,9 +1,10 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package schema
 
 import (
 	"context"
-	"fmt"
-	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
@@ -124,120 +125,38 @@ func (s Schema) TypeAtTerraformPath(ctx context.Context, p *tftypes.AttributePat
 }
 
 // Validate verifies that the schema is not using a reserved field name for a top-level attribute.
+//
+// Deprecated: Use the ValidateImplementation method instead.
 func (s Schema) Validate() diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	// Raise error diagnostics when data source configuration uses reserved
-	// field names for root-level attributes.
-	reservedFieldNames := map[string]struct{}{
-		"alias":   {},
-		"version": {},
-	}
-
-	attributes := s.GetAttributes()
-
-	for k, v := range attributes {
-		if _, ok := reservedFieldNames[k]; ok {
-			diags.AddAttributeError(
-				path.Root(k),
-				"Schema Using Reserved Field Name",
-				fmt.Sprintf("%q is a reserved field name", k),
-			)
-		}
-
-		d := validateAttributeFieldName(path.Root(k), k, v)
-
-		diags.Append(d...)
-	}
-
-	blocks := s.GetBlocks()
-
-	for k, v := range blocks {
-		if _, ok := reservedFieldNames[k]; ok {
-			diags.AddAttributeError(
-				path.Root(k),
-				"Schema Using Reserved Field Name",
-				fmt.Sprintf("%q is a reserved field name", k),
-			)
-		}
-
-		d := validateBlockFieldName(path.Root(k), k, v)
-
-		diags.Append(d...)
-	}
-
-	return diags
+	return s.ValidateImplementation(context.Background())
 }
 
-// validFieldNameRegex is used to verify that name used for attributes and blocks
-// comply with the defined regular expression.
-var validFieldNameRegex = regexp.MustCompile("^[a-z0-9_]+$")
-
-// validateAttributeFieldName verifies that the name used for an attribute complies with the regular
-// expression defined in validFieldNameRegex.
-func validateAttributeFieldName(path path.Path, name string, attr fwschema.Attribute) diag.Diagnostics {
+// ValidateImplementation contains logic for validating the provider-defined
+// implementation of the schema and underlying attributes and blocks to prevent
+// unexpected errors or panics. This logic runs during the GetProviderSchema
+// RPC, or via provider-defined unit testing, and should never include false
+// positives.
+func (s Schema) ValidateImplementation(ctx context.Context) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if !validFieldNameRegex.MatchString(name) {
-		diags.AddAttributeError(
-			path,
-			"Invalid Schema Field Name",
-			fmt.Sprintf("Field name %q is invalid, the only allowed characters are a-z, 0-9 and _. This is always a problem with the provider and should be reported to the provider developer.", name),
-		)
-	}
-
-	if na, ok := attr.(fwschema.NestedAttribute); ok {
-		nestedObject := na.GetNestedObject()
-
-		if nestedObject == nil {
-			return diags
+	for attributeName, attribute := range s.GetAttributes() {
+		req := fwschema.ValidateImplementationRequest{
+			Name: attributeName,
+			Path: path.Root(attributeName),
 		}
 
-		attributes := nestedObject.GetAttributes()
+		diags.Append(fwschema.IsReservedProviderAttributeName(req.Name, req.Path)...)
+		diags.Append(fwschema.ValidateAttributeImplementation(ctx, attribute, req)...)
+	}
 
-		for k, v := range attributes {
-			d := validateAttributeFieldName(path.AtName(k), k, v)
-
-			diags.Append(d...)
+	for blockName, block := range s.GetBlocks() {
+		req := fwschema.ValidateImplementationRequest{
+			Name: blockName,
+			Path: path.Root(blockName),
 		}
-	}
 
-	return diags
-}
-
-// validateBlockFieldName verifies that the name used for a block complies with the regular
-// expression defined in validFieldNameRegex.
-func validateBlockFieldName(path path.Path, name string, b fwschema.Block) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	if !validFieldNameRegex.MatchString(name) {
-		diags.AddAttributeError(
-			path,
-			"Invalid Schema Field Name",
-			fmt.Sprintf("Field name %q is invalid, the only allowed characters are a-z, 0-9 and _. This is always a problem with the provider and should be reported to the provider developer.", name),
-		)
-	}
-
-	nestedObject := b.GetNestedObject()
-
-	if nestedObject == nil {
-		return diags
-	}
-
-	blocks := nestedObject.GetBlocks()
-
-	for k, v := range blocks {
-		d := validateBlockFieldName(path.AtName(k), k, v)
-
-		diags.Append(d...)
-	}
-
-	attributes := nestedObject.GetAttributes()
-
-	for k, v := range attributes {
-		d := validateAttributeFieldName(path.AtName(k), k, v)
-
-		diags.Append(d...)
+		diags.Append(fwschema.IsReservedProviderAttributeName(req.Name, req.Path)...)
+		diags.Append(fwschema.ValidateBlockImplementation(ctx, block, req)...)
 	}
 
 	return diags

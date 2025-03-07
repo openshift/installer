@@ -20,9 +20,11 @@ package activedirectory
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -47,13 +49,17 @@ func ResourceActiveDirectoryDomainTrust() *schema.Resource {
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
+
 		Schema: map[string]*schema.Schema{
 			"domain": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
-				Description: `The fully qualified domain name. e.g. mydomain.myorganization.com, with the restrictions,
-https://cloud.google.com/managed-microsoft-ad/reference/rest/v1/projects.locations.global.domains.`,
+				Description: `The fully qualified domain name. e.g. mydomain.myorganization.com, with the restrictions
+of https://cloud.google.com/managed-microsoft-ad/reference/rest/v1/projects.locations.global.domains.`,
 			},
 			"target_dns_ip_addresses": {
 				Type:        schema.TypeSet,
@@ -176,6 +182,7 @@ func resourceActiveDirectoryDomainTrustCreate(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -184,6 +191,7 @@ func resourceActiveDirectoryDomainTrustCreate(d *schema.ResourceData, meta inter
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating DomainTrust: %s", err)
@@ -268,12 +276,14 @@ func resourceActiveDirectoryDomainTrustRead(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ActiveDirectoryDomainTrust %q", d.Id()))
@@ -390,6 +400,7 @@ func resourceActiveDirectoryDomainTrustUpdate(d *schema.ResourceData, meta inter
 	}
 
 	log.Printf("[DEBUG] Updating DomainTrust %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -404,6 +415,7 @@ func resourceActiveDirectoryDomainTrustUpdate(d *schema.ResourceData, meta inter
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
+		Headers:   headers,
 	})
 
 	if err != nil {
@@ -513,9 +525,9 @@ func resourceActiveDirectoryDomainTrustDelete(d *schema.ResourceData, meta inter
 func resourceActiveDirectoryDomainTrustImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/global/domains/(?P<domain>[^/]+)/(?P<target_domain_name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<domain>[^/]+)/(?P<target_domain_name>[^/]+)",
-		"(?P<domain>[^/]+)/(?P<target_domain_name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/global/domains/(?P<domain>[^/]+)/(?P<target_domain_name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<domain>[^/]+)/(?P<target_domain_name>[^/]+)$",
+		"^(?P<domain>[^/]+)/(?P<target_domain_name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -579,7 +591,6 @@ func expandNestedActiveDirectoryDomainTrustTrustHandshakeSecret(v interface{}, d
 }
 
 func resourceActiveDirectoryDomainTrustEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {
-
 	wrappedReq := map[string]interface{}{
 		"trust": obj,
 	}

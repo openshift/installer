@@ -20,9 +20,11 @@ package compute
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -44,6 +46,11 @@ func ResourceComputeResourcePolicy() *schema.Resource {
 			Create: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+			tpgresource.DefaultProviderRegion,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -258,8 +265,7 @@ both 13:00-5 and 08:00 are valid.`,
 													ValidateFunc: verify.ValidateHourlyOnly,
 													Description: `Time within the window to start the operations.
 It must be in an hourly format "HH:MM",
-where HH : [00-23] and MM : [00] GMT.
-eg: 21:00`,
+where HH : [00-23] and MM : [00] GMT. eg: 21:00`,
 												},
 											},
 										},
@@ -473,6 +479,7 @@ func resourceComputeResourcePolicyCreate(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -481,6 +488,7 @@ func resourceComputeResourcePolicyCreate(d *schema.ResourceData, meta interface{
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating ResourcePolicy: %s", err)
@@ -533,18 +541,28 @@ func resourceComputeResourcePolicyRead(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeResourcePolicy %q", d.Id()))
 	}
 
 	if err := d.Set("project", project); err != nil {
+		return fmt.Errorf("Error reading ResourcePolicy: %s", err)
+	}
+
+	region, err := tpgresource.GetRegion(d, config)
+	if err != nil {
+		return err
+	}
+	if err := d.Set("region", region); err != nil {
 		return fmt.Errorf("Error reading ResourcePolicy: %s", err)
 	}
 
@@ -564,9 +582,6 @@ func resourceComputeResourcePolicyRead(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("Error reading ResourcePolicy: %s", err)
 	}
 	if err := d.Set("disk_consistency_group_policy", flattenComputeResourcePolicyDiskConsistencyGroupPolicy(res["diskConsistencyGroupPolicy"], d, config)); err != nil {
-		return fmt.Errorf("Error reading ResourcePolicy: %s", err)
-	}
-	if err := d.Set("region", flattenComputeResourcePolicyRegion(res["region"], d, config)); err != nil {
 		return fmt.Errorf("Error reading ResourcePolicy: %s", err)
 	}
 	if err := d.Set("self_link", tpgresource.ConvertSelfLinkToV1(res["selfLink"].(string))); err != nil {
@@ -597,13 +612,15 @@ func resourceComputeResourcePolicyDelete(d *schema.ResourceData, meta interface{
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting ResourcePolicy %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting ResourcePolicy %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -612,6 +629,7 @@ func resourceComputeResourcePolicyDelete(d *schema.ResourceData, meta interface{
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "ResourcePolicy")
@@ -632,10 +650,10 @@ func resourceComputeResourcePolicyDelete(d *schema.ResourceData, meta interface{
 func resourceComputeResourcePolicyImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/regions/(?P<region>[^/]+)/resourcePolicies/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/regions/(?P<region>[^/]+)/resourcePolicies/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -1007,13 +1025,6 @@ func flattenComputeResourcePolicyDiskConsistencyGroupPolicy(v interface{}, d *sc
 	transformed := make(map[string]interface{})
 	transformed["enabled"] = true
 	return []interface{}{transformed}
-}
-
-func flattenComputeResourcePolicyRegion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return v
-	}
-	return tpgresource.ConvertSelfLinkToV1(v.(string))
 }
 
 func expandComputeResourcePolicyName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {

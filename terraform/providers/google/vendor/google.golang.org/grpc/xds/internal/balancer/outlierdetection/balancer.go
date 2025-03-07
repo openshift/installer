@@ -36,7 +36,6 @@ import (
 	"google.golang.org/grpc/internal/balancer/gracefulswitch"
 	"google.golang.org/grpc/internal/buffer"
 	"google.golang.org/grpc/internal/channelz"
-	"google.golang.org/grpc/internal/envconfig"
 	"google.golang.org/grpc/internal/grpclog"
 	"google.golang.org/grpc/internal/grpcrand"
 	"google.golang.org/grpc/internal/grpcsync"
@@ -55,23 +54,21 @@ var (
 const Name = "outlier_detection_experimental"
 
 func init() {
-	if envconfig.XDSOutlierDetection {
-		balancer.Register(bb{})
-	}
+	balancer.Register(bb{})
 }
 
 type bb struct{}
 
 func (bb) Build(cc balancer.ClientConn, bOpts balancer.BuildOptions) balancer.Balancer {
 	b := &outlierDetectionBalancer{
-		cc:               cc,
-		closed:           grpcsync.NewEvent(),
-		done:             grpcsync.NewEvent(),
-		addrs:            make(map[string]*addressInfo),
-		scWrappers:       make(map[balancer.SubConn]*subConnWrapper),
-		scUpdateCh:       buffer.NewUnbounded(),
-		pickerUpdateCh:   buffer.NewUnbounded(),
-		channelzParentID: bOpts.ChannelzParentID,
+		cc:             cc,
+		closed:         grpcsync.NewEvent(),
+		done:           grpcsync.NewEvent(),
+		addrs:          make(map[string]*addressInfo),
+		scWrappers:     make(map[balancer.SubConn]*subConnWrapper),
+		scUpdateCh:     buffer.NewUnbounded(),
+		pickerUpdateCh: buffer.NewUnbounded(),
+		channelzParent: bOpts.ChannelzParent,
 	}
 	b.logger = prefixLogger(b)
 	b.logger.Infof("Created")
@@ -167,11 +164,11 @@ type outlierDetectionBalancer struct {
 	// to suppress redundant picker updates.
 	recentPickerNoop bool
 
-	closed           *grpcsync.Event
-	done             *grpcsync.Event
-	cc               balancer.ClientConn
-	logger           *grpclog.PrefixLogger
-	channelzParentID *channelz.Identifier
+	closed         *grpcsync.Event
+	done           *grpcsync.Event
+	cc             balancer.ClientConn
+	logger         *grpclog.PrefixLogger
+	channelzParent channelz.Identifier
 
 	// childMu guards calls into child (to uphold the balancer.Balancer API
 	// guarantee of synchronous calls).
@@ -345,7 +342,7 @@ func (b *outlierDetectionBalancer) ResolverError(err error) {
 	b.child.ResolverError(err)
 }
 
-func (b *outlierDetectionBalancer) UpdateSubConnState(sc balancer.SubConn, state balancer.SubConnState) {
+func (b *outlierDetectionBalancer) updateSubConnState(sc balancer.SubConn, state balancer.SubConnState) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	scw, ok := b.scWrappers[sc]
@@ -362,6 +359,10 @@ func (b *outlierDetectionBalancer) UpdateSubConnState(sc balancer.SubConn, state
 		scw:   scw,
 		state: state,
 	})
+}
+
+func (b *outlierDetectionBalancer) UpdateSubConnState(sc balancer.SubConn, state balancer.SubConnState) {
+	b.logger.Errorf("UpdateSubConnState(%v, %+v) called unexpectedly", sc, state)
 }
 
 func (b *outlierDetectionBalancer) Close() {
@@ -466,6 +467,9 @@ func (b *outlierDetectionBalancer) UpdateState(s balancer.State) {
 }
 
 func (b *outlierDetectionBalancer) NewSubConn(addrs []resolver.Address, opts balancer.NewSubConnOptions) (balancer.SubConn, error) {
+	var sc balancer.SubConn
+	oldListener := opts.StateListener
+	opts.StateListener = func(state balancer.SubConnState) { b.updateSubConnState(sc, state) }
 	sc, err := b.cc.NewSubConn(addrs, opts)
 	if err != nil {
 		return nil, err
@@ -474,6 +478,7 @@ func (b *outlierDetectionBalancer) NewSubConn(addrs []resolver.Address, opts bal
 		SubConn:    sc,
 		addresses:  addrs,
 		scUpdateCh: b.scUpdateCh,
+		listener:   oldListener,
 	}
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -494,14 +499,7 @@ func (b *outlierDetectionBalancer) NewSubConn(addrs []resolver.Address, opts bal
 }
 
 func (b *outlierDetectionBalancer) RemoveSubConn(sc balancer.SubConn) {
-	scw, ok := sc.(*subConnWrapper)
-	if !ok { // Shouldn't happen
-		return
-	}
-	// Remove the wrapped SubConn from the parent Client Conn. We don't remove
-	// from map entry until we get a Shutdown state for the SubConn, as we need
-	// that data to forward that state down.
-	b.cc.RemoveSubConn(scw.SubConn)
+	b.logger.Errorf("RemoveSubConn(%v) called unexpectedly", sc)
 }
 
 // appendIfPresent appends the scw to the address, if the address is present in
@@ -614,9 +612,11 @@ func (b *outlierDetectionBalancer) handleSubConnUpdate(u *scUpdate) {
 	scw := u.scw
 	scw.latestState = u.state
 	if !scw.ejected {
-		b.childMu.Lock()
-		b.child.UpdateSubConnState(scw, u.state)
-		b.childMu.Unlock()
+		if scw.listener != nil {
+			b.childMu.Lock()
+			scw.listener(u.state)
+			b.childMu.Unlock()
+		}
 	}
 }
 
@@ -633,9 +633,11 @@ func (b *outlierDetectionBalancer) handleEjectedUpdate(u *ejectionUpdate) {
 			ConnectivityState: connectivity.TransientFailure,
 		}
 	}
-	b.childMu.Lock()
-	b.child.UpdateSubConnState(scw, stateToUpdate)
-	b.childMu.Unlock()
+	if scw.listener != nil {
+		b.childMu.Lock()
+		scw.listener(stateToUpdate)
+		b.childMu.Unlock()
+	}
 }
 
 // handleChildStateUpdate forwards the picker update wrapped in a wrapped picker
@@ -835,7 +837,7 @@ func (b *outlierDetectionBalancer) successRateAlgorithm() {
 		successRate := float64(bucket.numSuccesses) / float64(bucket.numSuccesses+bucket.numFailures)
 		requiredSuccessRate := mean - stddev*(float64(ejectionCfg.StdevFactor)/1000)
 		if successRate < requiredSuccessRate {
-			channelz.Infof(logger, b.channelzParentID, "SuccessRate algorithm detected outlier: %s. Parameters: successRate=%f, mean=%f, stddev=%f, requiredSuccessRate=%f", addrInfo, successRate, mean, stddev, requiredSuccessRate)
+			channelz.Infof(logger, b.channelzParent, "SuccessRate algorithm detected outlier: %s. Parameters: successRate=%f, mean=%f, stddev=%f, requiredSuccessRate=%f", addrInfo, successRate, mean, stddev, requiredSuccessRate)
 			if uint32(grpcrand.Int31n(100)) < ejectionCfg.EnforcementPercentage {
 				b.ejectAddress(addrInfo)
 			}
@@ -862,7 +864,7 @@ func (b *outlierDetectionBalancer) failurePercentageAlgorithm() {
 		}
 		failurePercentage := (float64(bucket.numFailures) / float64(bucket.numSuccesses+bucket.numFailures)) * 100
 		if failurePercentage > float64(b.cfg.FailurePercentageEjection.Threshold) {
-			channelz.Infof(logger, b.channelzParentID, "FailurePercentage algorithm detected outlier: %s, failurePercentage=%f", addrInfo, failurePercentage)
+			channelz.Infof(logger, b.channelzParent, "FailurePercentage algorithm detected outlier: %s, failurePercentage=%f", addrInfo, failurePercentage)
 			if uint32(grpcrand.Int31n(100)) < ejectionCfg.EnforcementPercentage {
 				b.ejectAddress(addrInfo)
 			}
@@ -877,7 +879,7 @@ func (b *outlierDetectionBalancer) ejectAddress(addrInfo *addressInfo) {
 	addrInfo.ejectionTimeMultiplier++
 	for _, sbw := range addrInfo.sws {
 		sbw.eject()
-		channelz.Infof(logger, b.channelzParentID, "Subchannel ejected: %s", sbw)
+		channelz.Infof(logger, b.channelzParent, "Subchannel ejected: %s", sbw)
 	}
 
 }
@@ -888,7 +890,7 @@ func (b *outlierDetectionBalancer) unejectAddress(addrInfo *addressInfo) {
 	addrInfo.latestEjectionTimestamp = time.Time{}
 	for _, sbw := range addrInfo.sws {
 		sbw.uneject()
-		channelz.Infof(logger, b.channelzParentID, "Subchannel unejected: %s", sbw)
+		channelz.Infof(logger, b.channelzParent, "Subchannel unejected: %s", sbw)
 	}
 }
 

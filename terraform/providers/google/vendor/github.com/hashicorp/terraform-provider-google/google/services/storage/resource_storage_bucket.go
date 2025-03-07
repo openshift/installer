@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -16,10 +17,11 @@ import (
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
+	"github.com/hashicorp/terraform-provider-google/google/verify"
 
 	"github.com/gammazero/workerpool"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
@@ -38,6 +40,7 @@ func ResourceStorageBucket() *schema.Resource {
 		},
 		CustomizeDiff: customdiff.All(
 			customdiff.ForceNewIfChange("retention_policy.0.is_locked", isPolicyLocked),
+			tpgresource.SetLabelsDiff,
 		),
 
 		Timeouts: &schema.ResourceTimeout{
@@ -46,12 +49,22 @@ func ResourceStorageBucket() *schema.Resource {
 			Read:   schema.DefaultTimeout(4 * time.Minute),
 		},
 
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceStorageBucketV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: ResourceStorageBucketStateUpgradeV0,
+				Version: 0,
+			},
+		},
+
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: `The name of the bucket.`,
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				Description:  `The name of the bucket.`,
+				ValidateFunc: verify.ValidateGCSName,
 			},
 
 			"encryption": {
@@ -84,13 +97,25 @@ func ResourceStorageBucket() *schema.Resource {
 			},
 
 			"labels": {
-				Type:     schema.TypeMap,
-				Optional: true,
-				Computed: true,
-				// GCP (Dataplex) automatically adds labels
-				DiffSuppressFunc: resourceDataplexLabelDiffSuppress,
-				Elem:             &schema.Schema{Type: schema.TypeString},
-				Description:      `A set of key/value label pairs to assign to the bucket.`,
+				Type:         schema.TypeMap,
+				ValidateFunc: labelKeyValidator,
+				Optional:     true,
+				Elem:         &schema.Schema{Type: schema.TypeString},
+				Description:  `A set of key/value label pairs to assign to the bucket.`,
+			},
+
+			"terraform_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `The combination of labels configured directly on the resource and default labels configured on the provider.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"location": {
@@ -109,6 +134,12 @@ func ResourceStorageBucket() *schema.Resource {
 				Computed:    true,
 				ForceNew:    true,
 				Description: `The ID of the project in which the resource belongs. If it is not provided, the provider project is used.`,
+			},
+
+			"project_number": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: `The project number of the project in which the resource belongs.`,
 			},
 
 			"self_link": {
@@ -197,6 +228,11 @@ func ResourceStorageBucket() *schema.Resource {
 										Optional:    true,
 										Description: `Creation date of an object in RFC 3339 (e.g. 2017-06-13) to satisfy this condition.`,
 									},
+									"no_age": {
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: `While set true, age value will be omitted.Required to set true when age is unset in the config file.`,
+									},
 									"with_state": {
 										Type:         schema.TypeString,
 										Computed:     true,
@@ -227,6 +263,21 @@ func ResourceStorageBucket() *schema.Resource {
 										Elem:        &schema.Schema{Type: schema.TypeString},
 										Description: `One or more matching name suffixes to satisfy this condition.`,
 									},
+									"send_days_since_noncurrent_time_if_zero": {
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: `While set true, days_since_noncurrent_time value will be sent in the request even for zero value of the field. This field is only useful for setting 0 value to the days_since_noncurrent_time field. It can be used alone or together with days_since_noncurrent_time.`,
+									},
+									"send_days_since_custom_time_if_zero": {
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: `While set true, days_since_custom_time value will be sent in the request even for zero value of the field. This field is only useful for setting 0 value to the days_since_custom_time field. It can be used alone or together with days_since_custom_time.`,
+									},
+									"send_num_newer_versions_if_zero": {
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: `While set true, num_newer_versions value will be sent in the request even for zero value of the field. This field is only useful for setting 0 value to the num_newer_versions field. It can be used alone or together with num_newer_versions.`,
+									},
 								},
 							},
 							Description: `The Lifecycle Rule's condition configuration.`,
@@ -234,6 +285,13 @@ func ResourceStorageBucket() *schema.Resource {
 					},
 				},
 				Description: `The bucket's Lifecycle Rules configuration.`,
+			},
+
+			"enable_object_retention": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `Enables each object in the bucket to have its own retention policy, which prevents deletion until stored for a specific length of time.`,
 			},
 
 			"versioning": {
@@ -257,14 +315,18 @@ func ResourceStorageBucket() *schema.Resource {
 				Type:     schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
-				ForceNew: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"enabled": {
 							Type:        schema.TypeBool,
 							Required:    true,
-							ForceNew:    true,
 							Description: `While set to true, autoclass automatically transitions objects in your bucket to appropriate storage classes based on each object's access pattern.`,
+						},
+						"terminal_storage_class": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: `The storage class that objects in the bucket eventually transition to if they are not read for a certain length of time. Supported values include: NEARLINE, ARCHIVE.`,
 						},
 					},
 				},
@@ -281,6 +343,14 @@ func ResourceStorageBucket() *schema.Resource {
 						if !ok {
 							return false
 						}
+						if contents["enabled"] == false {
+							return true
+						}
+					}
+					if new == "0" && old == "1" {
+						n := d.Get(strings.TrimSuffix(k, ".#"))
+						l = n.([]interface{})
+						contents := l[0].(map[string]interface{})
 						if contents["enabled"] == false {
 							return true
 						}
@@ -427,6 +497,9 @@ func ResourceStorageBucket() *schema.Resource {
 							MinItems: 2,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
+								StateFunc: func(s interface{}) string {
+									return strings.ToUpper(s.(string))
+								},
 							},
 							Description: `The list of individual regions that comprise a dual-region bucket. See the docs for a list of acceptable regions. Note: If any of the data_locations changes, it will recreate the bucket.`,
 						},
@@ -434,18 +507,63 @@ func ResourceStorageBucket() *schema.Resource {
 				},
 				Description: `The bucket's custom location configuration, which specifies the individual regions that comprise a dual-region bucket. If the bucket is designated a single or multi-region, the parameters are empty.`,
 			},
+			"rpo": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: `Specifies the RPO setting of bucket. If set 'ASYNC_TURBO', The Turbo Replication will be enabled for the dual-region bucket. Value 'DEFAULT' will set RPO setting to default. Turbo Replication is only for buckets in dual-regions.See the docs for more details.`,
+			},
 			"public_access_prevention": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
 				Description: `Prevents public access to a bucket.`,
 			},
+			"soft_delete_policy": {
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				Optional:    true,
+				Computed:    true,
+				Description: `The bucket's soft delete policy, which defines the period of time that soft-deleted objects will be retained, and cannot be permanently deleted. If it is not provided, by default Google Cloud Storage sets this to default soft delete policy`,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"retention_duration_seconds": {
+							Type:        schema.TypeInt,
+							Default:     604800,
+							Optional:    true,
+							Description: `The duration in seconds that soft-deleted objects in the bucket will be retained and cannot be permanently deleted. Default value is 604800.`,
+						},
+						"effective_time": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: `Server-determined value that indicates the time from which the policy, or one with a greater retention, was effective. This value is in RFC 3339 format.`,
+						},
+					},
+				},
+			},
 		},
 		UseJSONNumber: true,
 	}
 }
 
-const resourceDataplexGoogleProvidedLabelPrefix = "labels.goog-dataplex"
+const resourceDataplexGoogleLabelPrefix = "goog-dataplex"
+const resourceDataplexGoogleProvidedLabelPrefix = "labels." + resourceDataplexGoogleLabelPrefix
+
+var labelKeyRegex = regexp.MustCompile(`^[a-z0-9_-]{1,63}$`)
+
+func labelKeyValidator(val interface{}, key string) (warns []string, errs []error) {
+	if val == nil {
+		return
+	}
+
+	m := val.(map[string]interface{})
+	for k := range m {
+		if !labelKeyRegex.MatchString(k) {
+			errs = append(errs, fmt.Errorf("%q is an invalid label key. See https://cloud.google.com/storage/docs/tags-and-labels#bucket-labels", k))
+		}
+	}
+	return
+}
 
 func resourceDataplexLabelDiffSuppress(k, old, new string, d *schema.ResourceData) bool {
 	if strings.HasPrefix(k, resourceDataplexGoogleProvidedLabelPrefix) && new == "" {
@@ -489,15 +607,12 @@ func resourceStorageBucketCreate(d *schema.ResourceData, meta interface{}) error
 
 	// Get the bucket and location
 	bucket := d.Get("name").(string)
-	if err := tpgresource.CheckGCSName(bucket); err != nil {
-		return err
-	}
 	location := d.Get("location").(string)
 
 	// Create a bucket, setting the labels, location and name.
 	sb := &storage.Bucket{
 		Name:             bucket,
-		Labels:           tpgresource.ExpandLabels(d),
+		Labels:           tpgresource.ExpandEffectiveLabels(d),
 		Location:         location,
 		IamConfiguration: expandIamConfiguration(d),
 	}
@@ -565,13 +680,26 @@ func resourceStorageBucketCreate(d *schema.ResourceData, meta interface{}) error
 		sb.CustomPlacementConfig = expandBucketCustomPlacementConfig(v.([]interface{}))
 	}
 
+	if v, ok := d.GetOk("rpo"); ok {
+		sb.Rpo = v.(string)
+	}
+
+	if v, ok := d.GetOk("soft_delete_policy"); ok {
+		sb.SoftDeletePolicy = expandBucketSoftDeletePolicy(v.([]interface{}))
+	}
+
 	var res *storage.Bucket
 
 	err = transport_tpg.Retry(transport_tpg.RetryOptions{
 		RetryFunc: func() error {
-			res, err = config.NewStorageClient(userAgent).Buckets.Insert(project, sb).Do()
+			insertCall := config.NewStorageClient(userAgent).Buckets.Insert(project, sb)
+			if d.Get("enable_object_retention").(bool) {
+				insertCall.EnableObjectRetention(true)
+			}
+			res, err = insertCall.Do()
 			return err
 		},
+		Timeout: d.Timeout(schema.TimeoutCreate),
 	})
 
 	if err != nil {
@@ -653,6 +781,11 @@ func resourceStorageBucketUpdate(d *schema.ResourceData, meta interface{}) error
 	if d.HasChange("autoclass") {
 		if v, ok := d.GetOk("autoclass"); ok {
 			sb.Autoclass = expandBucketAutoclass(v)
+		} else {
+			sb.Autoclass = &storage.BucketAutoclass{
+				Enabled:         false,
+				ForceSendFields: []string{"Enabled"},
+			}
 		}
 	}
 
@@ -698,15 +831,15 @@ func resourceStorageBucketUpdate(d *schema.ResourceData, meta interface{}) error
 		}
 	}
 
-	if d.HasChange("labels") {
-		sb.Labels = tpgresource.ExpandLabels(d)
+	if d.HasChange("effective_labels") {
+		sb.Labels = tpgresource.ExpandEffectiveLabels(d)
 		if len(sb.Labels) == 0 {
 			sb.NullFields = append(sb.NullFields, "Labels")
 		}
 
 		// To delete a label using PATCH, we have to explicitly set its value
 		// to null.
-		old, _ := d.GetChange("labels")
+		old, _ := d.GetChange("effective_labels")
 		for k := range old.(map[string]interface{}) {
 			if _, ok := sb.Labels[k]; !ok {
 				sb.NullFields = append(sb.NullFields, fmt.Sprintf("Labels.%s", k))
@@ -722,6 +855,20 @@ func resourceStorageBucketUpdate(d *schema.ResourceData, meta interface{}) error
 
 	if d.HasChange("uniform_bucket_level_access") || d.HasChange("public_access_prevention") {
 		sb.IamConfiguration = expandIamConfiguration(d)
+	}
+
+	if d.HasChange("rpo") {
+		if v, ok := d.GetOk("rpo"); ok {
+			sb.Rpo = v.(string)
+		} else {
+			sb.NullFields = append(sb.NullFields, "Rpo")
+		}
+	}
+
+	if d.HasChange("soft_delete_policy") {
+		if v, ok := d.GetOk("soft_delete_policy"); ok {
+			sb.SoftDeletePolicy = expandBucketSoftDeletePolicy(v.([]interface{}))
+		}
 	}
 
 	res, err := config.NewStorageClient(userAgent).Buckets.Patch(d.Get("name").(string), sb).Do()
@@ -883,15 +1030,15 @@ func resourceStorageBucketDelete(d *schema.ResourceData, meta interface{}) error
 	}
 
 	// remove empty bucket
-	err = resource.Retry(1*time.Minute, func() *resource.RetryError {
+	err = retry.Retry(1*time.Minute, func() *retry.RetryError {
 		err := config.NewStorageClient(userAgent).Buckets.Delete(bucket).Do()
 		if err == nil {
 			return nil
 		}
 		if gerr, ok := err.(*googleapi.Error); ok && gerr.Code == 429 {
-			return resource.RetryableError(gerr)
+			return retry.RetryableError(gerr)
 		}
-		return resource.NonRetryableError(err)
+		return retry.NonRetryableError(err)
 	})
 	if gerr, ok := err.(*googleapi.Error); ok && gerr.Code == 409 && strings.Contains(gerr.Message, "not empty") && listError != nil {
 		return fmt.Errorf("could not delete non-empty bucket due to error when listing contents: %v", listError)
@@ -1026,9 +1173,15 @@ func flattenBucketCustomPlacementConfig(cfc *storage.BucketCustomPlacementConfig
 func expandBucketDataLocations(configured interface{}) []string {
 	l := configured.(*schema.Set).List()
 
+	// Since we only want uppercase values to prevent unnecessary diffs, we can do a comparison
+	// to determine whether or not to include the value as part of the request.
+
+	// This extra check comes from the limitations of both DiffStateFunc and StateFunc towards types of Sets,Lists, and Maps.
 	req := make([]string, 0, len(l))
 	for _, raw := range l {
-		req = append(req, raw.(string))
+		if raw.(string) == strings.ToUpper(raw.(string)) {
+			req = append(req, raw.(string))
+		}
 	}
 	return req
 }
@@ -1096,6 +1249,42 @@ func flattenBucketRetentionPolicy(bucketRetentionPolicy *storage.BucketRetention
 	return bucketRetentionPolicies
 }
 
+func flattenBucketObjectRetention(bucketObjectRetention *storage.BucketObjectRetention) bool {
+	if bucketObjectRetention == nil {
+		return false
+	}
+	if bucketObjectRetention.Mode == "Enabled" {
+		return true
+	}
+	return false
+}
+
+func expandBucketSoftDeletePolicy(configured interface{}) *storage.BucketSoftDeletePolicy {
+	configuredSoftDeletePolicies := configured.([]interface{})
+	if len(configuredSoftDeletePolicies) == 0 {
+		return nil
+	}
+	configuredSoftDeletePolicy := configuredSoftDeletePolicies[0].(map[string]interface{})
+	softDeletePolicy := &storage.BucketSoftDeletePolicy{
+		RetentionDurationSeconds: int64(configuredSoftDeletePolicy["retention_duration_seconds"].(int)),
+	}
+	softDeletePolicy.ForceSendFields = append(softDeletePolicy.ForceSendFields, "RetentionDurationSeconds")
+	return softDeletePolicy
+}
+
+func flattenBucketSoftDeletePolicy(softDeletePolicy *storage.BucketSoftDeletePolicy) []map[string]interface{} {
+	policies := make([]map[string]interface{}, 0, 1)
+	if softDeletePolicy == nil {
+		return policies
+	}
+	policy := map[string]interface{}{
+		"retention_duration_seconds": softDeletePolicy.RetentionDurationSeconds,
+		"effective_time":             softDeletePolicy.EffectiveTime,
+	}
+	policies = append(policies, policy)
+	return policies
+}
+
 func expandBucketVersioning(configured interface{}) *storage.BucketVersioning {
 	versionings := configured.([]interface{})
 	if len(versionings) == 0 {
@@ -1123,6 +1312,9 @@ func expandBucketAutoclass(configured interface{}) *storage.BucketAutoclass {
 	bucketAutoclass := &storage.BucketAutoclass{}
 
 	bucketAutoclass.Enabled = autoclass["enabled"].(bool)
+	if autoclass["terminal_storage_class"] != "" {
+		bucketAutoclass.TerminalStorageClass = autoclass["terminal_storage_class"].(string)
+	}
 	bucketAutoclass.ForceSendFields = append(bucketAutoclass.ForceSendFields, "Enabled")
 
 	return bucketAutoclass
@@ -1150,23 +1342,24 @@ func flattenBucketAutoclass(bucketAutoclass *storage.BucketAutoclass) []map[stri
 	}
 
 	autoclass := map[string]interface{}{
-		"enabled": bucketAutoclass.Enabled,
+		"enabled":                bucketAutoclass.Enabled,
+		"terminal_storage_class": bucketAutoclass.TerminalStorageClass,
 	}
 	autoclassList = append(autoclassList, autoclass)
 	return autoclassList
 }
 
-func flattenBucketLifecycle(lifecycle *storage.BucketLifecycle) []map[string]interface{} {
+func flattenBucketLifecycle(d *schema.ResourceData, lifecycle *storage.BucketLifecycle) []map[string]interface{} {
 	if lifecycle == nil || lifecycle.Rule == nil {
 		return []map[string]interface{}{}
 	}
 
 	rules := make([]map[string]interface{}, 0, len(lifecycle.Rule))
 
-	for _, rule := range lifecycle.Rule {
+	for index, rule := range lifecycle.Rule {
 		rules = append(rules, map[string]interface{}{
 			"action":    schema.NewSet(resourceGCSBucketLifecycleRuleActionHash, []interface{}{flattenBucketLifecycleRuleAction(rule.Action)}),
-			"condition": schema.NewSet(resourceGCSBucketLifecycleRuleConditionHash, []interface{}{flattenBucketLifecycleRuleCondition(rule.Condition)}),
+			"condition": schema.NewSet(resourceGCSBucketLifecycleRuleConditionHash, []interface{}{flattenBucketLifecycleRuleCondition(index, d, rule.Condition)}),
 		})
 	}
 
@@ -1180,7 +1373,7 @@ func flattenBucketLifecycleRuleAction(action *storage.BucketLifecycleRuleAction)
 	}
 }
 
-func flattenBucketLifecycleRuleCondition(condition *storage.BucketLifecycleRuleCondition) map[string]interface{} {
+func flattenBucketLifecycleRuleCondition(index int, d *schema.ResourceData, condition *storage.BucketLifecycleRuleCondition) map[string]interface{} {
 	ruleCondition := map[string]interface{}{
 		"created_before":             condition.CreatedBefore,
 		"matches_storage_class":      tpgresource.ConvertStringArrToInterface(condition.MatchesStorageClass),
@@ -1204,6 +1397,15 @@ func flattenBucketLifecycleRuleCondition(condition *storage.BucketLifecycleRuleC
 			ruleCondition["with_state"] = "ARCHIVED"
 		}
 	}
+	// setting no_age value from state config since it is terraform only variable and not getting value from backend.
+	if v, ok := d.GetOk(fmt.Sprintf("lifecycle_rule.%d.condition", index)); ok {
+		state_condition := v.(*schema.Set).List()[0].(map[string]interface{})
+		ruleCondition["no_age"] = state_condition["no_age"].(bool)
+		ruleCondition["send_days_since_noncurrent_time_if_zero"] = state_condition["send_days_since_noncurrent_time_if_zero"].(bool)
+		ruleCondition["send_days_since_custom_time_if_zero"] = state_condition["send_days_since_custom_time_if_zero"].(bool)
+		ruleCondition["send_num_newer_versions_if_zero"] = state_condition["send_num_newer_versions_if_zero"].(bool)
+	}
+
 	return ruleCondition
 }
 
@@ -1351,11 +1553,14 @@ func expandStorageBucketLifecycleRuleCondition(v interface{}) (*storage.BucketLi
 
 	condition := conditions[0].(map[string]interface{})
 	transformed := &storage.BucketLifecycleRuleCondition{}
-
-	if v, ok := condition["age"]; ok {
-		age := int64(v.(int))
-		transformed.Age = &age
-		transformed.ForceSendFields = append(transformed.ForceSendFields, "Age")
+	// Setting high precedence of no_age over age when both used together.
+	// Only sets age value when no_age is not present or no_age is present and has false value
+	if v, ok := condition["no_age"]; !ok || !(v.(bool)) {
+		if v, ok := condition["age"]; ok {
+			age := int64(v.(int))
+			transformed.Age = &age
+			transformed.ForceSendFields = append(transformed.ForceSendFields, "Age")
+		}
 	}
 
 	if v, ok := condition["created_before"]; ok {
@@ -1391,6 +1596,9 @@ func expandStorageBucketLifecycleRuleCondition(v interface{}) (*storage.BucketLi
 
 	if v, ok := condition["num_newer_versions"]; ok {
 		transformed.NumNewerVersions = int64(v.(int))
+		if u, ok := condition["send_num_newer_versions_if_zero"]; ok && u.(bool) {
+			transformed.ForceSendFields = append(transformed.ForceSendFields, "NumNewerVersions")
+		}
 	}
 
 	if v, ok := condition["custom_time_before"]; ok {
@@ -1399,10 +1607,16 @@ func expandStorageBucketLifecycleRuleCondition(v interface{}) (*storage.BucketLi
 
 	if v, ok := condition["days_since_custom_time"]; ok {
 		transformed.DaysSinceCustomTime = int64(v.(int))
+		if u, ok := condition["send_days_since_custom_time_if_zero"]; ok && u.(bool) {
+			transformed.ForceSendFields = append(transformed.ForceSendFields, "DaysSinceCustomTime")
+		}
 	}
 
 	if v, ok := condition["days_since_noncurrent_time"]; ok {
 		transformed.DaysSinceNoncurrentTime = int64(v.(int))
+		if u, ok := condition["send_days_since_noncurrent_time_if_zero"]; ok && u.(bool) {
+			transformed.ForceSendFields = append(transformed.ForceSendFields, "DaysSinceNoncurrentTime")
+		}
 	}
 
 	if v, ok := condition["noncurrent_time_before"]; ok {
@@ -1456,8 +1670,12 @@ func resourceGCSBucketLifecycleRuleConditionHash(v interface{}) int {
 	var buf bytes.Buffer
 	m := v.(map[string]interface{})
 
-	if v, ok := m["age"]; ok {
-		buf.WriteString(fmt.Sprintf("%d-", v.(int)))
+	if v, ok := m["no_age"]; ok && v.(bool) {
+		buf.WriteString(fmt.Sprintf("%t-", v.(bool)))
+	} else {
+		if v, ok := m["age"]; ok {
+			buf.WriteString(fmt.Sprintf("%d-", v.(int)))
+		}
 	}
 
 	if v, ok := m["days_since_custom_time"]; ok {
@@ -1469,6 +1687,14 @@ func resourceGCSBucketLifecycleRuleConditionHash(v interface{}) int {
 	}
 
 	if v, ok := m["created_before"]; ok {
+		buf.WriteString(fmt.Sprintf("%s-", v.(string)))
+	}
+
+	if v, ok := m["custom_time_before"]; ok {
+		buf.WriteString(fmt.Sprintf("%s-", v.(string)))
+	}
+
+	if v, ok := m["noncurrent_time_before"]; ok {
 		buf.WriteString(fmt.Sprintf("%s-", v.(string)))
 	}
 
@@ -1491,6 +1717,18 @@ func resourceGCSBucketLifecycleRuleConditionHash(v interface{}) int {
 
 	if v, ok := m["num_newer_versions"]; ok {
 		buf.WriteString(fmt.Sprintf("%d-", v.(int)))
+	}
+
+	if v, ok := m["send_days_since_noncurrent_time_if_zero"]; ok {
+		buf.WriteString(fmt.Sprintf("%t-", v.(bool)))
+	}
+
+	if v, ok := m["send_days_since_custom_time_if_zero"]; ok {
+		buf.WriteString(fmt.Sprintf("%t-", v.(bool)))
+	}
+
+	if v, ok := m["send_num_newer_versions_if_zero"]; ok {
+		buf.WriteString(fmt.Sprintf("%t-", v.(bool)))
 	}
 
 	if v, ok := m["matches_prefix"]; ok {
@@ -1573,6 +1811,9 @@ func setStorageBucket(d *schema.ResourceData, config *transport_tpg.Config, res 
 	if err := d.Set("url", fmt.Sprintf("gs://%s", bucket)); err != nil {
 		return fmt.Errorf("Error setting url: %s", err)
 	}
+	if err := d.Set("project_number", res.ProjectNumber); err != nil {
+		return fmt.Errorf("Error setting project_number: %s", err)
+	}
 	if err := d.Set("storage_class", res.StorageClass); err != nil {
 		return fmt.Errorf("Error setting storage_class: %s", err)
 	}
@@ -1591,16 +1832,27 @@ func setStorageBucket(d *schema.ResourceData, config *transport_tpg.Config, res 
 	if err := d.Set("logging", flattenBucketLogging(res.Logging)); err != nil {
 		return fmt.Errorf("Error setting logging: %s", err)
 	}
+	if err := d.Set("enable_object_retention", flattenBucketObjectRetention(res.ObjectRetention)); err != nil {
+		return fmt.Errorf("Error setting object retention: %s", err)
+	}
 	if err := d.Set("versioning", flattenBucketVersioning(res.Versioning)); err != nil {
 		return fmt.Errorf("Error setting versioning: %s", err)
 	}
 	if err := d.Set("autoclass", flattenBucketAutoclass(res.Autoclass)); err != nil {
 		return fmt.Errorf("Error setting autoclass: %s", err)
 	}
-	if err := d.Set("lifecycle_rule", flattenBucketLifecycle(res.Lifecycle)); err != nil {
+	// lifecycle_rule contains terraform only variable no_age.
+	// Passing config("d") to flattener function to set no_age separately.
+	if err := d.Set("lifecycle_rule", flattenBucketLifecycle(d, res.Lifecycle)); err != nil {
 		return fmt.Errorf("Error setting lifecycle_rule: %s", err)
 	}
-	if err := d.Set("labels", res.Labels); err != nil {
+	if err := tpgresource.SetLabels(res.Labels, d, "labels"); err != nil {
+		return fmt.Errorf("Error setting labels: %s", err)
+	}
+	if err := tpgresource.SetLabels(res.Labels, d, "terraform_labels"); err != nil {
+		return fmt.Errorf("Error setting terraform_labels: %s", err)
+	}
+	if err := d.Set("effective_labels", res.Labels); err != nil {
 		return fmt.Errorf("Error setting labels: %s", err)
 	}
 	if err := d.Set("website", flattenBucketWebsite(res.Website)); err != nil {
@@ -1612,7 +1864,16 @@ func setStorageBucket(d *schema.ResourceData, config *transport_tpg.Config, res 
 	if err := d.Set("custom_placement_config", flattenBucketCustomPlacementConfig(res.CustomPlacementConfig)); err != nil {
 		return fmt.Errorf("Error setting custom_placement_config: %s", err)
 	}
-
+	// Needs to hide rpo field for single-region buckets.
+	// Check the Rpo field from API response to determine whether bucket is in single region config or not.
+	if res.Rpo != "" {
+		if err := d.Set("rpo", res.Rpo); err != nil {
+			return fmt.Errorf("Error setting RPO setting : %s", err)
+		}
+	}
+	if err := d.Set("soft_delete_policy", flattenBucketSoftDeletePolicy(res.SoftDeletePolicy)); err != nil {
+		return fmt.Errorf("Error setting soft_delete_policy: %s", err)
+	}
 	if res.IamConfiguration != nil && res.IamConfiguration.UniformBucketLevelAccess != nil {
 		if err := d.Set("uniform_bucket_level_access", res.IamConfiguration.UniformBucketLevelAccess.Enabled); err != nil {
 			return fmt.Errorf("Error setting uniform_bucket_level_access: %s", err)

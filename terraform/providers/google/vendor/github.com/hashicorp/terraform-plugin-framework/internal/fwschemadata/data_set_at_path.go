@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fwschemadata
 
 import (
@@ -68,9 +71,9 @@ func (d *Data) SetAtPath(ctx context.Context, path path.Path, val interface{}) d
 
 	if attrTypeWithValidate, ok := attrType.(xattr.TypeWithValidate); ok {
 		logging.FrameworkTrace(ctx, "Type implements TypeWithValidate")
-		logging.FrameworkDebug(ctx, "Calling provider defined Type Validate")
+		logging.FrameworkTrace(ctx, "Calling provider defined Type Validate")
 		diags.Append(attrTypeWithValidate.Validate(ctx, tfVal, path)...)
-		logging.FrameworkDebug(ctx, "Called provider defined Type Validate")
+		logging.FrameworkTrace(ctx, "Called provider defined Type Validate")
 
 		if diags.HasError() {
 			return diags
@@ -155,10 +158,6 @@ func (d Data) SetAtPathTransformFunc(ctx context.Context, path path.Path, tfVal 
 	}
 
 	if parentValue.IsNull() || !parentValue.IsKnown() {
-		// TODO: This will break when DynamicPsuedoType is introduced.
-		// tftypes.Type should implement AttributePathStepper, but it currently does not.
-		// When it does, we should use: tftypes.WalkAttributePath(p.Raw.Type(), parentPath)
-		// Reference: https://github.com/hashicorp/terraform-plugin-go/issues/110
 		parentType := parentAttrType.TerraformType(ctx)
 		var childValue interface{}
 
@@ -186,9 +185,9 @@ func (d Data) SetAtPathTransformFunc(ctx context.Context, path path.Path, tfVal 
 
 	if attrTypeWithValidate, ok := parentAttrType.(xattr.TypeWithValidate); ok {
 		logging.FrameworkTrace(ctx, "Type implements TypeWithValidate")
-		logging.FrameworkDebug(ctx, "Calling provider defined Type Validate")
+		logging.FrameworkTrace(ctx, "Calling provider defined Type Validate")
 		diags.Append(attrTypeWithValidate.Validate(ctx, parentValue, parentPath)...)
-		logging.FrameworkDebug(ctx, "Called provider defined Type Validate")
+		logging.FrameworkTrace(ctx, "Called provider defined Type Validate")
 
 		if diags.HasError() {
 			return nil, diags

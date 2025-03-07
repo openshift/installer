@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 // Package validator contains common schema validator interfaces and
 // implementations. These validators are used by concept specific packages
 // such as datasource/schema, provider/schema, and resource/schema.

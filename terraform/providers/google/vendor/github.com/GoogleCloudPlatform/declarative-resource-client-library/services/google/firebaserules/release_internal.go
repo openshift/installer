@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -82,73 +82,6 @@ func (r *Release) deleteURL(userBasePath string) (string, error) {
 // API such as Create, Update, or Delete.
 type releaseApiOperation interface {
 	do(context.Context, *Release, *Client) error
-}
-
-// newUpdateReleaseUpdateReleaseRequest creates a request for an
-// Release resource's UpdateRelease update type by filling in the update
-// fields based on the intended state of the resource.
-func newUpdateReleaseUpdateReleaseRequest(ctx context.Context, f *Release, c *Client) (map[string]interface{}, error) {
-	req := map[string]interface{}{}
-	res := f
-	_ = res
-
-	if v, err := dcl.DeriveField("projects/%s/rulesets/%s", f.RulesetName, dcl.SelfLinkToName(f.Project), dcl.SelfLinkToName(f.RulesetName)); err != nil {
-		return nil, fmt.Errorf("error expanding RulesetName into rulesetName: %w", err)
-	} else if !dcl.IsEmptyValueIndirect(v) {
-		req["rulesetName"] = v
-	}
-	req["name"] = fmt.Sprintf("projects/%s/releases/%s", *f.Project, *f.Name)
-
-	return req, nil
-}
-
-// marshalUpdateReleaseUpdateReleaseRequest converts the update into
-// the final JSON request body.
-func marshalUpdateReleaseUpdateReleaseRequest(c *Client, m map[string]interface{}) ([]byte, error) {
-
-	m = EncodeReleaseUpdateRequest(m)
-	return json.Marshal(m)
-}
-
-type updateReleaseUpdateReleaseOperation struct {
-	// If the update operation has the REQUIRES_APPLY_OPTIONS trait, this will be populated.
-	// Usually it will be nil - this is to prevent us from accidentally depending on apply
-	// options, which should usually be unnecessary.
-	ApplyOptions []dcl.ApplyOption
-	FieldDiffs   []*dcl.FieldDiff
-}
-
-// do creates a request and sends it to the appropriate URL. In most operations,
-// do will transcribe a subset of the resource into a request object and send a
-// PUT request to a single URL.
-
-func (op *updateReleaseUpdateReleaseOperation) do(ctx context.Context, r *Release, c *Client) error {
-	_, err := c.GetRelease(ctx, r)
-	if err != nil {
-		return err
-	}
-
-	u, err := r.updateURL(c.Config.BasePath, "UpdateRelease")
-	if err != nil {
-		return err
-	}
-
-	req, err := newUpdateReleaseUpdateReleaseRequest(ctx, r, c)
-	if err != nil {
-		return err
-	}
-
-	c.Config.Logger.InfoWithContextf(ctx, "Created update: %#v", req)
-	body, err := marshalUpdateReleaseUpdateReleaseRequest(c, req)
-	if err != nil {
-		return err
-	}
-	_, err = dcl.SendRequest(ctx, c.Config, "PATCH", u, bytes.NewBuffer(body), c.Config.RetryProvider)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (c *Client) listReleaseRaw(ctx context.Context, r *Release, pageToken string, pageSize int32) ([]byte, error) {
@@ -471,7 +404,7 @@ func diffRelease(c *Client, desired, actual *Release, opts ...dcl.ApplyOption) (
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.RulesetName, actual.RulesetName, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.TriggersOperation("updateReleaseUpdateReleaseOperation")}, fn.AddNest("RulesetName")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.RulesetName, actual.RulesetName, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RulesetName")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -524,16 +457,6 @@ func (r *Release) urlNormalized() *Release {
 }
 
 func (r *Release) updateURL(userBasePath, updateName string) (string, error) {
-	nr := r.urlNormalized()
-	if updateName == "UpdateRelease" {
-		fields := map[string]interface{}{
-			"project": dcl.ValueOrEmptyString(nr.Project),
-			"name":    dcl.ValueOrEmptyString(nr.Name),
-		}
-		return dcl.URL("projects/{{project}}/releases/{{name}}", nr.basePath(), userBasePath, fields), nil
-
-	}
-
 	return "", fmt.Errorf("unknown update name: %s", updateName)
 }
 
@@ -689,9 +612,6 @@ func convertFieldDiffsToReleaseDiffs(config *dcl.Config, fds []*dcl.FieldDiff, o
 
 func convertOpNameToReleaseApiOperation(opName string, fieldDiffs []*dcl.FieldDiff, opts ...dcl.ApplyOption) (releaseApiOperation, error) {
 	switch opName {
-
-	case "updateReleaseUpdateReleaseOperation":
-		return &updateReleaseUpdateReleaseOperation{FieldDiffs: fieldDiffs}, nil
 
 	default:
 		return nil, fmt.Errorf("no such operation with name: %v", opName)

@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -230,6 +230,7 @@ func DCLSubnetworkSchema() *dcl.Schema {
 										Parent:   true,
 									},
 								},
+								Parameter: true,
 							},
 							"purpose": &dcl.Property{
 								Type:          "string",
@@ -252,6 +253,7 @@ func DCLSubnetworkSchema() *dcl.Schema {
 								GoName:      "Region",
 								Description: "The GCP region for this subnetwork. ",
 								Immutable:   true,
+								Parameter:   true,
 							},
 							"role": &dcl.Property{
 								Type:        "string",

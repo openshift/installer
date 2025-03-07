@@ -15,6 +15,23 @@
   "description": "Manages Hadoop-based clusters and jobs on Google Cloud Platform.",
   "discoveryVersion": "v1",
   "documentationLink": "https://cloud.google.com/dataproc/",
+  "endpoints": [
+    {
+      "description": "Regional Endpoint",
+      "endpointUrl": "https://dataproc.europe-west3.rep.googleapis.com/",
+      "location": "europe-west3"
+    },
+    {
+      "description": "Regional Endpoint",
+      "endpointUrl": "https://dataproc.europe-west9.rep.googleapis.com/",
+      "location": "europe-west9"
+    },
+    {
+      "description": "Regional Endpoint",
+      "endpointUrl": "https://dataproc.me-central2.rep.googleapis.com/",
+      "location": "me-central2"
+    }
+  ],
   "fullyEncodeReservedExpansion": true,
   "icons": {
     "x16": "http://www.google.com/images/icons/product/search-16.gif",
@@ -341,6 +358,34 @@
             },
             "batches": {
               "methods": {
+                "analyze": {
+                  "description": "Analyze a Batch for possible recommendations and insights.",
+                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/batches/{batchesId}:analyze",
+                  "httpMethod": "POST",
+                  "id": "dataproc.projects.locations.batches.analyze",
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "parameters": {
+                    "name": {
+                      "description": "Required. The fully qualified name of the batch to analyze in the format \"projects/PROJECT_ID/locations/DATAPROC_REGION/batches/BATCH_ID\"",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+/batches/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1/{+name}:analyze",
+                  "request": {
+                    "$ref": "AnalyzeBatchRequest"
+                  },
+                  "response": {
+                    "$ref": "Operation"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                },
                 "create": {
                   "description": "Creates a batch workload that executes asynchronously.",
                   "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/batches",
@@ -380,7 +425,7 @@
                   ]
                 },
                 "delete": {
-                  "description": "Deletes the batch workload resource. If the batch is not in terminal state, the delete fails and the response returns FAILED_PRECONDITION.",
+                  "description": "Deletes the batch workload resource. If the batch is not in a CANCELLED, SUCCEEDED or FAILED State, the delete operation fails and the response returns FAILED_PRECONDITION.",
                   "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/batches/{batchesId}",
                   "httpMethod": "DELETE",
                   "id": "dataproc.projects.locations.batches.delete",
@@ -439,7 +484,7 @@
                   ],
                   "parameters": {
                     "filter": {
-                      "description": "Optional. A filter for the batches to return in the response.A filter is a logical expression constraining the values of various fields in each batch resource. Filters are case sensitive, and may contain multiple clauses combined with logical operators (AND/OR). Supported fields are batch_id, batch_uuid, state, and create_time.e.g. state = RUNNING and create_time \u003c \"2023-01-01T00:00:00Z\" filters for batches in state RUNNING that were created before 2023-01-01See https://google.aip.dev/assets/misc/ebnf-filtering.txt for a detailed description of the filter syntax and a list of supported comparisons.",
+                      "description": "Optional. A filter for the batches to return in the response.A filter is a logical expression constraining the values of various fields in each batch resource. Filters are case sensitive, and may contain multiple clauses combined with logical operators (AND/OR). Supported fields are batch_id, batch_uuid, state, create_time, and labels.e.g. state = RUNNING and create_time \u003c \"2023-01-01T00:00:00Z\" filters for batches in state RUNNING that were created before 2023-01-01. state = RUNNING and labels.environment=production filters for batches in state in a RUNNING state that have a production environment label.See https://google.aip.dev/assets/misc/ebnf-filtering.txt for a detailed description of the filter syntax and a list of supported comparisons.",
                       "location": "query",
                       "type": "string"
                     },
@@ -590,6 +635,323 @@
                   "path": "v1/{+name}",
                   "response": {
                     "$ref": "ListOperationsResponse"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                }
+              }
+            },
+            "sessionTemplates": {
+              "methods": {
+                "create": {
+                  "description": "Create a session template synchronously.",
+                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/sessionTemplates",
+                  "httpMethod": "POST",
+                  "id": "dataproc.projects.locations.sessionTemplates.create",
+                  "parameterOrder": [
+                    "parent"
+                  ],
+                  "parameters": {
+                    "parent": {
+                      "description": "Required. The parent resource where this session template will be created.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1/{+parent}/sessionTemplates",
+                  "request": {
+                    "$ref": "SessionTemplate"
+                  },
+                  "response": {
+                    "$ref": "SessionTemplate"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                },
+                "delete": {
+                  "description": "Deletes a session template.",
+                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/sessionTemplates/{sessionTemplatesId}",
+                  "httpMethod": "DELETE",
+                  "id": "dataproc.projects.locations.sessionTemplates.delete",
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "parameters": {
+                    "name": {
+                      "description": "Required. The name of the session template resource to delete.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+/sessionTemplates/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1/{+name}",
+                  "response": {
+                    "$ref": "Empty"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                },
+                "get": {
+                  "description": "Gets the resource representation for a session template.",
+                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/sessionTemplates/{sessionTemplatesId}",
+                  "httpMethod": "GET",
+                  "id": "dataproc.projects.locations.sessionTemplates.get",
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "parameters": {
+                    "name": {
+                      "description": "Required. The name of the session template to retrieve.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+/sessionTemplates/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1/{+name}",
+                  "response": {
+                    "$ref": "SessionTemplate"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                },
+                "list": {
+                  "description": "Lists session templates.",
+                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/sessionTemplates",
+                  "httpMethod": "GET",
+                  "id": "dataproc.projects.locations.sessionTemplates.list",
+                  "parameterOrder": [
+                    "parent"
+                  ],
+                  "parameters": {
+                    "filter": {
+                      "description": "Optional. A filter for the session templates to return in the response. Filters are case sensitive and have the following syntax:field = value AND field = value ...",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "pageSize": {
+                      "description": "Optional. The maximum number of sessions to return in each response. The service may return fewer than this value.",
+                      "format": "int32",
+                      "location": "query",
+                      "type": "integer"
+                    },
+                    "pageToken": {
+                      "description": "Optional. A page token received from a previous ListSessions call. Provide this token to retrieve the subsequent page.",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "parent": {
+                      "description": "Required. The parent that owns this collection of session templates.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1/{+parent}/sessionTemplates",
+                  "response": {
+                    "$ref": "ListSessionTemplatesResponse"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                },
+                "patch": {
+                  "description": "Updates the session template synchronously.",
+                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/sessionTemplates/{sessionTemplatesId}",
+                  "httpMethod": "PATCH",
+                  "id": "dataproc.projects.locations.sessionTemplates.patch",
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "parameters": {
+                    "name": {
+                      "description": "Required. The resource name of the session template.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+/sessionTemplates/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1/{+name}",
+                  "request": {
+                    "$ref": "SessionTemplate"
+                  },
+                  "response": {
+                    "$ref": "SessionTemplate"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                }
+              }
+            },
+            "sessions": {
+              "methods": {
+                "create": {
+                  "description": "Create an interactive session asynchronously.",
+                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/sessions",
+                  "httpMethod": "POST",
+                  "id": "dataproc.projects.locations.sessions.create",
+                  "parameterOrder": [
+                    "parent"
+                  ],
+                  "parameters": {
+                    "parent": {
+                      "description": "Required. The parent resource where this session will be created.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "description": "Optional. A unique ID used to identify the request. If the service receives two CreateSessionRequests (https://cloud.google.com/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#google.cloud.dataproc.v1.CreateSessionRequest)s with the same ID, the second request is ignored, and the first Session is created and stored in the backend.Recommendation: Set this value to a UUID (https://en.wikipedia.org/wiki/Universally_unique_identifier).The value must contain only letters (a-z, A-Z), numbers (0-9), underscores (_), and hyphens (-). The maximum length is 40 characters.",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "sessionId": {
+                      "description": "Required. The ID to use for the session, which becomes the final component of the session's resource name.This value must be 4-63 characters. Valid characters are /a-z-/.",
+                      "location": "query",
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1/{+parent}/sessions",
+                  "request": {
+                    "$ref": "Session"
+                  },
+                  "response": {
+                    "$ref": "Operation"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                },
+                "delete": {
+                  "description": "Deletes the interactive session resource. If the session is not in terminal state, it is terminated, and then deleted.",
+                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/sessions/{sessionsId}",
+                  "httpMethod": "DELETE",
+                  "id": "dataproc.projects.locations.sessions.delete",
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "parameters": {
+                    "name": {
+                      "description": "Required. The name of the session resource to delete.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+/sessions/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "description": "Optional. A unique ID used to identify the request. If the service receives two DeleteSessionRequest (https://cloud.google.com/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#google.cloud.dataproc.v1.DeleteSessionRequest)s with the same ID, the second request is ignored.Recommendation: Set this value to a UUID (https://en.wikipedia.org/wiki/Universally_unique_identifier).The value must contain only letters (a-z, A-Z), numbers (0-9), underscores (_), and hyphens (-). The maximum length is 40 characters.",
+                      "location": "query",
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1/{+name}",
+                  "response": {
+                    "$ref": "Operation"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                },
+                "get": {
+                  "description": "Gets the resource representation for an interactive session.",
+                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/sessions/{sessionsId}",
+                  "httpMethod": "GET",
+                  "id": "dataproc.projects.locations.sessions.get",
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "parameters": {
+                    "name": {
+                      "description": "Required. The name of the session to retrieve.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+/sessions/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1/{+name}",
+                  "response": {
+                    "$ref": "Session"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                },
+                "list": {
+                  "description": "Lists interactive sessions.",
+                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/sessions",
+                  "httpMethod": "GET",
+                  "id": "dataproc.projects.locations.sessions.list",
+                  "parameterOrder": [
+                    "parent"
+                  ],
+                  "parameters": {
+                    "filter": {
+                      "description": "Optional. A filter for the sessions to return in the response.A filter is a logical expression constraining the values of various fields in each session resource. Filters are case sensitive, and may contain multiple clauses combined with logical operators (AND, OR). Supported fields are session_id, session_uuid, state, create_time, and labels.Example: state = ACTIVE and create_time \u003c \"2023-01-01T00:00:00Z\" is a filter for sessions in an ACTIVE state that were created before 2023-01-01. state = ACTIVE and labels.environment=production is a filter for sessions in an ACTIVE state that have a production environment label.See https://google.aip.dev/assets/misc/ebnf-filtering.txt for a detailed description of the filter syntax and a list of supported comparators.",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "pageSize": {
+                      "description": "Optional. The maximum number of sessions to return in each response. The service may return fewer than this value.",
+                      "format": "int32",
+                      "location": "query",
+                      "type": "integer"
+                    },
+                    "pageToken": {
+                      "description": "Optional. A page token received from a previous ListSessions call. Provide this token to retrieve the subsequent page.",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "parent": {
+                      "description": "Required. The parent, which owns this collection of sessions.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1/{+parent}/sessions",
+                  "response": {
+                    "$ref": "ListSessionsResponse"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                },
+                "terminate": {
+                  "description": "Terminates the interactive session.",
+                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/sessions/{sessionsId}:terminate",
+                  "httpMethod": "POST",
+                  "id": "dataproc.projects.locations.sessions.terminate",
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "parameters": {
+                    "name": {
+                      "description": "Required. The name of the session resource to terminate.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+/sessions/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1/{+name}:terminate",
+                  "request": {
+                    "$ref": "TerminateSessionRequest"
+                  },
+                  "response": {
+                    "$ref": "Operation"
                   },
                   "scopes": [
                     "https://www.googleapis.com/auth/cloud-platform"
@@ -1212,6 +1574,12 @@
                       "location": "query",
                       "type": "string"
                     },
+                    "gracefulTerminationTimeout": {
+                      "description": "Optional. The graceful termination timeout for the deletion of the cluster. Indicate the time the request will wait to complete the running jobs on the cluster before its forceful deletion. Default value is 0 indicating that the user has not enabled the graceful termination. Value can be between 60 second and 6 Hours, in case the graceful termination is enabled. (There is no separate flag to check the enabling or disabling of graceful termination, it can be checked by the values in the field).",
+                      "format": "google-duration",
+                      "location": "query",
+                      "type": "string"
+                    },
                     "projectId": {
                       "description": "Required. The ID of the Google Cloud Platform project that the cluster belongs to.",
                       "location": "path",
@@ -1400,7 +1768,7 @@
                   ],
                   "parameters": {
                     "filter": {
-                      "description": "Optional. A filter constraining the clusters to list. Filters are case-sensitive and have the following syntax:field = value AND field = value ...where field is one of status.state, clusterName, or labels.[KEY], and [KEY] is a label key. value can be * to match all values. status.state can be one of the following: ACTIVE, INACTIVE, CREATING, RUNNING, ERROR, DELETING, or UPDATING. ACTIVE contains the CREATING, UPDATING, and RUNNING states. INACTIVE contains the DELETING and ERROR states. clusterName is the name of the cluster provided at creation time. Only the logical AND operator is supported; space-separated items are treated as having an implicit AND operator.Example filter:status.state = ACTIVE AND clusterName = mycluster AND labels.env = staging AND labels.starred = *",
+                      "description": "Optional. A filter constraining the clusters to list. Filters are case-sensitive and have the following syntax:field = value AND field = value ...where field is one of status.state, clusterName, or labels.[KEY], and [KEY] is a label key. value can be * to match all values. status.state can be one of the following: ACTIVE, INACTIVE, CREATING, RUNNING, ERROR, DELETING, UPDATING, STOPPING, or STOPPED. ACTIVE contains the CREATING, UPDATING, and RUNNING states. INACTIVE contains the DELETING, ERROR, STOPPING, and STOPPED states. clusterName is the name of the cluster provided at creation time. Only the logical AND operator is supported; space-separated items are treated as having an implicit AND operator.Example filter:status.state = ACTIVE AND clusterName = mycluster AND labels.env = staging AND labels.starred = *",
                       "location": "query",
                       "type": "string"
                     },
@@ -1698,8 +2066,13 @@
                           "required": true,
                           "type": "string"
                         },
+                        "parentOperationId": {
+                          "description": "Optional. operation id of the parent operation sending the create request",
+                          "location": "query",
+                          "type": "string"
+                        },
                         "requestId": {
-                          "description": "Optional. A unique ID used to identify the request. If the server receives two CreateNodeGroupRequest (https://cloud.google.com/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#google.cloud.dataproc.v1.CreateNodeGroupRequests) with the same ID, the second request is ignored and the first google.longrunning.Operation created and stored in the backend is returned.Recommendation: Set this value to a UUID (https://en.wikipedia.org/wiki/Universally_unique_identifier).The ID must contain only letters (a-z, A-Z), numbers (0-9), underscores (_), and hyphens (-). The maximum length is 40 characters.",
+                          "description": "Optional. A unique ID used to identify the request. If the server receives two CreateNodeGroupRequest (https://cloud.google.com/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#google.cloud.dataproc.v1.CreateNodeGroupRequest) with the same ID, the second request is ignored and the first google.longrunning.Operation created and stored in the backend is returned.Recommendation: Set this value to a UUID (https://en.wikipedia.org/wiki/Universally_unique_identifier).The ID must contain only letters (a-z, A-Z), numbers (0-9), underscores (_), and hyphens (-). The maximum length is 40 characters.",
                           "location": "query",
                           "type": "string"
                         }
@@ -1735,6 +2108,34 @@
                       "path": "v1/{+name}",
                       "response": {
                         "$ref": "NodeGroup"
+                      },
+                      "scopes": [
+                        "https://www.googleapis.com/auth/cloud-platform"
+                      ]
+                    },
+                    "repair": {
+                      "description": "Repair nodes in a node group.",
+                      "flatPath": "v1/projects/{projectsId}/regions/{regionsId}/clusters/{clustersId}/nodeGroups/{nodeGroupsId}:repair",
+                      "httpMethod": "POST",
+                      "id": "dataproc.projects.regions.clusters.nodeGroups.repair",
+                      "parameterOrder": [
+                        "name"
+                      ],
+                      "parameters": {
+                        "name": {
+                          "description": "Required. The name of the node group to resize. Format: projects/{project}/regions/{region}/clusters/{cluster}/nodeGroups/{nodeGroup}",
+                          "location": "path",
+                          "pattern": "^projects/[^/]+/regions/[^/]+/clusters/[^/]+/nodeGroups/[^/]+$",
+                          "required": true,
+                          "type": "string"
+                        }
+                      },
+                      "path": "v1/{+name}:repair",
+                      "request": {
+                        "$ref": "RepairNodeGroupRequest"
+                      },
+                      "response": {
+                        "$ref": "Operation"
                       },
                       "scopes": [
                         "https://www.googleapis.com/auth/cloud-platform"
@@ -2671,7 +3072,7 @@
       }
     }
   },
-  "revision": "20230622",
+  "revision": "20240605",
   "rootUrl": "https://dataproc.googleapis.com/",
   "schemas": {
     "AcceleratorConfig": {
@@ -2684,8 +3085,82 @@
           "type": "integer"
         },
         "acceleratorTypeUri": {
-          "description": "Full URL, partial URI, or short name of the accelerator type resource to expose to this instance. See Compute Engine AcceleratorTypes (https://cloud.google.com/compute/docs/reference/v1/acceleratorTypes).Examples: https://www.googleapis.com/compute/v1/projects/[project_id]/zones/[zone]/acceleratorTypes/nvidia-tesla-k80 projects/[project_id]/zones/[zone]/acceleratorTypes/nvidia-tesla-k80 nvidia-tesla-k80Auto Zone Exception: If you are using the Dataproc Auto Zone Placement (https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/auto-zone#using_auto_zone_placement) feature, you must use the short name of the accelerator type resource, for example, nvidia-tesla-k80.",
+          "description": "Full URL, partial URI, or short name of the accelerator type resource to expose to this instance. See Compute Engine AcceleratorTypes (https://cloud.google.com/compute/docs/reference/v1/acceleratorTypes).Examples: https://www.googleapis.com/compute/v1/projects/[project_id]/zones/[zone]/acceleratorTypes/nvidia-tesla-t4 projects/[project_id]/zones/[zone]/acceleratorTypes/nvidia-tesla-t4 nvidia-tesla-t4Auto Zone Exception: If you are using the Dataproc Auto Zone Placement (https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/auto-zone#using_auto_zone_placement) feature, you must use the short name of the accelerator type resource, for example, nvidia-tesla-t4.",
           "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "AnalyzeBatchRequest": {
+      "description": "A request to analyze a batch workload.",
+      "id": "AnalyzeBatchRequest",
+      "properties": {
+        "requestId": {
+          "description": "Optional. A unique ID used to identify the request. If the service receives two AnalyzeBatchRequest (http://cloud/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#google.cloud.dataproc.v1.AnalyzeBatchRequest)s with the same request_id, the second request is ignored and the Operation that corresponds to the first request created and stored in the backend is returned.Recommendation: Set this value to a UUID (https://en.wikipedia.org/wiki/Universally_unique_identifier).The value must contain only letters (a-z, A-Z), numbers (0-9), underscores (_), and hyphens (-). The maximum length is 40 characters.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "AnalyzeOperationMetadata": {
+      "description": "Metadata describing the Analyze operation.",
+      "id": "AnalyzeOperationMetadata",
+      "properties": {
+        "analyzedWorkloadName": {
+          "description": "Output only. name of the workload being analyzed.",
+          "readOnly": true,
+          "type": "string"
+        },
+        "analyzedWorkloadType": {
+          "description": "Output only. Type of the workload being analyzed.",
+          "enum": [
+            "WORKLOAD_TYPE_UNSPECIFIED",
+            "BATCH"
+          ],
+          "enumDescriptions": [
+            "Undefined option",
+            "Serverless batch job"
+          ],
+          "readOnly": true,
+          "type": "string"
+        },
+        "analyzedWorkloadUuid": {
+          "description": "Output only. unique identifier of the workload typically generated by control plane. E.g. batch uuid.",
+          "readOnly": true,
+          "type": "string"
+        },
+        "createTime": {
+          "description": "Output only. The time when the operation was created.",
+          "format": "google-datetime",
+          "readOnly": true,
+          "type": "string"
+        },
+        "description": {
+          "description": "Output only. Short description of the operation.",
+          "readOnly": true,
+          "type": "string"
+        },
+        "doneTime": {
+          "description": "Output only. The time when the operation finished.",
+          "format": "google-datetime",
+          "readOnly": true,
+          "type": "string"
+        },
+        "labels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Output only. Labels associated with the operation.",
+          "readOnly": true,
+          "type": "object"
+        },
+        "warnings": {
+          "description": "Output only. Warnings encountered during operation execution.",
+          "items": {
+            "type": "string"
+          },
+          "readOnly": true,
+          "type": "array"
         }
       },
       "type": "object"
@@ -2731,6 +3206,32 @@
         "workerConfig": {
           "$ref": "InstanceGroupAutoscalingPolicyConfig",
           "description": "Required. Describes how the autoscaler will operate for primary workers."
+        }
+      },
+      "type": "object"
+    },
+    "AutotuningConfig": {
+      "description": "Autotuning configuration of the workload.",
+      "id": "AutotuningConfig",
+      "properties": {
+        "scenarios": {
+          "description": "Optional. Scenarios for which tunings are applied.",
+          "items": {
+            "enum": [
+              "SCENARIO_UNSPECIFIED",
+              "SCALING",
+              "BROADCAST_HASH_JOIN",
+              "MEMORY"
+            ],
+            "enumDescriptions": [
+              "Default value.",
+              "Scaling recommendations such as initialExecutors.",
+              "Adding hints for potential relation broadcasts.",
+              "Memory management for workloads."
+            ],
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -2992,14 +3493,14 @@
           "description": "The condition that is associated with this binding.If the condition evaluates to true, then this binding applies to the current request.If the condition evaluates to false, then this binding does not apply to the current request. However, a different role binding might grant the same role to one or more of the principals in this binding.To learn which resources support conditions in their IAM policies, see the IAM documentation (https://cloud.google.com/iam/help/conditions/resource-policies)."
         },
         "members": {
-          "description": "Specifies the principals requesting access for a Google Cloud resource. members can have the following values: allUsers: A special identifier that represents anyone who is on the internet; with or without a Google account. allAuthenticatedUsers: A special identifier that represents anyone who is authenticated with a Google account or a service account. Does not include identities that come from external identity providers (IdPs) through identity federation. user:{emailid}: An email address that represents a specific Google account. For example, alice@example.com . serviceAccount:{emailid}: An email address that represents a Google service account. For example, my-other-app@appspot.gserviceaccount.com. serviceAccount:{projectid}.svc.id.goog[{namespace}/{kubernetes-sa}]: An identifier for a Kubernetes service account (https://cloud.google.com/kubernetes-engine/docs/how-to/kubernetes-service-accounts). For example, my-project.svc.id.goog[my-namespace/my-kubernetes-sa]. group:{emailid}: An email address that represents a Google group. For example, admins@example.com. domain:{domain}: The G Suite domain (primary) that represents all the users of that domain. For example, google.com or example.com. deleted:user:{emailid}?uid={uniqueid}: An email address (plus unique identifier) representing a user that has been recently deleted. For example, alice@example.com?uid=123456789012345678901. If the user is recovered, this value reverts to user:{emailid} and the recovered user retains the role in the binding. deleted:serviceAccount:{emailid}?uid={uniqueid}: An email address (plus unique identifier) representing a service account that has been recently deleted. For example, my-other-app@appspot.gserviceaccount.com?uid=123456789012345678901. If the service account is undeleted, this value reverts to serviceAccount:{emailid} and the undeleted service account retains the role in the binding. deleted:group:{emailid}?uid={uniqueid}: An email address (plus unique identifier) representing a Google group that has been recently deleted. For example, admins@example.com?uid=123456789012345678901. If the group is recovered, this value reverts to group:{emailid} and the recovered group retains the role in the binding.",
+          "description": "Specifies the principals requesting access for a Google Cloud resource. members can have the following values: allUsers: A special identifier that represents anyone who is on the internet; with or without a Google account. allAuthenticatedUsers: A special identifier that represents anyone who is authenticated with a Google account or a service account. Does not include identities that come from external identity providers (IdPs) through identity federation. user:{emailid}: An email address that represents a specific Google account. For example, alice@example.com . serviceAccount:{emailid}: An email address that represents a Google service account. For example, my-other-app@appspot.gserviceaccount.com. serviceAccount:{projectid}.svc.id.goog[{namespace}/{kubernetes-sa}]: An identifier for a Kubernetes service account (https://cloud.google.com/kubernetes-engine/docs/how-to/kubernetes-service-accounts). For example, my-project.svc.id.goog[my-namespace/my-kubernetes-sa]. group:{emailid}: An email address that represents a Google group. For example, admins@example.com. domain:{domain}: The G Suite domain (primary) that represents all the users of that domain. For example, google.com or example.com. principal://iam.googleapis.com/locations/global/workforcePools/{pool_id}/subject/{subject_attribute_value}: A single identity in a workforce identity pool. principalSet://iam.googleapis.com/locations/global/workforcePools/{pool_id}/group/{group_id}: All workforce identities in a group. principalSet://iam.googleapis.com/locations/global/workforcePools/{pool_id}/attribute.{attribute_name}/{attribute_value}: All workforce identities with a specific attribute value. principalSet://iam.googleapis.com/locations/global/workforcePools/{pool_id}/*: All identities in a workforce identity pool. principal://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/subject/{subject_attribute_value}: A single identity in a workload identity pool. principalSet://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/group/{group_id}: A workload identity pool group. principalSet://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/attribute.{attribute_name}/{attribute_value}: All identities in a workload identity pool with a certain attribute. principalSet://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/*: All identities in a workload identity pool. deleted:user:{emailid}?uid={uniqueid}: An email address (plus unique identifier) representing a user that has been recently deleted. For example, alice@example.com?uid=123456789012345678901. If the user is recovered, this value reverts to user:{emailid} and the recovered user retains the role in the binding. deleted:serviceAccount:{emailid}?uid={uniqueid}: An email address (plus unique identifier) representing a service account that has been recently deleted. For example, my-other-app@appspot.gserviceaccount.com?uid=123456789012345678901. If the service account is undeleted, this value reverts to serviceAccount:{emailid} and the undeleted service account retains the role in the binding. deleted:group:{emailid}?uid={uniqueid}: An email address (plus unique identifier) representing a Google group that has been recently deleted. For example, admins@example.com?uid=123456789012345678901. If the group is recovered, this value reverts to group:{emailid} and the recovered group retains the role in the binding. deleted:principal://iam.googleapis.com/locations/global/workforcePools/{pool_id}/subject/{subject_attribute_value}: Deleted single identity in a workforce identity pool. For example, deleted:principal://iam.googleapis.com/locations/global/workforcePools/my-pool-id/subject/my-subject-attribute-value.",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
         "role": {
-          "description": "Role that is assigned to the list of members, or principals. For example, roles/viewer, roles/editor, or roles/owner.",
+          "description": "Role that is assigned to the list of members, or principals. For example, roles/viewer, roles/editor, or roles/owner.For an overview of the IAM roles and permissions, see the IAM documentation (https://cloud.google.com/iam/docs/roles-overview). For a list of the available pre-defined roles, see here (https://cloud.google.com/iam/docs/understanding-roles).",
           "type": "string"
         }
       },
@@ -3101,6 +3602,7 @@
         },
         "gkeClusterConfig": {
           "$ref": "GkeClusterConfig",
+          "deprecated": true,
           "description": "Optional. BETA. The Kubernetes Engine config for Dataproc clusters deployed to The Kubernetes Engine config for Dataproc clusters deployed to Kubernetes. These config settings are mutually exclusive with Compute Engine-based options, such as gce_cluster_config, master_config, worker_config, secondary_worker_config, and autoscaling_config."
         },
         "initializationActions": {
@@ -3410,6 +3912,7 @@
           "description": "Optional. Time interval in which diagnosis should be carried out on the cluster."
         },
         "job": {
+          "deprecated": true,
           "description": "Optional. DEPRECATED Specifies the job on which diagnosis is to be performed. Format: projects/{project}/regions/{region}/jobs/{job}",
           "type": "string"
         },
@@ -3420,7 +3923,26 @@
           },
           "type": "array"
         },
+        "tarballAccess": {
+          "description": "Optional. (Optional) The access type to the diagnostic tarball. If not specified, falls back to default access of the bucket",
+          "enum": [
+            "TARBALL_ACCESS_UNSPECIFIED",
+            "GOOGLE_CLOUD_SUPPORT",
+            "GOOGLE_DATAPROC_DIAGNOSE"
+          ],
+          "enumDescriptions": [
+            "Tarball Access unspecified. Falls back to default access of the bucket",
+            "Google Cloud Support group has read access to the diagnostic tarball",
+            "Google Cloud Dataproc Diagnose service account has read access to the diagnostic tarball"
+          ],
+          "type": "string"
+        },
+        "tarballGcsDir": {
+          "description": "Optional. (Optional) The output Cloud Storage directory for the diagnostic tarball. If not specified, a task-specific directory in the cluster's staging bucket will be used.",
+          "type": "string"
+        },
         "yarnApplicationId": {
+          "deprecated": true,
           "description": "Optional. DEPRECATED Specifies the yarn application on which diagnosis is to be performed.",
           "type": "string"
         },
@@ -3499,11 +4021,11 @@
       "id": "EncryptionConfig",
       "properties": {
         "gcePdKmsKeyName": {
-          "description": "Optional. The Cloud KMS key name to use for PD disk encryption for all instances in the cluster.",
+          "description": "Optional. The Cloud KMS key resource name to use for persistent disk encryption for all instances in the cluster. See Use CMEK with cluster data (https://cloud.google.com//dataproc/docs/concepts/configuring-clusters/customer-managed-encryption#use_cmek_with_cluster_data) for more information.",
           "type": "string"
         },
         "kmsKey": {
-          "description": "Optional. The Cloud KMS key name to use for encrypting customer core content and cluster PD disk for all instances in the cluster.",
+          "description": "Optional. The Cloud KMS key resource name to use for cluster persistent disk and job argument encryption. See Use CMEK with cluster data (https://cloud.google.com//dataproc/docs/concepts/configuring-clusters/customer-managed-encryption#use_cmek_with_cluster_data) for more information.When this key resource name is provided, the following job arguments of the following job types submitted to the cluster are encrypted using CMEK: FlinkJob args (https://cloud.google.com/dataproc/docs/reference/rest/v1/FlinkJob) HadoopJob args (https://cloud.google.com/dataproc/docs/reference/rest/v1/HadoopJob) SparkJob args (https://cloud.google.com/dataproc/docs/reference/rest/v1/SparkJob) SparkRJob args (https://cloud.google.com/dataproc/docs/reference/rest/v1/SparkRJob) PySparkJob args (https://cloud.google.com/dataproc/docs/reference/rest/v1/PySparkJob) SparkSqlJob (https://cloud.google.com/dataproc/docs/reference/rest/v1/SparkSqlJob) scriptVariables and queryList.queries HiveJob (https://cloud.google.com/dataproc/docs/reference/rest/v1/HiveJob) scriptVariables and queryList.queries PigJob (https://cloud.google.com/dataproc/docs/reference/rest/v1/PigJob) scriptVariables and queryList.queries PrestoJob (https://cloud.google.com/dataproc/docs/reference/rest/v1/PrestoJob) scriptVariables and queryList.queries",
           "type": "string"
         }
       },
@@ -3548,7 +4070,7 @@
       "id": "ExecutionConfig",
       "properties": {
         "idleTtl": {
-          "description": "Optional. The duration to keep the session alive while it's idling. Exceeding this threshold causes the session to terminate. This field cannot be set on a batch workload. Minimum value is 10 minutes; maximum value is 14 days (see JSON representation of Duration (https://developers.google.com/protocol-buffers/docs/proto3#json)). Defaults to 4 hours if not set. If both ttl and idle_ttl are specified for an interactive session, the conditions are treated as OR conditions: the workload will be terminated when it has been idle for idle_ttl or when ttl has been exceeded, whichever occurs first.",
+          "description": "Optional. Applies to sessions only. The duration to keep the session alive while it's idling. Exceeding this threshold causes the session to terminate. This field cannot be set on a batch workload. Minimum value is 10 minutes; maximum value is 14 days (see JSON representation of Duration (https://developers.google.com/protocol-buffers/docs/proto3#json)). Defaults to 1 hour if not set. If both ttl and idle_ttl are specified for an interactive session, the conditions are treated as OR conditions: the workload will be terminated when it has been idle for idle_ttl or when ttl has been exceeded, whichever occurs first.",
           "format": "google-duration",
           "type": "string"
         },
@@ -3580,7 +4102,7 @@
           "type": "string"
         },
         "ttl": {
-          "description": "Optional. The duration after which the workload will be terminated. When the workload exceeds this duration, it will be unconditionally terminated without waiting for ongoing work to finish. If ttl is not specified for a batch workload, the workload will be allowed to run until it exits naturally (or runs forever without exiting). If ttl is not specified for an interactive session, it defaults to 24h. If ttl is not specified for a batch that uses 2.1+ runtime version, it defaults to 4h. Minimum value is 10 minutes; maximum value is 14 days (see JSON representation of Duration (https://developers.google.com/protocol-buffers/docs/proto3#json)). If both ttl and idle_ttl are specified (for an interactive session), the conditions are treated as OR conditions: the workload will be terminated when it has been idle for idle_ttl or when ttl has been exceeded, whichever occurs first.",
+          "description": "Optional. The duration after which the workload will be terminated, specified as the JSON representation for Duration (https://protobuf.dev/programming-guides/proto3/#json). When the workload exceeds this duration, it will be unconditionally terminated without waiting for ongoing work to finish. If ttl is not specified for a batch workload, the workload will be allowed to run until it exits naturally (or run forever without exiting). If ttl is not specified for an interactive session, it defaults to 24 hours. If ttl is not specified for a batch that uses 2.1+ runtime version, it defaults to 4 hours. Minimum value is 10 minutes; maximum value is 14 days. If both ttl and idle_ttl are specified (for an interactive session), the conditions are treated as OR conditions: the workload will be terminated when it has been idle for idle_ttl or when ttl has been exceeded, whichever occurs first.",
           "format": "google-duration",
           "type": "string"
         }
@@ -3610,6 +4132,50 @@
       },
       "type": "object"
     },
+    "FlinkJob": {
+      "description": "A Dataproc job for running Apache Flink applications on YARN.",
+      "id": "FlinkJob",
+      "properties": {
+        "args": {
+          "description": "Optional. The arguments to pass to the driver. Do not include arguments, such as --conf, that can be set as job properties, since a collision might occur that causes an incorrect job submission.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "jarFileUris": {
+          "description": "Optional. HCFS URIs of jar files to add to the CLASSPATHs of the Flink driver and tasks.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "loggingConfig": {
+          "$ref": "LoggingConfig",
+          "description": "Optional. The runtime log config for job execution."
+        },
+        "mainClass": {
+          "description": "The name of the driver's main class. The jar file that contains the class must be in the default CLASSPATH or specified in jarFileUris.",
+          "type": "string"
+        },
+        "mainJarFileUri": {
+          "description": "The HCFS URI of the jar file that contains the main class.",
+          "type": "string"
+        },
+        "properties": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Optional. A mapping of property names to values, used to configure Flink. Properties that conflict with values set by the Dataproc API might beoverwritten. Can include properties set in/etc/flink/conf/flink-defaults.conf and classes in user code.",
+          "type": "object"
+        },
+        "savepointUri": {
+          "description": "Optional. HCFS URI of the savepoint, which contains the last saved progress for starting the current job.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "GceClusterConfig": {
       "description": "Common config settings for resources of Compute Engine cluster instances, applicable to all instances in the cluster.",
       "id": "GceClusterConfig",
@@ -3619,14 +4185,14 @@
           "description": "Optional. Confidential Instance Config for clusters using Confidential VMs (https://cloud.google.com/compute/confidential-vm/docs)."
         },
         "internalIpOnly": {
-          "description": "Optional. If true, all instances in the cluster will only have internal IP addresses. By default, clusters are not restricted to internal IP addresses, and will have ephemeral external IP addresses assigned to each instance. This internal_ip_only restriction can only be enabled for subnetwork enabled networks, and all off-cluster dependencies must be configured to be accessible without external IP addresses.",
+          "description": "Optional. This setting applies to subnetwork-enabled networks. It is set to true by default in clusters created with image versions 2.2.x.When set to true: All cluster VMs have internal IP addresses. Google Private Access (https://cloud.google.com/vpc/docs/private-google-access) must be enabled to access Dataproc and other Google Cloud APIs. Off-cluster dependencies must be configured to be accessible without external IP addresses.When set to false: Cluster VMs are not restricted to internal IP addresses. Ephemeral external IP addresses are assigned to each cluster VM.",
           "type": "boolean"
         },
         "metadata": {
           "additionalProperties": {
             "type": "string"
           },
-          "description": "The Compute Engine metadata entries to add to all instances (see Project and instance metadata (https://cloud.google.com/compute/docs/storing-retrieving-metadata#project_and_instance_metadata)).",
+          "description": "Optional. The Compute Engine metadata entries to add to all instances (see Project and instance metadata (https://cloud.google.com/compute/docs/storing-retrieving-metadata#project_and_instance_metadata)).",
           "type": "object"
         },
         "networkUri": {
@@ -3723,6 +4289,7 @@
         },
         "namespacedGkeDeploymentTarget": {
           "$ref": "NamespacedGkeDeploymentTarget",
+          "deprecated": true,
           "description": "Optional. Deprecated. Use gkeClusterTarget. Used only for the deprecated beta. A target for the deployment."
         },
         "nodePoolTarget": {
@@ -3869,6 +4436,17 @@
       },
       "type": "object"
     },
+    "GoogleCloudDataprocV1WorkflowTemplateEncryptionConfig": {
+      "description": "Encryption settings for encrypting workflow template job arguments.",
+      "id": "GoogleCloudDataprocV1WorkflowTemplateEncryptionConfig",
+      "properties": {
+        "kmsKey": {
+          "description": "Optional. The Cloud KMS key name to use for encrypting workflow template job arguments.When this this key is provided, the following workflow template job arguments (https://cloud.google.com/dataproc/docs/concepts/workflows/use-workflows#adding_jobs_to_a_template), if present, are CMEK encrypted (https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/customer-managed-encryption#use_cmek_with_workflow_template_data): FlinkJob args (https://cloud.google.com/dataproc/docs/reference/rest/v1/FlinkJob) HadoopJob args (https://cloud.google.com/dataproc/docs/reference/rest/v1/HadoopJob) SparkJob args (https://cloud.google.com/dataproc/docs/reference/rest/v1/SparkJob) SparkRJob args (https://cloud.google.com/dataproc/docs/reference/rest/v1/SparkRJob) PySparkJob args (https://cloud.google.com/dataproc/docs/reference/rest/v1/PySparkJob) SparkSqlJob (https://cloud.google.com/dataproc/docs/reference/rest/v1/SparkSqlJob) scriptVariables and queryList.queries HiveJob (https://cloud.google.com/dataproc/docs/reference/rest/v1/HiveJob) scriptVariables and queryList.queries PigJob (https://cloud.google.com/dataproc/docs/reference/rest/v1/PigJob) scriptVariables and queryList.queries PrestoJob (https://cloud.google.com/dataproc/docs/reference/rest/v1/PrestoJob) scriptVariables and queryList.queries",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "HadoopJob": {
       "description": "A Dataproc job for running Apache Hadoop MapReduce (https://hadoop.apache.org/docs/current/hadoop-mapreduce-client/hadoop-mapreduce-client-core/MapReduceTutorial.html) jobs on Apache Hadoop YARN (https://hadoop.apache.org/docs/r2.7.1/hadoop-yarn/hadoop-yarn-site/YARN.html).",
       "id": "HadoopJob",
@@ -3881,7 +4459,7 @@
           "type": "array"
         },
         "args": {
-          "description": "Optional. The arguments to pass to the driver. Do not include arguments, such as -libjars or -Dfoo=bar, that can be set as job properties, since a collision may occur that causes an incorrect job submission.",
+          "description": "Optional. The arguments to pass to the driver. Do not include arguments, such as -libjars or -Dfoo=bar, that can be set as job properties, since a collision might occur that causes an incorrect job submission.",
           "items": {
             "type": "string"
           },
@@ -3917,7 +4495,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Optional. A mapping of property names to values, used to configure Hadoop. Properties that conflict with values set by the Dataproc API may be overwritten. Can include properties set in /etc/hadoop/conf/*-site and classes in user code.",
+          "description": "Optional. A mapping of property names to values, used to configure Hadoop. Properties that conflict with values set by the Dataproc API might be overwritten. Can include properties set in /etc/hadoop/conf/*-site and classes in user code.",
           "type": "object"
         }
       },
@@ -3942,7 +4520,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Optional. A mapping of property names and values, used to configure Hive. Properties that conflict with values set by the Dataproc API may be overwritten. Can include properties set in /etc/hadoop/conf/*-site.xml, /etc/hive/conf/hive-site.xml, and classes in user code.",
+          "description": "Optional. A mapping of property names and values, used to configure Hive. Properties that conflict with values set by the Dataproc API might be overwritten. Can include properties set in /etc/hadoop/conf/*-site.xml, /etc/hive/conf/hive-site.xml, and classes in user code.",
           "type": "object"
         },
         "queryFileUri": {
@@ -3992,6 +4570,28 @@
       },
       "type": "object"
     },
+    "InstanceFlexibilityPolicy": {
+      "description": "Instance flexibility Policy allowing a mixture of VM shapes and provisioning models.",
+      "id": "InstanceFlexibilityPolicy",
+      "properties": {
+        "instanceSelectionList": {
+          "description": "Optional. List of instance selection options that the group will use when creating new VMs.",
+          "items": {
+            "$ref": "InstanceSelection"
+          },
+          "type": "array"
+        },
+        "instanceSelectionResults": {
+          "description": "Output only. A list of instance selection results in the group.",
+          "items": {
+            "$ref": "InstanceSelectionResult"
+          },
+          "readOnly": true,
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
     "InstanceGroupAutoscalingPolicyConfig": {
       "description": "Configuration for the size bounds of an instance group, including its proportional size to other groups.",
       "id": "InstanceGroupAutoscalingPolicyConfig",
@@ -4033,6 +4633,10 @@
           "description": "Optional. The Compute Engine image resource used for cluster instances.The URI can represent an image or image family.Image examples: https://www.googleapis.com/compute/v1/projects/[project_id]/global/images/[image-id] projects/[project_id]/global/images/[image-id] image-idImage family examples. Dataproc will use the most recent image from the family: https://www.googleapis.com/compute/v1/projects/[project_id]/global/images/family/[custom-image-family-name] projects/[project_id]/global/images/family/[custom-image-family-name]If the URI is unspecified, it will be inferred from SoftwareConfig.image_version or the system default.",
           "type": "string"
         },
+        "instanceFlexibilityPolicy": {
+          "$ref": "InstanceFlexibilityPolicy",
+          "description": "Optional. Instance flexibility Policy allowing a mixture of VM shapes and provisioning models."
+        },
         "instanceNames": {
           "description": "Output only. The list of instance names. Dataproc derives the names from cluster_name, num_instances, and the instance group.",
           "items": {
@@ -4067,6 +4671,11 @@
           "description": "Optional. Specifies the minimum cpu platform for the Instance Group. See Dataproc -\u003e Minimum CPU Platform (https://cloud.google.com/dataproc/docs/concepts/compute/dataproc-min-cpu).",
           "type": "string"
         },
+        "minNumInstances": {
+          "description": "Optional. The minimum number of primary worker instances to create. If min_num_instances is set, cluster creation will succeed if the number of primary workers created is at least equal to the min_num_instances number.Example: Cluster creation request with num_instances = 5 and min_num_instances = 3: If 4 VMs are created and 1 instance fails, the failed VM is deleted. The cluster is resized to 4 instances and placed in a RUNNING state. If 2 instances are created and 3 instances fail, the cluster in placed in an ERROR state. The failed VMs are not deleted.",
+          "format": "int32",
+          "type": "integer"
+        },
         "numInstances": {
           "description": "Optional. The number of VM instances in the instance group. For HA cluster master_config groups, must be set to 3. For standard cluster master_config groups, must be set to 1.",
           "format": "int32",
@@ -4087,6 +4696,10 @@
             "Instances are Spot VMs (https://cloud.google.com/compute/docs/instances/spot).This option is allowed only for secondary worker (https://cloud.google.com/dataproc/docs/concepts/compute/secondary-vms) groups. Spot VMs are the latest version of preemptible VMs (https://cloud.google.com/compute/docs/instances/preemptible), and provide additional features."
           ],
           "type": "string"
+        },
+        "startupConfig": {
+          "$ref": "StartupConfig",
+          "description": "Optional. Configuration to handle the startup of instances during cluster create and update process."
         }
       },
       "type": "object"
@@ -4110,6 +4723,43 @@
         "publicKey": {
           "description": "The public RSA key used for sharing data with this instance.",
           "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "InstanceSelection": {
+      "description": "Defines machines types and a rank to which the machines types belong.",
+      "id": "InstanceSelection",
+      "properties": {
+        "machineTypes": {
+          "description": "Optional. Full machine-type names, e.g. \"n1-standard-16\".",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "rank": {
+          "description": "Optional. Preference of this instance selection. Lower number means higher preference. Dataproc will first try to create a VM based on the machine-type with priority rank and fallback to next rank based on availability. Machine types and instance selections with the same priority have the same preference.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "InstanceSelectionResult": {
+      "description": "Defines a mapping from machine types to the number of VMs that are created with each machine type.",
+      "id": "InstanceSelectionResult",
+      "properties": {
+        "machineType": {
+          "description": "Output only. Full machine-type names, e.g. \"n1-standard-16\".",
+          "readOnly": true,
+          "type": "string"
+        },
+        "vmCount": {
+          "description": "Output only. Number of VM provisioned with the machine_type.",
+          "format": "int32",
+          "readOnly": true,
+          "type": "integer"
         }
       },
       "type": "object"
@@ -4164,7 +4814,7 @@
           "type": "boolean"
         },
         "driverControlFilesUri": {
-          "description": "Output only. If present, the location of miscellaneous control files which may be used as part of job setup and handling. If not present, control files may be placed in the same location as driver_output_uri.",
+          "description": "Output only. If present, the location of miscellaneous control files which can be used as part of job setup and handling. If not present, control files might be placed in the same location as driver_output_uri.",
           "readOnly": true,
           "type": "string"
         },
@@ -4177,6 +4827,10 @@
           "$ref": "DriverSchedulingConfig",
           "description": "Optional. Driver scheduling configuration."
         },
+        "flinkJob": {
+          "$ref": "FlinkJob",
+          "description": "Optional. Job is a Flink job."
+        },
         "hadoopJob": {
           "$ref": "HadoopJob",
           "description": "Optional. Job is a Hadoop job."
@@ -4186,7 +4840,7 @@
           "description": "Optional. Job is a Hive job."
         },
         "jobUuid": {
-          "description": "Output only. A UUID that uniquely identifies a job within the project over time. This is in contrast to a user-settable reference.job_id that may be reused over time.",
+          "description": "Output only. A UUID that uniquely identifies a job within the project over time. This is in contrast to a user-settable reference.job_id that might be reused over time.",
           "readOnly": true,
           "type": "string"
         },
@@ -4194,7 +4848,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Optional. The labels to associate with this job. Label keys must contain 1 to 63 characters, and must conform to RFC 1035 (https://www.ietf.org/rfc/rfc1035.txt). Label values may be empty, but, if present, must contain 1 to 63 characters, and must conform to RFC 1035 (https://www.ietf.org/rfc/rfc1035.txt). No more than 32 labels can be associated with a job.",
+          "description": "Optional. The labels to associate with this job. Label keys must contain 1 to 63 characters, and must conform to RFC 1035 (https://www.ietf.org/rfc/rfc1035.txt). Label values can be empty, but, if present, must contain 1 to 63 characters, and must conform to RFC 1035 (https://www.ietf.org/rfc/rfc1035.txt). No more than 32 labels can be associated with a job.",
           "type": "object"
         },
         "pigJob": {
@@ -4235,7 +4889,7 @@
         },
         "status": {
           "$ref": "JobStatus",
-          "description": "Output only. The job status. Additional application-specific status information may be contained in the type_job and yarn_applications fields.",
+          "description": "Output only. The job status. Additional application-specific status information might be contained in the type_job and yarn_applications fields.",
           "readOnly": true
         },
         "statusHistory": {
@@ -4251,7 +4905,7 @@
           "description": "Optional. Job is a Trino job."
         },
         "yarnApplications": {
-          "description": "Output only. The collection of YARN applications spun up by this job.Beta Feature: This report is available for testing purposes only. It may be changed before final release.",
+          "description": "Output only. The collection of YARN applications spun up by this job.Beta Feature: This report is available for testing purposes only. It might be changed before final release.",
           "items": {
             "$ref": "YarnApplication"
           },
@@ -4332,12 +4986,12 @@
       "id": "JobScheduling",
       "properties": {
         "maxFailuresPerHour": {
-          "description": "Optional. Maximum number of times per hour a driver may be restarted as a result of driver exiting with non-zero code before job is reported failed.A job may be reported as thrashing if the driver exits with a non-zero code four times within a 10-minute window.Maximum value is 10.Note: This restartable job option is not supported in Dataproc workflow templates (https://cloud.google.com/dataproc/docs/concepts/workflows/using-workflows#adding_jobs_to_a_template).",
+          "description": "Optional. Maximum number of times per hour a driver can be restarted as a result of driver exiting with non-zero code before job is reported failed.A job might be reported as thrashing if the driver exits with a non-zero code four times within a 10-minute window.Maximum value is 10.Note: This restartable job option is not supported in Dataproc workflow templates (https://cloud.google.com/dataproc/docs/concepts/workflows/using-workflows#adding_jobs_to_a_template).",
           "format": "int32",
           "type": "integer"
         },
         "maxFailuresTotal": {
-          "description": "Optional. Maximum total number of times a driver may be restarted as a result of the driver exiting with a non-zero code. After the maximum number is reached, the job will be reported as failed.Maximum value is 240.Note: Currently, this restartable job option is not supported in Dataproc workflow templates (https://cloud.google.com/dataproc/docs/concepts/workflows/using-workflows#adding_jobs_to_a_template).",
+          "description": "Optional. Maximum total number of times a driver can be restarted as a result of the driver exiting with a non-zero code. After the maximum number is reached, the job will be reported as failed.Maximum value is 240.Note: Currently, this restartable job option is not supported in Dataproc workflow templates (https://cloud.google.com/dataproc/docs/concepts/workflows/using-workflows#adding_jobs_to_a_template).",
           "format": "int32",
           "type": "integer"
         }
@@ -4399,10 +5053,35 @@
           "enumDescriptions": [
             "The job substate is unknown.",
             "The Job is submitted to the agent.Applies to RUNNING state.",
-            "The Job has been received and is awaiting execution (it may be waiting for a condition to be met). See the \"details\" field for the reason for the delay.Applies to RUNNING state.",
-            "The agent-reported status is out of date, which may be caused by a loss of communication between the agent and Dataproc. If the agent does not send a timely update, the job will fail.Applies to RUNNING state."
+            "The Job has been received and is awaiting execution (it might be waiting for a condition to be met). See the \"details\" field for the reason for the delay.Applies to RUNNING state.",
+            "The agent-reported status is out of date, which can be caused by a loss of communication between the agent and Dataproc. If the agent does not send a timely update, the job will fail.Applies to RUNNING state."
           ],
           "readOnly": true,
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "JupyterConfig": {
+      "description": "Jupyter configuration for an interactive session.",
+      "id": "JupyterConfig",
+      "properties": {
+        "displayName": {
+          "description": "Optional. Display name, shown in the Jupyter kernelspec card.",
+          "type": "string"
+        },
+        "kernel": {
+          "description": "Optional. Kernel",
+          "enum": [
+            "KERNEL_UNSPECIFIED",
+            "PYTHON",
+            "SCALA"
+          ],
+          "enumDescriptions": [
+            "The kernel is unknown.",
+            "Python kernel.",
+            "Scala kernel."
+          ],
           "type": "string"
         }
       },
@@ -4449,7 +5128,7 @@
           "type": "string"
         },
         "kmsKeyUri": {
-          "description": "Optional. The uri of the KMS key used to encrypt various sensitive files.",
+          "description": "Optional. The URI of the KMS key used to encrypt sensitive files.",
           "type": "string"
         },
         "realm": {
@@ -4579,6 +5258,14 @@
         "nextPageToken": {
           "description": "A token, which can be sent as page_token to retrieve the next page. If this field is omitted, there are no subsequent pages.",
           "type": "string"
+        },
+        "unreachable": {
+          "description": "Output only. List of Batches that could not be included in the response. Attempting to get one of these resources may indicate why it was not included in the list response.",
+          "items": {
+            "type": "string"
+          },
+          "readOnly": true,
+          "type": "array"
         }
       },
       "type": "object"
@@ -4618,6 +5305,14 @@
         "nextPageToken": {
           "description": "Optional. This token is included in the response if there are more results to fetch. To fetch additional results, provide this value as the page_token in a subsequent ListJobsRequest.",
           "type": "string"
+        },
+        "unreachable": {
+          "description": "Output only. List of jobs with kms_key-encrypted parameters that could not be decrypted. A response to a jobs.get request may indicate the reason for the decryption failure for a specific job.",
+          "items": {
+            "type": "string"
+          },
+          "readOnly": true,
+          "type": "array"
         }
       },
       "type": "object"
@@ -4640,6 +5335,44 @@
       },
       "type": "object"
     },
+    "ListSessionTemplatesResponse": {
+      "description": "A list of session templates.",
+      "id": "ListSessionTemplatesResponse",
+      "properties": {
+        "nextPageToken": {
+          "description": "A token, which can be sent as page_token to retrieve the next page. If this field is omitted, there are no subsequent pages.",
+          "type": "string"
+        },
+        "sessionTemplates": {
+          "description": "Output only. Session template list",
+          "items": {
+            "$ref": "SessionTemplate"
+          },
+          "readOnly": true,
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "ListSessionsResponse": {
+      "description": "A list of interactive sessions.",
+      "id": "ListSessionsResponse",
+      "properties": {
+        "nextPageToken": {
+          "description": "A token, which can be sent as page_token, to retrieve the next page. If this field is omitted, there are no subsequent pages.",
+          "type": "string"
+        },
+        "sessions": {
+          "description": "Output only. The sessions from the specified collection.",
+          "items": {
+            "$ref": "Session"
+          },
+          "readOnly": true,
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
     "ListWorkflowTemplatesResponse": {
       "description": "A response to a request to list workflow templates in a project.",
       "id": "ListWorkflowTemplatesResponse",
@@ -4653,6 +5386,14 @@
           "description": "Output only. WorkflowTemplates list.",
           "items": {
             "$ref": "WorkflowTemplate"
+          },
+          "readOnly": true,
+          "type": "array"
+        },
+        "unreachable": {
+          "description": "Output only. List of workflow templates that could not be included in the response. Attempting to get one of these resources may indicate why it was not included in the list response.",
+          "items": {
+            "type": "string"
           },
           "readOnly": true,
           "type": "array"
@@ -4690,7 +5431,7 @@
             ],
             "type": "string"
           },
-          "description": "The per-package log levels for the driver. This may include \"root\" package name to configure rootLogger. Examples: - 'com.google = FATAL' - 'root = INFO' - 'org.apache = DEBUG'",
+          "description": "The per-package log levels for the driver. This can include \"root\" package name to configure rootLogger. Examples: - 'com.google = FATAL' - 'root = INFO' - 'org.apache = DEBUG'",
           "type": "object"
         }
       },
@@ -4724,6 +5465,11 @@
       "properties": {
         "instanceGroupManagerName": {
           "description": "Output only. The name of the Instance Group Manager for this group.",
+          "readOnly": true,
+          "type": "string"
+        },
+        "instanceGroupManagerUri": {
+          "description": "Output only. The partial URI to the instance group manager for this group. E.g. projects/my-project/regions/us-central1/instanceGroupManagers/my-igm.",
           "readOnly": true,
           "type": "string"
         },
@@ -4767,7 +5513,8 @@
             "YARN",
             "SPARK_HISTORY_SERVER",
             "HIVESERVER2",
-            "HIVEMETASTORE"
+            "HIVEMETASTORE",
+            "FLINK"
           ],
           "enumDescriptions": [
             "Required unspecified metric source.",
@@ -4777,7 +5524,8 @@
             "YARN metric source.",
             "Spark History Server metric source.",
             "Hiveserver2 metric source.",
-            "hivemetastore metric source"
+            "hivemetastore metric source",
+            "flink metric source"
           ],
           "type": "string"
         }
@@ -4785,6 +5533,7 @@
       "type": "object"
     },
     "NamespacedGkeDeploymentTarget": {
+      "deprecated": true,
       "description": "Deprecated. Used only for the deprecated beta. A full, namespace-isolated deployment target for an existing GKE cluster.",
       "id": "NamespacedGkeDeploymentTarget",
       "properties": {
@@ -4881,14 +5630,22 @@
             "CREATE",
             "UPDATE",
             "DELETE",
-            "RESIZE"
+            "RESIZE",
+            "REPAIR",
+            "UPDATE_LABELS",
+            "START",
+            "STOP"
           ],
           "enumDescriptions": [
             "Node group operation type is unknown.",
             "Create node group operation type.",
             "Update node group operation type.",
             "Delete node group operation type.",
-            "Resize node group operation type."
+            "Resize node group operation type.",
+            "Repair node group operation type.",
+            "Update node group label operation type.",
+            "Start node group operation type.",
+            "Stop node group operation type."
           ],
           "type": "string"
         },
@@ -4991,7 +5748,7 @@
             "description": "Properties of the object. Contains field @type with type URL.",
             "type": "any"
           },
-          "description": "The normal response of the operation in case of success. If the original method returns no data on success, such as Delete, the response is google.protobuf.Empty. If the original method is standard Get/Create/Update, the response should be the resource. For other methods, the response should have the type XxxResponse, where Xxx is the original method name. For example, if the original method name is TakeSnapshot(), the inferred response type is TakeSnapshotResponse.",
+          "description": "The normal, successful response of the operation. If the original method returns no data on success, such as Delete, the response is google.protobuf.Empty. If the original method is standard Get/Create/Update, the response should be the resource. For other methods, the response should have the type XxxResponse, where Xxx is the original method name. For example, if the original method name is TakeSnapshot(), the inferred response type is TakeSnapshotResponse.",
           "type": "object"
         }
       },
@@ -5001,6 +5758,10 @@
       "description": "A job executed by the workflow.",
       "id": "OrderedJob",
       "properties": {
+        "flinkJob": {
+          "$ref": "FlinkJob",
+          "description": "Optional. Job is a Flink job."
+        },
         "hadoopJob": {
           "$ref": "HadoopJob",
           "description": "Optional. Job is a Hadoop job."
@@ -5115,7 +5876,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Optional. A mapping of property names to values, used to configure Pig. Properties that conflict with values set by the Dataproc API may be overwritten. Can include properties set in /etc/hadoop/conf/*-site.xml, /etc/pig/conf/pig.properties, and classes in user code.",
+          "description": "Optional. A mapping of property names to values, used to configure Pig. Properties that conflict with values set by the Dataproc API might be overwritten. Can include properties set in /etc/hadoop/conf/*-site.xml, /etc/pig/conf/pig.properties, and classes in user code.",
           "type": "object"
         },
         "queryFileUri": {
@@ -5197,6 +5958,17 @@
         "queryList": {
           "$ref": "QueryList",
           "description": "A list of queries."
+        }
+      },
+      "type": "object"
+    },
+    "PyPiRepositoryConfig": {
+      "description": "Configuration for PyPi repository",
+      "id": "PyPiRepositoryConfig",
+      "properties": {
+        "pypiRepository": {
+          "description": "Optional. PyPi repository address",
+          "type": "string"
         }
       },
       "type": "object"
@@ -5291,7 +6063,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Optional. A mapping of property names to values, used to configure PySpark. Properties that conflict with values set by the Dataproc API may be overwritten. Can include properties set in /etc/spark/conf/spark-defaults.conf and classes in user code.",
+          "description": "Optional. A mapping of property names to values, used to configure PySpark. Properties that conflict with values set by the Dataproc API might be overwritten. Can include properties set in /etc/spark/conf/spark-defaults.conf and classes in user code.",
           "type": "object"
         },
         "pythonFileUris": {
@@ -5363,6 +6135,46 @@
       },
       "type": "object"
     },
+    "RepairNodeGroupRequest": {
+      "id": "RepairNodeGroupRequest",
+      "properties": {
+        "instanceNames": {
+          "description": "Required. Name of instances to be repaired. These instances must belong to specified node pool.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "repairAction": {
+          "description": "Required. Repair action to take on specified resources of the node pool.",
+          "enum": [
+            "REPAIR_ACTION_UNSPECIFIED",
+            "REPLACE"
+          ],
+          "enumDescriptions": [
+            "No action will be taken by default.",
+            "replace the specified list of nodes."
+          ],
+          "type": "string"
+        },
+        "requestId": {
+          "description": "Optional. A unique ID used to identify the request. If the server receives two RepairNodeGroupRequest with the same ID, the second request is ignored and the first google.longrunning.Operation created and stored in the backend is returned.Recommendation: Set this value to a UUID (https://en.wikipedia.org/wiki/Universally_unique_identifier).The ID must contain only letters (a-z, A-Z), numbers (0-9), underscores (_), and hyphens (-). The maximum length is 40 characters.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "RepositoryConfig": {
+      "description": "Configuration for dependency repositories",
+      "id": "RepositoryConfig",
+      "properties": {
+        "pypiRepositoryConfig": {
+          "$ref": "PyPiRepositoryConfig",
+          "description": "Optional. Configuration for PyPi repository."
+        }
+      },
+      "type": "object"
+    },
     "ReservationAffinity": {
       "description": "Reservation Affinity for consuming Zonal reservation.",
       "id": "ReservationAffinity",
@@ -5406,6 +6218,10 @@
           "format": "google-duration",
           "type": "string"
         },
+        "parentOperationId": {
+          "description": "Optional. operation id of the parent operation sending the resize request",
+          "type": "string"
+        },
         "requestId": {
           "description": "Optional. A unique ID used to identify the request. If the server receives two ResizeNodeGroupRequest (https://cloud.google.com/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#google.cloud.dataproc.v1.ResizeNodeGroupRequests) with the same ID, the second request is ignored and the first google.longrunning.Operation created and stored in the backend is returned.Recommendation: Set this value to a UUID (https://en.wikipedia.org/wiki/Universally_unique_identifier).The ID must contain only letters (a-z, A-Z), numbers (0-9), underscores (_), and hyphens (-). The maximum length is 40 characters.",
           "type": "string"
@@ -5422,6 +6238,14 @@
       "description": "Runtime configuration for a workload.",
       "id": "RuntimeConfig",
       "properties": {
+        "autotuningConfig": {
+          "$ref": "AutotuningConfig",
+          "description": "Optional. Autotuning configuration of the workload."
+        },
+        "cohort": {
+          "description": "Optional. Cohort identifier. Identifies families of the workloads having the same shape, e.g. daily ETL jobs.",
+          "type": "string"
+        },
         "containerImage": {
           "description": "Optional. Optional custom container image for the job runtime environment. If not specified, a default container image will be used.",
           "type": "string"
@@ -5432,6 +6256,10 @@
           },
           "description": "Optional. A mapping of property names to values, which are used to configure workload execution.",
           "type": "object"
+        },
+        "repositoryConfig": {
+          "$ref": "RepositoryConfig",
+          "description": "Optional. Dependency repository configuration."
         },
         "version": {
           "description": "Optional. Version of the batch runtime.",
@@ -5446,7 +6274,7 @@
       "properties": {
         "approximateUsage": {
           "$ref": "UsageMetrics",
-          "description": "Output only. Approximate workload resource usage calculated after workload finishes (see Dataproc Serverless pricing (https://cloud.google.com/dataproc-serverless/pricing)).",
+          "description": "Output only. Approximate workload resource usage, calculated when the workload completes (see Dataproc Serverless pricing (https://cloud.google.com/dataproc-serverless/pricing)).Note: This metric calculation may change in the future, for example, to capture cumulative workload resource consumption during workload execution (see the Dataproc Serverless release notes (https://cloud.google.com/dataproc-serverless/docs/release-notes) for announcements, changes, fixes and other Dataproc developments).",
           "readOnly": true
         },
         "currentUsage": {
@@ -5486,6 +6314,105 @@
         "kerberosConfig": {
           "$ref": "KerberosConfig",
           "description": "Optional. Kerberos related configuration."
+        }
+      },
+      "type": "object"
+    },
+    "Session": {
+      "description": "A representation of a session.",
+      "id": "Session",
+      "properties": {
+        "createTime": {
+          "description": "Output only. The time when the session was created.",
+          "format": "google-datetime",
+          "readOnly": true,
+          "type": "string"
+        },
+        "creator": {
+          "description": "Output only. The email address of the user who created the session.",
+          "readOnly": true,
+          "type": "string"
+        },
+        "environmentConfig": {
+          "$ref": "EnvironmentConfig",
+          "description": "Optional. Environment configuration for the session execution."
+        },
+        "jupyterSession": {
+          "$ref": "JupyterConfig",
+          "description": "Optional. Jupyter session config."
+        },
+        "labels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Optional. The labels to associate with the session. Label keys must contain 1 to 63 characters, and must conform to RFC 1035 (https://www.ietf.org/rfc/rfc1035.txt). Label values may be empty, but, if present, must contain 1 to 63 characters, and must conform to RFC 1035 (https://www.ietf.org/rfc/rfc1035.txt). No more than 32 labels can be associated with a session.",
+          "type": "object"
+        },
+        "name": {
+          "description": "Required. The resource name of the session.",
+          "type": "string"
+        },
+        "runtimeConfig": {
+          "$ref": "RuntimeConfig",
+          "description": "Optional. Runtime configuration for the session execution."
+        },
+        "runtimeInfo": {
+          "$ref": "RuntimeInfo",
+          "description": "Output only. Runtime information about session execution.",
+          "readOnly": true
+        },
+        "sessionTemplate": {
+          "description": "Optional. The session template used by the session.Only resource names, including project ID and location, are valid.Example: * https://www.googleapis.com/compute/v1/projects/[project_id]/locations/[dataproc_region]/sessionTemplates/[template_id] * projects/[project_id]/locations/[dataproc_region]/sessionTemplates/[template_id]The template must be in the same project and Dataproc region as the session.",
+          "type": "string"
+        },
+        "state": {
+          "description": "Output only. A state of the session.",
+          "enum": [
+            "STATE_UNSPECIFIED",
+            "CREATING",
+            "ACTIVE",
+            "TERMINATING",
+            "TERMINATED",
+            "FAILED"
+          ],
+          "enumDescriptions": [
+            "The session state is unknown.",
+            "The session is created prior to running.",
+            "The session is running.",
+            "The session is terminating.",
+            "The session is terminated successfully.",
+            "The session is no longer running due to an error."
+          ],
+          "readOnly": true,
+          "type": "string"
+        },
+        "stateHistory": {
+          "description": "Output only. Historical state information for the session.",
+          "items": {
+            "$ref": "SessionStateHistory"
+          },
+          "readOnly": true,
+          "type": "array"
+        },
+        "stateMessage": {
+          "description": "Output only. Session state details, such as the failure description if the state is FAILED.",
+          "readOnly": true,
+          "type": "string"
+        },
+        "stateTime": {
+          "description": "Output only. The time when the session entered the current state.",
+          "format": "google-datetime",
+          "readOnly": true,
+          "type": "string"
+        },
+        "user": {
+          "description": "Optional. The email address of the user who owns the session.",
+          "type": "string"
+        },
+        "uuid": {
+          "description": "Output only. A session UUID (Unique Universal Identifier). The service generates this value when it creates the session.",
+          "readOnly": true,
+          "type": "string"
         }
       },
       "type": "object"
@@ -5545,6 +6472,101 @@
             "type": "string"
           },
           "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "SessionStateHistory": {
+      "description": "Historical state information.",
+      "id": "SessionStateHistory",
+      "properties": {
+        "state": {
+          "description": "Output only. The state of the session at this point in the session history.",
+          "enum": [
+            "STATE_UNSPECIFIED",
+            "CREATING",
+            "ACTIVE",
+            "TERMINATING",
+            "TERMINATED",
+            "FAILED"
+          ],
+          "enumDescriptions": [
+            "The session state is unknown.",
+            "The session is created prior to running.",
+            "The session is running.",
+            "The session is terminating.",
+            "The session is terminated successfully.",
+            "The session is no longer running due to an error."
+          ],
+          "readOnly": true,
+          "type": "string"
+        },
+        "stateMessage": {
+          "description": "Output only. Details about the state at this point in the session history.",
+          "readOnly": true,
+          "type": "string"
+        },
+        "stateStartTime": {
+          "description": "Output only. The time when the session entered the historical state.",
+          "format": "google-datetime",
+          "readOnly": true,
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "SessionTemplate": {
+      "description": "A representation of a session template.",
+      "id": "SessionTemplate",
+      "properties": {
+        "createTime": {
+          "description": "Output only. The time when the template was created.",
+          "format": "google-datetime",
+          "readOnly": true,
+          "type": "string"
+        },
+        "creator": {
+          "description": "Output only. The email address of the user who created the template.",
+          "readOnly": true,
+          "type": "string"
+        },
+        "description": {
+          "description": "Optional. Brief description of the template.",
+          "type": "string"
+        },
+        "environmentConfig": {
+          "$ref": "EnvironmentConfig",
+          "description": "Optional. Environment configuration for session execution."
+        },
+        "jupyterSession": {
+          "$ref": "JupyterConfig",
+          "description": "Optional. Jupyter session config."
+        },
+        "labels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Optional. Labels to associate with sessions created using this template. Label keys must contain 1 to 63 characters, and must conform to RFC 1035 (https://www.ietf.org/rfc/rfc1035.txt). Label values can be empty, but, if present, must contain 1 to 63 characters and conform to RFC 1035 (https://www.ietf.org/rfc/rfc1035.txt). No more than 32 labels can be associated with a session.",
+          "type": "object"
+        },
+        "name": {
+          "description": "Required. The resource name of the session template.",
+          "type": "string"
+        },
+        "runtimeConfig": {
+          "$ref": "RuntimeConfig",
+          "description": "Optional. Runtime configuration for session execution."
+        },
+        "updateTime": {
+          "description": "Output only. The time the template was last updated.",
+          "format": "google-datetime",
+          "readOnly": true,
+          "type": "string"
+        },
+        "uuid": {
+          "description": "Output only. A session template UUID (Unique Universal Identifier). The service generates this value when it creates the session template.",
+          "readOnly": true,
+          "type": "string"
         }
       },
       "type": "object"
@@ -5729,7 +6751,7 @@
           "description": "Optional. The runtime log config for job execution."
         },
         "mainClass": {
-          "description": "The name of the driver's main class. The jar file that contains the class must be in the default CLASSPATH or specified in jar_file_uris.",
+          "description": "The name of the driver's main class. The jar file that contains the class must be in the default CLASSPATH or specified in SparkJob.jar_file_uris.",
           "type": "string"
         },
         "mainJarFileUri": {
@@ -5740,7 +6762,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Optional. A mapping of property names to values, used to configure Spark. Properties that conflict with values set by the Dataproc API may be overwritten. Can include properties set in /etc/spark/conf/spark-defaults.conf and classes in user code.",
+          "description": "Optional. A mapping of property names to values, used to configure Spark. Properties that conflict with values set by the Dataproc API might be overwritten. Can include properties set in /etc/spark/conf/spark-defaults.conf and classes in user code.",
           "type": "object"
         }
       },
@@ -5815,7 +6837,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Optional. A mapping of property names to values, used to configure SparkR. Properties that conflict with values set by the Dataproc API may be overwritten. Can include properties set in /etc/spark/conf/spark-defaults.conf and classes in user code.",
+          "description": "Optional. A mapping of property names to values, used to configure SparkR. Properties that conflict with values set by the Dataproc API might be overwritten. Can include properties set in /etc/spark/conf/spark-defaults.conf and classes in user code.",
           "type": "object"
         }
       },
@@ -5865,7 +6887,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Optional. A mapping of property names to values, used to configure Spark SQL's SparkConf. Properties that conflict with values set by the Dataproc API may be overwritten.",
+          "description": "Optional. A mapping of property names to values, used to configure Spark SQL's SparkConf. Properties that conflict with values set by the Dataproc API might be overwritten.",
           "type": "object"
         },
         "queryFileUri": {
@@ -5894,6 +6916,10 @@
           "description": "Required. Timeout for Spark graceful decommissioning of spark workers. Specifies the duration to wait for spark worker to complete spark decommissioning tasks before forcefully removing workers. Only applicable to downscaling operations.Bounds: 0s, 1d.",
           "format": "google-duration",
           "type": "string"
+        },
+        "removeOnlyIdleWorkers": {
+          "description": "Optional. Remove only idle workers when scaling down cluster",
+          "type": "boolean"
         },
         "scaleDownFactor": {
           "description": "Required. Fraction of required executors to remove from Spark Serverless clusters. A scale-down factor of 1.0 will result in scaling down so that there are no more executors for the Spark Job.(more aggressive scaling). A scale-down factor closer to 0 will result in a smaller magnitude of scaling donw (less aggressive scaling).Bounds: 0.0, 1.0.",
@@ -5929,6 +6955,18 @@
         "requestId": {
           "description": "Optional. A unique ID used to identify the request. If the server receives two StartClusterRequest (https://cloud.google.com/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#google.cloud.dataproc.v1.StartClusterRequest)s with the same id, then the second request will be ignored and the first google.longrunning.Operation created and stored in the backend is returned.Recommendation: Set this value to a UUID (https://en.wikipedia.org/wiki/Universally_unique_identifier).The ID must contain only letters (a-z, A-Z), numbers (0-9), underscores (_), and hyphens (-). The maximum length is 40 characters.",
           "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "StartupConfig": {
+      "description": "Configuration to handle the startup of instances during cluster create and update process.",
+      "id": "StartupConfig",
+      "properties": {
+        "requiredRegistrationFraction": {
+          "description": "Optional. The config setting to enable cluster creation/ updation to be successful only after required_registration_fraction of instances are up and running. This configuration is applicable to only secondary workers for now. The cluster will fail if required_registration_fraction of instances are not available. This will include instance creation, agent registration, and service registration (if enabled).",
+          "format": "double",
+          "type": "number"
         }
       },
       "type": "object"
@@ -6057,6 +7095,17 @@
       },
       "type": "object"
     },
+    "TerminateSessionRequest": {
+      "description": "A request to terminate an interactive session.",
+      "id": "TerminateSessionRequest",
+      "properties": {
+        "requestId": {
+          "description": "Optional. A unique ID used to identify the request. If the service receives two TerminateSessionRequest (https://cloud.google.com/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#google.cloud.dataproc.v1.TerminateSessionRequest)s with the same ID, the second request is ignored.Recommendation: Set this value to a UUID (https://en.wikipedia.org/wiki/Universally_unique_identifier).The value must contain only letters (a-z, A-Z), numbers (0-9), underscores (_), and hyphens (-). The maximum length is 40 characters.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "TestIamPermissionsRequest": {
       "description": "Request message for TestIamPermissions method.",
       "id": "TestIamPermissionsRequest",
@@ -6130,6 +7179,15 @@
       "description": "Usage metrics represent approximate total resources consumed by a workload.",
       "id": "UsageMetrics",
       "properties": {
+        "acceleratorType": {
+          "description": "Optional. Accelerator type being used, if any",
+          "type": "string"
+        },
+        "milliAcceleratorSeconds": {
+          "description": "Optional. Accelerator usage in (milliAccelerator x seconds) (see Dataproc Serverless pricing (https://cloud.google.com/dataproc-serverless/pricing)).",
+          "format": "int64",
+          "type": "string"
+        },
         "milliDcuSeconds": {
           "description": "Optional. DCU (Dataproc Compute Units) usage in (milliDCU x seconds) (see Dataproc Serverless pricing (https://cloud.google.com/dataproc-serverless/pricing)).",
           "format": "int64",
@@ -6144,16 +7202,35 @@
       "type": "object"
     },
     "UsageSnapshot": {
-      "description": "The usage snaphot represents the resources consumed by a workload at a specified time.",
+      "description": "The usage snapshot represents the resources consumed by a workload at a specified time.",
       "id": "UsageSnapshot",
       "properties": {
+        "acceleratorType": {
+          "description": "Optional. Accelerator type being used, if any",
+          "type": "string"
+        },
+        "milliAccelerator": {
+          "description": "Optional. Milli (one-thousandth) accelerator. (see Dataproc Serverless pricing (https://cloud.google.com/dataproc-serverless/pricing))",
+          "format": "int64",
+          "type": "string"
+        },
         "milliDcu": {
           "description": "Optional. Milli (one-thousandth) Dataproc Compute Units (DCUs) (see Dataproc Serverless pricing (https://cloud.google.com/dataproc-serverless/pricing)).",
           "format": "int64",
           "type": "string"
         },
+        "milliDcuPremium": {
+          "description": "Optional. Milli (one-thousandth) Dataproc Compute Units (DCUs) charged at premium tier (see Dataproc Serverless pricing (https://cloud.google.com/dataproc-serverless/pricing)).",
+          "format": "int64",
+          "type": "string"
+        },
         "shuffleStorageGb": {
           "description": "Optional. Shuffle Storage in gigabytes (GB). (see Dataproc Serverless pricing (https://cloud.google.com/dataproc-serverless/pricing))",
+          "format": "int64",
+          "type": "string"
+        },
+        "shuffleStorageGbPremium": {
+          "description": "Optional. Shuffle Storage in gigabytes (GB) charged at premium tier. (see Dataproc Serverless pricing (https://cloud.google.com/dataproc-serverless/pricing))",
           "format": "int64",
           "type": "string"
         },
@@ -6375,6 +7452,10 @@
           "description": "Optional. Timeout duration for the DAG of jobs, expressed in seconds (see JSON representation of duration (https://developers.google.com/protocol-buffers/docs/proto3#json)). The timeout duration must be from 10 minutes (\"600s\") to 24 hours (\"86400s\"). The timer begins when the first job is submitted. If the workflow is running at the end of the timeout period, any remaining jobs are cancelled, the workflow is ended, and if the workflow was running on a managed cluster, the cluster is deleted.",
           "format": "google-duration",
           "type": "string"
+        },
+        "encryptionConfig": {
+          "$ref": "GoogleCloudDataprocV1WorkflowTemplateEncryptionConfig",
+          "description": "Optional. Encryption settings for encrypting workflow template job arguments."
         },
         "id": {
           "type": "string"

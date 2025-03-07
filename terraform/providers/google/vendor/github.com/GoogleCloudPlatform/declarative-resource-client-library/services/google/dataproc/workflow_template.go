@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -249,7 +249,7 @@ func (r *WorkflowTemplatePlacement) String() string {
 func (r *WorkflowTemplatePlacement) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -301,7 +301,7 @@ func (r *WorkflowTemplatePlacementManagedCluster) String() string {
 func (r *WorkflowTemplatePlacementManagedCluster) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -383,7 +383,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfig) String() string {
 func (r *WorkflowTemplatePlacementManagedClusterConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -462,7 +462,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfig) String()
 func (r *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -514,7 +514,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservatio
 func (r *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservationAffinity) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -560,7 +560,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigNodeGroupA
 func (r *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigNodeGroupAffinity) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -612,7 +612,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigShieldedIn
 func (r *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigShieldedInstanceConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -685,7 +685,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigMasterConfig) String() str
 func (r *WorkflowTemplatePlacementManagedClusterConfigMasterConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -737,7 +737,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigMasterConfigDiskConfig) St
 func (r *WorkflowTemplatePlacementManagedClusterConfigMasterConfigDiskConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -786,7 +786,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigMasterConfigManagedGroupCo
 func (r *WorkflowTemplatePlacementManagedClusterConfigMasterConfigManagedGroupConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -835,7 +835,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigMasterConfigAccelerators) 
 func (r *WorkflowTemplatePlacementManagedClusterConfigMasterConfigAccelerators) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -908,7 +908,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigWorkerConfig) String() str
 func (r *WorkflowTemplatePlacementManagedClusterConfigWorkerConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -960,7 +960,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigDiskConfig) St
 func (r *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigDiskConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1009,7 +1009,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigManagedGroupCo
 func (r *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigManagedGroupConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1058,7 +1058,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigAccelerators) 
 func (r *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigAccelerators) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1131,7 +1131,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfig) Str
 func (r *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1183,7 +1183,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigDiskC
 func (r *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigDiskConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1232,7 +1232,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigManag
 func (r *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigManagedGroupConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1281,7 +1281,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigAccel
 func (r *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigAccelerators) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1333,7 +1333,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigSoftwareConfig) String() s
 func (r *WorkflowTemplatePlacementManagedClusterConfigSoftwareConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1382,7 +1382,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigInitializationActions) Str
 func (r *WorkflowTemplatePlacementManagedClusterConfigInitializationActions) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1428,7 +1428,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigEncryptionConfig) String()
 func (r *WorkflowTemplatePlacementManagedClusterConfigEncryptionConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1474,7 +1474,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigAutoscalingConfig) String(
 func (r *WorkflowTemplatePlacementManagedClusterConfigAutoscalingConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1520,7 +1520,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigSecurityConfig) String() s
 func (r *WorkflowTemplatePlacementManagedClusterConfigSecurityConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1608,7 +1608,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigSecurityConfigKerberosConf
 func (r *WorkflowTemplatePlacementManagedClusterConfigSecurityConfigKerberosConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1663,7 +1663,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigLifecycleConfig) String() 
 func (r *WorkflowTemplatePlacementManagedClusterConfigLifecycleConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1712,7 +1712,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigEndpointConfig) String() s
 func (r *WorkflowTemplatePlacementManagedClusterConfigEndpointConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1761,7 +1761,7 @@ func (r *WorkflowTemplatePlacementClusterSelector) String() string {
 func (r *WorkflowTemplatePlacementClusterSelector) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1840,7 +1840,7 @@ func (r *WorkflowTemplateJobs) String() string {
 func (r *WorkflowTemplateJobs) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1907,7 +1907,7 @@ func (r *WorkflowTemplateJobsHadoopJob) String() string {
 func (r *WorkflowTemplateJobsHadoopJob) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1953,7 +1953,7 @@ func (r *WorkflowTemplateJobsHadoopJobLoggingConfig) String() string {
 func (r *WorkflowTemplateJobsHadoopJobLoggingConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2020,7 +2020,7 @@ func (r *WorkflowTemplateJobsSparkJob) String() string {
 func (r *WorkflowTemplateJobsSparkJob) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2066,7 +2066,7 @@ func (r *WorkflowTemplateJobsSparkJobLoggingConfig) String() string {
 func (r *WorkflowTemplateJobsSparkJobLoggingConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2133,7 +2133,7 @@ func (r *WorkflowTemplateJobsPysparkJob) String() string {
 func (r *WorkflowTemplateJobsPysparkJob) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2179,7 +2179,7 @@ func (r *WorkflowTemplateJobsPysparkJobLoggingConfig) String() string {
 func (r *WorkflowTemplateJobsPysparkJobLoggingConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2240,7 +2240,7 @@ func (r *WorkflowTemplateJobsHiveJob) String() string {
 func (r *WorkflowTemplateJobsHiveJob) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2286,7 +2286,7 @@ func (r *WorkflowTemplateJobsHiveJobQueryList) String() string {
 func (r *WorkflowTemplateJobsHiveJobQueryList) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2350,7 +2350,7 @@ func (r *WorkflowTemplateJobsPigJob) String() string {
 func (r *WorkflowTemplateJobsPigJob) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2396,7 +2396,7 @@ func (r *WorkflowTemplateJobsPigJobQueryList) String() string {
 func (r *WorkflowTemplateJobsPigJobQueryList) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2442,7 +2442,7 @@ func (r *WorkflowTemplateJobsPigJobLoggingConfig) String() string {
 func (r *WorkflowTemplateJobsPigJobLoggingConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2503,7 +2503,7 @@ func (r *WorkflowTemplateJobsSparkRJob) String() string {
 func (r *WorkflowTemplateJobsSparkRJob) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2549,7 +2549,7 @@ func (r *WorkflowTemplateJobsSparkRJobLoggingConfig) String() string {
 func (r *WorkflowTemplateJobsSparkRJobLoggingConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2610,7 +2610,7 @@ func (r *WorkflowTemplateJobsSparkSqlJob) String() string {
 func (r *WorkflowTemplateJobsSparkSqlJob) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2656,7 +2656,7 @@ func (r *WorkflowTemplateJobsSparkSqlJobQueryList) String() string {
 func (r *WorkflowTemplateJobsSparkSqlJobQueryList) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2702,7 +2702,7 @@ func (r *WorkflowTemplateJobsSparkSqlJobLoggingConfig) String() string {
 func (r *WorkflowTemplateJobsSparkSqlJobLoggingConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2766,7 +2766,7 @@ func (r *WorkflowTemplateJobsPrestoJob) String() string {
 func (r *WorkflowTemplateJobsPrestoJob) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2812,7 +2812,7 @@ func (r *WorkflowTemplateJobsPrestoJobQueryList) String() string {
 func (r *WorkflowTemplateJobsPrestoJobQueryList) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2858,7 +2858,7 @@ func (r *WorkflowTemplateJobsPrestoJobLoggingConfig) String() string {
 func (r *WorkflowTemplateJobsPrestoJobLoggingConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2907,7 +2907,7 @@ func (r *WorkflowTemplateJobsScheduling) String() string {
 func (r *WorkflowTemplateJobsScheduling) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2962,7 +2962,7 @@ func (r *WorkflowTemplateParameters) String() string {
 func (r *WorkflowTemplateParameters) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -3011,7 +3011,7 @@ func (r *WorkflowTemplateParametersValidation) String() string {
 func (r *WorkflowTemplateParametersValidation) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -3057,7 +3057,7 @@ func (r *WorkflowTemplateParametersValidationRegex) String() string {
 func (r *WorkflowTemplateParametersValidationRegex) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -3103,7 +3103,7 @@ func (r *WorkflowTemplateParametersValidationValues) String() string {
 func (r *WorkflowTemplateParametersValidationValues) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
