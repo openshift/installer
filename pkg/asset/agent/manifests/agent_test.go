@@ -45,7 +45,11 @@ func TestAgentManifests_Generate(t *testing.T) {
 			Name: "default",
 			Assets: []asset.WritableAsset{
 				&AgentPullSecret{Config: fakeSecret},
-				&InfraEnv{Config: fakeInfraEnv},
+				&InfraEnv{
+					InfraEnvFile: InfraEnvFile{
+						Config: fakeInfraEnv,
+					},
+				},
 				&NMStateConfig{
 					StaticNetworkConfig: fakeStaticNetworkConfig,
 					Config:              fakeNMStatConfig,
@@ -66,15 +70,18 @@ func TestAgentManifests_Generate(t *testing.T) {
 			Name: "invalid-NMStateLabelSelector",
 			Assets: []asset.WritableAsset{
 				&AgentPullSecret{},
-				&InfraEnv{Config: &aiv1beta1.InfraEnv{
-					Spec: aiv1beta1.InfraEnvSpec{
-						NMStateConfigLabelSelector: v1.LabelSelector{
-							MatchLabels: map[string]string{
-								"missing-label": "missing-label",
+				&InfraEnv{
+					InfraEnvFile: InfraEnvFile{
+						Config: &aiv1beta1.InfraEnv{
+							Spec: aiv1beta1.InfraEnvSpec{
+								NMStateConfigLabelSelector: v1.LabelSelector{
+									MatchLabels: map[string]string{
+										"missing-label": "missing-label",
+									},
+								},
 							},
 						},
-					},
-				}},
+					}},
 				&NMStateConfig{
 					StaticNetworkConfig: fakeStaticNetworkConfig,
 					Config:              fakeNMStatConfig,

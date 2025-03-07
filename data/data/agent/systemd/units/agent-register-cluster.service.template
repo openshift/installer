@@ -6,6 +6,7 @@ PartOf=assisted-service-pod.service
 After=network-online.target assisted-service.service
 ConditionPathExists=/etc/assisted/node0
 ConditionPathExists=!/etc/assisted/add-nodes.env
+ConditionPathExists=!/etc/assisted/interactive-ui
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n

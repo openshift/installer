@@ -2,6 +2,7 @@
 Description=If a config ISO is mounted, copy its files to the system
 Wants=network-online.target
 After=network-online.target
+ConditionPathExists=!/etc/assisted/no-config-image
 
 [Service]
 Environment=CONFIG_IMAGE_FILES={{.ConfigImageFiles}}
