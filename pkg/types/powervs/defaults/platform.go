@@ -30,3 +30,8 @@ func SetPlatformDefaults(p *powervs.Platform) {
 	// MustParseCIDR parses a CIDR from its string representation. If the parse fails, the function will panic.
 	DefaultMachineCIDR = ipnet.MustParseCIDR(fmt.Sprintf("192.168.%d.0/24", subnet))
 }
+
+// DefaultExtraRoutes returns the default network routes necessary for disconnected install on PowerVS.
+func DefaultExtraRoutes() []string {
+	return []string{"166.8.0.0/14", "161.26.0.0/16"}
+}

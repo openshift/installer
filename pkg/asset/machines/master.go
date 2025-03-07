@@ -568,6 +568,12 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 				return errors.Wrap(err, "failed to create ignition for custom NTP for master machines")
 			}
 			machineConfigs = append(machineConfigs, ignChrony)
+
+			ignRoutes, err := machineconfig.ForExtraRoutes("master", powervsdefaults.DefaultExtraRoutes(), ic.MachineNetwork[0].CIDR.String())
+			if err != nil {
+				return errors.Wrap(err, "failed to create ignition for extra routes for master machines")
+			}
+			machineConfigs = append(machineConfigs, ignRoutes)
 		}
 	}
 	// The maximum number of networks supported on ServiceNetwork is two, one IPv4 and one IPv6 network.

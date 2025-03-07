@@ -119,6 +119,20 @@ func (mr *MockAPIMockRecorder) CreateDNSServicesDNSRecord(ctx, dnsInstanceID, zo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDNSServicesDNSRecord", reflect.TypeOf((*MockAPI)(nil).CreateDNSServicesDNSRecord), ctx, dnsInstanceID, zoneID, recordName, cname)
 }
 
+// CreateDNSServicesPermittedNetwork mocks base method.
+func (m *MockAPI) CreateDNSServicesPermittedNetwork(ctx context.Context, dnsInstanceID, dnsZoneID, vpcCRN string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateDNSServicesPermittedNetwork", ctx, dnsInstanceID, dnsZoneID, vpcCRN)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateDNSServicesPermittedNetwork indicates an expected call of CreateDNSServicesPermittedNetwork.
+func (mr *MockAPIMockRecorder) CreateDNSServicesPermittedNetwork(ctx, dnsInstanceID, dnsZoneID, vpcCRN interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDNSServicesPermittedNetwork", reflect.TypeOf((*MockAPI)(nil).CreateDNSServicesPermittedNetwork), ctx, dnsInstanceID, dnsZoneID, vpcCRN)
+}
+
 // CreateIAMAuthorizationPolicy mocks base method.
 func (m *MockAPI) CreateIAMAuthorizationPolicy(tx context.Context, sourceServiceName, sourceServiceResourceType, targetServiceName, targetServiceInstanceID string, roles []string) error {
 	m.ctrl.T.Helper()
@@ -339,6 +353,21 @@ func (m *MockAPI) GetEncryptionKey(ctx context.Context, keyCRN string) (*respons
 func (mr *MockAPIMockRecorder) GetEncryptionKey(ctx, keyCRN any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEncryptionKey", reflect.TypeOf((*MockAPI)(nil).GetEncryptionKey), ctx, keyCRN)
+}
+
+// GetIBMCloudRegions mocks base method.
+func (m *MockAPI) GetIBMCloudRegions(ctx context.Context) (map[string]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetIBMCloudRegions", ctx)
+	ret0, _ := ret[0].(map[string]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetIBMCloudRegions indicates an expected call of GetIBMCloudRegions.
+func (mr *MockAPIMockRecorder) GetIBMCloudRegions(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetIBMCloudRegions", reflect.TypeOf((*MockAPI)(nil).GetIBMCloudRegions), ctx)
 }
 
 // GetLoadBalancer mocks base method.

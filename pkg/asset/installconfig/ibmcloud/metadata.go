@@ -3,7 +3,6 @@ package ibmcloud
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync"
 
 	"github.com/IBM/go-sdk-core/v5/core"
@@ -17,8 +16,10 @@ import (
 )
 
 const (
-	privateHostPrefix = "api-int."
-	publicHostPrefix  = "api."
+	// PrivateHostPrefix is the prefix for private API traffic used for DNS Records.
+	PrivateHostPrefix = "api-int."
+	// PublicHostPrefix is the prefix for public API traffic used for DNS Records.
+	PublicHostPrefix = "api."
 )
 
 // Metadata holds additional metadata for InstallConfig resources that
@@ -84,16 +85,39 @@ func (m *Metadata) AccountID(ctx context.Context) (string, error) {
 	return m.accountID, nil
 }
 
-// CreateDNSRecord creates a CNAME DNS Record in the IBM Cloud Internet Services zone or DNS Services zone for a Load Balancer hostname, based on the PublishStrategy.
-func (m *Metadata) CreateDNSRecord(ctx context.Context, clusterDomain string, loadBalancer *vpcv1.LoadBalancer) error {
-	var recordName string
-	// Based on the name of the Load Balancer (either for kubernetes API public or private traffic), build the record name.
-	if strings.HasSuffix(*loadBalancer.Name, KubernetesAPIPublicSuffix) {
-		recordName = fmt.Sprintf("%s%s", publicHostPrefix, clusterDomain)
-	} else if strings.HasSuffix(*loadBalancer.Name, KubernetesAPIPrivateSuffix) {
-		recordName = fmt.Sprintf("%s%s", privateHostPrefix, clusterDomain)
+// AddVPCToPermittedNetworks adds a VPC to the DNS Services Zone of Permitted Networks.
+func (m *Metadata) AddVPCToPermittedNetworks(ctx context.Context, vpcID string) error {
+	// The following values are required to add the VPC to Permitted Networks:
+	// - DNS Services Instance ID
+	// - DNS Services Zone ID
+	// - VPC CRN
+	// We should already have the Instance ID and Zone ID, or they will be fetched.
+	dnsInstance, err := m.DNSInstance(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve dns services instance: %w", err)
 	}
 
+	client, err := m.Client()
+	if err != nil {
+		return fmt.Errorf("failed to create ibmcloud client: %w", err)
+	}
+	// Lookup the VPC CRN.
+	vpcDetails, err := client.GetVPC(ctx, vpcID)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve vpc %s: %w", vpcID, err)
+	} else if vpcDetails.CRN == nil {
+		return fmt.Errorf("error vpc crn not set for vpc %s", vpcID)
+	}
+
+	if err = client.CreateDNSServicesPermittedNetwork(ctx, dnsInstance.ID, dnsInstance.Zone, *vpcDetails.CRN); err != nil {
+		return fmt.Errorf("failed to add vpc %s to permitted networks of dns services zone %s and instance %s: %w", vpcID, dnsInstance.Zone, dnsInstance.ID, err)
+	}
+
+	return nil
+}
+
+// CreateDNSRecord creates a CNAME DNS Record in the IBM Cloud Internet Services zone or DNS Services zone for a Load Balancer hostname, based on the PublishStrategy.
+func (m *Metadata) CreateDNSRecord(ctx context.Context, recordName string, loadBalancer *vpcv1.LoadBalancer) error {
 	client, err := m.Client()
 	if err != nil {
 		return fmt.Errorf("failed to create ibmcloud client: %w", err)

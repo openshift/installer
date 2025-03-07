@@ -201,6 +201,17 @@ func TestSetInstallConfigDefaults(t *testing.T) {
 			expected: defaultInstallConfig(),
 		},
 		{
+			name: "arbiter present",
+			config: &types.InstallConfig{
+				Arbiter: &types.MachinePool{},
+			},
+			expected: func() *types.InstallConfig {
+				c := defaultInstallConfig()
+				c.Arbiter = defaultMachinePoolWithReplicaCount("arbiter", 0)
+				return c
+			}(),
+		},
+		{
 			name: "Compute present",
 			config: &types.InstallConfig{
 				Compute: []types.MachinePool{{Name: "worker"}},
