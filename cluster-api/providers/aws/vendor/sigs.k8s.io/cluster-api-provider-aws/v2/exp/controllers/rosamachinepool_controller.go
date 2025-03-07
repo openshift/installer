@@ -232,7 +232,7 @@ func (r *ROSAMachinePoolReconciler) reconcileNormal(ctx context.Context,
 			return ctrl.Result{}, fmt.Errorf("failed to ensure rosaMachinePool: %w", err)
 		}
 
-		currentReplicas := int32(nodePool.Status().CurrentReplicas())
+		currentReplicas := int32(nodePool.Status().CurrentReplicas()) //#nosec G115
 		if annotations.ReplicasManagedByExternalAutoscaler(machinePool) {
 			// Set MachinePool replicas to rosa autoscaling replicas
 			if *machinePool.Spec.Replicas != currentReplicas {

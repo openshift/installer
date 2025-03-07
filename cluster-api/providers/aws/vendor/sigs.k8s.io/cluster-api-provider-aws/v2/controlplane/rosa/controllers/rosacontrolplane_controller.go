@@ -98,7 +98,6 @@ func (r *ROSAControlPlaneReconciler) SetupWithManager(ctx context.Context, mgr c
 		WithOptions(options).
 		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(log.GetLogger(), r.WatchFilterValue)).
 		Build(r)
-
 	if err != nil {
 		return fmt.Errorf("failed setting up the AWSManagedControlPlane controller manager: %w", err)
 	}
@@ -222,6 +221,7 @@ func (r *ROSAControlPlaneReconciler) reconcileNormal(ctx context.Context, rosaSc
 			rosacontrolplanev1.ROSAControlPlaneValidCondition,
 			rosacontrolplanev1.ROSAControlPlaneInvalidConfigurationReason,
 			clusterv1.ConditionSeverityError,
+			"%s",
 			validationMessage)
 		// dont' requeue because input is invalid and manual intervention is needed.
 		return ctrl.Result{}, nil
@@ -278,6 +278,7 @@ func (r *ROSAControlPlaneReconciler) reconcileNormal(ctx context.Context, rosaSc
 				rosacontrolplanev1.ROSAControlPlaneReadyCondition,
 				string(cluster.Status().State()),
 				clusterv1.ConditionSeverityError,
+				"%s",
 				cluster.Status().ProvisionErrorCode())
 			// Cluster is in an unrecoverable state, returning nil error so that the request doesn't get requeued.
 			return ctrl.Result{}, nil
@@ -287,6 +288,7 @@ func (r *ROSAControlPlaneReconciler) reconcileNormal(ctx context.Context, rosaSc
 			rosacontrolplanev1.ROSAControlPlaneReadyCondition,
 			string(cluster.Status().State()),
 			clusterv1.ConditionSeverityInfo,
+			"%s",
 			cluster.Status().Description())
 
 		rosaScope.Info("waiting for cluster to become ready", "state", cluster.Status().State())
@@ -305,6 +307,7 @@ func (r *ROSAControlPlaneReconciler) reconcileNormal(ctx context.Context, rosaSc
 			rosacontrolplanev1.ROSAControlPlaneReadyCondition,
 			rosacontrolplanev1.ReconciliationFailedReason,
 			clusterv1.ConditionSeverityError,
+			"%s",
 			err.Error())
 		return ctrl.Result{}, fmt.Errorf("failed to create OCM cluster: %w", err)
 	}
@@ -454,6 +457,7 @@ func (r *ROSAControlPlaneReconciler) updateOCMCluster(rosaScope *scope.ROSAContr
 			rosacontrolplanev1.ROSAControlPlaneValidCondition,
 			rosacontrolplanev1.ROSAControlPlaneInvalidConfigurationReason,
 			clusterv1.ConditionSeverityError,
+			"%s",
 			err.Error())
 		return err
 	}
@@ -475,6 +479,7 @@ func (r *ROSAControlPlaneReconciler) reconcileExternalAuth(ctx context.Context, 
 			rosacontrolplanev1.ExternalAuthConfiguredCondition,
 			rosacontrolplanev1.ReconciliationFailedReason,
 			clusterv1.ConditionSeverityError,
+			"%s",
 			err.Error())
 	} else {
 		conditions.MarkTrue(rosaScope.ControlPlane, rosacontrolplanev1.ExternalAuthConfiguredCondition)
@@ -993,6 +998,6 @@ func buildAPIEndpoint(cluster *cmv1.Cluster) (*clusterv1.APIEndpoint, error) {
 
 	return &clusterv1.APIEndpoint{
 		Host: host,
-		Port: int32(port), // #nosec G109
+		Port: int32(port), //#nosec G109 G115
 	}, nil
 }

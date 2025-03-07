@@ -99,8 +99,10 @@ func NewRosaMachinePoolScope(params RosaMachinePoolScopeParams) (*RosaMachinePoo
 	return scope, nil
 }
 
-var _ cloud.Session = &RosaMachinePoolScope{}
-var _ cloud.SessionMetadata = &RosaMachinePoolScope{}
+var (
+	_ cloud.Session         = &RosaMachinePoolScope{}
+	_ cloud.SessionMetadata = &RosaMachinePoolScope{}
+)
 
 // RosaMachinePoolScope defines the basic context for an actuator to operate upon.
 type RosaMachinePoolScope struct {
@@ -201,6 +203,7 @@ func (s *RosaMachinePoolScope) RosaMchinePoolReadyFalse(reason string, err strin
 		expinfrav1.RosaMachinePoolReadyCondition,
 		reason,
 		severity,
+		"%s",
 		err,
 	)
 	if err := s.PatchObject(); err != nil {

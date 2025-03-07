@@ -73,13 +73,13 @@ func (s *Service) ReconcileLaunchTemplate(
 	scope.Info("checking for existing launch template")
 	launchTemplate, launchTemplateUserDataHash, launchTemplateUserDataSecretKey, err := ec2svc.GetLaunchTemplate(scope.LaunchTemplateName())
 	if err != nil {
-		conditions.MarkUnknown(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateNotFoundReason, err.Error())
+		conditions.MarkUnknown(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateNotFoundReason, "%s", err.Error())
 		return err
 	}
 
 	imageID, err := ec2svc.DiscoverLaunchTemplateAMI(scope)
 	if err != nil {
-		conditions.MarkFalse(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateCreateFailedReason, clusterv1.ConditionSeverityError, err.Error())
+		conditions.MarkFalse(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateCreateFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
 		return err
 	}
 
@@ -87,7 +87,7 @@ func (s *Service) ReconcileLaunchTemplate(
 		scope.Info("no existing launch template found, creating")
 		launchTemplateID, err := ec2svc.CreateLaunchTemplate(scope, imageID, *bootstrapDataSecretKey, bootstrapData)
 		if err != nil {
-			conditions.MarkFalse(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateCreateFailedReason, clusterv1.ConditionSeverityError, err.Error())
+			conditions.MarkFalse(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateCreateFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
 			return err
 		}
 
@@ -100,7 +100,7 @@ func (s *Service) ReconcileLaunchTemplate(
 	if scope.GetLaunchTemplateIDStatus() == "" {
 		launchTemplateID, err := ec2svc.GetLaunchTemplateID(scope.LaunchTemplateName())
 		if err != nil {
-			conditions.MarkUnknown(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateNotFoundReason, err.Error())
+			conditions.MarkUnknown(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateNotFoundReason, "%s", err.Error())
 			return err
 		}
 		scope.SetLaunchTemplateIDStatus(launchTemplateID)
@@ -110,7 +110,7 @@ func (s *Service) ReconcileLaunchTemplate(
 	if scope.GetLaunchTemplateLatestVersionStatus() == "" {
 		launchTemplateVersion, err := ec2svc.GetLaunchTemplateLatestVersion(scope.GetLaunchTemplateIDStatus())
 		if err != nil {
-			conditions.MarkUnknown(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateNotFoundReason, err.Error())
+			conditions.MarkUnknown(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateNotFoundReason, "%s", err.Error())
 			return err
 		}
 		scope.SetLaunchTemplateLatestVersionStatus(launchTemplateVersion)
@@ -180,7 +180,7 @@ func (s *Service) ReconcileLaunchTemplate(
 
 	if needsUpdate || tagsChanged || amiChanged || userDataSecretKeyChanged {
 		if err := runPostLaunchTemplateUpdateOperation(); err != nil {
-			conditions.MarkFalse(scope.GetSetter(), expinfrav1.PostLaunchTemplateUpdateOperationCondition, expinfrav1.PostLaunchTemplateUpdateOperationFailedReason, clusterv1.ConditionSeverityError, err.Error())
+			conditions.MarkFalse(scope.GetSetter(), expinfrav1.PostLaunchTemplateUpdateOperationCondition, expinfrav1.PostLaunchTemplateUpdateOperationFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
 			return err
 		}
 		conditions.MarkTrue(scope.GetSetter(), expinfrav1.PostLaunchTemplateUpdateOperationCondition)

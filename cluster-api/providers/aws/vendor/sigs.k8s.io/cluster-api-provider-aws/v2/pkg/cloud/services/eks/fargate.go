@@ -54,6 +54,7 @@ func (s *FargateService) Reconcile() (reconcile.Result, error) {
 			expinfrav1.IAMFargateRolesReadyCondition,
 			expinfrav1.IAMFargateRolesReconciliationFailedReason,
 			clusterv1.ConditionSeverityError,
+			"%s",
 			err.Error(),
 		)
 		return reconcile.Result{}, err
@@ -73,6 +74,7 @@ func (s *FargateService) Reconcile() (reconcile.Result, error) {
 			clusterv1.ReadyCondition,
 			expinfrav1.EKSFargateReconciliationFailedReason,
 			clusterv1.ConditionSeverityError,
+			"%s",
 			err.Error(),
 		)
 		return reconcile.Result{}, err
@@ -169,6 +171,7 @@ func (s *FargateService) ReconcileDelete() (reconcile.Result, error) {
 			clusterv1.ReadyCondition,
 			expinfrav1.EKSFargateReconciliationFailedReason,
 			clusterv1.ConditionSeverityError,
+			"%s",
 			err.Error(),
 		)
 		return reconcile.Result{}, err
@@ -185,6 +188,7 @@ func (s *FargateService) ReconcileDelete() (reconcile.Result, error) {
 			expinfrav1.IAMFargateRolesReadyCondition,
 			expinfrav1.IAMFargateRolesReconciliationFailedReason,
 			clusterv1.ConditionSeverityError,
+			"%s",
 			err.Error(),
 		)
 	}

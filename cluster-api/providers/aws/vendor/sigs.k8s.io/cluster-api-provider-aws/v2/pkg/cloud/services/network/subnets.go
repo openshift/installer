@@ -58,14 +58,6 @@ func (s *Service) reconcileSubnets() error {
 		existing infrav1.Subnets
 	)
 
-	// Describing the VPC Subnets tags the resources.
-	if s.scope.TagUnmanagedNetworkResources() {
-		// Describe subnets in the vpc.
-		if existing, err = s.describeVpcSubnets(); err != nil {
-			return err
-		}
-	}
-
 	unmanagedVPC := s.scope.VPC().IsUnmanaged(s.scope.Name())
 
 	if len(subnets) == 0 {
@@ -93,12 +85,9 @@ func (s *Service) reconcileSubnets() error {
 		}
 	}
 
-	// Describing the VPC Subnets tags the resources.
-	if !s.scope.TagUnmanagedNetworkResources() {
-		// Describe subnets in the vpc.
-		if existing, err = s.describeVpcSubnets(); err != nil {
-			return err
-		}
+	// Describe subnets in the vpc.
+	if existing, err = s.describeVpcSubnets(); err != nil {
+		return err
 	}
 
 	if s.scope.SecondaryCidrBlock() != nil {
@@ -139,11 +128,12 @@ func (s *Service) reconcileSubnets() error {
 				existingSubnet.ID = sub.ID
 			}
 
+			// Make sure tags are up-to-date.
+			subnetTags := sub.Tags
+
 			// Update subnet spec with the existing subnet details
 			existingSubnet.DeepCopyInto(sub)
 
-			// Make sure tags are up-to-date.
-			subnetTags := sub.Tags
 			if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
 				buildParams := s.getSubnetTagParams(unmanagedVPC, existingSubnet.GetResourceID(), existingSubnet.IsPublic, existingSubnet.AvailabilityZone, subnetTags, existingSubnet.IsEdge())
 				tagsBuilder := tags.New(&buildParams, tags.WithEC2(s.EC2Client))
