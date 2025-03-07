@@ -24,6 +24,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	dcl "github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl"
@@ -50,6 +51,10 @@ func ResourceRecaptchaEnterpriseKey() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+			tpgresource.SetLabelsDiff,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"display_name": {
@@ -67,6 +72,12 @@ func ResourceRecaptchaEnterpriseKey() *schema.Resource {
 				ConflictsWith: []string{"web_settings", "ios_settings"},
 			},
 
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.",
+			},
+
 			"ios_settings": {
 				Type:          schema.TypeList,
 				Optional:      true,
@@ -74,13 +85,6 @@ func ResourceRecaptchaEnterpriseKey() *schema.Resource {
 				MaxItems:      1,
 				Elem:          RecaptchaEnterpriseKeyIosSettingsSchema(),
 				ConflictsWith: []string{"web_settings", "android_settings"},
-			},
-
-			"labels": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "See [Creating and managing labels](https://cloud.google.com/recaptcha-enterprise/docs/labels).",
-				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"project": {
@@ -101,6 +105,15 @@ func ResourceRecaptchaEnterpriseKey() *schema.Resource {
 				Elem:        RecaptchaEnterpriseKeyTestingOptionsSchema(),
 			},
 
+			"waf_settings": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Settings specific to keys that can be used for WAF (Web Application Firewall).",
+				MaxItems:    1,
+				Elem:        RecaptchaEnterpriseKeyWafSettingsSchema(),
+			},
+
 			"web_settings": {
 				Type:          schema.TypeList,
 				Optional:      true,
@@ -116,10 +129,23 @@ func ResourceRecaptchaEnterpriseKey() *schema.Resource {
 				Description: "The timestamp corresponding to the creation of this Key.",
 			},
 
+			"labels": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "See [Creating and managing labels](https://cloud.google.com/recaptcha-enterprise/docs/labels).\n\n**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.\nPlease refer to the field `effective_labels` for all of the labels present on the resource.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+
 			"name": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The resource name for the Key in the format \"projects/{project}/keys/{key}\".",
+				Description: "The resource id for the Key, which is the same as the Site Key itself.",
+			},
+
+			"terraform_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "The combination of labels configured directly on the resource and default labels configured on the provider.",
 			},
 		},
 	}
@@ -184,6 +210,26 @@ func RecaptchaEnterpriseKeyTestingOptionsSchema() *schema.Resource {
 	}
 }
 
+func RecaptchaEnterpriseKeyWafSettingsSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"waf_feature": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Supported WAF features. For more information, see https://cloud.google.com/recaptcha-enterprise/docs/usecase#comparison_of_features. Possible values: CHALLENGE_PAGE, SESSION_TOKEN, ACTION_TOKEN, EXPRESS",
+			},
+
+			"waf_service": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "The WAF service that uses this key. Possible values: CA, FASTLY",
+			},
+		},
+	}
+}
+
 func RecaptchaEnterpriseKeyWebSettingsSchema() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
@@ -233,10 +279,11 @@ func resourceRecaptchaEnterpriseKeyCreate(d *schema.ResourceData, meta interface
 	obj := &recaptchaenterprise.Key{
 		DisplayName:     dcl.String(d.Get("display_name").(string)),
 		AndroidSettings: expandRecaptchaEnterpriseKeyAndroidSettings(d.Get("android_settings")),
+		Labels:          tpgresource.CheckStringMap(d.Get("effective_labels")),
 		IosSettings:     expandRecaptchaEnterpriseKeyIosSettings(d.Get("ios_settings")),
-		Labels:          tpgresource.CheckStringMap(d.Get("labels")),
 		Project:         dcl.String(project),
 		TestingOptions:  expandRecaptchaEnterpriseKeyTestingOptions(d.Get("testing_options")),
+		WafSettings:     expandRecaptchaEnterpriseKeyWafSettings(d.Get("waf_settings")),
 		WebSettings:     expandRecaptchaEnterpriseKeyWebSettings(d.Get("web_settings")),
 	}
 
@@ -298,10 +345,11 @@ func resourceRecaptchaEnterpriseKeyRead(d *schema.ResourceData, meta interface{}
 	obj := &recaptchaenterprise.Key{
 		DisplayName:     dcl.String(d.Get("display_name").(string)),
 		AndroidSettings: expandRecaptchaEnterpriseKeyAndroidSettings(d.Get("android_settings")),
+		Labels:          tpgresource.CheckStringMap(d.Get("effective_labels")),
 		IosSettings:     expandRecaptchaEnterpriseKeyIosSettings(d.Get("ios_settings")),
-		Labels:          tpgresource.CheckStringMap(d.Get("labels")),
 		Project:         dcl.String(project),
 		TestingOptions:  expandRecaptchaEnterpriseKeyTestingOptions(d.Get("testing_options")),
+		WafSettings:     expandRecaptchaEnterpriseKeyWafSettings(d.Get("waf_settings")),
 		WebSettings:     expandRecaptchaEnterpriseKeyWebSettings(d.Get("web_settings")),
 		Name:            dcl.StringOrNil(d.Get("name").(string)),
 	}
@@ -334,11 +382,11 @@ func resourceRecaptchaEnterpriseKeyRead(d *schema.ResourceData, meta interface{}
 	if err = d.Set("android_settings", flattenRecaptchaEnterpriseKeyAndroidSettings(res.AndroidSettings)); err != nil {
 		return fmt.Errorf("error setting android_settings in state: %s", err)
 	}
+	if err = d.Set("effective_labels", res.Labels); err != nil {
+		return fmt.Errorf("error setting effective_labels in state: %s", err)
+	}
 	if err = d.Set("ios_settings", flattenRecaptchaEnterpriseKeyIosSettings(res.IosSettings)); err != nil {
 		return fmt.Errorf("error setting ios_settings in state: %s", err)
-	}
-	if err = d.Set("labels", res.Labels); err != nil {
-		return fmt.Errorf("error setting labels in state: %s", err)
 	}
 	if err = d.Set("project", res.Project); err != nil {
 		return fmt.Errorf("error setting project in state: %s", err)
@@ -346,14 +394,23 @@ func resourceRecaptchaEnterpriseKeyRead(d *schema.ResourceData, meta interface{}
 	if err = d.Set("testing_options", flattenRecaptchaEnterpriseKeyTestingOptions(res.TestingOptions)); err != nil {
 		return fmt.Errorf("error setting testing_options in state: %s", err)
 	}
+	if err = d.Set("waf_settings", flattenRecaptchaEnterpriseKeyWafSettings(res.WafSettings)); err != nil {
+		return fmt.Errorf("error setting waf_settings in state: %s", err)
+	}
 	if err = d.Set("web_settings", flattenRecaptchaEnterpriseKeyWebSettings(res.WebSettings)); err != nil {
 		return fmt.Errorf("error setting web_settings in state: %s", err)
 	}
 	if err = d.Set("create_time", res.CreateTime); err != nil {
 		return fmt.Errorf("error setting create_time in state: %s", err)
 	}
+	if err = d.Set("labels", flattenRecaptchaEnterpriseKeyLabels(res.Labels, d)); err != nil {
+		return fmt.Errorf("error setting labels in state: %s", err)
+	}
 	if err = d.Set("name", res.Name); err != nil {
 		return fmt.Errorf("error setting name in state: %s", err)
+	}
+	if err = d.Set("terraform_labels", flattenRecaptchaEnterpriseKeyTerraformLabels(res.Labels, d)); err != nil {
+		return fmt.Errorf("error setting terraform_labels in state: %s", err)
 	}
 
 	return nil
@@ -368,10 +425,11 @@ func resourceRecaptchaEnterpriseKeyUpdate(d *schema.ResourceData, meta interface
 	obj := &recaptchaenterprise.Key{
 		DisplayName:     dcl.String(d.Get("display_name").(string)),
 		AndroidSettings: expandRecaptchaEnterpriseKeyAndroidSettings(d.Get("android_settings")),
+		Labels:          tpgresource.CheckStringMap(d.Get("effective_labels")),
 		IosSettings:     expandRecaptchaEnterpriseKeyIosSettings(d.Get("ios_settings")),
-		Labels:          tpgresource.CheckStringMap(d.Get("labels")),
 		Project:         dcl.String(project),
 		TestingOptions:  expandRecaptchaEnterpriseKeyTestingOptions(d.Get("testing_options")),
+		WafSettings:     expandRecaptchaEnterpriseKeyWafSettings(d.Get("waf_settings")),
 		WebSettings:     expandRecaptchaEnterpriseKeyWebSettings(d.Get("web_settings")),
 		Name:            dcl.StringOrNil(d.Get("name").(string)),
 	}
@@ -418,10 +476,11 @@ func resourceRecaptchaEnterpriseKeyDelete(d *schema.ResourceData, meta interface
 	obj := &recaptchaenterprise.Key{
 		DisplayName:     dcl.String(d.Get("display_name").(string)),
 		AndroidSettings: expandRecaptchaEnterpriseKeyAndroidSettings(d.Get("android_settings")),
+		Labels:          tpgresource.CheckStringMap(d.Get("effective_labels")),
 		IosSettings:     expandRecaptchaEnterpriseKeyIosSettings(d.Get("ios_settings")),
-		Labels:          tpgresource.CheckStringMap(d.Get("labels")),
 		Project:         dcl.String(project),
 		TestingOptions:  expandRecaptchaEnterpriseKeyTestingOptions(d.Get("testing_options")),
+		WafSettings:     expandRecaptchaEnterpriseKeyWafSettings(d.Get("waf_settings")),
 		WebSettings:     expandRecaptchaEnterpriseKeyWebSettings(d.Get("web_settings")),
 		Name:            dcl.StringOrNil(d.Get("name").(string)),
 	}
@@ -556,6 +615,34 @@ func flattenRecaptchaEnterpriseKeyTestingOptions(obj *recaptchaenterprise.KeyTes
 
 }
 
+func expandRecaptchaEnterpriseKeyWafSettings(o interface{}) *recaptchaenterprise.KeyWafSettings {
+	if o == nil {
+		return recaptchaenterprise.EmptyKeyWafSettings
+	}
+	objArr := o.([]interface{})
+	if len(objArr) == 0 || objArr[0] == nil {
+		return recaptchaenterprise.EmptyKeyWafSettings
+	}
+	obj := objArr[0].(map[string]interface{})
+	return &recaptchaenterprise.KeyWafSettings{
+		WafFeature: recaptchaenterprise.KeyWafSettingsWafFeatureEnumRef(obj["waf_feature"].(string)),
+		WafService: recaptchaenterprise.KeyWafSettingsWafServiceEnumRef(obj["waf_service"].(string)),
+	}
+}
+
+func flattenRecaptchaEnterpriseKeyWafSettings(obj *recaptchaenterprise.KeyWafSettings) interface{} {
+	if obj == nil || obj.Empty() {
+		return nil
+	}
+	transformed := map[string]interface{}{
+		"waf_feature": obj.WafFeature,
+		"waf_service": obj.WafService,
+	}
+
+	return []interface{}{transformed}
+
+}
+
 func expandRecaptchaEnterpriseKeyWebSettings(o interface{}) *recaptchaenterprise.KeyWebSettings {
 	if o == nil {
 		return recaptchaenterprise.EmptyKeyWebSettings
@@ -588,4 +675,34 @@ func flattenRecaptchaEnterpriseKeyWebSettings(obj *recaptchaenterprise.KeyWebSet
 
 	return []interface{}{transformed}
 
+}
+
+func flattenRecaptchaEnterpriseKeyLabels(v map[string]string, d *schema.ResourceData) interface{} {
+	if v == nil {
+		return nil
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.Get("labels").(map[string]interface{}); ok {
+		for k, _ := range l {
+			transformed[k] = v[k]
+		}
+	}
+
+	return transformed
+}
+
+func flattenRecaptchaEnterpriseKeyTerraformLabels(v map[string]string, d *schema.ResourceData) interface{} {
+	if v == nil {
+		return nil
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.Get("terraform_labels").(map[string]interface{}); ok {
+		for k, _ := range l {
+			transformed[k] = v[k]
+		}
+	}
+
+	return transformed
 }

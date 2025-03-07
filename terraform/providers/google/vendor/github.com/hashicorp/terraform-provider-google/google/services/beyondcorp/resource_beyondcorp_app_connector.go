@@ -20,10 +20,12 @@ package beyondcorp
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -46,6 +48,11 @@ func ResourceBeyondcorpAppConnector() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -85,10 +92,14 @@ func ResourceBeyondcorpAppConnector() *schema.Resource {
 				Description: `An arbitrary user-provided name for the AppConnector.`,
 			},
 			"labels": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: `Resource labels to represent user provided metadata.`,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `Resource labels to represent user provided metadata.
+
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"region": {
 				Type:        schema.TypeString,
@@ -96,10 +107,23 @@ func ResourceBeyondcorpAppConnector() *schema.Resource {
 				ForceNew:    true,
 				Description: `The region of the AppConnector.`,
 			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 			"state": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `Represents the different states of a AppConnector.`,
+			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"project": {
 				Type:     schema.TypeString,
@@ -126,17 +150,17 @@ func resourceBeyondcorpAppConnectorCreate(d *schema.ResourceData, meta interface
 	} else if v, ok := d.GetOkExists("display_name"); !tpgresource.IsEmptyValue(reflect.ValueOf(displayNameProp)) && (ok || !reflect.DeepEqual(v, displayNameProp)) {
 		obj["displayName"] = displayNameProp
 	}
-	labelsProp, err := expandBeyondcorpAppConnectorLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	principalInfoProp, err := expandBeyondcorpAppConnectorPrincipalInfo(d.Get("principal_info"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("principal_info"); !tpgresource.IsEmptyValue(reflect.ValueOf(principalInfoProp)) && (ok || !reflect.DeepEqual(v, principalInfoProp)) {
 		obj["principalInfo"] = principalInfoProp
+	}
+	labelsProp, err := expandBeyondcorpAppConnectorEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{BeyondcorpBasePath}}projects/{{project}}/locations/{{region}}/appConnectors?app_connector_id={{name}}")
@@ -158,6 +182,7 @@ func resourceBeyondcorpAppConnectorCreate(d *schema.ResourceData, meta interface
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -166,6 +191,7 @@ func resourceBeyondcorpAppConnectorCreate(d *schema.ResourceData, meta interface
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating AppConnector: %s", err)
@@ -228,12 +254,14 @@ func resourceBeyondcorpAppConnectorRead(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("BeyondcorpAppConnector %q", d.Id()))
@@ -253,6 +281,12 @@ func resourceBeyondcorpAppConnectorRead(d *schema.ResourceData, meta interface{}
 		return fmt.Errorf("Error reading AppConnector: %s", err)
 	}
 	if err := d.Set("state", flattenBeyondcorpAppConnectorState(res["state"], d, config)); err != nil {
+		return fmt.Errorf("Error reading AppConnector: %s", err)
+	}
+	if err := d.Set("terraform_labels", flattenBeyondcorpAppConnectorTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading AppConnector: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenBeyondcorpAppConnectorEffectiveLabels(res["labels"], d, config)); err != nil {
 		return fmt.Errorf("Error reading AppConnector: %s", err)
 	}
 
@@ -281,17 +315,17 @@ func resourceBeyondcorpAppConnectorUpdate(d *schema.ResourceData, meta interface
 	} else if v, ok := d.GetOkExists("display_name"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, displayNameProp)) {
 		obj["displayName"] = displayNameProp
 	}
-	labelsProp, err := expandBeyondcorpAppConnectorLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	principalInfoProp, err := expandBeyondcorpAppConnectorPrincipalInfo(d.Get("principal_info"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("principal_info"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, principalInfoProp)) {
 		obj["principalInfo"] = principalInfoProp
+	}
+	labelsProp, err := expandBeyondcorpAppConnectorEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{BeyondcorpBasePath}}projects/{{project}}/locations/{{region}}/appConnectors/{{name}}")
@@ -300,18 +334,19 @@ func resourceBeyondcorpAppConnectorUpdate(d *schema.ResourceData, meta interface
 	}
 
 	log.Printf("[DEBUG] Updating AppConnector %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("display_name") {
 		updateMask = append(updateMask, "displayName")
 	}
 
-	if d.HasChange("labels") {
-		updateMask = append(updateMask, "labels")
-	}
-
 	if d.HasChange("principal_info") {
 		updateMask = append(updateMask, "principalInfo")
+	}
+
+	if d.HasChange("effective_labels") {
+		updateMask = append(updateMask, "labels")
 	}
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
 	// won't set it
@@ -325,28 +360,32 @@ func resourceBeyondcorpAppConnectorUpdate(d *schema.ResourceData, meta interface
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating AppConnector %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating AppConnector %q: %#v", d.Id(), res)
-	}
+		if err != nil {
+			return fmt.Errorf("Error updating AppConnector %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating AppConnector %q: %#v", d.Id(), res)
+		}
 
-	err = BeyondcorpOperationWaitTime(
-		config, res, project, "Updating AppConnector", userAgent,
-		d.Timeout(schema.TimeoutUpdate))
+		err = BeyondcorpOperationWaitTime(
+			config, res, project, "Updating AppConnector", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return resourceBeyondcorpAppConnectorRead(d, meta)
@@ -373,13 +412,15 @@ func resourceBeyondcorpAppConnectorDelete(d *schema.ResourceData, meta interface
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting AppConnector %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting AppConnector %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -388,6 +429,7 @@ func resourceBeyondcorpAppConnectorDelete(d *schema.ResourceData, meta interface
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "AppConnector")
@@ -408,10 +450,10 @@ func resourceBeyondcorpAppConnectorDelete(d *schema.ResourceData, meta interface
 func resourceBeyondcorpAppConnectorImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/(?P<region>[^/]+)/appConnectors/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/(?P<region>[^/]+)/appConnectors/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -431,7 +473,18 @@ func flattenBeyondcorpAppConnectorDisplayName(v interface{}, d *schema.ResourceD
 }
 
 func flattenBeyondcorpAppConnectorLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenBeyondcorpAppConnectorPrincipalInfo(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -468,19 +521,27 @@ func flattenBeyondcorpAppConnectorState(v interface{}, d *schema.ResourceData, c
 	return v
 }
 
-func expandBeyondcorpAppConnectorDisplayName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
+func flattenBeyondcorpAppConnectorTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
-func expandBeyondcorpAppConnectorLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
-	if v == nil {
-		return map[string]string{}, nil
-	}
-	m := make(map[string]string)
-	for k, val := range v.(map[string]interface{}) {
-		m[k] = val.(string)
-	}
-	return m, nil
+func flattenBeyondcorpAppConnectorEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func expandBeyondcorpAppConnectorDisplayName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
 }
 
 func expandBeyondcorpAppConnectorPrincipalInfo(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
@@ -523,4 +584,15 @@ func expandBeyondcorpAppConnectorPrincipalInfoServiceAccount(v interface{}, d tp
 
 func expandBeyondcorpAppConnectorPrincipalInfoServiceAccountEmail(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
+}
+
+func expandBeyondcorpAppConnectorEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
 }

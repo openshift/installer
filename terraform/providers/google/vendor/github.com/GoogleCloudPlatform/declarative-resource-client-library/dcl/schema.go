@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -177,6 +177,8 @@ type Property struct {
 	Properties               map[string]*Property         `yaml:"properties,omitempty"`
 	Deprecated               bool                         `yaml:"x-dcl-deprecated,omitempty"`
 	OptionalType             bool                         `yaml:"x-dcl-optional-type,omitempty"`
+	Parameter                bool                         `yaml:"x-dcl-parameter,omitempty"`
+	HasLongForm              bool                         `yaml:"x-dcl-has-long-form,omitempty"`
 }
 
 // IsOptional returns if the type is an optional type.

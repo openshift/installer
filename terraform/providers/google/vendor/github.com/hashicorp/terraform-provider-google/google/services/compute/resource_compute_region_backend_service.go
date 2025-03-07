@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
@@ -144,6 +145,7 @@ func ResourceComputeRegionBackendService() *schema.Resource {
 		MigrateState:  tpgresource.MigrateStateNoop,
 		CustomizeDiff: customdiff.All(
 			customDiffRegionBackendService,
+			tpgresource.DefaultProviderProject,
 		),
 
 		Schema: map[string]*schema.Schema{
@@ -389,7 +391,9 @@ Defaults to 3.`,
 				Type:     schema.TypeInt,
 				Optional: true,
 				Description: `Time for which instance will be drained (not accept new
-connections, but still work to finish started).`,
+connections, but still work to finish started).
+
+From version 6.0.0 ConnectionDrainingTimeoutSec default value will be 300 to match default GCP value.`,
 				Default: 0,
 			},
 
@@ -637,7 +641,6 @@ The possible values are:
                      UNAVAILABLE_WEIGHT. Otherwise, Load Balancing remains
                      equal-weight.
 
-
 This field is applicable to either:
 
 * A regional backend service with the service_protocol set to HTTP, HTTPS, or HTTP2,
@@ -646,7 +649,6 @@ This field is applicable to either:
 * A regional backend service with loadBalancingScheme set to EXTERNAL (External Network
   Load Balancing). Only MAGLEV and WEIGHTED_MAGLEV values are possible for External
   Network Load Balancing. The default is MAGLEV.
-
 
 If session_affinity is not NONE, and this field is not set to MAGLEV, WEIGHTED_MAGLEV,
 or RING_HASH, session affinity settings will not take effect.
@@ -696,7 +698,10 @@ This field can only be specified when the load balancing scheme is set to INTERN
 				Optional: true,
 				Description: `Settings controlling eviction of unhealthy hosts from the load balancing pool.
 This field is applicable only when the 'load_balancing_scheme' is set
-to INTERNAL_MANAGED and the 'protocol' is set to HTTP, HTTPS, or HTTP2.`,
+to INTERNAL_MANAGED and the 'protocol' is set to HTTP, HTTPS, or HTTP2.
+
+From version 6.0.0 outlierDetection default terraform values will be removed to match default GCP value.
+Default values are enforce by GCP without providing them.`,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -881,8 +886,10 @@ not applicable if the protocol is UDP. Possible values: ["NONE", "CLIENT_IP", "C
 				Type:     schema.TypeInt,
 				Computed: true,
 				Optional: true,
-				Description: `How many seconds to wait for the backend before considering it a
-failed request. Default is 30 seconds. Valid range is [1, 86400].`,
+				Description: `The backend service timeout has a different meaning depending on the type of load balancer.
+For more information see, [Backend service settings](https://cloud.google.com/compute/docs/reference/rest/v1/backendServices).
+The default is 30 seconds.
+The full range of timeout values allowed goes from 1 through 2,147,483,647 seconds.`,
 			},
 			"creation_timestamp": {
 				Type:        schema.TypeString,
@@ -894,6 +901,11 @@ failed request. Default is 30 seconds. Valid range is [1, 86400].`,
 				Computed: true,
 				Description: `Fingerprint of this resource. A hash of the contents stored in this
 object. This field is used in optimistic locking.`,
+			},
+			"generated_id": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: `The unique identifier for the resource. This identifier is defined by the server.`,
 			},
 			"project": {
 				Type:     schema.TypeString,
@@ -945,7 +957,9 @@ partial URL.`,
 				Description: `Specifies the balancing mode for this backend.
 
 See the [Backend Services Overview](https://cloud.google.com/load-balancing/docs/backend-service#balancing-mode)
-for an explanation of load balancing modes. Default value: "CONNECTION" Possible values: ["UTILIZATION", "RATE", "CONNECTION"]`,
+for an explanation of load balancing modes.
+
+From version 6.0.0 default value will be UTILIZATION to match default GCP value. Default value: "CONNECTION" Possible values: ["UTILIZATION", "RATE", "CONNECTION"]`,
 				Default: "CONNECTION",
 			},
 			"capacity_scaler": {
@@ -1221,6 +1235,7 @@ func resourceComputeRegionBackendServiceCreate(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -1229,6 +1244,7 @@ func resourceComputeRegionBackendServiceCreate(d *schema.ResourceData, meta inte
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating RegionBackendService: %s", err)
@@ -1281,12 +1297,14 @@ func resourceComputeRegionBackendServiceRead(d *schema.ResourceData, meta interf
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeRegionBackendService %q", d.Id()))
@@ -1354,6 +1372,9 @@ func resourceComputeRegionBackendServiceRead(d *schema.ResourceData, meta interf
 		return fmt.Errorf("Error reading RegionBackendService: %s", err)
 	}
 	if err := d.Set("health_checks", flattenComputeRegionBackendServiceHealthChecks(res["healthChecks"], d, config)); err != nil {
+		return fmt.Errorf("Error reading RegionBackendService: %s", err)
+	}
+	if err := d.Set("generated_id", flattenComputeRegionBackendServiceGeneratedId(res["id"], d, config)); err != nil {
 		return fmt.Errorf("Error reading RegionBackendService: %s", err)
 	}
 	if err := d.Set("iap", flattenComputeRegionBackendServiceIap(res["iap"], d, config)); err != nil {
@@ -1565,6 +1586,7 @@ func resourceComputeRegionBackendServiceUpdate(d *schema.ResourceData, meta inte
 	}
 
 	log.Printf("[DEBUG] Updating RegionBackendService %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -1579,6 +1601,7 @@ func resourceComputeRegionBackendServiceUpdate(d *schema.ResourceData, meta inte
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
+		Headers:   headers,
 	})
 
 	if err != nil {
@@ -1619,13 +1642,15 @@ func resourceComputeRegionBackendServiceDelete(d *schema.ResourceData, meta inte
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting RegionBackendService %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting RegionBackendService %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -1634,6 +1659,7 @@ func resourceComputeRegionBackendServiceDelete(d *schema.ResourceData, meta inte
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "RegionBackendService")
@@ -1654,10 +1680,10 @@ func resourceComputeRegionBackendServiceDelete(d *schema.ResourceData, meta inte
 func resourceComputeRegionBackendServiceImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/regions/(?P<region>[^/]+)/backendServices/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/regions/(?P<region>[^/]+)/backendServices/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -2329,6 +2355,23 @@ func flattenComputeRegionBackendServiceHealthChecks(v interface{}, d *schema.Res
 		return v
 	}
 	return tpgresource.ConvertAndMapStringArr(v.([]interface{}), tpgresource.ConvertSelfLinkToV1)
+}
+
+func flattenComputeRegionBackendServiceGeneratedId(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
 }
 
 func flattenComputeRegionBackendServiceIap(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -3672,8 +3715,6 @@ func resourceComputeRegionBackendServiceEncoder(d *schema.ResourceData, meta int
 	if iapVal == nil {
 		data := map[string]interface{}{}
 		data["enabled"] = false
-		data["oauth2ClientId"] = ""
-		data["oauth2ClientSecret"] = ""
 		obj["iap"] = data
 	} else {
 		iap := iapVal.(map[string]interface{})

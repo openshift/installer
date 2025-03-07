@@ -21,7 +21,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -63,6 +65,7 @@ func ResourceMonitoringNotificationChannel() *schema.Resource {
 
 		CustomizeDiff: customdiff.All(
 			sensitiveLabelCustomizeDiff,
+			tpgresource.DefaultProviderProject,
 		),
 
 		Schema: map[string]*schema.Schema{
@@ -251,6 +254,7 @@ func resourceMonitoringNotificationChannelCreate(d *schema.ResourceData, meta in
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "POST",
@@ -259,6 +263,7 @@ func resourceMonitoringNotificationChannelCreate(d *schema.ResourceData, meta in
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutCreate),
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsMonitoringConcurrentEditError},
 	})
 	if err != nil {
@@ -323,12 +328,14 @@ func resourceMonitoringNotificationChannelRead(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "GET",
 		Project:              billingProject,
 		RawURL:               url,
 		UserAgent:            userAgent,
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsMonitoringConcurrentEditError},
 	})
 	if err != nil {
@@ -456,6 +463,7 @@ func resourceMonitoringNotificationChannelUpdate(d *schema.ResourceData, meta in
 	}
 
 	log.Printf("[DEBUG] Updating NotificationChannel %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -470,6 +478,7 @@ func resourceMonitoringNotificationChannelUpdate(d *schema.ResourceData, meta in
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutUpdate),
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsMonitoringConcurrentEditError},
 	})
 
@@ -510,13 +519,15 @@ func resourceMonitoringNotificationChannelDelete(d *schema.ResourceData, meta in
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting NotificationChannel %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting NotificationChannel %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "DELETE",
@@ -525,6 +536,7 @@ func resourceMonitoringNotificationChannelDelete(d *schema.ResourceData, meta in
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutDelete),
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsMonitoringConcurrentEditError},
 	})
 	if err != nil {
@@ -540,10 +552,21 @@ func resourceMonitoringNotificationChannelImport(d *schema.ResourceData, meta in
 	config := meta.(*transport_tpg.Config)
 
 	// current import_formats can't import fields with forward slashes in their value
-	if err := tpgresource.ParseImportId([]string{"(?P<project>[^ ]+) (?P<name>[^ ]+)", "(?P<name>[^ ]+)"}, d, config); err != nil {
+	if err := tpgresource.ParseImportId([]string{"(?P<name>.+)"}, d, config); err != nil {
 		return nil, err
 	}
 
+	stringParts := strings.Split(d.Get("name").(string), "/")
+	if len(stringParts) < 2 {
+		return nil, fmt.Errorf(
+			"Could not split project from name: %s",
+			d.Get("name"),
+		)
+	}
+
+	if err := d.Set("project", stringParts[1]); err != nil {
+		return nil, fmt.Errorf("Error setting project: %s", err)
+	}
 	return []*schema.ResourceData{d}, nil
 }
 

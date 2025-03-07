@@ -20,9 +20,11 @@ package logging
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -46,6 +48,10 @@ func ResourceLoggingMetric() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"filter": {
@@ -105,22 +111,19 @@ the lower bound. Each bucket represents a constant relative uncertainty on a spe
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"growth_factor": {
-										Type:         schema.TypeFloat,
-										Optional:     true,
-										Description:  `Must be greater than 1.`,
-										AtLeastOneOf: []string{"bucket_options.0.exponential_buckets.0.num_finite_buckets", "bucket_options.0.exponential_buckets.0.growth_factor", "bucket_options.0.exponential_buckets.0.scale"},
+										Type:        schema.TypeFloat,
+										Required:    true,
+										Description: `Must be greater than 1.`,
 									},
 									"num_finite_buckets": {
-										Type:         schema.TypeInt,
-										Optional:     true,
-										Description:  `Must be greater than 0.`,
-										AtLeastOneOf: []string{"bucket_options.0.exponential_buckets.0.num_finite_buckets", "bucket_options.0.exponential_buckets.0.growth_factor", "bucket_options.0.exponential_buckets.0.scale"},
+										Type:        schema.TypeInt,
+										Required:    true,
+										Description: `Must be greater than 0.`,
 									},
 									"scale": {
-										Type:         schema.TypeFloat,
-										Optional:     true,
-										Description:  `Must be greater than 0.`,
-										AtLeastOneOf: []string{"bucket_options.0.exponential_buckets.0.num_finite_buckets", "bucket_options.0.exponential_buckets.0.growth_factor", "bucket_options.0.exponential_buckets.0.scale"},
+										Type:        schema.TypeFloat,
+										Required:    true,
+										Description: `Must be greater than 0.`,
 									},
 								},
 							},
@@ -135,22 +138,19 @@ Each bucket represents a constant absolute uncertainty on the specific value in 
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"num_finite_buckets": {
-										Type:         schema.TypeInt,
-										Optional:     true,
-										Description:  `Must be greater than 0.`,
-										AtLeastOneOf: []string{"bucket_options.0.linear_buckets.0.num_finite_buckets", "bucket_options.0.linear_buckets.0.width", "bucket_options.0.linear_buckets.0.offset"},
+										Type:        schema.TypeInt,
+										Required:    true,
+										Description: `Must be greater than 0.`,
 									},
 									"offset": {
-										Type:         schema.TypeFloat,
-										Optional:     true,
-										Description:  `Lower bound of the first bucket.`,
-										AtLeastOneOf: []string{"bucket_options.0.linear_buckets.0.num_finite_buckets", "bucket_options.0.linear_buckets.0.width", "bucket_options.0.linear_buckets.0.offset"},
+										Type:        schema.TypeFloat,
+										Required:    true,
+										Description: `Lower bound of the first bucket.`,
 									},
 									"width": {
-										Type:         schema.TypeFloat,
-										Optional:     true,
-										Description:  `Must be greater than 0.`,
-										AtLeastOneOf: []string{"bucket_options.0.linear_buckets.0.num_finite_buckets", "bucket_options.0.linear_buckets.0.width", "bucket_options.0.linear_buckets.0.offset"},
+										Type:        schema.TypeFloat,
+										Required:    true,
+										Description: `Must be greater than 0.`,
 									},
 								},
 							},
@@ -371,6 +371,7 @@ func resourceLoggingMetricCreate(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -379,6 +380,7 @@ func resourceLoggingMetricCreate(d *schema.ResourceData, meta interface{}) error
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Metric: %s", err)
@@ -439,12 +441,14 @@ func resourceLoggingMetricRead(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("LoggingMetric %q", d.Id()))
@@ -569,6 +573,7 @@ func resourceLoggingMetricUpdate(d *schema.ResourceData, meta interface{}) error
 	}
 
 	log.Printf("[DEBUG] Updating Metric %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -583,6 +588,7 @@ func resourceLoggingMetricUpdate(d *schema.ResourceData, meta interface{}) error
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
+		Headers:   headers,
 	})
 
 	if err != nil {
@@ -622,13 +628,15 @@ func resourceLoggingMetricDelete(d *schema.ResourceData, meta interface{}) error
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Metric %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Metric %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -637,6 +645,7 @@ func resourceLoggingMetricDelete(d *schema.ResourceData, meta interface{}) error
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Metric")

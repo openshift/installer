@@ -18,16 +18,20 @@
 package certificatemanager
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
+	"github.com/hashicorp/terraform-provider-google/google/verify"
 )
 
 func ResourceCertificateManagerDnsAuthorization() *schema.Resource {
@@ -46,6 +50,20 @@ func ResourceCertificateManagerDnsAuthorization() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		SchemaVersion: 1,
+
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceCertificateManagerDnsAuthorizationResourceV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: ResourceCertificateManagerDnsAuthorizationUpgradeV0,
+				Version: 0,
+			},
+		},
+		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"domain": {
@@ -70,10 +88,35 @@ and all following characters must be a dash, underscore, letter or digit.`,
 				Description: `A human-readable description of the resource.`,
 			},
 			"labels": {
-				Type:        schema.TypeMap,
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `Set of label tags associated with the DNS Authorization resource.
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
+			},
+			"location": {
+				Type:        schema.TypeString,
 				Optional:    true,
-				Description: `Set of label tags associated with the DNS Authorization resource.`,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				ForceNew:    true,
+				Description: `The Certificate Manager location. If not specified, "global" is used.`,
+				Default:     "global",
+			},
+			"type": {
+				Type:         schema.TypeString,
+				Computed:     true,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: verify.ValidateEnum([]string{"FIXED_RECORD", "PER_PROJECT_RECORD", ""}),
+				Description: `type of DNS authorization. If unset during the resource creation, FIXED_RECORD will
+be used for global resources, and PER_PROJECT_RECORD will be used for other locations.
+
+FIXED_RECORD DNS authorization uses DNS-01 validation method
+
+PER_PROJECT_RECORD DNS authorization allows for independent management
+of Google-managed certificates with DNS authorization across multiple
+projects. Possible values: ["FIXED_RECORD", "PER_PROJECT_RECORD"]`,
 			},
 			"dns_resource_record": {
 				Type:     schema.TypeList,
@@ -102,6 +145,19 @@ E.g. '_acme-challenge.example.com'.`,
 					},
 				},
 			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
+			},
 			"project": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -127,20 +183,26 @@ func resourceCertificateManagerDnsAuthorizationCreate(d *schema.ResourceData, me
 	} else if v, ok := d.GetOkExists("description"); !tpgresource.IsEmptyValue(reflect.ValueOf(descriptionProp)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
 	}
-	labelsProp, err := expandCertificateManagerDnsAuthorizationLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	domainProp, err := expandCertificateManagerDnsAuthorizationDomain(d.Get("domain"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("domain"); !tpgresource.IsEmptyValue(reflect.ValueOf(domainProp)) && (ok || !reflect.DeepEqual(v, domainProp)) {
 		obj["domain"] = domainProp
 	}
+	typeProp, err := expandCertificateManagerDnsAuthorizationType(d.Get("type"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("type"); !tpgresource.IsEmptyValue(reflect.ValueOf(typeProp)) && (ok || !reflect.DeepEqual(v, typeProp)) {
+		obj["type"] = typeProp
+	}
+	labelsProp, err := expandCertificateManagerDnsAuthorizationEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
 
-	url, err := tpgresource.ReplaceVars(d, config, "{{CertificateManagerBasePath}}projects/{{project}}/locations/global/dnsAuthorizations?dnsAuthorizationId={{name}}")
+	url, err := tpgresource.ReplaceVars(d, config, "{{CertificateManagerBasePath}}projects/{{project}}/locations/{{location}}/dnsAuthorizations?dnsAuthorizationId={{name}}")
 	if err != nil {
 		return err
 	}
@@ -159,6 +221,7 @@ func resourceCertificateManagerDnsAuthorizationCreate(d *schema.ResourceData, me
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -167,13 +230,14 @@ func resourceCertificateManagerDnsAuthorizationCreate(d *schema.ResourceData, me
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating DnsAuthorization: %s", err)
 	}
 
 	// Store the ID now
-	id, err := tpgresource.ReplaceVars(d, config, "projects/{{project}}/locations/global/dnsAuthorizations/{{name}}")
+	id, err := tpgresource.ReplaceVars(d, config, "projects/{{project}}/locations/{{location}}/dnsAuthorizations/{{name}}")
 	if err != nil {
 		return fmt.Errorf("Error constructing id: %s", err)
 	}
@@ -201,7 +265,7 @@ func resourceCertificateManagerDnsAuthorizationRead(d *schema.ResourceData, meta
 		return err
 	}
 
-	url, err := tpgresource.ReplaceVars(d, config, "{{CertificateManagerBasePath}}projects/{{project}}/locations/global/dnsAuthorizations/{{name}}")
+	url, err := tpgresource.ReplaceVars(d, config, "{{CertificateManagerBasePath}}projects/{{project}}/locations/{{location}}/dnsAuthorizations/{{name}}")
 	if err != nil {
 		return err
 	}
@@ -219,12 +283,14 @@ func resourceCertificateManagerDnsAuthorizationRead(d *schema.ResourceData, meta
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("CertificateManagerDnsAuthorization %q", d.Id()))
@@ -243,7 +309,16 @@ func resourceCertificateManagerDnsAuthorizationRead(d *schema.ResourceData, meta
 	if err := d.Set("domain", flattenCertificateManagerDnsAuthorizationDomain(res["domain"], d, config)); err != nil {
 		return fmt.Errorf("Error reading DnsAuthorization: %s", err)
 	}
+	if err := d.Set("type", flattenCertificateManagerDnsAuthorizationType(res["type"], d, config)); err != nil {
+		return fmt.Errorf("Error reading DnsAuthorization: %s", err)
+	}
 	if err := d.Set("dns_resource_record", flattenCertificateManagerDnsAuthorizationDnsResourceRecord(res["dnsResourceRecord"], d, config)); err != nil {
+		return fmt.Errorf("Error reading DnsAuthorization: %s", err)
+	}
+	if err := d.Set("terraform_labels", flattenCertificateManagerDnsAuthorizationTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading DnsAuthorization: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenCertificateManagerDnsAuthorizationEffectiveLabels(res["labels"], d, config)); err != nil {
 		return fmt.Errorf("Error reading DnsAuthorization: %s", err)
 	}
 
@@ -272,26 +347,27 @@ func resourceCertificateManagerDnsAuthorizationUpdate(d *schema.ResourceData, me
 	} else if v, ok := d.GetOkExists("description"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
 	}
-	labelsProp, err := expandCertificateManagerDnsAuthorizationLabels(d.Get("labels"), d, config)
+	labelsProp, err := expandCertificateManagerDnsAuthorizationEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
 		obj["labels"] = labelsProp
 	}
 
-	url, err := tpgresource.ReplaceVars(d, config, "{{CertificateManagerBasePath}}projects/{{project}}/locations/global/dnsAuthorizations/{{name}}")
+	url, err := tpgresource.ReplaceVars(d, config, "{{CertificateManagerBasePath}}projects/{{project}}/locations/{{location}}/dnsAuthorizations/{{name}}")
 	if err != nil {
 		return err
 	}
 
 	log.Printf("[DEBUG] Updating DnsAuthorization %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("description") {
 		updateMask = append(updateMask, "description")
 	}
 
-	if d.HasChange("labels") {
+	if d.HasChange("effective_labels") {
 		updateMask = append(updateMask, "labels")
 	}
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
@@ -306,28 +382,32 @@ func resourceCertificateManagerDnsAuthorizationUpdate(d *schema.ResourceData, me
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating DnsAuthorization %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating DnsAuthorization %q: %#v", d.Id(), res)
-	}
+		if err != nil {
+			return fmt.Errorf("Error updating DnsAuthorization %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating DnsAuthorization %q: %#v", d.Id(), res)
+		}
 
-	err = CertificateManagerOperationWaitTime(
-		config, res, project, "Updating DnsAuthorization", userAgent,
-		d.Timeout(schema.TimeoutUpdate))
+		err = CertificateManagerOperationWaitTime(
+			config, res, project, "Updating DnsAuthorization", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return resourceCertificateManagerDnsAuthorizationRead(d, meta)
@@ -348,19 +428,21 @@ func resourceCertificateManagerDnsAuthorizationDelete(d *schema.ResourceData, me
 	}
 	billingProject = project
 
-	url, err := tpgresource.ReplaceVars(d, config, "{{CertificateManagerBasePath}}projects/{{project}}/locations/global/dnsAuthorizations/{{name}}")
+	url, err := tpgresource.ReplaceVars(d, config, "{{CertificateManagerBasePath}}projects/{{project}}/locations/{{location}}/dnsAuthorizations/{{name}}")
 	if err != nil {
 		return err
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting DnsAuthorization %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting DnsAuthorization %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -369,6 +451,7 @@ func resourceCertificateManagerDnsAuthorizationDelete(d *schema.ResourceData, me
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "DnsAuthorization")
@@ -389,15 +472,15 @@ func resourceCertificateManagerDnsAuthorizationDelete(d *schema.ResourceData, me
 func resourceCertificateManagerDnsAuthorizationImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/global/dnsAuthorizations/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/dnsAuthorizations/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<location>[^/]+)/(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
 
 	// Replace import id for the resource id
-	id, err := tpgresource.ReplaceVars(d, config, "projects/{{project}}/locations/global/dnsAuthorizations/{{name}}")
+	id, err := tpgresource.ReplaceVars(d, config, "projects/{{project}}/locations/{{location}}/dnsAuthorizations/{{name}}")
 	if err != nil {
 		return nil, fmt.Errorf("Error constructing id: %s", err)
 	}
@@ -411,10 +494,25 @@ func flattenCertificateManagerDnsAuthorizationDescription(v interface{}, d *sche
 }
 
 func flattenCertificateManagerDnsAuthorizationLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenCertificateManagerDnsAuthorizationDomain(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCertificateManagerDnsAuthorizationType(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -447,11 +545,38 @@ func flattenCertificateManagerDnsAuthorizationDnsResourceRecordData(v interface{
 	return v
 }
 
+func flattenCertificateManagerDnsAuthorizationTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
+}
+
+func flattenCertificateManagerDnsAuthorizationEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func expandCertificateManagerDnsAuthorizationDescription(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
-func expandCertificateManagerDnsAuthorizationLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+func expandCertificateManagerDnsAuthorizationDomain(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCertificateManagerDnsAuthorizationType(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCertificateManagerDnsAuthorizationEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
 	if v == nil {
 		return map[string]string{}, nil
 	}
@@ -462,6 +587,94 @@ func expandCertificateManagerDnsAuthorizationLabels(v interface{}, d tpgresource
 	return m, nil
 }
 
-func expandCertificateManagerDnsAuthorizationDomain(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
+func ResourceCertificateManagerDnsAuthorizationUpgradeV0(_ context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+	log.Printf("[DEBUG] Attributes before migration: %#v", rawState)
+	// Version 0 didn't support location. Default it to global.
+	rawState["location"] = "global"
+	log.Printf("[DEBUG] Attributes after migration: %#v", rawState)
+	return rawState, nil
+}
+
+func resourceCertificateManagerDnsAuthorizationResourceV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"domain": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+				Description: `A domain which is being authorized. A DnsAuthorization resource covers a
+single domain and its wildcard, e.g. authorization for "example.com" can
+be used to issue certificates for "example.com" and "*.example.com".`,
+			},
+			"name": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+				Description: `Name of the resource; provided by the client when the resource is created.
+The name must be 1-64 characters long, and match the regular expression [a-zA-Z][a-zA-Z0-9_-]* which means the first character must be a letter,
+and all following characters must be a dash, underscore, letter or digit.`,
+			},
+			"description": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: `A human-readable description of the resource.`,
+			},
+			"labels": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `Set of label tags associated with the DNS Authorization resource.
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
+			},
+			"dns_resource_record": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Description: `The structure describing the DNS Resource Record that needs to be added
+to DNS configuration for the authorization to be usable by
+certificate.`,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"data": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: `Data of the DNS Resource Record.`,
+						},
+						"name": {
+							Type:     schema.TypeString,
+							Computed: true,
+							Description: `Fully qualified name of the DNS Resource Record.
+E.g. '_acme-challenge.example.com'.`,
+						},
+						"type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: `Type of the DNS Resource Record.`,
+						},
+					},
+				},
+			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
+			},
+			"project": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ForceNew: true,
+			},
+		},
+	}
+
 }

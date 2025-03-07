@@ -20,6 +20,7 @@ package accesscontextmanager
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -130,6 +131,7 @@ func resourceAccessContextManagerAccessPolicyCreate(d *schema.ResourceData, meta
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -138,6 +140,7 @@ func resourceAccessContextManagerAccessPolicyCreate(d *schema.ResourceData, meta
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating AccessPolicy: %s", err)
@@ -210,12 +213,14 @@ func resourceAccessContextManagerAccessPolicyRead(d *schema.ResourceData, meta i
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("AccessContextManagerAccessPolicy %q", d.Id()))
@@ -272,6 +277,7 @@ func resourceAccessContextManagerAccessPolicyUpdate(d *schema.ResourceData, meta
 	}
 
 	log.Printf("[DEBUG] Updating AccessPolicy %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("title") {
@@ -293,28 +299,32 @@ func resourceAccessContextManagerAccessPolicyUpdate(d *schema.ResourceData, meta
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating AccessPolicy %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating AccessPolicy %q: %#v", d.Id(), res)
-	}
+		if err != nil {
+			return fmt.Errorf("Error updating AccessPolicy %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating AccessPolicy %q: %#v", d.Id(), res)
+		}
 
-	err = AccessContextManagerOperationWaitTime(
-		config, res, "Updating AccessPolicy", userAgent,
-		d.Timeout(schema.TimeoutUpdate))
+		err = AccessContextManagerOperationWaitTime(
+			config, res, "Updating AccessPolicy", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return resourceAccessContextManagerAccessPolicyRead(d, meta)
@@ -335,13 +345,15 @@ func resourceAccessContextManagerAccessPolicyDelete(d *schema.ResourceData, meta
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting AccessPolicy %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting AccessPolicy %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -350,6 +362,7 @@ func resourceAccessContextManagerAccessPolicyDelete(d *schema.ResourceData, meta
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "AccessPolicy")
@@ -370,7 +383,7 @@ func resourceAccessContextManagerAccessPolicyDelete(d *schema.ResourceData, meta
 func resourceAccessContextManagerAccessPolicyImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"(?P<name>[^/]+)",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

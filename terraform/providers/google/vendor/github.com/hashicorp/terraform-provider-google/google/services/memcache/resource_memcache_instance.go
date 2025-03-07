@@ -20,10 +20,12 @@ package memcache
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
@@ -48,6 +50,11 @@ func ResourceMemcacheInstance() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -97,10 +104,14 @@ func ResourceMemcacheInstance() *schema.Resource {
 				Description: `A user-visible name for the instance.`,
 			},
 			"labels": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: `Resource labels to represent user-provided metadata.`,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `Resource labels to represent user-provided metadata.
+
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"maintenance_policy": {
 				Type:        schema.TypeList,
@@ -227,10 +238,10 @@ resolution and up to nine fractional digits.`,
 			"memcache_version": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ValidateFunc: verify.ValidateEnum([]string{"MEMCACHE_1_5", ""}),
+				ValidateFunc: verify.ValidateEnum([]string{"MEMCACHE_1_5", "MEMCACHE_1_6_15", ""}),
 				Description: `The major version of Memcached software. If not provided, latest supported version will be used.
 Currently the latest supported major version is MEMCACHE_1_5. The minor version will be automatically
-determined by our system based on the latest supported minor version. Default value: "MEMCACHE_1_5" Possible values: ["MEMCACHE_1_5"]`,
+determined by our system based on the latest supported minor version. Default value: "MEMCACHE_1_5" Possible values: ["MEMCACHE_1_5", "MEMCACHE_1_6_15"]`,
 				Default: "MEMCACHE_1_5",
 			},
 			"region": {
@@ -239,6 +250,17 @@ determined by our system based on the latest supported minor version. Default va
 				Optional:    true,
 				ForceNew:    true,
 				Description: `The region of the Memcache instance. If it is not provided, the provider region is used.`,
+			},
+			"reserved_ip_range_id": {
+				Type:     schema.TypeList,
+				Optional: true,
+				ForceNew: true,
+				Description: `Contains the name of allocated IP address ranges associated with
+the private service access connection for example, "test-default"
+associated with IP range 10.0.0.0/29.`,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 			"zones": {
 				Type:     schema.TypeSet,
@@ -261,6 +283,12 @@ provided, all zones will be used.`,
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `Endpoint for Discovery API`,
+			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"maintenance_schedule": {
 				Type:        schema.TypeList,
@@ -332,6 +360,13 @@ resolution and up to nine fractional digits.`,
 					},
 				},
 			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
+			},
 			"project": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -356,12 +391,6 @@ func resourceMemcacheInstanceCreate(d *schema.ResourceData, meta interface{}) er
 		return err
 	} else if v, ok := d.GetOkExists("display_name"); !tpgresource.IsEmptyValue(reflect.ValueOf(displayNameProp)) && (ok || !reflect.DeepEqual(v, displayNameProp)) {
 		obj["displayName"] = displayNameProp
-	}
-	labelsProp, err := expandMemcacheInstanceLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
 	}
 	zonesProp, err := expandMemcacheInstanceZones(d.Get("zones"), d, config)
 	if err != nil {
@@ -405,6 +434,18 @@ func resourceMemcacheInstanceCreate(d *schema.ResourceData, meta interface{}) er
 	} else if v, ok := d.GetOkExists("maintenance_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(maintenancePolicyProp)) && (ok || !reflect.DeepEqual(v, maintenancePolicyProp)) {
 		obj["maintenancePolicy"] = maintenancePolicyProp
 	}
+	reservedIpRangeIdProp, err := expandMemcacheInstanceReservedIpRangeId(d.Get("reserved_ip_range_id"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("reserved_ip_range_id"); !tpgresource.IsEmptyValue(reflect.ValueOf(reservedIpRangeIdProp)) && (ok || !reflect.DeepEqual(v, reservedIpRangeIdProp)) {
+		obj["reservedIpRangeId"] = reservedIpRangeIdProp
+	}
+	labelsProp, err := expandMemcacheInstanceEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{MemcacheBasePath}}projects/{{project}}/locations/{{region}}/instances?instanceId={{name}}")
 	if err != nil {
@@ -425,6 +466,7 @@ func resourceMemcacheInstanceCreate(d *schema.ResourceData, meta interface{}) er
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -433,6 +475,7 @@ func resourceMemcacheInstanceCreate(d *schema.ResourceData, meta interface{}) er
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Instance: %s", err)
@@ -495,12 +538,14 @@ func resourceMemcacheInstanceRead(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("MemcacheInstance %q", d.Id()))
@@ -552,6 +597,12 @@ func resourceMemcacheInstanceRead(d *schema.ResourceData, meta interface{}) erro
 	if err := d.Set("maintenance_schedule", flattenMemcacheInstanceMaintenanceSchedule(res["maintenanceSchedule"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
+	if err := d.Set("terraform_labels", flattenMemcacheInstanceTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenMemcacheInstanceEffectiveLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
 
 	return nil
 }
@@ -578,29 +629,23 @@ func resourceMemcacheInstanceUpdate(d *schema.ResourceData, meta interface{}) er
 	} else if v, ok := d.GetOkExists("display_name"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, displayNameProp)) {
 		obj["displayName"] = displayNameProp
 	}
-	labelsProp, err := expandMemcacheInstanceLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	nodeCountProp, err := expandMemcacheInstanceNodeCount(d.Get("node_count"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("node_count"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, nodeCountProp)) {
 		obj["nodeCount"] = nodeCountProp
 	}
-	memcacheVersionProp, err := expandMemcacheInstanceMemcacheVersion(d.Get("memcache_version"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("memcache_version"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, memcacheVersionProp)) {
-		obj["memcacheVersion"] = memcacheVersionProp
-	}
 	maintenancePolicyProp, err := expandMemcacheInstanceMaintenancePolicy(d.Get("maintenance_policy"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("maintenance_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, maintenancePolicyProp)) {
 		obj["maintenancePolicy"] = maintenancePolicyProp
+	}
+	labelsProp, err := expandMemcacheInstanceEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{MemcacheBasePath}}projects/{{project}}/locations/{{region}}/instances/{{name}}")
@@ -609,26 +654,23 @@ func resourceMemcacheInstanceUpdate(d *schema.ResourceData, meta interface{}) er
 	}
 
 	log.Printf("[DEBUG] Updating Instance %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("display_name") {
 		updateMask = append(updateMask, "displayName")
 	}
 
-	if d.HasChange("labels") {
-		updateMask = append(updateMask, "labels")
-	}
-
 	if d.HasChange("node_count") {
 		updateMask = append(updateMask, "nodeCount")
 	}
 
-	if d.HasChange("memcache_version") {
-		updateMask = append(updateMask, "memcacheVersion")
-	}
-
 	if d.HasChange("maintenance_policy") {
 		updateMask = append(updateMask, "maintenancePolicy")
+	}
+
+	if d.HasChange("effective_labels") {
+		updateMask = append(updateMask, "labels")
 	}
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
 	// won't set it
@@ -642,29 +684,82 @@ func resourceMemcacheInstanceUpdate(d *schema.ResourceData, meta interface{}) er
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating Instance %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating Instance %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating Instance %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating Instance %q: %#v", d.Id(), res)
+		}
+
+		err = MemcacheOperationWaitTime(
+			config, res, project, "Updating Instance", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
+
+		if err != nil {
+			return err
+		}
+	}
+	d.Partial(true)
+
+	if d.HasChange("memcache_version") {
+		obj := make(map[string]interface{})
+
+		memcacheVersionProp, err := expandMemcacheInstanceMemcacheVersion(d.Get("memcache_version"), d, config)
+		if err != nil {
+			return err
+		} else if v, ok := d.GetOkExists("memcache_version"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, memcacheVersionProp)) {
+			obj["memcacheVersion"] = memcacheVersionProp
+		}
+
+		url, err := tpgresource.ReplaceVars(d, config, "{{MemcacheBasePath}}projects/{{project}}/locations/{{region}}/instances/{{name}}:upgrade")
+		if err != nil {
+			return err
+		}
+
+		headers := make(http.Header)
+
+		// err == nil indicates that the billing_project value was found
+		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+			billingProject = bp
+		}
+
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "POST",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
+		if err != nil {
+			return fmt.Errorf("Error updating Instance %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating Instance %q: %#v", d.Id(), res)
+		}
+
+		err = MemcacheOperationWaitTime(
+			config, res, project, "Updating Instance", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
+		if err != nil {
+			return err
+		}
 	}
 
-	err = MemcacheOperationWaitTime(
-		config, res, project, "Updating Instance", userAgent,
-		d.Timeout(schema.TimeoutUpdate))
-
-	if err != nil {
-		return err
-	}
+	d.Partial(false)
 
 	return resourceMemcacheInstanceRead(d, meta)
 }
@@ -690,13 +785,15 @@ func resourceMemcacheInstanceDelete(d *schema.ResourceData, meta interface{}) er
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Instance %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Instance %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -705,6 +802,7 @@ func resourceMemcacheInstanceDelete(d *schema.ResourceData, meta interface{}) er
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Instance")
@@ -725,10 +823,10 @@ func resourceMemcacheInstanceDelete(d *schema.ResourceData, meta interface{}) er
 func resourceMemcacheInstanceImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/(?P<region>[^/]+)/instances/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/(?P<region>[^/]+)/instances/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -811,7 +909,18 @@ func flattenMemcacheInstanceDiscoveryEndpoint(v interface{}, d *schema.ResourceD
 }
 
 func flattenMemcacheInstanceLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenMemcacheInstanceMemcacheFullVersion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1094,19 +1203,27 @@ func flattenMemcacheInstanceMaintenanceScheduleScheduleDeadlineTime(v interface{
 	return v
 }
 
-func expandMemcacheInstanceDisplayName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
+func flattenMemcacheInstanceTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
-func expandMemcacheInstanceLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
-	if v == nil {
-		return map[string]string{}, nil
-	}
-	m := make(map[string]string)
-	for k, val := range v.(map[string]interface{}) {
-		m[k] = val.(string)
-	}
-	return m, nil
+func flattenMemcacheInstanceEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func expandMemcacheInstanceDisplayName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
 }
 
 func expandMemcacheInstanceZones(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
@@ -1356,4 +1473,19 @@ func expandMemcacheInstanceMaintenancePolicyWeeklyMaintenanceWindowStartTimeSeco
 
 func expandMemcacheInstanceMaintenancePolicyWeeklyMaintenanceWindowStartTimeNanos(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
+}
+
+func expandMemcacheInstanceReservedIpRangeId(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandMemcacheInstanceEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
 }

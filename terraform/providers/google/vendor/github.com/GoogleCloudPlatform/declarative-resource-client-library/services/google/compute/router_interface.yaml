@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC. All Rights Reserved.
+# Copyright 2024 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -91,6 +91,7 @@ components:
           x-dcl-go-name: Location
           description: The location of the resource
           x-kubernetes-immutable: true
+          x-dcl-parameter: true
         managementType:
           type: string
           x-dcl-go-name: ManagementType
@@ -116,6 +117,7 @@ components:
           - resource: Cloudresourcemanager/Project
             field: name
             parent: true
+          x-dcl-parameter: true
         router:
           type: string
           x-dcl-go-name: Router
@@ -125,3 +127,4 @@ components:
           - resource: Compute/Router
             field: name
             parent: true
+          x-dcl-parameter: true

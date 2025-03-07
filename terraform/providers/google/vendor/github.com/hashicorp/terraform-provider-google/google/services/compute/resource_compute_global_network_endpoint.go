@@ -20,10 +20,13 @@ package compute
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
@@ -44,6 +47,10 @@ func ResourceComputeGlobalNetworkEndpoint() *schema.Resource {
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
+
 		Schema: map[string]*schema.Schema{
 			"global_network_endpoint_group": {
 				Type:             schema.TypeString,
@@ -53,10 +60,11 @@ func ResourceComputeGlobalNetworkEndpoint() *schema.Resource {
 				Description:      `The global network endpoint group this endpoint is part of.`,
 			},
 			"port": {
-				Type:        schema.TypeInt,
-				Required:    true,
-				ForceNew:    true,
-				Description: `Port number of the external endpoint.`,
+				Type:         schema.TypeInt,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IntAtLeast(1),
+				Description:  `Port number of the external endpoint.`,
 			},
 			"fqdn": {
 				Type:     schema.TypeString,
@@ -141,6 +149,7 @@ func resourceComputeGlobalNetworkEndpointCreate(d *schema.ResourceData, meta int
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -149,6 +158,7 @@ func resourceComputeGlobalNetworkEndpointCreate(d *schema.ResourceData, meta int
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating GlobalNetworkEndpoint: %s", err)
@@ -201,12 +211,14 @@ func resourceComputeGlobalNetworkEndpointRead(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeGlobalNetworkEndpoint %q", d.Id()))
@@ -281,12 +293,19 @@ func resourceComputeGlobalNetworkEndpointDelete(d *schema.ResourceData, meta int
 	}
 
 	var obj map[string]interface{}
+
+	// err == nil indicates that the billing_project value was found
+	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+		billingProject = bp
+	}
+
+	headers := make(http.Header)
 	toDelete := make(map[string]interface{})
 	portProp, err := expandNestedComputeGlobalNetworkEndpointPort(d.Get("port"), d, config)
 	if err != nil {
 		return err
 	}
-	if portProp != "" {
+	if portProp != "" && portProp != 0 {
 		toDelete["port"] = portProp
 	}
 
@@ -309,13 +328,8 @@ func resourceComputeGlobalNetworkEndpointDelete(d *schema.ResourceData, meta int
 	obj = map[string]interface{}{
 		"networkEndpoints": []map[string]interface{}{toDelete},
 	}
+
 	log.Printf("[DEBUG] Deleting GlobalNetworkEndpoint %q", d.Id())
-
-	// err == nil indicates that the billing_project value was found
-	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
-		billingProject = bp
-	}
-
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -324,6 +338,7 @@ func resourceComputeGlobalNetworkEndpointDelete(d *schema.ResourceData, meta int
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "GlobalNetworkEndpoint")

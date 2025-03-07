@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -45,8 +46,8 @@ func sensitiveParamCustomizeDiff(_ context.Context, diff *schema.ResourceDiff, v
 	return nil
 }
 
-// This customizeDiff is to use ForceNew for params fields data_path_template and
-// destination_table_name_template only if the value of "data_source_id" is "google_cloud_storage".
+// This customizeDiff is to use ForceNew for params fields data_path_template or data_path and
+// destination_table_name_template only if the value of "data_source_id" is "google_cloud_storage" or "amazon_s3".
 func ParamsCustomizeDiffFunc(diff tpgresource.TerraformResourceDiff) error {
 	old, new := diff.GetChange("params")
 	dsId := diff.Get("data_source_id").(string)
@@ -54,7 +55,8 @@ func ParamsCustomizeDiffFunc(diff tpgresource.TerraformResourceDiff) error {
 	newParams := new.(map[string]interface{})
 	var err error
 
-	if dsId == "google_cloud_storage" {
+	switch dsId {
+	case "google_cloud_storage":
 		if oldParams["data_path_template"] != nil && newParams["data_path_template"] != nil && oldParams["data_path_template"].(string) != newParams["data_path_template"].(string) {
 			err = diff.ForceNew("params")
 			if err != nil {
@@ -70,11 +72,25 @@ func ParamsCustomizeDiffFunc(diff tpgresource.TerraformResourceDiff) error {
 			}
 			return nil
 		}
-	}
+	case "amazon_s3":
+		if oldParams["data_path"] != nil && newParams["data_path"] != nil && oldParams["data_path"].(string) != newParams["data_path"].(string) {
+			err = diff.ForceNew("params")
+			if err != nil {
+				return fmt.Errorf("ForceNew failed for params, old - %v and new - %v", oldParams, newParams)
+			}
+			return nil
+		}
 
+		if oldParams["destination_table_name_template"] != nil && newParams["destination_table_name_template"] != nil && oldParams["destination_table_name_template"].(string) != newParams["destination_table_name_template"].(string) {
+			err = diff.ForceNew("params")
+			if err != nil {
+				return fmt.Errorf("ForceNew failed for params, old - %v and new - %v", oldParams, newParams)
+			}
+			return nil
+		}
+	}
 	return nil
 }
-
 func paramsCustomizeDiff(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
 	return ParamsCustomizeDiffFunc(diff)
 }
@@ -99,6 +115,7 @@ func ResourceBigqueryDataTransferConfig() *schema.Resource {
 		CustomizeDiff: customdiff.All(
 			sensitiveParamCustomizeDiff,
 			paramsCustomizeDiff,
+			tpgresource.DefaultProviderProject,
 		),
 
 		Schema: map[string]*schema.Schema{
@@ -182,7 +199,8 @@ of valid format: 1st,3rd monday of month 15:30, every wed,fri of jan,
 jun 13:15, and first sunday of quarter 00:00. See more explanation
 about the format here:
 https://cloud.google.com/appengine/docs/flexible/python/scheduling-jobs-with-cron-yaml#the_schedule_format
-NOTE: the granularity should be at least 8 hours, or less frequent.`,
+NOTE: The minimum interval time between recurring transfers depends
+on the data source; refer to the documentation for your data source.`,
 			},
 			"schedule_options": {
 				Type:        schema.TypeList,
@@ -257,8 +275,9 @@ requesting user calling this API has permissions to act as this service account.
 				Type:     schema.TypeString,
 				Computed: true,
 				Description: `The resource name of the transfer config. Transfer config names have the
-form projects/{projectId}/locations/{location}/transferConfigs/{configId}.
-Where configId is usually a uuid, but this is not required.
+form projects/{projectId}/locations/{location}/transferConfigs/{configId}
+or projects/{projectId}/transferConfigs/{configId},
+where configId is usually a uuid, but this is not required.
 The name is ignored when creating a transfer config.`,
 			},
 			"project": {
@@ -365,6 +384,7 @@ func resourceBigqueryDataTransferConfigCreate(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "POST",
@@ -373,6 +393,7 @@ func resourceBigqueryDataTransferConfigCreate(d *schema.ResourceData, meta inter
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutCreate),
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IamMemberMissing},
 	})
 	if err != nil {
@@ -437,12 +458,14 @@ func resourceBigqueryDataTransferConfigRead(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "GET",
 		Project:              billingProject,
 		RawURL:               url,
 		UserAgent:            userAgent,
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IamMemberMissing},
 	})
 	if err != nil {
@@ -584,43 +607,41 @@ func resourceBigqueryDataTransferConfigUpdate(d *schema.ResourceData, meta inter
 	}
 
 	log.Printf("[DEBUG] Updating Config %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
-
+	if v, ok := d.GetOk("service_account_name"); ok {
+		if v != nil && d.HasChange("service_account_name") {
+			updateMask = append(updateMask, "serviceAccountName")
+		}
+	}
 	if d.HasChange("display_name") {
 		updateMask = append(updateMask, "displayName")
 	}
-
 	if d.HasChange("destination_dataset_id") {
 		updateMask = append(updateMask, "destinationDatasetId")
 	}
-
 	if d.HasChange("schedule") {
 		updateMask = append(updateMask, "schedule")
 	}
-
 	if d.HasChange("schedule_options") {
 		updateMask = append(updateMask, "scheduleOptions")
 	}
-
 	if d.HasChange("email_preferences") {
 		updateMask = append(updateMask, "emailPreferences")
 	}
-
 	if d.HasChange("notification_pubsub_topic") {
 		updateMask = append(updateMask, "notificationPubsubTopic")
 	}
-
 	if d.HasChange("data_refresh_window_days") {
 		updateMask = append(updateMask, "dataRefreshWindowDays")
 	}
-
 	if d.HasChange("disabled") {
 		updateMask = append(updateMask, "disabled")
 	}
-
 	if d.HasChange("params") {
 		updateMask = append(updateMask, "params")
 	}
+
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
 	// won't set it
 	url, err = transport_tpg.AddQueryParams(url, map[string]string{"updateMask": strings.Join(updateMask, ",")})
@@ -641,6 +662,7 @@ func resourceBigqueryDataTransferConfigUpdate(d *schema.ResourceData, meta inter
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutUpdate),
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IamMemberMissing},
 	})
 
@@ -674,13 +696,15 @@ func resourceBigqueryDataTransferConfigDelete(d *schema.ResourceData, meta inter
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Config %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Config %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "DELETE",
@@ -689,6 +713,7 @@ func resourceBigqueryDataTransferConfigDelete(d *schema.ResourceData, meta inter
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutDelete),
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IamMemberMissing},
 	})
 	if err != nil {
@@ -706,6 +731,17 @@ func resourceBigqueryDataTransferConfigImport(d *schema.ResourceData, meta inter
 	// current import_formats can't import fields with forward slashes in their value
 	if err := tpgresource.ParseImportId([]string{"(?P<project>[^ ]+) (?P<name>[^ ]+)", "(?P<name>[^ ]+)"}, d, config); err != nil {
 		return nil, err
+	}
+
+	// import location if the name format follows: projects/{{project}}/locations/{{location}}/transferConfigs/{{config_id}}
+	name := d.Get("name").(string)
+	stringParts := strings.Split(name, "/")
+	if len(stringParts) == 6 {
+		if err := d.Set("location", stringParts[3]); err != nil {
+			return nil, fmt.Errorf("Error setting location: %s", err)
+		}
+	} else {
+		log.Printf("[INFO] Transfer config location not imported as it is not included in the name: %s", name)
 	}
 
 	return []*schema.ResourceData{d}, nil

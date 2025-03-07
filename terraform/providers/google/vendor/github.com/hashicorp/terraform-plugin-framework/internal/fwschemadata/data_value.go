@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fwschemadata
 
 import (
@@ -75,9 +78,9 @@ func (d Data) ValueAtPath(ctx context.Context, schemaPath path.Path) (attr.Value
 
 	if attrTypeWithValidate, ok := attrType.(xattr.TypeWithValidate); ok {
 		logging.FrameworkTrace(ctx, "Type implements TypeWithValidate")
-		logging.FrameworkDebug(ctx, "Calling provider defined Type Validate")
+		logging.FrameworkTrace(ctx, "Calling provider defined Type Validate")
 		diags.Append(attrTypeWithValidate.Validate(ctx, tfValue, schemaPath)...)
-		logging.FrameworkDebug(ctx, "Called provider defined Type Validate")
+		logging.FrameworkTrace(ctx, "Called provider defined Type Validate")
 
 		if diags.HasError() {
 			return nil, diags

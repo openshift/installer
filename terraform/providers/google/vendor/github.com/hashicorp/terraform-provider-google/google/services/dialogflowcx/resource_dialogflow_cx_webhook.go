@@ -20,6 +20,7 @@ package dialogflowcx
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"regexp"
 	"strings"
@@ -247,6 +248,8 @@ func resourceDialogflowCXWebhookCreate(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
 	// extract location from the parent
 	location := ""
 
@@ -269,6 +272,7 @@ func resourceDialogflowCXWebhookCreate(d *schema.ResourceData, meta interface{})
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Webhook: %s", err)
@@ -308,6 +312,8 @@ func resourceDialogflowCXWebhookRead(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
 	// extract location from the parent
 	location := ""
 
@@ -328,6 +334,7 @@ func resourceDialogflowCXWebhookRead(d *schema.ResourceData, meta interface{}) e
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DialogflowCXWebhook %q", d.Id()))
@@ -432,6 +439,7 @@ func resourceDialogflowCXWebhookUpdate(d *schema.ResourceData, meta interface{})
 	}
 
 	log.Printf("[DEBUG] Updating Webhook %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("display_name") {
@@ -492,20 +500,25 @@ func resourceDialogflowCXWebhookUpdate(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating Webhook %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating Webhook %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating Webhook %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating Webhook %q: %#v", d.Id(), res)
+		}
+
 	}
 
 	return resourceDialogflowCXWebhookRead(d, meta)
@@ -527,6 +540,13 @@ func resourceDialogflowCXWebhookDelete(d *schema.ResourceData, meta interface{})
 
 	var obj map[string]interface{}
 
+	// err == nil indicates that the billing_project value was found
+	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+		billingProject = bp
+	}
+
+	headers := make(http.Header)
+
 	// extract location from the parent
 	location := ""
 
@@ -541,13 +561,8 @@ func resourceDialogflowCXWebhookDelete(d *schema.ResourceData, meta interface{})
 	}
 
 	url = strings.Replace(url, "-dialogflow", fmt.Sprintf("%s-dialogflow", location), 1)
+
 	log.Printf("[DEBUG] Deleting Webhook %q", d.Id())
-
-	// err == nil indicates that the billing_project value was found
-	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
-		billingProject = bp
-	}
-
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -556,6 +571,7 @@ func resourceDialogflowCXWebhookDelete(d *schema.ResourceData, meta interface{})
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Webhook")

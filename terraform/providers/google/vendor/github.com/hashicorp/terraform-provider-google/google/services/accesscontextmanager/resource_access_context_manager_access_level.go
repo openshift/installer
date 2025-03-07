@@ -20,6 +20,7 @@ package accesscontextmanager
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -220,6 +221,38 @@ Format: accessPolicies/{policy_id}/accessLevels/{short_name}`,
 											Type: schema.TypeString,
 										},
 									},
+									"vpc_network_sources": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										Description: `The request must originate from one of the provided VPC networks in Google Cloud. Cannot specify this field together with 'ip_subnetworks'.`,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"vpc_subnetwork": {
+													Type:        schema.TypeList,
+													Optional:    true,
+													Description: `Sub networks within a VPC network.`,
+													MaxItems:    1,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"network": {
+																Type:        schema.TypeString,
+																Required:    true,
+																Description: `Required. Network name to be allowed by this Access Level. Networks of foreign organizations requires 'compute.network.get' permission to be granted to caller.`,
+															},
+															"vpc_ip_subnetworks": {
+																Type:        schema.TypeList,
+																Optional:    true,
+																Description: `CIDR block IP subnetwork specification. Must be IPv4.`,
+																Elem: &schema.Schema{
+																	Type: schema.TypeString,
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
 								},
 							},
 						},
@@ -355,6 +388,7 @@ func resourceAccessContextManagerAccessLevelCreate(d *schema.ResourceData, meta 
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -363,6 +397,7 @@ func resourceAccessContextManagerAccessLevelCreate(d *schema.ResourceData, meta 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating AccessLevel: %s", err)
@@ -423,12 +458,14 @@ func resourceAccessContextManagerAccessLevelRead(d *schema.ResourceData, meta in
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("AccessContextManagerAccessLevel %q", d.Id()))
@@ -499,6 +536,7 @@ func resourceAccessContextManagerAccessLevelUpdate(d *schema.ResourceData, meta 
 	}
 
 	log.Printf("[DEBUG] Updating AccessLevel %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("title") {
@@ -528,28 +566,32 @@ func resourceAccessContextManagerAccessLevelUpdate(d *schema.ResourceData, meta 
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating AccessLevel %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating AccessLevel %q: %#v", d.Id(), res)
-	}
+		if err != nil {
+			return fmt.Errorf("Error updating AccessLevel %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating AccessLevel %q: %#v", d.Id(), res)
+		}
 
-	err = AccessContextManagerOperationWaitTime(
-		config, res, "Updating AccessLevel", userAgent,
-		d.Timeout(schema.TimeoutUpdate))
+		err = AccessContextManagerOperationWaitTime(
+			config, res, "Updating AccessLevel", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return resourceAccessContextManagerAccessLevelRead(d, meta)
@@ -570,13 +612,15 @@ func resourceAccessContextManagerAccessLevelDelete(d *schema.ResourceData, meta 
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting AccessLevel %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting AccessLevel %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -585,6 +629,7 @@ func resourceAccessContextManagerAccessLevelDelete(d *schema.ResourceData, meta 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "AccessLevel")
@@ -669,6 +714,7 @@ func flattenAccessContextManagerAccessLevelBasicConditions(v interface{}, d *sch
 			"negate":                 flattenAccessContextManagerAccessLevelBasicConditionsNegate(original["negate"], d, config),
 			"device_policy":          flattenAccessContextManagerAccessLevelBasicConditionsDevicePolicy(original["devicePolicy"], d, config),
 			"regions":                flattenAccessContextManagerAccessLevelBasicConditionsRegions(original["regions"], d, config),
+			"vpc_network_sources":    flattenAccessContextManagerAccessLevelBasicConditionsVpcNetworkSources(original["vpcNetworkSources"], d, config),
 		})
 	}
 	return transformed
@@ -765,6 +811,47 @@ func flattenAccessContextManagerAccessLevelBasicConditionsDevicePolicyRequireCor
 }
 
 func flattenAccessContextManagerAccessLevelBasicConditionsRegions(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAccessContextManagerAccessLevelBasicConditionsVpcNetworkSources(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"vpc_subnetwork": flattenAccessContextManagerAccessLevelBasicConditionsVpcNetworkSourcesVpcSubnetwork(original["vpcSubnetwork"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenAccessContextManagerAccessLevelBasicConditionsVpcNetworkSourcesVpcSubnetwork(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["network"] =
+		flattenAccessContextManagerAccessLevelBasicConditionsVpcNetworkSourcesVpcSubnetworkNetwork(original["network"], d, config)
+	transformed["vpc_ip_subnetworks"] =
+		flattenAccessContextManagerAccessLevelBasicConditionsVpcNetworkSourcesVpcSubnetworkVpcIpSubnetworks(original["vpcIpSubnetworks"], d, config)
+	return []interface{}{transformed}
+}
+func flattenAccessContextManagerAccessLevelBasicConditionsVpcNetworkSourcesVpcSubnetworkNetwork(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAccessContextManagerAccessLevelBasicConditionsVpcNetworkSourcesVpcSubnetworkVpcIpSubnetworks(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -908,6 +995,13 @@ func expandAccessContextManagerAccessLevelBasicConditions(v interface{}, d tpgre
 			return nil, err
 		} else if val := reflect.ValueOf(transformedRegions); val.IsValid() && !tpgresource.IsEmptyValue(val) {
 			transformed["regions"] = transformedRegions
+		}
+
+		transformedVpcNetworkSources, err := expandAccessContextManagerAccessLevelBasicConditionsVpcNetworkSources(original["vpc_network_sources"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedVpcNetworkSources); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["vpcNetworkSources"] = transformedVpcNetworkSources
 		}
 
 		req = append(req, transformed)
@@ -1054,6 +1148,62 @@ func expandAccessContextManagerAccessLevelBasicConditionsDevicePolicyRequireCorp
 }
 
 func expandAccessContextManagerAccessLevelBasicConditionsRegions(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAccessContextManagerAccessLevelBasicConditionsVpcNetworkSources(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedVpcSubnetwork, err := expandAccessContextManagerAccessLevelBasicConditionsVpcNetworkSourcesVpcSubnetwork(original["vpc_subnetwork"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedVpcSubnetwork); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["vpcSubnetwork"] = transformedVpcSubnetwork
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandAccessContextManagerAccessLevelBasicConditionsVpcNetworkSourcesVpcSubnetwork(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedNetwork, err := expandAccessContextManagerAccessLevelBasicConditionsVpcNetworkSourcesVpcSubnetworkNetwork(original["network"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedNetwork); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["network"] = transformedNetwork
+	}
+
+	transformedVpcIpSubnetworks, err := expandAccessContextManagerAccessLevelBasicConditionsVpcNetworkSourcesVpcSubnetworkVpcIpSubnetworks(original["vpc_ip_subnetworks"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedVpcIpSubnetworks); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["vpcIpSubnetworks"] = transformedVpcIpSubnetworks
+	}
+
+	return transformed, nil
+}
+
+func expandAccessContextManagerAccessLevelBasicConditionsVpcNetworkSourcesVpcSubnetworkNetwork(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAccessContextManagerAccessLevelBasicConditionsVpcNetworkSourcesVpcSubnetworkVpcIpSubnetworks(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

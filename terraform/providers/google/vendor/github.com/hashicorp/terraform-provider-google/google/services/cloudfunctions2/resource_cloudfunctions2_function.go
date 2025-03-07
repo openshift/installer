@@ -20,10 +20,12 @@ package cloudfunctions2
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -48,7 +50,18 @@ func ResourceCloudfunctions2function() *schema.Resource {
 			Delete: schema.DefaultTimeout(60 * time.Minute),
 		},
 
+		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
+			tpgresource.DefaultProviderProject,
+		),
+
 		Schema: map[string]*schema.Schema{
+			"location": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: `The location of this cloud function.`,
+			},
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -64,8 +77,21 @@ from the given source.`,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"automatic_update_policy": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Optional: true,
+							Description: `Security patches are applied automatically to the runtime without requiring
+the function to be redeployed.`,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{},
+							},
+							ExactlyOneOf: []string{},
+						},
 						"docker_repository": {
 							Type:        schema.TypeString,
+							Computed:    true,
 							Optional:    true,
 							Description: `User managed repository created in Artifact Registry optionally with a customer managed encryption key.`,
 						},
@@ -85,11 +111,33 @@ function exported by the module specified in source_location.`,
 							Description: `User-provided build-time environment variables for the function.`,
 							Elem:        &schema.Schema{Type: schema.TypeString},
 						},
+						"on_deploy_update_policy": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `Security patches are only applied when a function is redeployed.`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"runtime_version": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: `The runtime version which was used during latest function deployment.`,
+									},
+								},
+							},
+							ExactlyOneOf: []string{},
+						},
 						"runtime": {
 							Type:     schema.TypeString,
 							Optional: true,
 							Description: `The runtime in which to run the function. Required when deploying a new
 function, optional when updating an existing function.`,
+						},
+						"service_account": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Optional:    true,
+							Description: `The fully-qualified name of the service account to be used for building the container.`,
 						},
 						"source": {
 							Type:        schema.TypeList,
@@ -164,6 +212,7 @@ project ID requesting the build is assumed.`,
 												},
 												"generation": {
 													Type:     schema.TypeInt,
+													Computed: true,
 													Optional: true,
 													Description: `Google Cloud Storage generation for the object. If the generation
 is omitted, the latest generation will be used.`,
@@ -234,13 +283,16 @@ as the transport topic for the event delivery.`,
 Retried execution is charged as any other execution. Possible values: ["RETRY_POLICY_UNSPECIFIED", "RETRY_POLICY_DO_NOT_RETRY", "RETRY_POLICY_RETRY"]`,
 						},
 						"service_account_email": {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Optional:    true,
-							Description: `The email of the service account for this function.`,
+							Type:     schema.TypeString,
+							Computed: true,
+							Optional: true,
+							Description: `Optional. The email of the trigger's service account. The service account
+must have permission to invoke Cloud Run services. If empty, defaults to the
+Compute Engine default service account: {project_number}-compute@developer.gserviceaccount.com.`,
 						},
 						"trigger_region": {
 							Type:     schema.TypeString,
+							Computed: true,
 							Optional: true,
 							Description: `The region that the trigger will be in. The trigger will only receive
 events originating in this region. It can be the same
@@ -255,17 +307,21 @@ region. If not provided, defaults to the same region as the function.`,
 					},
 				},
 			},
-			"labels": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: `A set of key/value label pairs associated with this Cloud Function.`,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+			"kms_key_name": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Description: `Resource name of a KMS crypto key (managed by the user) used to encrypt/decrypt function resources.
+It must match the pattern projects/{project}/locations/{location}/keyRings/{key_ring}/cryptoKeys/{crypto_key}.`,
 			},
-			"location": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: `The location of this cloud function.`,
+			"labels": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `A set of key/value label pairs associated with this Cloud Function.
+
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"service_config": {
 				Type:        schema.TypeList,
@@ -443,6 +499,12 @@ timeout period. Defaults to 60 seconds.`,
 					},
 				},
 			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 			"environment": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -452,6 +514,13 @@ timeout period. Defaults to 60 seconds.`,
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `Describes the current state of the function.`,
+			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"update_time": {
 				Type:        schema.TypeString,
@@ -541,11 +610,22 @@ func resourceCloudfunctions2functionCreate(d *schema.ResourceData, meta interfac
 	} else if v, ok := d.GetOkExists("event_trigger"); !tpgresource.IsEmptyValue(reflect.ValueOf(eventTriggerProp)) && (ok || !reflect.DeepEqual(v, eventTriggerProp)) {
 		obj["eventTrigger"] = eventTriggerProp
 	}
-	labelsProp, err := expandCloudfunctions2functionLabels(d.Get("labels"), d, config)
+	kmsKeyNameProp, err := expandCloudfunctions2functionKmsKeyName(d.Get("kms_key_name"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+	} else if v, ok := d.GetOkExists("kms_key_name"); !tpgresource.IsEmptyValue(reflect.ValueOf(kmsKeyNameProp)) && (ok || !reflect.DeepEqual(v, kmsKeyNameProp)) {
+		obj["kmsKeyName"] = kmsKeyNameProp
+	}
+	labelsProp, err := expandCloudfunctions2functionEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
 		obj["labels"] = labelsProp
+	}
+
+	obj, err = resourceCloudfunctions2functionEncoder(d, meta, obj)
+	if err != nil {
+		return err
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{Cloudfunctions2BasePath}}projects/{{project}}/locations/{{location}}/functions?functionId={{name}}")
@@ -567,6 +647,7 @@ func resourceCloudfunctions2functionCreate(d *schema.ResourceData, meta interfac
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -575,6 +656,7 @@ func resourceCloudfunctions2functionCreate(d *schema.ResourceData, meta interfac
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating function: %s", err)
@@ -594,9 +676,6 @@ func resourceCloudfunctions2functionCreate(d *schema.ResourceData, meta interfac
 		config, res, &opRes, project, "Creating function", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 	if err != nil {
-		// The resource didn't actually create
-		d.SetId("")
-
 		return fmt.Errorf("Error waiting to create function: %s", err)
 	}
 
@@ -641,12 +720,14 @@ func resourceCloudfunctions2functionRead(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("Cloudfunctions2function %q", d.Id()))
@@ -684,6 +765,15 @@ func resourceCloudfunctions2functionRead(d *schema.ResourceData, meta interface{
 		return fmt.Errorf("Error reading function: %s", err)
 	}
 	if err := d.Set("labels", flattenCloudfunctions2functionLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading function: %s", err)
+	}
+	if err := d.Set("kms_key_name", flattenCloudfunctions2functionKmsKeyName(res["kmsKeyName"], d, config)); err != nil {
+		return fmt.Errorf("Error reading function: %s", err)
+	}
+	if err := d.Set("terraform_labels", flattenCloudfunctions2functionTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading function: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenCloudfunctions2functionEffectiveLabels(res["labels"], d, config)); err != nil {
 		return fmt.Errorf("Error reading function: %s", err)
 	}
 
@@ -730,11 +820,22 @@ func resourceCloudfunctions2functionUpdate(d *schema.ResourceData, meta interfac
 	} else if v, ok := d.GetOkExists("event_trigger"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, eventTriggerProp)) {
 		obj["eventTrigger"] = eventTriggerProp
 	}
-	labelsProp, err := expandCloudfunctions2functionLabels(d.Get("labels"), d, config)
+	kmsKeyNameProp, err := expandCloudfunctions2functionKmsKeyName(d.Get("kms_key_name"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+	} else if v, ok := d.GetOkExists("kms_key_name"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, kmsKeyNameProp)) {
+		obj["kmsKeyName"] = kmsKeyNameProp
+	}
+	labelsProp, err := expandCloudfunctions2functionEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
 		obj["labels"] = labelsProp
+	}
+
+	obj, err = resourceCloudfunctions2functionEncoder(d, meta, obj)
+	if err != nil {
+		return err
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{Cloudfunctions2BasePath}}projects/{{project}}/locations/{{location}}/functions/{{name}}")
@@ -743,6 +844,7 @@ func resourceCloudfunctions2functionUpdate(d *schema.ResourceData, meta interfac
 	}
 
 	log.Printf("[DEBUG] Updating function %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("description") {
@@ -761,7 +863,11 @@ func resourceCloudfunctions2functionUpdate(d *schema.ResourceData, meta interfac
 		updateMask = append(updateMask, "eventTrigger")
 	}
 
-	if d.HasChange("labels") {
+	if d.HasChange("kms_key_name") {
+		updateMask = append(updateMask, "kmsKeyName")
+	}
+
+	if d.HasChange("effective_labels") {
 		updateMask = append(updateMask, "labels")
 	}
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
@@ -776,28 +882,32 @@ func resourceCloudfunctions2functionUpdate(d *schema.ResourceData, meta interfac
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating function %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating function %q: %#v", d.Id(), res)
-	}
+		if err != nil {
+			return fmt.Errorf("Error updating function %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating function %q: %#v", d.Id(), res)
+		}
 
-	err = Cloudfunctions2OperationWaitTime(
-		config, res, project, "Updating function", userAgent,
-		d.Timeout(schema.TimeoutUpdate))
+		err = Cloudfunctions2OperationWaitTime(
+			config, res, project, "Updating function", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return resourceCloudfunctions2functionRead(d, meta)
@@ -824,13 +934,15 @@ func resourceCloudfunctions2functionDelete(d *schema.ResourceData, meta interfac
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting function %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting function %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -839,6 +951,7 @@ func resourceCloudfunctions2functionDelete(d *schema.ResourceData, meta interfac
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "function")
@@ -859,9 +972,9 @@ func resourceCloudfunctions2functionDelete(d *schema.ResourceData, meta interfac
 func resourceCloudfunctions2functionImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/functions/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<name>[^/]+)",
-		"(?P<location>[^/]+)/(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/functions/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<location>[^/]+)/(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -922,6 +1035,12 @@ func flattenCloudfunctions2functionBuildConfig(v interface{}, d *schema.Resource
 		flattenCloudfunctions2functionBuildConfigEnvironmentVariables(original["environmentVariables"], d, config)
 	transformed["docker_repository"] =
 		flattenCloudfunctions2functionBuildConfigDockerRepository(original["dockerRepository"], d, config)
+	transformed["service_account"] =
+		flattenCloudfunctions2functionBuildConfigServiceAccount(original["serviceAccount"], d, config)
+	transformed["automatic_update_policy"] =
+		flattenCloudfunctions2functionBuildConfigAutomaticUpdatePolicy(original["automaticUpdatePolicy"], d, config)
+	transformed["on_deploy_update_policy"] =
+		flattenCloudfunctions2functionBuildConfigOnDeployUpdatePolicy(original["onDeployUpdatePolicy"], d, config)
 	return []interface{}{transformed}
 }
 func flattenCloudfunctions2functionBuildConfigBuild(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1082,6 +1201,32 @@ func flattenCloudfunctions2functionBuildConfigEnvironmentVariables(v interface{}
 }
 
 func flattenCloudfunctions2functionBuildConfigDockerRepository(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudfunctions2functionBuildConfigServiceAccount(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudfunctions2functionBuildConfigAutomaticUpdatePolicy(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	return []interface{}{transformed}
+}
+
+func flattenCloudfunctions2functionBuildConfigOnDeployUpdatePolicy(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	transformed := make(map[string]interface{})
+	transformed["runtime_version"] =
+		flattenCloudfunctions2functionBuildConfigOnDeployUpdatePolicyRuntimeVersion(original["runtimeVersion"], d, config)
+	return []interface{}{transformed}
+}
+func flattenCloudfunctions2functionBuildConfigOnDeployUpdatePolicyRuntimeVersion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1425,6 +1570,40 @@ func flattenCloudfunctions2functionUpdateTime(v interface{}, d *schema.ResourceD
 }
 
 func flattenCloudfunctions2functionLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
+}
+
+func flattenCloudfunctions2functionKmsKeyName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudfunctions2functionTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
+}
+
+func flattenCloudfunctions2functionEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1492,6 +1671,27 @@ func expandCloudfunctions2functionBuildConfig(v interface{}, d tpgresource.Terra
 		return nil, err
 	} else if val := reflect.ValueOf(transformedDockerRepository); val.IsValid() && !tpgresource.IsEmptyValue(val) {
 		transformed["dockerRepository"] = transformedDockerRepository
+	}
+
+	transformedServiceAccount, err := expandCloudfunctions2functionBuildConfigServiceAccount(original["service_account"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedServiceAccount); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["serviceAccount"] = transformedServiceAccount
+	}
+
+	transformedAutomaticUpdatePolicy, err := expandCloudfunctions2functionBuildConfigAutomaticUpdatePolicy(original["automatic_update_policy"], d, config)
+	if err != nil {
+		return nil, err
+	} else {
+		transformed["automaticUpdatePolicy"] = transformedAutomaticUpdatePolicy
+	}
+
+	transformedOnDeployUpdatePolicy, err := expandCloudfunctions2functionBuildConfigOnDeployUpdatePolicy(original["on_deploy_update_policy"], d, config)
+	if err != nil {
+		return nil, err
+	} else {
+		transformed["onDeployUpdatePolicy"] = transformedOnDeployUpdatePolicy
 	}
 
 	return transformed, nil
@@ -1685,6 +1885,53 @@ func expandCloudfunctions2functionBuildConfigEnvironmentVariables(v interface{},
 }
 
 func expandCloudfunctions2functionBuildConfigDockerRepository(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudfunctions2functionBuildConfigServiceAccount(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudfunctions2functionBuildConfigAutomaticUpdatePolicy(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 {
+		return nil, nil
+	}
+
+	if l[0] == nil {
+		transformed := make(map[string]interface{})
+		return transformed, nil
+	}
+	transformed := make(map[string]interface{})
+
+	return transformed, nil
+}
+
+func expandCloudfunctions2functionBuildConfigOnDeployUpdatePolicy(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 {
+		return nil, nil
+	}
+
+	if l[0] == nil {
+		transformed := make(map[string]interface{})
+		return transformed, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedRuntimeVersion, err := expandCloudfunctions2functionBuildConfigOnDeployUpdatePolicyRuntimeVersion(original["runtime_version"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedRuntimeVersion); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["runtimeVersion"] = transformedRuntimeVersion
+	}
+
+	return transformed, nil
+}
+
+func expandCloudfunctions2functionBuildConfigOnDeployUpdatePolicyRuntimeVersion(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -2171,7 +2418,11 @@ func expandCloudfunctions2functionEventTriggerRetryPolicy(v interface{}, d tpgre
 	return v, nil
 }
 
-func expandCloudfunctions2functionLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+func expandCloudfunctions2functionKmsKeyName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudfunctions2functionEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
 	if v == nil {
 		return map[string]string{}, nil
 	}
@@ -2180,4 +2431,22 @@ func expandCloudfunctions2functionLabels(v interface{}, d tpgresource.TerraformR
 		m[k] = val.(string)
 	}
 	return m, nil
+}
+
+func resourceCloudfunctions2functionEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {
+	if obj == nil || obj["buildConfig"] == nil {
+		return obj, nil
+	}
+
+	build_config := obj["buildConfig"].(map[string]interface{})
+
+	// Automatic Update policy is the default from API, unset it if the data
+	// contains the on-deploy policy.
+	if build_config["onDeployUpdatePolicy"] != nil {
+		delete(build_config, "automaticUpdatePolicy")
+	}
+
+	obj["buildConfig"] = build_config
+
+	return obj, nil
 }

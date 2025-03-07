@@ -20,10 +20,12 @@ package containeranalysis
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -46,6 +48,10 @@ func ResourceContainerAnalysisNote() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"attestation_authority": {
@@ -251,6 +257,7 @@ func resourceContainerAnalysisNoteCreate(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -259,6 +266,7 @@ func resourceContainerAnalysisNoteCreate(d *schema.ResourceData, meta interface{
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Note: %s", err)
@@ -301,12 +309,14 @@ func resourceContainerAnalysisNoteRead(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ContainerAnalysisNote %q", d.Id()))
@@ -433,6 +443,7 @@ func resourceContainerAnalysisNoteUpdate(d *schema.ResourceData, meta interface{
 	}
 
 	log.Printf("[DEBUG] Updating Note %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("short_description") {
@@ -470,20 +481,25 @@ func resourceContainerAnalysisNoteUpdate(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating Note %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating Note %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating Note %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating Note %q: %#v", d.Id(), res)
+		}
+
 	}
 
 	return resourceContainerAnalysisNoteRead(d, meta)
@@ -517,13 +533,15 @@ func resourceContainerAnalysisNoteDelete(d *schema.ResourceData, meta interface{
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Note %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Note %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -532,6 +550,7 @@ func resourceContainerAnalysisNoteDelete(d *schema.ResourceData, meta interface{
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Note")
@@ -544,9 +563,9 @@ func resourceContainerAnalysisNoteDelete(d *schema.ResourceData, meta interface{
 func resourceContainerAnalysisNoteImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/notes/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/notes/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

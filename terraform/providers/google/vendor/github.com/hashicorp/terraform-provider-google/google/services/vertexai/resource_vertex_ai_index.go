@@ -20,10 +20,12 @@ package vertexai
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -47,6 +49,11 @@ func ResourceVertexAIIndex() *schema.Resource {
 			Delete: schema.DefaultTimeout(180 * time.Minute),
 		},
 
+		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
+			tpgresource.DefaultProviderProject,
+		),
+
 		Schema: map[string]*schema.Schema{
 			"display_name": {
 				Type:        schema.TypeString,
@@ -68,10 +75,13 @@ func ResourceVertexAIIndex() *schema.Resource {
 				Default: "BATCH_UPDATE",
 			},
 			"labels": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: `The labels with user-defined metadata to organize your Indexes.`,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `The labels with user-defined metadata to organize your Indexes.
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"metadata": {
 				Type:        schema.TypeList,
@@ -80,6 +90,16 @@ func ResourceVertexAIIndex() *schema.Resource {
 				MaxItems:    1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"contents_delta_uri": {
+							Type:     schema.TypeString,
+							Required: true,
+							Description: `Allows inserting, updating  or deleting the contents of the Matching Engine Index.
+The string must be a valid Cloud Storage directory path. If this
+field is set when calling IndexService.UpdateIndex, then no other
+Index field can be also updated as part of the same call.
+The expected structure and format of the files this URI points to is
+described at https://cloud.google.com/vertex-ai/docs/matching-engine/using-matching-engine#input-data-format`,
+						},
 						"config": {
 							Type:        schema.TypeList,
 							Optional:    true,
@@ -179,16 +199,6 @@ The shard size must be specified when creating an index. The value must be one o
 								},
 							},
 						},
-						"contents_delta_uri": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Description: `Allows inserting, updating  or deleting the contents of the Matching Engine Index.
-The string must be a valid Cloud Storage directory path. If this
-field is set when calling IndexService.UpdateIndex, then no other
-Index field can be also updated as part of the same call.
-The expected structure and format of the files this URI points to is
-described at https://cloud.google.com/vertex-ai/docs/matching-engine/using-matching-engine#input-data-format`,
-						},
 						"is_complete_overwrite": {
 							Type:     schema.TypeBool,
 							Optional: true,
@@ -229,6 +239,12 @@ then existing content of the Index will be replaced by the data from the content
 					},
 				},
 			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 			"etag": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -262,6 +278,13 @@ then existing content of the Index will be replaced by the data from the content
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `The resource name of the Index.`,
+			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"update_time": {
 				Type:        schema.TypeString,
@@ -305,17 +328,17 @@ func resourceVertexAIIndexCreate(d *schema.ResourceData, meta interface{}) error
 	} else if v, ok := d.GetOkExists("metadata"); !tpgresource.IsEmptyValue(reflect.ValueOf(metadataProp)) && (ok || !reflect.DeepEqual(v, metadataProp)) {
 		obj["metadata"] = metadataProp
 	}
-	labelsProp, err := expandVertexAIIndexLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	indexUpdateMethodProp, err := expandVertexAIIndexIndexUpdateMethod(d.Get("index_update_method"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("index_update_method"); !tpgresource.IsEmptyValue(reflect.ValueOf(indexUpdateMethodProp)) && (ok || !reflect.DeepEqual(v, indexUpdateMethodProp)) {
 		obj["indexUpdateMethod"] = indexUpdateMethodProp
+	}
+	labelsProp, err := expandVertexAIIndexEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{VertexAIBasePath}}projects/{{project}}/locations/{{region}}/indexes")
@@ -337,6 +360,7 @@ func resourceVertexAIIndexCreate(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -345,6 +369,7 @@ func resourceVertexAIIndexCreate(d *schema.ResourceData, meta interface{}) error
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Index: %s", err)
@@ -411,12 +436,14 @@ func resourceVertexAIIndexRead(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("VertexAIIndex %q", d.Id()))
@@ -459,6 +486,12 @@ func resourceVertexAIIndexRead(d *schema.ResourceData, meta interface{}) error {
 	if err := d.Set("index_update_method", flattenVertexAIIndexIndexUpdateMethod(res["indexUpdateMethod"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Index: %s", err)
 	}
+	if err := d.Set("terraform_labels", flattenVertexAIIndexTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Index: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenVertexAIIndexEffectiveLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Index: %s", err)
+	}
 
 	return nil
 }
@@ -497,10 +530,10 @@ func resourceVertexAIIndexUpdate(d *schema.ResourceData, meta interface{}) error
 	} else if v, ok := d.GetOkExists("metadata"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, metadataProp)) {
 		obj["metadata"] = metadataProp
 	}
-	labelsProp, err := expandVertexAIIndexLabels(d.Get("labels"), d, config)
+	labelsProp, err := expandVertexAIIndexEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
 		obj["labels"] = labelsProp
 	}
 
@@ -510,6 +543,7 @@ func resourceVertexAIIndexUpdate(d *schema.ResourceData, meta interface{}) error
 	}
 
 	log.Printf("[DEBUG] Updating Index %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("display_name") {
@@ -520,40 +554,8 @@ func resourceVertexAIIndexUpdate(d *schema.ResourceData, meta interface{}) error
 		updateMask = append(updateMask, "description")
 	}
 
-	if d.HasChange("metadata") {
-		updateMask = append(updateMask, "metadata")
-	}
-
-	if d.HasChange("labels") {
+	if d.HasChange("effective_labels") {
 		updateMask = append(updateMask, "labels")
-	}
-	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
-	// won't set it
-	url, err = transport_tpg.AddQueryParams(url, map[string]string{"updateMask": strings.Join(updateMask, ",")})
-	if err != nil {
-		return err
-	}
-	newUpdateMask := []string{}
-
-	if d.HasChange("metadata.0.contents_delta_uri") {
-		// Use the current value of isCompleteOverwrite when updating contentsDeltaUri
-		newUpdateMask = append(newUpdateMask, "metadata.contentsDeltaUri")
-		newUpdateMask = append(newUpdateMask, "metadata.isCompleteOverwrite")
-	}
-
-	for _, mask := range updateMask {
-		// Use granular update masks instead of 'metadata' to avoid the following error:
-		// 'If `contents_delta_gcs_uri` is set as part of `index.metadata`, then no other Index fields can be also updated as part of the same update call.'
-		if mask == "metadata" {
-			continue
-		}
-		newUpdateMask = append(newUpdateMask, mask)
-	}
-
-	// Refreshing updateMask after adding extra schema entries
-	url, err = transport_tpg.AddQueryParams(url, map[string]string{"updateMask": strings.Join(newUpdateMask, ",")})
-	if err != nil {
-		return err
 	}
 
 	// err == nil indicates that the billing_project value was found
@@ -561,28 +563,81 @@ func resourceVertexAIIndexUpdate(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		log.Printf("[DEBUG] Updating first Index with updateMask: %#v", updateMask)
+		// updateMask is a URL parameter but not present in the schema, so ReplaceVars
+		// won't set it
+		url, err = transport_tpg.AddQueryParams(url, map[string]string{"updateMask": strings.Join(updateMask, ",")})
+		if err != nil {
+			return err
+		}
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating Index %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating Index %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating first Index %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating first Index %q: %#v", d.Id(), res)
+		}
+
+		err = VertexAIOperationWaitTime(
+			config, res, project, "Updating Index", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
+
+		if err != nil {
+			return err
+		}
 	}
 
-	err = VertexAIOperationWaitTime(
-		config, res, project, "Updating Index", userAgent,
-		d.Timeout(schema.TimeoutUpdate))
+	secondUpdateMask := []string{}
+	// 'If `contents_delta_gcs_uri` is set as part of `index.metadata`,
+	// then no other Index fields can be also updated as part of the same update call.'
+	// Metadata update need to be done in a separate update call.
+	if d.HasChange("metadata") {
+		secondUpdateMask = append(secondUpdateMask, "metadata")
+	}
 
-	if err != nil {
-		return err
+	// if secondUpdateMask is empty we are not updating anything so skip the post
+	if len(secondUpdateMask) > 0 {
+		log.Printf("[DEBUG] Updating second Index with updateMask: %#v", secondUpdateMask)
+		// Override updateMask with secondUpdateMask
+		url, err = transport_tpg.AddQueryParams(url, map[string]string{"updateMask": strings.Join(secondUpdateMask, ",")})
+		if err != nil {
+			return err
+		}
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
+
+		if err != nil {
+			return fmt.Errorf("Error Updating second Index %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished Updating second Index %q: %#v", d.Id(), res)
+		}
+
+		err = VertexAIOperationWaitTime(
+			config, res, project, "Updating Index", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return resourceVertexAIIndexRead(d, meta)
@@ -609,13 +664,15 @@ func resourceVertexAIIndexDelete(d *schema.ResourceData, meta interface{}) error
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Index %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Index %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -624,6 +681,7 @@ func resourceVertexAIIndexDelete(d *schema.ResourceData, meta interface{}) error
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Index")
@@ -644,10 +702,10 @@ func resourceVertexAIIndexDelete(d *schema.ResourceData, meta interface{}) error
 func resourceVertexAIIndexImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/(?P<region>[^/]+)/indexes/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/(?P<region>[^/]+)/indexes/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -770,7 +828,7 @@ func flattenVertexAIIndexMetadataConfigDistanceMeasureType(v interface{}, d *sch
 }
 
 func flattenVertexAIIndexMetadataConfigFeatureNormType(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	return d.Get("metadata.0.config.0.feature_norm_type")
 }
 
 func flattenVertexAIIndexMetadataConfigAlgorithmConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -877,7 +935,18 @@ func flattenVertexAIIndexDeployedIndexesDeployedIndexId(v interface{}, d *schema
 }
 
 func flattenVertexAIIndexLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenVertexAIIndexCreateTime(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -925,6 +994,25 @@ func flattenVertexAIIndexIndexStatsShardsCount(v interface{}, d *schema.Resource
 }
 
 func flattenVertexAIIndexIndexUpdateMethod(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenVertexAIIndexTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
+}
+
+func flattenVertexAIIndexEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1126,7 +1214,11 @@ func expandVertexAIIndexMetadataConfigAlgorithmConfigBruteForceConfig(v interfac
 	return transformed, nil
 }
 
-func expandVertexAIIndexLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+func expandVertexAIIndexIndexUpdateMethod(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandVertexAIIndexEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
 	if v == nil {
 		return map[string]string{}, nil
 	}
@@ -1135,8 +1227,4 @@ func expandVertexAIIndexLabels(v interface{}, d tpgresource.TerraformResourceDat
 		m[k] = val.(string)
 	}
 	return m, nil
-}
-
-func expandVertexAIIndexIndexUpdateMethod(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
 }

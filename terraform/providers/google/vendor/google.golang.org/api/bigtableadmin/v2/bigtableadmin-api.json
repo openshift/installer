@@ -131,66 +131,6 @@
   "resources": {
     "operations": {
       "methods": {
-        "cancel": {
-          "description": "Starts asynchronous cancellation on a long-running operation. The server makes a best effort to cancel the operation, but success is not guaranteed. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`. Clients can use Operations.GetOperation or other methods to check whether the cancellation succeeded or whether the operation completed despite cancellation. On successful cancellation, the operation is not deleted; instead, it becomes an operation with an Operation.error value with a google.rpc.Status.code of 1, corresponding to `Code.CANCELLED`.",
-          "flatPath": "v2/operations/{operationsId}:cancel",
-          "httpMethod": "POST",
-          "id": "bigtableadmin.operations.cancel",
-          "parameterOrder": [
-            "name"
-          ],
-          "parameters": {
-            "name": {
-              "description": "The name of the operation resource to be cancelled.",
-              "location": "path",
-              "pattern": "^operations/.*$",
-              "required": true,
-              "type": "string"
-            }
-          },
-          "path": "v2/{+name}:cancel",
-          "response": {
-            "$ref": "Empty"
-          },
-          "scopes": [
-            "https://www.googleapis.com/auth/bigtable.admin",
-            "https://www.googleapis.com/auth/bigtable.admin.cluster",
-            "https://www.googleapis.com/auth/bigtable.admin.instance",
-            "https://www.googleapis.com/auth/cloud-bigtable.admin",
-            "https://www.googleapis.com/auth/cloud-bigtable.admin.cluster",
-            "https://www.googleapis.com/auth/cloud-platform"
-          ]
-        },
-        "delete": {
-          "description": "Deletes a long-running operation. This method indicates that the client is no longer interested in the operation result. It does not cancel the operation. If the server doesn't support this method, it returns `google.rpc.Code.UNIMPLEMENTED`.",
-          "flatPath": "v2/operations/{operationsId}",
-          "httpMethod": "DELETE",
-          "id": "bigtableadmin.operations.delete",
-          "parameterOrder": [
-            "name"
-          ],
-          "parameters": {
-            "name": {
-              "description": "The name of the operation resource to be deleted.",
-              "location": "path",
-              "pattern": "^operations/.*$",
-              "required": true,
-              "type": "string"
-            }
-          },
-          "path": "v2/{+name}",
-          "response": {
-            "$ref": "Empty"
-          },
-          "scopes": [
-            "https://www.googleapis.com/auth/bigtable.admin",
-            "https://www.googleapis.com/auth/bigtable.admin.cluster",
-            "https://www.googleapis.com/auth/bigtable.admin.instance",
-            "https://www.googleapis.com/auth/cloud-bigtable.admin",
-            "https://www.googleapis.com/auth/cloud-bigtable.admin.cluster",
-            "https://www.googleapis.com/auth/cloud-platform"
-          ]
-        },
         "get": {
           "description": "Gets the latest state of a long-running operation. Clients can use this method to poll the operation result at intervals as recommended by the API service.",
           "flatPath": "v2/operations/{operationsId}",
@@ -1127,7 +1067,7 @@
                       ]
                     },
                     "getIamPolicy": {
-                      "description": "Gets the access control policy for a Table resource. Returns an empty policy if the resource exists but does not have a policy set.",
+                      "description": "Gets the access control policy for a Bigtable resource. Returns an empty policy if the resource exists but does not have a policy set.",
                       "flatPath": "v2/projects/{projectsId}/instances/{instancesId}/clusters/{clustersId}/backups/{backupsId}:getIamPolicy",
                       "httpMethod": "POST",
                       "id": "bigtableadmin.projects.instances.clusters.backups.getIamPolicy",
@@ -1247,7 +1187,7 @@
                       ]
                     },
                     "setIamPolicy": {
-                      "description": "Sets the access control policy on a Table resource. Replaces any existing policy.",
+                      "description": "Sets the access control policy on a Bigtable resource. Replaces any existing policy.",
                       "flatPath": "v2/projects/{projectsId}/instances/{instancesId}/clusters/{clustersId}/backups/{backupsId}:setIamPolicy",
                       "httpMethod": "POST",
                       "id": "bigtableadmin.projects.instances.clusters.backups.setIamPolicy",
@@ -1279,7 +1219,7 @@
                       ]
                     },
                     "testIamPermissions": {
-                      "description": "Returns permissions that the caller has on the specified table resource.",
+                      "description": "Returns permissions that the caller has on the specified Bigtable resource.",
                       "flatPath": "v2/projects/{projectsId}/instances/{instancesId}/clusters/{clustersId}/backups/{backupsId}:testIamPermissions",
                       "httpMethod": "POST",
                       "id": "bigtableadmin.projects.instances.clusters.backups.testIamPermissions",
@@ -1467,7 +1407,7 @@
                   ]
                 },
                 "dropRowRange": {
-                  "description": "Permanently drop/delete a row range from a specified table. The request can specify whether to delete all rows in a table, or only those that match a particular prefix.",
+                  "description": "Permanently drop/delete a row range from a specified table. The request can specify whether to delete all rows in a table, or only those that match a particular prefix. Note that row key prefixes used here are treated as service data. For more information about how service data is handled, see the [Google Cloud Privacy Notice](https://cloud.google.com/terms/cloud-privacy-notice).",
                   "flatPath": "v2/projects/{projectsId}/instances/{instancesId}/tables/{tablesId}:dropRowRange",
                   "httpMethod": "POST",
                   "id": "bigtableadmin.projects.instances.tables.dropRowRange",
@@ -1584,7 +1524,7 @@
                   ]
                 },
                 "getIamPolicy": {
-                  "description": "Gets the access control policy for a Table resource. Returns an empty policy if the resource exists but does not have a policy set.",
+                  "description": "Gets the access control policy for a Bigtable resource. Returns an empty policy if the resource exists but does not have a policy set.",
                   "flatPath": "v2/projects/{projectsId}/instances/{instancesId}/tables/{tablesId}:getIamPolicy",
                   "httpMethod": "POST",
                   "id": "bigtableadmin.projects.instances.tables.getIamPolicy",
@@ -1782,7 +1722,7 @@
                   ]
                 },
                 "setIamPolicy": {
-                  "description": "Sets the access control policy on a Table resource. Replaces any existing policy.",
+                  "description": "Sets the access control policy on a Bigtable resource. Replaces any existing policy.",
                   "flatPath": "v2/projects/{projectsId}/instances/{instancesId}/tables/{tablesId}:setIamPolicy",
                   "httpMethod": "POST",
                   "id": "bigtableadmin.projects.instances.tables.setIamPolicy",
@@ -1814,7 +1754,7 @@
                   ]
                 },
                 "testIamPermissions": {
-                  "description": "Returns permissions that the caller has on the specified table resource.",
+                  "description": "Returns permissions that the caller has on the specified Bigtable resource.",
                   "flatPath": "v2/projects/{projectsId}/instances/{instancesId}/tables/{tablesId}:testIamPermissions",
                   "httpMethod": "POST",
                   "id": "bigtableadmin.projects.instances.tables.testIamPermissions",
@@ -1879,13 +1819,130 @@
                 }
               },
               "resources": {
-                "views": {
+                "authorizedViews": {
                   "methods": {
-                    "getIamPolicy": {
-                      "description": "Gets the access control policy for a Table resource. Returns an empty policy if the resource exists but does not have a policy set.",
-                      "flatPath": "v2/projects/{projectsId}/instances/{instancesId}/tables/{tablesId}/views/{viewsId}:getIamPolicy",
+                    "create": {
+                      "description": "Creates a new AuthorizedView in a table.",
+                      "flatPath": "v2/projects/{projectsId}/instances/{instancesId}/tables/{tablesId}/authorizedViews",
                       "httpMethod": "POST",
-                      "id": "bigtableadmin.projects.instances.tables.views.getIamPolicy",
+                      "id": "bigtableadmin.projects.instances.tables.authorizedViews.create",
+                      "parameterOrder": [
+                        "parent"
+                      ],
+                      "parameters": {
+                        "authorizedViewId": {
+                          "description": "Required. The id of the AuthorizedView to create. This AuthorizedView must not already exist. The `authorized_view_id` appended to `parent` forms the full AuthorizedView name of the form `projects/{project}/instances/{instance}/tables/{table}/authorizedView/{authorized_view}`.",
+                          "location": "query",
+                          "type": "string"
+                        },
+                        "parent": {
+                          "description": "Required. This is the name of the table the AuthorizedView belongs to. Values are of the form `projects/{project}/instances/{instance}/tables/{table}`.",
+                          "location": "path",
+                          "pattern": "^projects/[^/]+/instances/[^/]+/tables/[^/]+$",
+                          "required": true,
+                          "type": "string"
+                        }
+                      },
+                      "path": "v2/{+parent}/authorizedViews",
+                      "request": {
+                        "$ref": "AuthorizedView"
+                      },
+                      "response": {
+                        "$ref": "Operation"
+                      },
+                      "scopes": [
+                        "https://www.googleapis.com/auth/bigtable.admin",
+                        "https://www.googleapis.com/auth/bigtable.admin.table",
+                        "https://www.googleapis.com/auth/cloud-bigtable.admin",
+                        "https://www.googleapis.com/auth/cloud-bigtable.admin.table",
+                        "https://www.googleapis.com/auth/cloud-platform"
+                      ]
+                    },
+                    "delete": {
+                      "description": "Permanently deletes a specified AuthorizedView.",
+                      "flatPath": "v2/projects/{projectsId}/instances/{instancesId}/tables/{tablesId}/authorizedViews/{authorizedViewsId}",
+                      "httpMethod": "DELETE",
+                      "id": "bigtableadmin.projects.instances.tables.authorizedViews.delete",
+                      "parameterOrder": [
+                        "name"
+                      ],
+                      "parameters": {
+                        "etag": {
+                          "description": "Optional. The current etag of the AuthorizedView. If an etag is provided and does not match the current etag of the AuthorizedView, deletion will be blocked and an ABORTED error will be returned.",
+                          "location": "query",
+                          "type": "string"
+                        },
+                        "name": {
+                          "description": "Required. The unique name of the AuthorizedView to be deleted. Values are of the form `projects/{project}/instances/{instance}/tables/{table}/authorizedViews/{authorized_view}`.",
+                          "location": "path",
+                          "pattern": "^projects/[^/]+/instances/[^/]+/tables/[^/]+/authorizedViews/[^/]+$",
+                          "required": true,
+                          "type": "string"
+                        }
+                      },
+                      "path": "v2/{+name}",
+                      "response": {
+                        "$ref": "Empty"
+                      },
+                      "scopes": [
+                        "https://www.googleapis.com/auth/bigtable.admin",
+                        "https://www.googleapis.com/auth/bigtable.admin.table",
+                        "https://www.googleapis.com/auth/cloud-bigtable.admin",
+                        "https://www.googleapis.com/auth/cloud-bigtable.admin.table",
+                        "https://www.googleapis.com/auth/cloud-platform"
+                      ]
+                    },
+                    "get": {
+                      "description": "Gets information from a specified AuthorizedView.",
+                      "flatPath": "v2/projects/{projectsId}/instances/{instancesId}/tables/{tablesId}/authorizedViews/{authorizedViewsId}",
+                      "httpMethod": "GET",
+                      "id": "bigtableadmin.projects.instances.tables.authorizedViews.get",
+                      "parameterOrder": [
+                        "name"
+                      ],
+                      "parameters": {
+                        "name": {
+                          "description": "Required. The unique name of the requested AuthorizedView. Values are of the form `projects/{project}/instances/{instance}/tables/{table}/authorizedViews/{authorized_view}`.",
+                          "location": "path",
+                          "pattern": "^projects/[^/]+/instances/[^/]+/tables/[^/]+/authorizedViews/[^/]+$",
+                          "required": true,
+                          "type": "string"
+                        },
+                        "view": {
+                          "description": "Optional. The resource_view to be applied to the returned AuthorizedView's fields. Default to BASIC.",
+                          "enum": [
+                            "RESPONSE_VIEW_UNSPECIFIED",
+                            "NAME_ONLY",
+                            "BASIC",
+                            "FULL"
+                          ],
+                          "enumDescriptions": [
+                            "Uses the default view for each method as documented in the request.",
+                            "Only populates `name`.",
+                            "Only populates the AuthorizedView's basic metadata. This includes: name, deletion_protection, etag.",
+                            "Populates every fields."
+                          ],
+                          "location": "query",
+                          "type": "string"
+                        }
+                      },
+                      "path": "v2/{+name}",
+                      "response": {
+                        "$ref": "AuthorizedView"
+                      },
+                      "scopes": [
+                        "https://www.googleapis.com/auth/bigtable.admin",
+                        "https://www.googleapis.com/auth/bigtable.admin.table",
+                        "https://www.googleapis.com/auth/cloud-bigtable.admin",
+                        "https://www.googleapis.com/auth/cloud-bigtable.admin.table",
+                        "https://www.googleapis.com/auth/cloud-platform"
+                      ]
+                    },
+                    "getIamPolicy": {
+                      "description": "Gets the access control policy for a Bigtable resource. Returns an empty policy if the resource exists but does not have a policy set.",
+                      "flatPath": "v2/projects/{projectsId}/instances/{instancesId}/tables/{tablesId}/authorizedViews/{authorizedViewsId}:getIamPolicy",
+                      "httpMethod": "POST",
+                      "id": "bigtableadmin.projects.instances.tables.authorizedViews.getIamPolicy",
                       "parameterOrder": [
                         "resource"
                       ],
@@ -1893,7 +1950,7 @@
                         "resource": {
                           "description": "REQUIRED: The resource for which the policy is being requested. See [Resource names](https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.",
                           "location": "path",
-                          "pattern": "^projects/[^/]+/instances/[^/]+/tables/[^/]+/views/[^/]+$",
+                          "pattern": "^projects/[^/]+/instances/[^/]+/tables/[^/]+/authorizedViews/[^/]+$",
                           "required": true,
                           "type": "string"
                         }
@@ -1913,11 +1970,111 @@
                         "https://www.googleapis.com/auth/cloud-platform"
                       ]
                     },
+                    "list": {
+                      "description": "Lists all AuthorizedViews from a specific table.",
+                      "flatPath": "v2/projects/{projectsId}/instances/{instancesId}/tables/{tablesId}/authorizedViews",
+                      "httpMethod": "GET",
+                      "id": "bigtableadmin.projects.instances.tables.authorizedViews.list",
+                      "parameterOrder": [
+                        "parent"
+                      ],
+                      "parameters": {
+                        "pageSize": {
+                          "description": "Optional. Maximum number of results per page. A page_size of zero lets the server choose the number of items to return. A page_size which is strictly positive will return at most that many items. A negative page_size will cause an error. Following the first request, subsequent paginated calls are not required to pass a page_size. If a page_size is set in subsequent calls, it must match the page_size given in the first request.",
+                          "format": "int32",
+                          "location": "query",
+                          "type": "integer"
+                        },
+                        "pageToken": {
+                          "description": "Optional. The value of `next_page_token` returned by a previous call.",
+                          "location": "query",
+                          "type": "string"
+                        },
+                        "parent": {
+                          "description": "Required. The unique name of the table for which AuthorizedViews should be listed. Values are of the form `projects/{project}/instances/{instance}/tables/{table}`.",
+                          "location": "path",
+                          "pattern": "^projects/[^/]+/instances/[^/]+/tables/[^/]+$",
+                          "required": true,
+                          "type": "string"
+                        },
+                        "view": {
+                          "description": "Optional. The resource_view to be applied to the returned AuthorizedViews' fields. Default to NAME_ONLY.",
+                          "enum": [
+                            "RESPONSE_VIEW_UNSPECIFIED",
+                            "NAME_ONLY",
+                            "BASIC",
+                            "FULL"
+                          ],
+                          "enumDescriptions": [
+                            "Uses the default view for each method as documented in the request.",
+                            "Only populates `name`.",
+                            "Only populates the AuthorizedView's basic metadata. This includes: name, deletion_protection, etag.",
+                            "Populates every fields."
+                          ],
+                          "location": "query",
+                          "type": "string"
+                        }
+                      },
+                      "path": "v2/{+parent}/authorizedViews",
+                      "response": {
+                        "$ref": "ListAuthorizedViewsResponse"
+                      },
+                      "scopes": [
+                        "https://www.googleapis.com/auth/bigtable.admin",
+                        "https://www.googleapis.com/auth/bigtable.admin.table",
+                        "https://www.googleapis.com/auth/cloud-bigtable.admin",
+                        "https://www.googleapis.com/auth/cloud-bigtable.admin.table",
+                        "https://www.googleapis.com/auth/cloud-platform"
+                      ]
+                    },
+                    "patch": {
+                      "description": "Updates an AuthorizedView in a table.",
+                      "flatPath": "v2/projects/{projectsId}/instances/{instancesId}/tables/{tablesId}/authorizedViews/{authorizedViewsId}",
+                      "httpMethod": "PATCH",
+                      "id": "bigtableadmin.projects.instances.tables.authorizedViews.patch",
+                      "parameterOrder": [
+                        "name"
+                      ],
+                      "parameters": {
+                        "ignoreWarnings": {
+                          "description": "Optional. If true, ignore the safety checks when updating the AuthorizedView.",
+                          "location": "query",
+                          "type": "boolean"
+                        },
+                        "name": {
+                          "description": "Identifier. The name of this AuthorizedView. Values are of the form `projects/{project}/instances/{instance}/tables/{table}/authorizedViews/{authorized_view}`",
+                          "location": "path",
+                          "pattern": "^projects/[^/]+/instances/[^/]+/tables/[^/]+/authorizedViews/[^/]+$",
+                          "required": true,
+                          "type": "string"
+                        },
+                        "updateMask": {
+                          "description": "Optional. The list of fields to update. A mask specifying which fields in the AuthorizedView resource should be updated. This mask is relative to the AuthorizedView resource, not to the request message. A field will be overwritten if it is in the mask. If empty, all fields set in the request will be overwritten. A special value `*` means to overwrite all fields (including fields not set in the request).",
+                          "format": "google-fieldmask",
+                          "location": "query",
+                          "type": "string"
+                        }
+                      },
+                      "path": "v2/{+name}",
+                      "request": {
+                        "$ref": "AuthorizedView"
+                      },
+                      "response": {
+                        "$ref": "Operation"
+                      },
+                      "scopes": [
+                        "https://www.googleapis.com/auth/bigtable.admin",
+                        "https://www.googleapis.com/auth/bigtable.admin.table",
+                        "https://www.googleapis.com/auth/cloud-bigtable.admin",
+                        "https://www.googleapis.com/auth/cloud-bigtable.admin.table",
+                        "https://www.googleapis.com/auth/cloud-platform"
+                      ]
+                    },
                     "setIamPolicy": {
-                      "description": "Sets the access control policy on a Table resource. Replaces any existing policy.",
-                      "flatPath": "v2/projects/{projectsId}/instances/{instancesId}/tables/{tablesId}/views/{viewsId}:setIamPolicy",
+                      "description": "Sets the access control policy on a Bigtable resource. Replaces any existing policy.",
+                      "flatPath": "v2/projects/{projectsId}/instances/{instancesId}/tables/{tablesId}/authorizedViews/{authorizedViewsId}:setIamPolicy",
                       "httpMethod": "POST",
-                      "id": "bigtableadmin.projects.instances.tables.views.setIamPolicy",
+                      "id": "bigtableadmin.projects.instances.tables.authorizedViews.setIamPolicy",
                       "parameterOrder": [
                         "resource"
                       ],
@@ -1925,7 +2082,7 @@
                         "resource": {
                           "description": "REQUIRED: The resource for which the policy is being specified. See [Resource names](https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.",
                           "location": "path",
-                          "pattern": "^projects/[^/]+/instances/[^/]+/tables/[^/]+/views/[^/]+$",
+                          "pattern": "^projects/[^/]+/instances/[^/]+/tables/[^/]+/authorizedViews/[^/]+$",
                           "required": true,
                           "type": "string"
                         }
@@ -1946,10 +2103,10 @@
                       ]
                     },
                     "testIamPermissions": {
-                      "description": "Returns permissions that the caller has on the specified table resource.",
-                      "flatPath": "v2/projects/{projectsId}/instances/{instancesId}/tables/{tablesId}/views/{viewsId}:testIamPermissions",
+                      "description": "Returns permissions that the caller has on the specified Bigtable resource.",
+                      "flatPath": "v2/projects/{projectsId}/instances/{instancesId}/tables/{tablesId}/authorizedViews/{authorizedViewsId}:testIamPermissions",
                       "httpMethod": "POST",
-                      "id": "bigtableadmin.projects.instances.tables.views.testIamPermissions",
+                      "id": "bigtableadmin.projects.instances.tables.authorizedViews.testIamPermissions",
                       "parameterOrder": [
                         "resource"
                       ],
@@ -1957,7 +2114,7 @@
                         "resource": {
                           "description": "REQUIRED: The resource for which the policy detail is being requested. See [Resource names](https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.",
                           "location": "path",
-                          "pattern": "^projects/[^/]+/instances/[^/]+/tables/[^/]+/views/[^/]+$",
+                          "pattern": "^projects/[^/]+/instances/[^/]+/tables/[^/]+/authorizedViews/[^/]+$",
                           "required": true,
                           "type": "string"
                         }
@@ -1985,37 +2142,6 @@
         },
         "locations": {
           "methods": {
-            "get": {
-              "description": "Gets information about a location.",
-              "flatPath": "v2/projects/{projectsId}/locations/{locationsId}",
-              "httpMethod": "GET",
-              "id": "bigtableadmin.projects.locations.get",
-              "parameterOrder": [
-                "name"
-              ],
-              "parameters": {
-                "name": {
-                  "description": "Resource name for the location.",
-                  "location": "path",
-                  "pattern": "^projects/[^/]+/locations/[^/]+$",
-                  "required": true,
-                  "type": "string"
-                }
-              },
-              "path": "v2/{+name}",
-              "response": {
-                "$ref": "Location"
-              },
-              "scopes": [
-                "https://www.googleapis.com/auth/bigtable.admin",
-                "https://www.googleapis.com/auth/bigtable.admin.cluster",
-                "https://www.googleapis.com/auth/bigtable.admin.instance",
-                "https://www.googleapis.com/auth/cloud-bigtable.admin",
-                "https://www.googleapis.com/auth/cloud-bigtable.admin.cluster",
-                "https://www.googleapis.com/auth/cloud-platform",
-                "https://www.googleapis.com/auth/cloud-platform.read-only"
-              ]
-            },
             "list": {
               "description": "Lists information about the supported locations for this service.",
               "flatPath": "v2/projects/{projectsId}/locations",
@@ -2068,13 +2194,17 @@
       }
     }
   },
-  "revision": "20230622",
+  "revision": "20240522",
   "rootUrl": "https://bigtableadmin.googleapis.com/",
   "schemas": {
     "AppProfile": {
       "description": "A configuration object describing how Cloud Bigtable should treat traffic from a particular end user application.",
       "id": "AppProfile",
       "properties": {
+        "dataBoostIsolationReadOnly": {
+          "$ref": "DataBoostIsolationReadOnly",
+          "description": "Specifies that this app profile is intended for read-only usage via the Data Boost feature."
+        },
         "description": {
           "description": "Long form description of the use case for this AppProfile.",
           "type": "string"
@@ -2091,9 +2221,30 @@
           "description": "The unique name of the app profile. Values are of the form `projects/{project}/instances/{instance}/appProfiles/_a-zA-Z0-9*`.",
           "type": "string"
         },
+        "priority": {
+          "deprecated": true,
+          "description": "This field has been deprecated in favor of `standard_isolation.priority`. If you set this field, `standard_isolation.priority` will be set instead. The priority of requests sent using this app profile.",
+          "enum": [
+            "PRIORITY_UNSPECIFIED",
+            "PRIORITY_LOW",
+            "PRIORITY_MEDIUM",
+            "PRIORITY_HIGH"
+          ],
+          "enumDescriptions": [
+            "Default value. Mapped to PRIORITY_HIGH (the legacy behavior) on creation.",
+            "",
+            "",
+            ""
+          ],
+          "type": "string"
+        },
         "singleClusterRouting": {
           "$ref": "SingleClusterRouting",
           "description": "Use a single-cluster routing policy."
+        },
+        "standardIsolation": {
+          "$ref": "StandardIsolation",
+          "description": "The standard options used for isolating this app profile's traffic from other use cases."
         }
       },
       "type": "object"
@@ -2141,6 +2292,46 @@
             "Data writes. Example: CloudSQL Users create",
             "Data reads. Example: CloudSQL Users list"
           ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "AuthorizedView": {
+      "description": "An Authorized View of a Cloud Bigtable Table.",
+      "id": "AuthorizedView",
+      "properties": {
+        "deletionProtection": {
+          "description": "Set to true to make the AuthorizedView protected against deletion. The parent Table and containing Instance cannot be deleted if an AuthorizedView has this bit set.",
+          "type": "boolean"
+        },
+        "etag": {
+          "description": "The etag for this AuthorizedView. If this is provided on update, it must match the server's etag. The server returns ABORTED error on a mismatched etag.",
+          "type": "string"
+        },
+        "name": {
+          "description": "Identifier. The name of this AuthorizedView. Values are of the form `projects/{project}/instances/{instance}/tables/{table}/authorizedViews/{authorized_view}`",
+          "type": "string"
+        },
+        "subsetView": {
+          "$ref": "GoogleBigtableAdminV2AuthorizedViewSubsetView",
+          "description": "An AuthorizedView permitting access to an explicit subset of a Table."
+        }
+      },
+      "type": "object"
+    },
+    "AutomatedBackupPolicy": {
+      "description": "Defines an automated backup policy for a table",
+      "id": "AutomatedBackupPolicy",
+      "properties": {
+        "frequency": {
+          "description": "Required. How frequently automated backups should occur. The only supported value at this time is 24 hours.",
+          "format": "google-duration",
+          "type": "string"
+        },
+        "retentionPeriod": {
+          "description": "Required. How long the automated backups should be retained. The only supported value at this time is 3 days.",
+          "format": "google-duration",
           "type": "string"
         }
       },
@@ -2196,7 +2387,7 @@
           "type": "string"
         },
         "expireTime": {
-          "description": "Required. The expiration time of the backup, with microseconds granularity that must be at least 6 hours and at most 30 days from the time the request is received. Once the `expire_time` has passed, Cloud Bigtable will delete the backup and free the resources used by the backup.",
+          "description": "Required. The expiration time of the backup, with microseconds granularity that must be at least 6 hours and at most 90 days from the time the request is received. Once the `expire_time` has passed, Cloud Bigtable will delete the backup and free the resources used by the backup.",
           "format": "google-datetime",
           "type": "string"
         },
@@ -2211,7 +2402,7 @@
           "type": "string"
         },
         "sourceBackup": {
-          "description": "Output only. Name of the backup from which this backup was copied. If a backup is not created by copying a backup, this field will be empty. Values are of the form: projects//instances//backups/.",
+          "description": "Output only. Name of the backup from which this backup was copied. If a backup is not created by copying a backup, this field will be empty. Values are of the form: projects//instances//clusters//backups/",
           "readOnly": true,
           "type": "string"
         },
@@ -2259,7 +2450,7 @@
           "type": "string"
         },
         "sourceBackup": {
-          "description": "Output only. Name of the backup from which this backup was copied. If a backup is not created by copying a backup, this field will be empty. Values are of the form: projects//instances//backups/.",
+          "description": "Output only. Name of the backup from which this backup was copied. If a backup is not created by copying a backup, this field will be empty. Values are of the form: projects//instances//clusters//backups/",
           "readOnly": true,
           "type": "string"
         },
@@ -2286,14 +2477,14 @@
           "description": "The condition that is associated with this binding. If the condition evaluates to `true`, then this binding applies to the current request. If the condition evaluates to `false`, then this binding does not apply to the current request. However, a different role binding might grant the same role to one or more of the principals in this binding. To learn which resources support conditions in their IAM policies, see the [IAM documentation](https://cloud.google.com/iam/help/conditions/resource-policies)."
         },
         "members": {
-          "description": "Specifies the principals requesting access for a Google Cloud resource. `members` can have the following values: * `allUsers`: A special identifier that represents anyone who is on the internet; with or without a Google account. * `allAuthenticatedUsers`: A special identifier that represents anyone who is authenticated with a Google account or a service account. Does not include identities that come from external identity providers (IdPs) through identity federation. * `user:{emailid}`: An email address that represents a specific Google account. For example, `alice@example.com` . * `serviceAccount:{emailid}`: An email address that represents a Google service account. For example, `my-other-app@appspot.gserviceaccount.com`. * `serviceAccount:{projectid}.svc.id.goog[{namespace}/{kubernetes-sa}]`: An identifier for a [Kubernetes service account](https://cloud.google.com/kubernetes-engine/docs/how-to/kubernetes-service-accounts). For example, `my-project.svc.id.goog[my-namespace/my-kubernetes-sa]`. * `group:{emailid}`: An email address that represents a Google group. For example, `admins@example.com`. * `domain:{domain}`: The G Suite domain (primary) that represents all the users of that domain. For example, `google.com` or `example.com`. * `deleted:user:{emailid}?uid={uniqueid}`: An email address (plus unique identifier) representing a user that has been recently deleted. For example, `alice@example.com?uid=123456789012345678901`. If the user is recovered, this value reverts to `user:{emailid}` and the recovered user retains the role in the binding. * `deleted:serviceAccount:{emailid}?uid={uniqueid}`: An email address (plus unique identifier) representing a service account that has been recently deleted. For example, `my-other-app@appspot.gserviceaccount.com?uid=123456789012345678901`. If the service account is undeleted, this value reverts to `serviceAccount:{emailid}` and the undeleted service account retains the role in the binding. * `deleted:group:{emailid}?uid={uniqueid}`: An email address (plus unique identifier) representing a Google group that has been recently deleted. For example, `admins@example.com?uid=123456789012345678901`. If the group is recovered, this value reverts to `group:{emailid}` and the recovered group retains the role in the binding.",
+          "description": "Specifies the principals requesting access for a Google Cloud resource. `members` can have the following values: * `allUsers`: A special identifier that represents anyone who is on the internet; with or without a Google account. * `allAuthenticatedUsers`: A special identifier that represents anyone who is authenticated with a Google account or a service account. Does not include identities that come from external identity providers (IdPs) through identity federation. * `user:{emailid}`: An email address that represents a specific Google account. For example, `alice@example.com` . * `serviceAccount:{emailid}`: An email address that represents a Google service account. For example, `my-other-app@appspot.gserviceaccount.com`. * `serviceAccount:{projectid}.svc.id.goog[{namespace}/{kubernetes-sa}]`: An identifier for a [Kubernetes service account](https://cloud.google.com/kubernetes-engine/docs/how-to/kubernetes-service-accounts). For example, `my-project.svc.id.goog[my-namespace/my-kubernetes-sa]`. * `group:{emailid}`: An email address that represents a Google group. For example, `admins@example.com`. * `domain:{domain}`: The G Suite domain (primary) that represents all the users of that domain. For example, `google.com` or `example.com`. * `principal://iam.googleapis.com/locations/global/workforcePools/{pool_id}/subject/{subject_attribute_value}`: A single identity in a workforce identity pool. * `principalSet://iam.googleapis.com/locations/global/workforcePools/{pool_id}/group/{group_id}`: All workforce identities in a group. * `principalSet://iam.googleapis.com/locations/global/workforcePools/{pool_id}/attribute.{attribute_name}/{attribute_value}`: All workforce identities with a specific attribute value. * `principalSet://iam.googleapis.com/locations/global/workforcePools/{pool_id}/*`: All identities in a workforce identity pool. * `principal://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/subject/{subject_attribute_value}`: A single identity in a workload identity pool. * `principalSet://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/group/{group_id}`: A workload identity pool group. * `principalSet://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/attribute.{attribute_name}/{attribute_value}`: All identities in a workload identity pool with a certain attribute. * `principalSet://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/*`: All identities in a workload identity pool. * `deleted:user:{emailid}?uid={uniqueid}`: An email address (plus unique identifier) representing a user that has been recently deleted. For example, `alice@example.com?uid=123456789012345678901`. If the user is recovered, this value reverts to `user:{emailid}` and the recovered user retains the role in the binding. * `deleted:serviceAccount:{emailid}?uid={uniqueid}`: An email address (plus unique identifier) representing a service account that has been recently deleted. For example, `my-other-app@appspot.gserviceaccount.com?uid=123456789012345678901`. If the service account is undeleted, this value reverts to `serviceAccount:{emailid}` and the undeleted service account retains the role in the binding. * `deleted:group:{emailid}?uid={uniqueid}`: An email address (plus unique identifier) representing a Google group that has been recently deleted. For example, `admins@example.com?uid=123456789012345678901`. If the group is recovered, this value reverts to `group:{emailid}` and the recovered group retains the role in the binding. * `deleted:principal://iam.googleapis.com/locations/global/workforcePools/{pool_id}/subject/{subject_attribute_value}`: Deleted single identity in a workforce identity pool. For example, `deleted:principal://iam.googleapis.com/locations/global/workforcePools/my-pool-id/subject/my-subject-attribute-value`.",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
         "role": {
-          "description": "Role that is assigned to the list of `members`, or principals. For example, `roles/viewer`, `roles/editor`, or `roles/owner`.",
+          "description": "Role that is assigned to the list of `members`, or principals. For example, `roles/viewer`, `roles/editor`, or `roles/owner`. For an overview of the IAM roles and permissions, see the [IAM documentation](https://cloud.google.com/iam/docs/roles-overview). For a list of the available pre-defined roles, see [here](https://cloud.google.com/iam/docs/understanding-roles).",
           "type": "string"
         }
       },
@@ -2318,6 +2509,14 @@
         "consistencyToken": {
           "description": "Required. The token created using GenerateConsistencyToken for the Table.",
           "type": "string"
+        },
+        "dataBoostReadLocalWrites": {
+          "$ref": "DataBoostReadLocalWrites",
+          "description": "Checks that reads using an app profile with `DataBoostIsolationReadOnly` can see all writes committed before the token was created, but only if the read and write target the same cluster."
+        },
+        "standardReadRemoteWrites": {
+          "$ref": "StandardReadRemoteWrites",
+          "description": "Checks that reads using an app profile with `StandardIsolation` can see all writes committed before the token was created, even if the read and write target different clusters."
         }
       },
       "type": "object"
@@ -2368,7 +2567,7 @@
           "type": "string"
         },
         "serveNodes": {
-          "description": "The number of nodes allocated to this cluster. More nodes enable higher throughput and more consistent performance.",
+          "description": "The number of nodes in the cluster. If no value is set, Cloud Bigtable automatically allocates nodes based on your data footprint and optimized for 50% storage utilization.",
           "format": "int32",
           "type": "integer"
         },
@@ -2466,7 +2665,12 @@
         },
         "stats": {
           "$ref": "ColumnFamilyStats",
-          "description": "Only available with STATS_VIEW, this includes summary statistics about column family contents. For statistics over an entire table, see TableStats above."
+          "description": "Output only. Only available with STATS_VIEW, this includes summary statistics about column family contents. For statistics over an entire table, see TableStats above.",
+          "readOnly": true
+        },
+        "valueType": {
+          "$ref": "Type",
+          "description": "The type of data stored in each of this family's cell values, including its full encoding. If omitted, the family only serves raw untyped bytes. For now, only the `Aggregate` type is supported. `Aggregate` can only be set at family creation and is immutable afterwards. If `value_type` is `Aggregate`, written data must be compatible with: * `value_type.input_type` for `AddInput` mutations"
         }
       },
       "type": "object"
@@ -2527,6 +2731,46 @@
         },
         "sourceBackup": {
           "description": "Required. The source backup to be copied from. The source backup needs to be in READY state for it to be copied. Copying a copied backup is not allowed. Once CopyBackup is in progress, the source backup cannot be deleted or cleaned up on expiration until CopyBackup is finished. Values are of the form: `projects//instances//clusters//backups/`.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "CreateAuthorizedViewMetadata": {
+      "description": "The metadata for the Operation returned by CreateAuthorizedView.",
+      "id": "CreateAuthorizedViewMetadata",
+      "properties": {
+        "finishTime": {
+          "description": "The time at which the operation failed or was completed successfully.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "originalRequest": {
+          "$ref": "CreateAuthorizedViewRequest",
+          "description": "The request that prompted the initiation of this CreateAuthorizedView operation."
+        },
+        "requestTime": {
+          "description": "The time at which the original request was received.",
+          "format": "google-datetime",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "CreateAuthorizedViewRequest": {
+      "description": "The request for CreateAuthorizedView",
+      "id": "CreateAuthorizedViewRequest",
+      "properties": {
+        "authorizedView": {
+          "$ref": "AuthorizedView",
+          "description": "Required. The AuthorizedView to create."
+        },
+        "authorizedViewId": {
+          "description": "Required. The id of the AuthorizedView to create. This AuthorizedView must not already exist. The `authorized_view_id` appended to `parent` forms the full AuthorizedView name of the form `projects/{project}/instances/{instance}/tables/{table}/authorizedView/{authorized_view}`.",
+          "type": "string"
+        },
+        "parent": {
+          "description": "Required. This is the name of the table the AuthorizedView belongs to. Values are of the form `projects/{project}/instances/{instance}/tables/{table}`.",
           "type": "string"
         }
       },
@@ -2671,6 +2915,31 @@
           "type": "string"
         }
       },
+      "type": "object"
+    },
+    "DataBoostIsolationReadOnly": {
+      "description": "Data Boost is a serverless compute capability that lets you run high-throughput read jobs and queries on your Bigtable data, without impacting the performance of the clusters that handle your application traffic. Data Boost supports read-only use cases with single-cluster routing.",
+      "id": "DataBoostIsolationReadOnly",
+      "properties": {
+        "computeBillingOwner": {
+          "description": "The Compute Billing Owner for this Data Boost App Profile.",
+          "enum": [
+            "COMPUTE_BILLING_OWNER_UNSPECIFIED",
+            "HOST_PAYS"
+          ],
+          "enumDescriptions": [
+            "Unspecified value.",
+            "The host Cloud Project containing the targeted Bigtable Instance / Table pays for compute."
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "DataBoostReadLocalWrites": {
+      "description": "Checks that all writes before the consistency token was generated in the same cluster are readable by Databoost.",
+      "id": "DataBoostReadLocalWrites",
+      "properties": {},
       "type": "object"
     },
     "DropRowRangeRequest": {
@@ -2826,6 +3095,138 @@
       },
       "type": "object"
     },
+    "GoogleBigtableAdminV2AuthorizedViewFamilySubsets": {
+      "description": "Subsets of a column family that are included in this AuthorizedView.",
+      "id": "GoogleBigtableAdminV2AuthorizedViewFamilySubsets",
+      "properties": {
+        "qualifierPrefixes": {
+          "description": "Prefixes for qualifiers to be included in the AuthorizedView. Every qualifier starting with one of these prefixes is included in the AuthorizedView. To provide access to all qualifiers, include the empty string as a prefix (\"\").",
+          "items": {
+            "format": "byte",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "qualifiers": {
+          "description": "Individual exact column qualifiers to be included in the AuthorizedView.",
+          "items": {
+            "format": "byte",
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleBigtableAdminV2AuthorizedViewSubsetView": {
+      "description": "Defines a simple AuthorizedView that is a subset of the underlying Table.",
+      "id": "GoogleBigtableAdminV2AuthorizedViewSubsetView",
+      "properties": {
+        "familySubsets": {
+          "additionalProperties": {
+            "$ref": "GoogleBigtableAdminV2AuthorizedViewFamilySubsets"
+          },
+          "description": "Map from column family name to the columns in this family to be included in the AuthorizedView.",
+          "type": "object"
+        },
+        "rowPrefixes": {
+          "description": "Row prefixes to be included in the AuthorizedView. To provide access to all rows, include the empty string as a prefix (\"\").",
+          "items": {
+            "format": "byte",
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleBigtableAdminV2TypeAggregate": {
+      "description": "A value that combines incremental updates into a summarized value. Data is never directly written or read using type `Aggregate`. Writes will provide either the `input_type` or `state_type`, and reads will always return the `state_type` .",
+      "id": "GoogleBigtableAdminV2TypeAggregate",
+      "properties": {
+        "inputType": {
+          "$ref": "Type",
+          "description": "Type of the inputs that are accumulated by this `Aggregate`, which must specify a full encoding. Use `AddInput` mutations to accumulate new inputs."
+        },
+        "stateType": {
+          "$ref": "Type",
+          "description": "Output only. Type that holds the internal accumulator state for the `Aggregate`. This is a function of the `input_type` and `aggregator` chosen, and will always specify a full encoding.",
+          "readOnly": true
+        },
+        "sum": {
+          "$ref": "GoogleBigtableAdminV2TypeAggregateSum",
+          "description": "Sum aggregator."
+        }
+      },
+      "type": "object"
+    },
+    "GoogleBigtableAdminV2TypeAggregateSum": {
+      "description": "Computes the sum of the input values. Allowed input: `Int64` State: same as input",
+      "id": "GoogleBigtableAdminV2TypeAggregateSum",
+      "properties": {},
+      "type": "object"
+    },
+    "GoogleBigtableAdminV2TypeBytes": {
+      "description": "Bytes Values of type `Bytes` are stored in `Value.bytes_value`.",
+      "id": "GoogleBigtableAdminV2TypeBytes",
+      "properties": {
+        "encoding": {
+          "$ref": "GoogleBigtableAdminV2TypeBytesEncoding",
+          "description": "The encoding to use when converting to/from lower level types."
+        }
+      },
+      "type": "object"
+    },
+    "GoogleBigtableAdminV2TypeBytesEncoding": {
+      "description": "Rules used to convert to/from lower level types.",
+      "id": "GoogleBigtableAdminV2TypeBytesEncoding",
+      "properties": {
+        "raw": {
+          "$ref": "GoogleBigtableAdminV2TypeBytesEncodingRaw",
+          "description": "Use `Raw` encoding."
+        }
+      },
+      "type": "object"
+    },
+    "GoogleBigtableAdminV2TypeBytesEncodingRaw": {
+      "description": "Leaves the value \"as-is\" * Natural sort? Yes * Self-delimiting? No * Compatibility? N/A",
+      "id": "GoogleBigtableAdminV2TypeBytesEncodingRaw",
+      "properties": {},
+      "type": "object"
+    },
+    "GoogleBigtableAdminV2TypeInt64": {
+      "description": "Int64 Values of type `Int64` are stored in `Value.int_value`.",
+      "id": "GoogleBigtableAdminV2TypeInt64",
+      "properties": {
+        "encoding": {
+          "$ref": "GoogleBigtableAdminV2TypeInt64Encoding",
+          "description": "The encoding to use when converting to/from lower level types."
+        }
+      },
+      "type": "object"
+    },
+    "GoogleBigtableAdminV2TypeInt64Encoding": {
+      "description": "Rules used to convert to/from lower level types.",
+      "id": "GoogleBigtableAdminV2TypeInt64Encoding",
+      "properties": {
+        "bigEndianBytes": {
+          "$ref": "GoogleBigtableAdminV2TypeInt64EncodingBigEndianBytes",
+          "description": "Use `BigEndianBytes` encoding."
+        }
+      },
+      "type": "object"
+    },
+    "GoogleBigtableAdminV2TypeInt64EncodingBigEndianBytes": {
+      "description": "Encodes the value as an 8-byte big endian twos complement `Bytes` value. * Natural sort? No (positive values only) * Self-delimiting? Yes * Compatibility? - BigQuery Federation `BINARY` encoding - HBase `Bytes.toBytes` - Java `ByteBuffer.putLong()` with `ByteOrder.BIG_ENDIAN`",
+      "id": "GoogleBigtableAdminV2TypeInt64EncodingBigEndianBytes",
+      "properties": {
+        "bytesType": {
+          "$ref": "GoogleBigtableAdminV2TypeBytes",
+          "description": "The underlying `Bytes` type, which may be able to encode further."
+        }
+      },
+      "type": "object"
+    },
     "HotTablet": {
       "description": "A tablet is a defined by a start and end key and is explained in https://cloud.google.com/bigtable/docs/overview#architecture and https://cloud.google.com/bigtable/docs/performance#optimization. A Hot tablet is a tablet that exhibits high average cpu usage during the time interval from start time to end time.",
       "id": "HotTablet",
@@ -2891,6 +3292,11 @@
         "name": {
           "description": "The unique name of the instance. Values are of the form `projects/{project}/instances/a-z+[a-z0-9]`.",
           "type": "string"
+        },
+        "satisfiesPzi": {
+          "description": "Output only. Reserved for future use.",
+          "readOnly": true,
+          "type": "boolean"
         },
         "satisfiesPzs": {
           "description": "Output only. Reserved for future use.",
@@ -2963,6 +3369,24 @@
         },
         "nextPageToken": {
           "description": "Set if not all app profiles could be returned in a single response. Pass this value to `page_token` in another request to get the next page of results.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ListAuthorizedViewsResponse": {
+      "description": "Response message for google.bigtable.admin.v2.BigtableTableAdmin.ListAuthorizedViews",
+      "id": "ListAuthorizedViewsResponse",
+      "properties": {
+        "authorizedViews": {
+          "description": "The AuthorizedViews present in the requested table.",
+          "items": {
+            "$ref": "AuthorizedView"
+          },
+          "type": "array"
+        },
+        "nextPageToken": {
+          "description": "Set if not all tables could be returned in a single response. Pass this value to `page_token` in another request to get the next page of results.",
           "type": "string"
         }
       },
@@ -3161,6 +3585,11 @@
         "update": {
           "$ref": "ColumnFamily",
           "description": "Update an existing column family to the specified schema, or fail if no column family exists with the given ID."
+        },
+        "updateMask": {
+          "description": "Optional. A mask specifying which fields (e.g. `gc_rule`) in the `update` mod should be updated, ignored for other modification types. If unset or empty, we treat it as updating `gc_rule` to be backward compatible.",
+          "format": "google-fieldmask",
+          "type": "string"
         }
       },
       "type": "object"
@@ -3170,7 +3599,7 @@
       "id": "ModifyColumnFamiliesRequest",
       "properties": {
         "ignoreWarnings": {
-          "description": "If true, ignore safety checks when modifying the column families.",
+          "description": "Optional. If true, ignore safety checks when modifying the column families.",
           "type": "boolean"
         },
         "modifications": {
@@ -3226,7 +3655,7 @@
             "description": "Properties of the object. Contains field @type with type URL.",
             "type": "any"
           },
-          "description": "The normal response of the operation in case of success. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.",
+          "description": "The normal, successful response of the operation. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.",
           "type": "object"
         }
       },
@@ -3323,7 +3752,7 @@
       "type": "object"
     },
     "Policy": {
-      "description": "An Identity and Access Management (IAM) policy, which specifies access controls for Google Cloud resources. A `Policy` is a collection of `bindings`. A `binding` binds one or more `members`, or principals, to a single `role`. Principals can be user accounts, service accounts, Google groups, and domains (such as G Suite). A `role` is a named list of permissions; each `role` can be an IAM predefined role or a user-created custom role. For some types of Google Cloud resources, a `binding` can also specify a `condition`, which is a logical expression that allows access to a resource only if the expression evaluates to `true`. A condition can add constraints based on attributes of the request, the resource, or both. To learn which resources support conditions in their IAM policies, see the [IAM documentation](https://cloud.google.com/iam/help/conditions/resource-policies). **JSON example:** { \"bindings\": [ { \"role\": \"roles/resourcemanager.organizationAdmin\", \"members\": [ \"user:mike@example.com\", \"group:admins@example.com\", \"domain:google.com\", \"serviceAccount:my-project-id@appspot.gserviceaccount.com\" ] }, { \"role\": \"roles/resourcemanager.organizationViewer\", \"members\": [ \"user:eve@example.com\" ], \"condition\": { \"title\": \"expirable access\", \"description\": \"Does not grant access after Sep 2020\", \"expression\": \"request.time \u003c timestamp('2020-10-01T00:00:00.000Z')\", } } ], \"etag\": \"BwWWja0YfJA=\", \"version\": 3 } **YAML example:** bindings: - members: - user:mike@example.com - group:admins@example.com - domain:google.com - serviceAccount:my-project-id@appspot.gserviceaccount.com role: roles/resourcemanager.organizationAdmin - members: - user:eve@example.com role: roles/resourcemanager.organizationViewer condition: title: expirable access description: Does not grant access after Sep 2020 expression: request.time \u003c timestamp('2020-10-01T00:00:00.000Z') etag: BwWWja0YfJA= version: 3 For a description of IAM and its features, see the [IAM documentation](https://cloud.google.com/iam/docs/).",
+      "description": "An Identity and Access Management (IAM) policy, which specifies access controls for Google Cloud resources. A `Policy` is a collection of `bindings`. A `binding` binds one or more `members`, or principals, to a single `role`. Principals can be user accounts, service accounts, Google groups, and domains (such as G Suite). A `role` is a named list of permissions; each `role` can be an IAM predefined role or a user-created custom role. For some types of Google Cloud resources, a `binding` can also specify a `condition`, which is a logical expression that allows access to a resource only if the expression evaluates to `true`. A condition can add constraints based on attributes of the request, the resource, or both. To learn which resources support conditions in their IAM policies, see the [IAM documentation](https://cloud.google.com/iam/help/conditions/resource-policies). **JSON example:** ``` { \"bindings\": [ { \"role\": \"roles/resourcemanager.organizationAdmin\", \"members\": [ \"user:mike@example.com\", \"group:admins@example.com\", \"domain:google.com\", \"serviceAccount:my-project-id@appspot.gserviceaccount.com\" ] }, { \"role\": \"roles/resourcemanager.organizationViewer\", \"members\": [ \"user:eve@example.com\" ], \"condition\": { \"title\": \"expirable access\", \"description\": \"Does not grant access after Sep 2020\", \"expression\": \"request.time \u003c timestamp('2020-10-01T00:00:00.000Z')\", } } ], \"etag\": \"BwWWja0YfJA=\", \"version\": 3 } ``` **YAML example:** ``` bindings: - members: - user:mike@example.com - group:admins@example.com - domain:google.com - serviceAccount:my-project-id@appspot.gserviceaccount.com role: roles/resourcemanager.organizationAdmin - members: - user:eve@example.com role: roles/resourcemanager.organizationViewer condition: title: expirable access description: Does not grant access after Sep 2020 expression: request.time \u003c timestamp('2020-10-01T00:00:00.000Z') etag: BwWWja0YfJA= version: 3 ``` For a description of IAM and its features, see the [IAM documentation](https://cloud.google.com/iam/docs/).",
       "id": "Policy",
       "properties": {
         "auditConfigs": {
@@ -3468,6 +3897,35 @@
       },
       "type": "object"
     },
+    "StandardIsolation": {
+      "description": "Standard options for isolating this app profile's traffic from other use cases.",
+      "id": "StandardIsolation",
+      "properties": {
+        "priority": {
+          "description": "The priority of requests sent using this app profile.",
+          "enum": [
+            "PRIORITY_UNSPECIFIED",
+            "PRIORITY_LOW",
+            "PRIORITY_MEDIUM",
+            "PRIORITY_HIGH"
+          ],
+          "enumDescriptions": [
+            "Default value. Mapped to PRIORITY_HIGH (the legacy behavior) on creation.",
+            "",
+            "",
+            ""
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "StandardReadRemoteWrites": {
+      "description": "Checks that all writes before the consistency token was generated are replicated in every cluster and readable.",
+      "id": "StandardReadRemoteWrites",
+      "properties": {},
+      "type": "object"
+    },
     "Status": {
       "description": "The `Status` type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs. It is used by [gRPC](https://github.com/grpc). Each `Status` message contains three pieces of data: error code, error message, and error details. You can find out more about this error model and how to work with it in the [API Design Guide](https://cloud.google.com/apis/design/errors).",
       "id": "Status",
@@ -3499,6 +3957,10 @@
       "description": "A collection of user data indexed by row, column, and timestamp. Each table is served using the resources of its parent cluster.",
       "id": "Table",
       "properties": {
+        "automatedBackupPolicy": {
+          "$ref": "AutomatedBackupPolicy",
+          "description": "If specified, automated backups are enabled for this table. Otherwise, automated backups are disabled."
+        },
         "changeStreamConfig": {
           "$ref": "ChangeStreamConfig",
           "description": "If specified, enable the change stream on this table. Otherwise, the change stream is disabled and the change stream is not retained."
@@ -3545,7 +4007,8 @@
         },
         "stats": {
           "$ref": "TableStats",
-          "description": "Only available with STATS_VIEW, this includes summary statistics about the entire table contents. For statistics about a specific column family, see ColumnFamilyStats in the mapped ColumnFamily collection above."
+          "description": "Output only. Only available with STATS_VIEW, this includes summary statistics about the entire table contents. For statistics about a specific column family, see ColumnFamilyStats in the mapped ColumnFamily collection above.",
+          "readOnly": true
         }
       },
       "type": "object"
@@ -3639,6 +4102,25 @@
       },
       "type": "object"
     },
+    "Type": {
+      "description": "`Type` represents the type of data that is written to, read from, or stored in Bigtable. It is heavily based on the GoogleSQL standard to help maintain familiarity and consistency across products and features. For compatibility with Bigtable's existing untyped APIs, each `Type` includes an `Encoding` which describes how to convert to/from the underlying data. This might involve composing a series of steps into an \"encoding chain,\" for example to convert from INT64 -\u003e STRING -\u003e raw bytes. In most cases, a \"link\" in the encoding chain will be based an on existing GoogleSQL conversion function like `CAST`. Each link in the encoding chain also defines the following properties: * Natural sort: Does the encoded value sort consistently with the original typed value? Note that Bigtable will always sort data based on the raw encoded value, *not* the decoded type. - Example: BYTES values sort in the same order as their raw encodings. - Counterexample: Encoding INT64 to a fixed-width STRING does *not* preserve sort order when dealing with negative numbers. INT64(1) \u003e INT64(-1), but STRING(\"-00001\") \u003e STRING(\"00001). - The overall encoding chain has this property if *every* link does. * Self-delimiting: If we concatenate two encoded values, can we always tell where the first one ends and the second one begins? - Example: If we encode INT64s to fixed-width STRINGs, the first value will always contain exactly N digits, possibly preceded by a sign. - Counterexample: If we concatenate two UTF-8 encoded STRINGs, we have no way to tell where the first one ends. - The overall encoding chain has this property if *any* link does. * Compatibility: Which other systems have matching encoding schemes? For example, does this encoding have a GoogleSQL equivalent? HBase? Java?",
+      "id": "Type",
+      "properties": {
+        "aggregateType": {
+          "$ref": "GoogleBigtableAdminV2TypeAggregate",
+          "description": "Aggregate"
+        },
+        "bytesType": {
+          "$ref": "GoogleBigtableAdminV2TypeBytes",
+          "description": "Bytes"
+        },
+        "int64Type": {
+          "$ref": "GoogleBigtableAdminV2TypeInt64",
+          "description": "Int64"
+        }
+      },
+      "type": "object"
+    },
     "UndeleteTableMetadata": {
       "description": "Metadata type for the operation returned by google.bigtable.admin.v2.BigtableTableAdmin.UndeleteTable.",
       "id": "UndeleteTableMetadata",
@@ -3684,6 +4166,47 @@
       "description": "The metadata for the Operation returned by UpdateAppProfile.",
       "id": "UpdateAppProfileMetadata",
       "properties": {},
+      "type": "object"
+    },
+    "UpdateAuthorizedViewMetadata": {
+      "description": "Metadata for the google.longrunning.Operation returned by UpdateAuthorizedView.",
+      "id": "UpdateAuthorizedViewMetadata",
+      "properties": {
+        "finishTime": {
+          "description": "The time at which the operation failed or was completed successfully.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "originalRequest": {
+          "$ref": "UpdateAuthorizedViewRequest",
+          "description": "The request that prompted the initiation of this UpdateAuthorizedView operation."
+        },
+        "requestTime": {
+          "description": "The time at which the original request was received.",
+          "format": "google-datetime",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "UpdateAuthorizedViewRequest": {
+      "description": "The request for UpdateAuthorizedView.",
+      "id": "UpdateAuthorizedViewRequest",
+      "properties": {
+        "authorizedView": {
+          "$ref": "AuthorizedView",
+          "description": "Required. The AuthorizedView to update. The `name` in `authorized_view` is used to identify the AuthorizedView. AuthorizedView name must in this format: `projects/{project}/instances/{instance}/tables/{table}/authorizedViews/{authorized_view}`."
+        },
+        "ignoreWarnings": {
+          "description": "Optional. If true, ignore the safety checks when updating the AuthorizedView.",
+          "type": "boolean"
+        },
+        "updateMask": {
+          "description": "Optional. The list of fields to update. A mask specifying which fields in the AuthorizedView resource should be updated. This mask is relative to the AuthorizedView resource, not to the request message. A field will be overwritten if it is in the mask. If empty, all fields set in the request will be overwritten. A special value `*` means to overwrite all fields (including fields not set in the request).",
+          "format": "google-fieldmask",
+          "type": "string"
+        }
+      },
       "type": "object"
     },
     "UpdateClusterMetadata": {

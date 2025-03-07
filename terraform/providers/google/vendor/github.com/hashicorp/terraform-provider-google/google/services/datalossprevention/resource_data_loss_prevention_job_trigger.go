@@ -20,6 +20,7 @@ package datalossprevention
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -214,7 +215,8 @@ rowsLimit and rowsLimitPercent can be specified. Cannot be used in conjunction w
 													Optional:     true,
 													ValidateFunc: verify.ValidateEnum([]string{"TOP", "RANDOM_START", ""}),
 													Description: `How to sample rows if not all rows are scanned. Meaningful only when used in conjunction with either
-rowsLimit or rowsLimitPercent. If not specified, rows are scanned in the order BigQuery reads them. Default value: "TOP" Possible values: ["TOP", "RANDOM_START"]`,
+rowsLimit or rowsLimitPercent. If not specified, rows are scanned in the order BigQuery reads them.
+If TimespanConfig is set, set this to an empty string to avoid using the default value. Default value: "TOP" Possible values: ["TOP", "RANDOM_START"]`,
 													Default: "TOP",
 												},
 											},
@@ -442,14 +444,37 @@ the specific row it came from. No more than 3 may be provided.`,
 									"timespan_config": {
 										Type:        schema.TypeList,
 										Optional:    true,
-										Description: `Information on where to inspect`,
+										Description: `Configuration of the timespan of the items to include in scanning`,
 										MaxItems:    1,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
+												"enable_auto_population_of_timespan_config": {
+													Type:     schema.TypeBool,
+													Optional: true,
+													Description: `When the job is started by a JobTrigger we will automatically figure out a valid startTime to avoid
+scanning files that have not been modified since the last time the JobTrigger executed. This will
+be based on the time of the execution of the last run of the JobTrigger or the timespan endTime
+used in the last run of the JobTrigger.`,
+													ConflictsWith: []string{"inspect_job.0.storage_config.0.timespan_config.0.start_time"},
+													AtLeastOneOf:  []string{"inspect_job.0.storage_config.0.timespan_config.0.start_time", "inspect_job.0.storage_config.0.timespan_config.0.end_time", "inspect_job.0.storage_config.0.timespan_config.0.enable_auto_population_of_timespan_config"},
+												},
+												"end_time": {
+													Type:         schema.TypeString,
+													Optional:     true,
+													Description:  `Exclude files, tables, or rows newer than this value. If not set, no upper time limit is applied.`,
+													AtLeastOneOf: []string{"inspect_job.0.storage_config.0.timespan_config.0.start_time", "inspect_job.0.storage_config.0.timespan_config.0.end_time", "inspect_job.0.storage_config.0.timespan_config.0.enable_auto_population_of_timespan_config"},
+												},
+												"start_time": {
+													Type:          schema.TypeString,
+													Optional:      true,
+													Description:   `Exclude files, tables, or rows older than this value. If not set, no lower time limit is applied.`,
+													ConflictsWith: []string{"inspect_job.0.storage_config.0.timespan_config.0.enable_auto_population_of_timespan_config"},
+													AtLeastOneOf:  []string{"inspect_job.0.storage_config.0.timespan_config.0.start_time", "inspect_job.0.storage_config.0.timespan_config.0.end_time", "inspect_job.0.storage_config.0.timespan_config.0.enable_auto_population_of_timespan_config"},
+												},
 												"timestamp_field": {
 													Type:        schema.TypeList,
-													Required:    true,
-													Description: `Information on where to inspect`,
+													Optional:    true,
+													Description: `Specification of the field containing the timestamp of scanned items.`,
 													MaxItems:    1,
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
@@ -468,25 +493,6 @@ timestamp property does not exist or its value is empty or invalid.`,
 														},
 													},
 												},
-												"enable_auto_population_of_timespan_config": {
-													Type:     schema.TypeBool,
-													Optional: true,
-													Description: `When the job is started by a JobTrigger we will automatically figure out a valid startTime to avoid
-scanning files that have not been modified since the last time the JobTrigger executed. This will
-be based on the time of the execution of the last run of the JobTrigger.`,
-												},
-												"end_time": {
-													Type:         schema.TypeString,
-													Optional:     true,
-													Description:  `Exclude files or rows newer than this value. If set to zero, no upper time limit is applied.`,
-													AtLeastOneOf: []string{"inspect_job.0.storage_config.0.timespan_config.0.start_time", "inspect_job.0.storage_config.0.timespan_config.0.end_time"},
-												},
-												"start_time": {
-													Type:         schema.TypeString,
-													Optional:     true,
-													Description:  `Exclude files or rows older than this value.`,
-													AtLeastOneOf: []string{"inspect_job.0.storage_config.0.timespan_config.0.start_time", "inspect_job.0.storage_config.0.timespan_config.0.end_time"},
-												},
 											},
 										},
 									},
@@ -496,7 +502,7 @@ be based on the time of the execution of the last run of the JobTrigger.`,
 						"actions": {
 							Type:        schema.TypeList,
 							Optional:    true,
-							Description: `A task to execute on the completion of a job.`,
+							Description: `Configuration block for the actions to execute on the completion of a job. Can be specified multiple times, but only one for each type. Each action block supports fields documented below. This argument is processed in [attribute-as-blocks mode](https://www.terraform.io/docs/configuration/attr-as-blocks.html).`,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"deidentify": {
@@ -1465,6 +1471,7 @@ func resourceDataLossPreventionJobTriggerCreate(d *schema.ResourceData, meta int
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -1473,6 +1480,7 @@ func resourceDataLossPreventionJobTriggerCreate(d *schema.ResourceData, meta int
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating JobTrigger: %s", err)
@@ -1512,12 +1520,14 @@ func resourceDataLossPreventionJobTriggerRead(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DataLossPreventionJobTrigger %q", d.Id()))
@@ -1618,6 +1628,7 @@ func resourceDataLossPreventionJobTriggerUpdate(d *schema.ResourceData, meta int
 	}
 
 	log.Printf("[DEBUG] Updating JobTrigger %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("description") {
@@ -1651,20 +1662,25 @@ func resourceDataLossPreventionJobTriggerUpdate(d *schema.ResourceData, meta int
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating JobTrigger %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating JobTrigger %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating JobTrigger %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating JobTrigger %q: %#v", d.Id(), res)
+		}
+
 	}
 
 	return resourceDataLossPreventionJobTriggerRead(d, meta)
@@ -1685,13 +1701,15 @@ func resourceDataLossPreventionJobTriggerDelete(d *schema.ResourceData, meta int
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting JobTrigger %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting JobTrigger %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -1700,6 +1718,7 @@ func resourceDataLossPreventionJobTriggerDelete(d *schema.ResourceData, meta int
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "JobTrigger")
