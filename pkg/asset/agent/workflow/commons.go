@@ -17,7 +17,7 @@ const (
 	// disconnected install workflow. The installation details will be provided through
 	// a dedicated UI running on the rendezvous node, and in addition no external registry
 	// will be required for an air-gapped deployment.
-	AgentWorkflowTypeInstallInteractiveDisconnected = "install-interactive-disconnected"
+	AgentWorkflowTypeInstallInteractiveDisconnected AgentWorkflowType = "install-interactive-disconnected"
 
 	agentWorkflowFilename = ".agentworkflow"
 )

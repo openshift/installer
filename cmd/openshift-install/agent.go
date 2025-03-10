@@ -148,7 +148,7 @@ func setUnconfiguredIgnitionFlag(ctx *agent.ContextWrapper) {
 			log.Fatal(err)
 		}
 		if isInteractive {
-			ctx.AddValue(workflow.WorkflowTypeKey, workflow.AgentWorkflowTypeInstallInteractiveDisconnected)
+			ctx.AddValue(workflow.WorkflowTypeKey, string(workflow.AgentWorkflowTypeInstallInteractiveDisconnected))
 		}
 	}
 }
