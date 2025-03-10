@@ -952,8 +952,7 @@ func validateAPIAndIngressVIPs(vips vips, fieldNames vipFields, vipIsRequired, r
 				for _, ingressVIP := range vips.Ingress {
 					apiVIPNet := net.ParseIP(vip)
 					ingressVIPNet := net.ParseIP(ingressVIP)
-
-					if apiVIPNet.Equal(ingressVIPNet) {
+					if apiVIPNet != nil && apiVIPNet.Equal(ingressVIPNet) {
 						allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.APIVIPs), vip, "VIP for API must not be one of the Ingress VIPs"))
 					}
 				}
