@@ -44,6 +44,9 @@ const (
 
 	// stackComputeAPIVersion is the Azure Stack compatible API version for compute resources (VMs & images).
 	stackComputeAPIVersion = "2020-06-01"
+
+	// stackDNSAPIVersion is the Azure Stack compatible API version for DNS resources.
+	stackDNSAPIVersion = "2018-05-01"
 )
 
 // Provider implements Azure CAPI installation.
@@ -436,7 +439,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	p.NetworkClientFactory = networkClientFactory
 	p.lbBackendAddressPools = lbBaps
 
-	if err := createDNSEntries(ctx, in, extLBFQDN, resourceGroupName, p.clientOptions); err != nil {
+	if err := createDNSEntries(ctx, in, extLBFQDN, pubIPAddress, resourceGroupName, p.clientOptions); err != nil {
 		return fmt.Errorf("error creating DNS records: %w", err)
 	}
 
