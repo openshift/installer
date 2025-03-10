@@ -135,14 +135,10 @@ func initFlags(fs *pflag.FlagSet) {
 }
 
 func validateFlags() error {
-	switch options.ProviderIDFormatType(options.ProviderIDFormat) {
-	// Deprecated: ProviderIDFormatV1 is deprecated and will be removed in a future release.
-	case options.ProviderIDFormatV1:
-		setupLog.Info("Using v1 version of ProviderID format.V1 is deprecated and will be removed in a future release.Instead use V2.")
-	case options.ProviderIDFormatV2:
+	if options.ProviderIDFormatType(options.ProviderIDFormat) == options.ProviderIDFormatV2 {
 		setupLog.Info("Using v2 version of ProviderID format")
-	default:
-		return fmt.Errorf("invalid value for flag provider-id-fmt: %s, Supported values: %s, %s ", options.ProviderIDFormat, options.ProviderIDFormatV1, options.ProviderIDFormatV2)
+	} else {
+		return fmt.Errorf("invalid value for flag provider-id-fmt: %s, Only supported value is %s", options.ProviderIDFormat, options.ProviderIDFormatV2)
 	}
 
 	if err := logsv1.ValidateAndApply(logOptions, nil); err != nil {
