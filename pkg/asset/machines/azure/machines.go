@@ -212,6 +212,11 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		publicLB = ""
 	}
 
+	managedIdentity := ""
+	if len(mpool.Identity.UserAssignedIdentities) > 0 {
+		managedIdentity = mpool.Identity.UserAssignedIdentities[0].ProviderID()
+	}
+
 	var diskEncryptionSet *machineapi.DiskEncryptionSetParameters
 	if mpool.OSDisk.DiskEncryptionSet != nil {
 		diskEncryptionSet = &machineapi.DiskEncryptionSetParameters{
@@ -259,6 +264,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		UltraSSDCapability:    ultraSSDCapability,
 		Zone:                  az,
 		Subnet:                subnet,
+		ManagedIdentity:       managedIdentity,
 		Vnet:                  virtualNetwork,
 		ResourceGroup:         rg,
 		NetworkResourceGroup:  networkResourceGroup,
