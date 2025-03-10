@@ -116,3 +116,8 @@ func ConstructKargsFromNetworkConfig(ipAddrs []string, nameservers []string, gat
 	logrus.Debugf("Generated karg: [%v].", outKargs)
 	return outKargs, nil
 }
+
+// GenerateVSphereTemplateName returns expected template name.
+func GenerateVSphereTemplateName(clusterID, fdName string) string {
+	return fmt.Sprintf("%s-rhcos-%s", clusterID, fdName)
+}

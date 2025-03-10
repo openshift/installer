@@ -11,6 +11,7 @@ import (
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
+	"github.com/openshift/installer/pkg/utils"
 )
 
 func getMachineSetWithPlatform(
@@ -112,7 +113,7 @@ func getDefinedZonesFromTopology(p *vsphere.Platform) (map[string]vsphere.Failur
 }
 
 // MachineSets returns a list of machinesets for a machinepool.
-func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]*machineapi.MachineSet, error) {
+func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string) ([]*machineapi.MachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != vsphere.Name {
 		return nil, fmt.Errorf("non vsphere configuration: %q", configPlatform)
 	}
@@ -162,7 +163,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 
 		osImageForZone := failureDomain.Topology.Template
 		if failureDomain.Topology.Template == "" {
-			osImageForZone = fmt.Sprintf("%s-%s-%s", osImage, failureDomain.Region, failureDomain.Zone)
+			osImageForZone = utils.GenerateVSphereTemplateName(clusterID, failureDomain.Name)
 		}
 		machineset, err := getMachineSetWithPlatform(
 			clusterID,
