@@ -34,6 +34,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	if pool.Replicas != nil {
 		total = *pool.Replicas
 	}
+
 	numOfAZs := int64(len(azs))
 	var machinesets []*clusterapi.MachineSet
 	for idx, az := range azs {
