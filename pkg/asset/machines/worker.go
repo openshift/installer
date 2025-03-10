@@ -477,6 +477,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 				InstallConfigPlatformAWS: installConfig.Config.Platform.AWS,
 				Subnets:                  subnets,
 				Zones:                    zones,
+				PublicSubnet:             awstypes.IsPublicOnlySubnetsEnabled(),
 				Pool:                     &pool,
 				Role:                     pool.Name,
 				UserDataSecret:           workerUserDataSecretName,
