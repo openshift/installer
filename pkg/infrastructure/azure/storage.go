@@ -57,6 +57,7 @@ type CreateStorageAccountOutput struct {
 // CreateStorageAccount creates a new storage account.
 func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*CreateStorageAccountOutput, error) {
 	minimumTLSVersion := armstorage.MinimumTLSVersionTLS10
+	storageKind := to.Ptr(armstorage.KindStorageV2)
 
 	/* XXX: Do we support other clouds? */
 	switch in.CloudName {
@@ -64,6 +65,8 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 		minimumTLSVersion = armstorage.MinimumTLSVersionTLS12
 	case aztypes.USGovernmentCloud:
 		minimumTLSVersion = armstorage.MinimumTLSVersionTLS12
+	case aztypes.StackCloud:
+		storageKind = to.Ptr(armstorage.KindStorage)
 	}
 
 	allowSharedKeyAccess := true
@@ -81,7 +84,7 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 	}
 	accountCreateParameters := armstorage.AccountCreateParameters{
 		Identity: nil,
-		Kind:     to.Ptr(armstorage.KindStorageV2),
+		Kind:     storageKind,
 		Location: to.Ptr(in.Region),
 		SKU:      &sku,
 		Properties: &armstorage.AccountPropertiesCreateParameters{
