@@ -13,6 +13,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
+	"github.com/openshift/installer/pkg/types/azure"
 )
 
 type recordListType string
@@ -41,6 +42,7 @@ func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBF
 	zone := in.InstallConfig.Config.BaseDomain
 	privatezone := in.InstallConfig.Config.ClusterDomain()
 	apiExternalName := fmt.Sprintf("api.%s", in.InstallConfig.Config.ObjectMeta.Name)
+	apiInternalName := fmt.Sprintf("api-int.%s", in.InstallConfig.Config.ObjectMeta.Name)
 
 	if in.InstallConfig.Config.Azure.ResourceGroupName != "" {
 		resourceGroup = in.InstallConfig.Config.Azure.ResourceGroupName
@@ -92,6 +94,25 @@ func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBF
 	privateRecordSetClient, err := armprivatedns.NewRecordSetsClient(subscriptionID, session.TokenCreds, opts)
 	if err != nil {
 		return fmt.Errorf("failed to create private record client: %w", err)
+	}
+
+	// Azure Stack only supports "DNS zones"--there is not a private/public zone distinction,
+	// so we handle Azure Stack differently and create all records in the single zone.
+	if in.InstallConfig.Azure.CloudName == azure.StackCloud {
+		stackRecords := []recordList{}
+		if in.InstallConfig.Config.PublicAPI() {
+			stackRecords = append(stackRecords, createRecordSet(apiExternalName, azureTags, ttl, cname, "", extLBFQDN))
+		} else {
+			stackRecords = append(stackRecords, createRecordSet(apiExternalName, azureTags, ttl, arecord, ipIlb, ""))
+		}
+		stackRecords = append(stackRecords, createRecordSet(apiInternalName, azureTags, ttl, arecord, ipIlb, ""))
+		for _, record := range stackRecords {
+			_, err = recordSetClient.CreateOrUpdate(ctx, baseDomainResourceGroup, zone, record.Name, record.RecordType, record.RecordSet, nil)
+			if err != nil {
+				return fmt.Errorf("failed to create public record set: %w", err)
+			}
+		}
+		return nil
 	}
 
 	// Create the records for api and api-int in the private zone and api.<clustername> for public zone.
