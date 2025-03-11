@@ -69,6 +69,8 @@ func (a *AgentPXEFiles) Generate(_ context.Context, dependencies asset.Parents) 
 
 // PersistToFile writes the PXE assets in the assets folder named pxe.
 func (a *AgentPXEFiles) PersistToFile(directory string) error {
+	defer os.RemoveAll(a.tmpPath)
+
 	var kernelFileType string
 	// If the imageReader is not set then it means that either one of the AgentPXEFiles
 	// dependencies or the asset itself failed for some reason
