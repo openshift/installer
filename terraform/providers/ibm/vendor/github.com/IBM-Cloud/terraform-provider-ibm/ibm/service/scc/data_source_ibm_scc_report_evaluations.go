@@ -295,7 +295,7 @@ func dataSourceIbmSccReportEvaluationsRead(context context.Context, d *schema.Re
 	allItems, err := pager.GetAll()
 	if err != nil {
 		log.Printf("[DEBUG] ReportEvaluationsPager.GetAll() failed %s", err)
-		return diag.FromErr(fmt.Errorf("ReportEvaluationsPager.GetAll() failed %s", err))
+		return diag.FromErr(flex.FmtErrorf("ReportEvaluationsPager.GetAll() failed %s", err))
 	}
 
 	d.SetId(dataSourceIbmSccReportEvaluationsID(d))
@@ -310,7 +310,7 @@ func dataSourceIbmSccReportEvaluationsRead(context context.Context, d *schema.Re
 	}
 
 	if err = d.Set("evaluations", mapSlice); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting evaluations %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting evaluations %s", err))
 	}
 
 	return nil

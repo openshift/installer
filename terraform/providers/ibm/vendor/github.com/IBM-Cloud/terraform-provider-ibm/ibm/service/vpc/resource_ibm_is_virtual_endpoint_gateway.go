@@ -622,9 +622,13 @@ func expandIPs(ipsSet []interface{}) (ipsOptions []vpcv1.EndpointGatewayReserved
 		}
 
 		ipsOpt := &vpcv1.EndpointGatewayReservedIP{
-			ID:     core.StringPtr(ipsID),
-			Name:   core.StringPtr(ipsName),
 			Subnet: ipsSubnetOpt,
+		}
+		if ipsID != "" {
+			ipsOpt.ID = &ipsID
+		}
+		if ipsName != "" {
+			ipsOpt.Name = &ipsName
 		}
 		ipsOptions = append(ipsOptions, ipsOpt)
 	}

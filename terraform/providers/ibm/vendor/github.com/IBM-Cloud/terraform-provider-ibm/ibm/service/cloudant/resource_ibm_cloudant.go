@@ -191,7 +191,7 @@ func resourceIBMCloudantCreate(d *schema.ResourceData, meta interface{}) error {
 	if d.Get("include_data_events").(bool) {
 		err := updateCloudantActivityTrackerEvents(client, d)
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error updating activity tracker events: %s", err)
+			return flex.FmtErrorf("[ERROR] Error updating activity tracker events: %s", err)
 		}
 	}
 
@@ -199,13 +199,13 @@ func resourceIBMCloudantCreate(d *schema.ResourceData, meta interface{}) error {
 	if d.Get("capacity").(int) > 1 {
 		err := updateCloudantInstanceCapacity(client, d)
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error retrieving capacity throughput information: %s", err)
+			return flex.FmtErrorf("[ERROR] Error retrieving capacity throughput information: %s", err)
 		}
 	}
 
 	err = updateCloudantInstanceCors(client, d)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error updating CORS settings: %s", err)
+		return flex.FmtErrorf("[ERROR] Error updating CORS settings: %s", err)
 	}
 
 	return resourceIBMCloudantRead(d, meta)
@@ -276,21 +276,21 @@ func resourceIBMCloudantUpdate(d *schema.ResourceData, meta interface{}) error {
 	if d.HasChange("include_data_events") {
 		err := updateCloudantActivityTrackerEvents(client, d)
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error updating activity tracker events: %s", err)
+			return flex.FmtErrorf("[ERROR] Error updating activity tracker events: %s", err)
 		}
 	}
 
 	if d.HasChange("capacity") {
 		err := updateCloudantInstanceCapacity(client, d)
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error retrieving capacity throughput information: %s", err)
+			return flex.FmtErrorf("[ERROR] Error retrieving capacity throughput information: %s", err)
 		}
 	}
 
 	if d.HasChange("enable_cors") {
 		err := updateCloudantInstanceCors(client, d)
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error updating CORS settings: %s", err)
+			return flex.FmtErrorf("[ERROR] Error updating CORS settings: %s", err)
 		}
 	}
 
@@ -363,7 +363,7 @@ func getCloudantClient(d *schema.ResourceData, meta interface{}) (*cloudantv1.Cl
 	case "private":
 		_, ok := extensions["endpoints.private"]
 		if !ok {
-			return nil, fmt.Errorf("[ERROR] Missing endpoints.private in extensions")
+			return nil, flex.FmtErrorf("[ERROR] Missing endpoints.private in extensions")
 		}
 		endpoint = "https://" + extensions["endpoints.private"].(string)
 	case "public-and-private":
@@ -374,7 +374,7 @@ func getCloudantClient(d *schema.ResourceData, meta interface{}) (*cloudantv1.Cl
 
 	endpoint = conns.EnvFallBack([]string{"IBMCLOUD_CLOUDANT_ENDPOINT"}, endpoint)
 	if endpoint == "" {
-		return nil, fmt.Errorf("[ERROR] Missing endpoints.public in extensions")
+		return nil, flex.FmtErrorf("[ERROR] Missing endpoints.public in extensions")
 	}
 
 	return GetCloudantClientForUrl(endpoint, meta)
@@ -417,7 +417,7 @@ func GetCloudantClientForUrl(endpoint string, meta interface{}) (*cloudantv1.Clo
 		URL:           endpoint,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("[ERROR] Error occured while configuring Cloudant service: %q", err)
+		return nil, flex.FmtErrorf("[ERROR] Error occured while configuring Cloudant service: %q", err)
 	}
 	client.Service.SetUserAgent("cloudant-terraform/" + version.Version)
 
@@ -427,7 +427,7 @@ func GetCloudantClientForUrl(endpoint string, meta interface{}) (*cloudantv1.Clo
 func setCloudantActivityTrackerEvents(client *cloudantv1.CloudantV1, d *schema.ResourceData) error {
 	activityTrackerEvents, err := readCloudantActivityTrackerEvents(client)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error retrieving activity tracker events: %s", err)
+		return flex.FmtErrorf("[ERROR] Error retrieving activity tracker events: %s", err)
 	}
 	if activityTrackerEvents.Types != nil {
 		includeDataEvents := false
@@ -470,7 +470,7 @@ func validateCloudantInstanceCapacity(d *schema.ResourceData) error {
 	plan := d.Get("plan").(string)
 	capacity := d.Get("capacity").(int)
 	if capacity > 1 && plan == "lite" {
-		return fmt.Errorf("[ERROR] Setting capacity is not supported for your instance's plan")
+		return flex.FmtErrorf("[ERROR] Setting capacity is not supported for your instance's plan")
 	}
 	return nil
 }
@@ -478,7 +478,7 @@ func validateCloudantInstanceCapacity(d *schema.ResourceData) error {
 func setCloudantInstanceCapacity(client *cloudantv1.CloudantV1, d *schema.ResourceData) error {
 	capacityThroughputInformation, err := readCloudantInstanceCapacity(client)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error retrieving capacity throughput information: %s", err)
+		return flex.FmtErrorf("[ERROR] Error retrieving capacity throughput information: %s", err)
 	}
 
 	if capacityThroughputInformation.Current != nil && capacityThroughputInformation.Current.Throughput != nil {
@@ -536,7 +536,7 @@ func validateCloudantInstanceCors(d *schema.ResourceData) error {
 		allowCredentials := corsConfig["allow_credentials"].(bool)
 		origins := corsConfig["origins"].([]interface{})
 		if !allowCredentials || len(origins) > 0 {
-			return fmt.Errorf("[ERROR] Setting \"cors_config\" conflicts with enable_cors set to false")
+			return flex.FmtErrorf("[ERROR] Setting \"cors_config\" conflicts with enable_cors set to false")
 		}
 	}
 	return nil
@@ -545,7 +545,7 @@ func validateCloudantInstanceCors(d *schema.ResourceData) error {
 func setCloudantInstanceCors(client *cloudantv1.CloudantV1, d *schema.ResourceData) error {
 	corsInformation, err := readCloudantInstanceCors(client)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error retrieving CORS config: %s", err)
+		return flex.FmtErrorf("[ERROR] Error retrieving CORS config: %s", err)
 	}
 	if corsInformation != nil {
 		d.Set("enable_cors", corsInformation.EnableCors)

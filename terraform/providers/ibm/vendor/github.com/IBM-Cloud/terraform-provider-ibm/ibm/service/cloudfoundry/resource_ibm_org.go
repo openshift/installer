@@ -81,6 +81,7 @@ func ResourceIBMOrg() *schema.Resource {
 				Set:      schema.HashString,
 			},
 		},
+		DeprecationMessage: "This service is deprecated.",
 	}
 }
 func resourceIBMOrgCreate(d *schema.ResourceData, meta interface{}) error {

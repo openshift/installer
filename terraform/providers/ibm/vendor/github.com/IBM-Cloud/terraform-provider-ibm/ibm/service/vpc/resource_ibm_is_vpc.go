@@ -1849,7 +1849,7 @@ func resourceIBMIsVPCVPCReferenceDnsResolverContextToMap(model *vpcv1.VPCReferen
 	return modelMap, nil
 }
 
-func resourceIBMIsVPCVPCReferenceDnsResolverContextDeletedToMap(model *vpcv1.VPCReferenceDnsResolverContextDeleted) (map[string]interface{}, error) {
+func resourceIBMIsVPCVPCReferenceDnsResolverContextDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	modelMap["more_info"] = model.MoreInfo
 	return modelMap, nil

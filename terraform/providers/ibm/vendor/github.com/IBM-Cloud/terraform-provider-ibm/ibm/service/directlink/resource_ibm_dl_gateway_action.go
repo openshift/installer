@@ -818,14 +818,16 @@ func resourceIBMdlGatewayActionRead(d *schema.ResourceData, meta interface{}) er
 	getOptions := &directlinkv1.GetGatewayOptions{
 		ID: &ID,
 	}
-	instance, response, err := directLink.GetGateway(getOptions)
-	if err != nil {
+	instanceIntf, response, err := directLink.GetGateway(getOptions)
+
+	if (err != nil) || (instanceIntf == nil) {
 		if response != nil && response.StatusCode == 404 {
 			d.SetId("")
 			return nil
 		}
 		return fmt.Errorf("[ERROR] Error Getting Direct Link Gateway: %s\n%s", err, response)
 	}
+	instance := instanceIntf.(*directlinkv1.GetGatewayResponse)
 	if instance.Name != nil {
 		d.Set(dlName, *instance.Name)
 	}
@@ -993,10 +995,12 @@ func isDirectLinkRefreshFuncforAction(client *directlinkv1.DirectLinkV1, id stri
 		getOptions := &directlinkv1.GetGatewayOptions{
 			ID: &id,
 		}
-		instance, response, err := client.GetGateway(getOptions)
-		if err != nil {
+
+		instanceIntf, response, err := client.GetGateway(getOptions)
+		if (err != nil) || (instanceIntf == nil) {
 			return nil, "", fmt.Errorf("[ERROR] Error Getting Direct Link: %s\n%s", err, response)
 		}
+		instance := instanceIntf.(*directlinkv1.GetGatewayResponse)
 		if *instance.OperationalStatus == "provisioned" || *instance.OperationalStatus == "failed" || *instance.OperationalStatus == "create_rejected" {
 			return instance, dlGatewayProvisioningDone, nil
 		}
@@ -1021,10 +1025,12 @@ func isDirectLinkRefreshActionFunc(client *directlinkv1.DirectLinkV1, id string)
 		getOptions := &directlinkv1.GetGatewayOptions{
 			ID: &id,
 		}
-		instance, response, err := client.GetGateway(getOptions)
-		if err != nil {
+		instanceIntf, response, err := client.GetGateway(getOptions)
+
+		if (err != nil) || (instanceIntf == nil) {
 			return nil, "", fmt.Errorf("[ERROR] Error Getting Direct Link: %s\n%s", err, response)
 		}
+		instance := instanceIntf.(*directlinkv1.GetGatewayResponse)
 		if instance.ChangeRequest != nil {
 			gatewayChangeRequestIntf := instance.ChangeRequest
 			gatewayChangeRequest := gatewayChangeRequestIntf.(*directlinkv1.GatewayChangeRequest)
@@ -1053,10 +1059,12 @@ func isDirectLinkRefreshDeleteActionFunc(client *directlinkv1.DirectLinkV1, id s
 		getOptions := &directlinkv1.GetGatewayOptions{
 			ID: &id,
 		}
-		instance, response, err := client.GetGateway(getOptions)
-		if err != nil {
+		instanceIntf, response, err := client.GetGateway(getOptions)
+
+		if (err != nil) || (instanceIntf == nil) {
 			return nil, "", fmt.Errorf("[ERROR] Error Getting Direct Link: %s\n%s", err, response)
 		}
+		instance := instanceIntf.(*directlinkv1.GetGatewayResponse)
 		if instance.ChangeRequest != nil {
 			gatewayChangeRequestIntf := instance.ChangeRequest
 			gatewayChangeRequest := gatewayChangeRequestIntf.(*directlinkv1.GatewayChangeRequest)
@@ -1090,14 +1098,16 @@ func resourceIBMdlGatewayActionUpdate(d *schema.ResourceData, meta interface{}) 
 		if err != nil {
 			return err
 		}
-		instance, response, err := directLink.GetGateway(getOptions)
-		if err != nil {
+		instanceIntf, response, err := directLink.GetGateway(getOptions)
+
+		if (err != nil) || (instanceIntf == nil) {
 			if response != nil && response.StatusCode == 404 {
 				d.SetId("")
 				return nil
 			}
 			return fmt.Errorf("[ERROR] Error Getting Direct Link Gateway : %s\n%s", err, response)
 		}
+		instance := instanceIntf.(*directlinkv1.GetGatewayResponse)
 		if instance.ChangeRequest != nil {
 			gatewayChangeRequestIntf := instance.ChangeRequest
 			gatewayChangeRequest := gatewayChangeRequestIntf.(*directlinkv1.GatewayChangeRequest)

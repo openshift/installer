@@ -481,9 +481,9 @@ func resourceIBMIAMAccessGroupPolicyRead(d *schema.ResourceData, meta interface{
 		return fmt.Errorf("[ERROR] Error retrieving access group policy: %s\n%s", err, res)
 	}
 
-	retrievedAttribute := flex.GetV2PolicySubjectAttribute("access_group_id", *accessGroupPolicy.Subject)
-	if accessGroupId != *retrievedAttribute {
-		return fmt.Errorf("[ERROR] Policy %s does not belong to access group %s, retrievedAttr: %s", accessGroupPolicyId, accessGroupId, *retrievedAttribute)
+	retrievedAttribute := flex.GetV2PolicySubjectAttribute("access_group_id", *accessGroupPolicy.Subject).(string)
+	if accessGroupId != retrievedAttribute {
+		return fmt.Errorf("[ERROR] Policy %s does not belong to access group %s, retrievedAttr: %s", accessGroupPolicyId, accessGroupId, retrievedAttribute)
 	}
 
 	d.Set("access_group_id", accessGroupId)
@@ -770,7 +770,7 @@ func resourceIBMIAMAccessGroupPolicyExists(d *schema.ResourceData, meta interfac
 		return false, nil
 	}
 
-	tempID := fmt.Sprintf("%s/%s", *flex.GetV2PolicySubjectAttribute("access_group_id", *accessGroupPolicy.Subject), *accessGroupPolicy.ID)
+	tempID := fmt.Sprintf("%s/%s", flex.GetV2PolicySubjectAttribute("access_group_id", *accessGroupPolicy.Subject), *accessGroupPolicy.ID)
 
 	return tempID == d.Id(), nil
 }

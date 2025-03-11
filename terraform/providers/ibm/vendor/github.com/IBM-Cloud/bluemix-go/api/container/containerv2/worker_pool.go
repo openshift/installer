@@ -20,6 +20,7 @@ type CommonWorkerPoolConfig struct {
 	Zones                  []Zone                  `json:"zones"`
 	WorkerVolumeEncryption *WorkerVolumeEncryption `json:"workerVolumeEncryption,omitempty"`
 	SecondaryStorageOption string                  `json:"secondaryStorageOption,omitempty"`
+	SecurityGroupIDs       []string                `json:"securityGroupIDs,omitempty"`
 }
 
 // WorkerPoolRequest provides worker pool data
@@ -33,6 +34,12 @@ type WorkerPoolTaintRequest struct {
 	Cluster    string            `json:"cluster" description:"cluster name"`
 	WorkerPool string            `json:"workerpool" description:"worker Pool name"`
 	Taints     map[string]string `json:"taints" description:"map of taints that has to be applied on workerpool"`
+}
+
+type SetWorkerPoolLabelsRequest struct {
+	Cluster    string            `json:"cluster" description:"cluster name"`
+	WorkerPool string            `json:"workerpool" description:"worker pool name"`
+	Labels     map[string]string `json:"labels" description:"Labels to apply to the worker pool and each of its worker nodes."`
 }
 
 // WorkerPoolResponse provides worker pool data
@@ -101,7 +108,13 @@ type ResizeWorkerPoolReq struct {
 	Workerpool string `json:"workerpool"`
 }
 
-//Workers ...
+type SetWorkerPoolOperatingSystem struct {
+	Cluster         string `json:"cluster"`
+	WorkerPool      string `json:"workerPool"`
+	OperatingSystem string `json:"operatingSystem"`
+}
+
+// Workers ...
 type WorkerPool interface {
 	CreateWorkerPool(workerPoolReq WorkerPoolRequest, target ClusterTargetHeader) (WorkerPoolResponse, error)
 	GetWorkerPool(clusterNameOrID, workerPoolNameOrID string, target ClusterTargetHeader) (GetWorkerPoolResponse, error)
@@ -110,6 +123,8 @@ type WorkerPool interface {
 	DeleteWorkerPool(clusterNameOrID string, workerPoolNameOrID string, target ClusterTargetHeader) error
 	UpdateWorkerPoolTaints(taintRequest WorkerPoolTaintRequest, target ClusterTargetHeader) error
 	ResizeWorkerPool(resizeWorkerPoolReq ResizeWorkerPoolReq, target ClusterTargetHeader) error
+	UpdateWorkerPoolLabels(setWorkerPoolLabelsRequest SetWorkerPoolLabelsRequest, target ClusterTargetHeader) error
+	SetWorkerPoolOperatingSystem(setWorkerPoolOperatingSystemRequest SetWorkerPoolOperatingSystem, target ClusterTargetHeader) error
 }
 
 type workerpool struct {
@@ -168,5 +183,18 @@ func (w *workerpool) UpdateWorkerPoolTaints(taintRequest WorkerPoolTaintRequest,
 func (w *workerpool) ResizeWorkerPool(resizeWorkerPoolReq ResizeWorkerPoolReq, target ClusterTargetHeader) error {
 	// Make the request, don't care about return value
 	_, err := w.client.Post("/v2/resizeWorkerPool", resizeWorkerPoolReq, nil, target.ToMap())
+	return err
+}
+
+func (w *workerpool) UpdateWorkerPoolLabels(setWorkerPoolLabelsRequest SetWorkerPoolLabelsRequest, target ClusterTargetHeader) error {
+	// Make the request, don't care about return value
+	_, err := w.client.Post("/v2/setWorkerPoolLabels", setWorkerPoolLabelsRequest, nil, target.ToMap())
+	return err
+}
+
+// SetWorkerPoolOperatingSystem calls the API to set the workerpool operating system.
+func (w *workerpool) SetWorkerPoolOperatingSystem(setWorkerPoolOperatingSystemRequest SetWorkerPoolOperatingSystem, target ClusterTargetHeader) error {
+	// Returns 202 without body
+	_, err := w.client.Post("/v2/setWorkerPoolOperatingSystem", setWorkerPoolOperatingSystemRequest, nil, target.ToMap())
 	return err
 }

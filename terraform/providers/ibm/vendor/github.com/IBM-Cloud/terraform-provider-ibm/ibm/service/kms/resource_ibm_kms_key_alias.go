@@ -98,10 +98,11 @@ func resourceIBMKmsKeyAliasRead(d *schema.ResourceData, meta interface{}) error 
 	}
 	key, err := kpAPI.GetKey(context.Background(), keyid)
 	if err != nil {
-		kpError := err.(*kp.Error)
-		if kpError.StatusCode == 404 || kpError.StatusCode == 409 {
-			d.SetId("")
-			return nil
+		if kpError, ok := err.(*kp.Error); ok {
+			if kpError.StatusCode == 404 || kpError.StatusCode == 409 {
+				d.SetId("")
+				return nil
+			}
 		}
 		return fmt.Errorf("[ERROR] Get Key failed with error while reading policies: %s", err)
 	} else if key.State == 5 { //Refers to Deleted state of the Key
@@ -129,12 +130,12 @@ func resourceIBMKmsKeyAliasDelete(d *schema.ResourceData, meta interface{}) erro
 	}
 	err1 := kpAPI.DeleteKeyAlias(context.Background(), id[0], keyid)
 	if err1 != nil {
-		kpError := err1.(*kp.Error)
-		if kpError.StatusCode == 404 {
-			return nil
-		} else {
-			return fmt.Errorf(" failed to Destroy alias with error: %s", err1)
+		if kpError, ok := err1.(*kp.Error); ok {
+			if kpError.StatusCode == 404 {
+				return nil
+			}
 		}
+		return fmt.Errorf(" failed to Destroy alias with error: %s", err1)
 	}
 	return nil
 }

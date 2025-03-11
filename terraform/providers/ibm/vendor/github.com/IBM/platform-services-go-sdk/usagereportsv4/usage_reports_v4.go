@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2023.
+ * (C) Copyright IBM Corp. 2024.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.75.0-726bc7e3-20230713-221716
+ * IBM OpenAPI SDK Code Generator Version: 3.89.0-f33c767b-20240410-144451
  */
 
 // Package usagereportsv4 : Operations and models for the UsageReportsV4 service
@@ -63,22 +63,26 @@ func NewUsageReportsV4UsingExternalConfig(options *UsageReportsV4Options) (usage
 	if options.Authenticator == nil {
 		options.Authenticator, err = core.GetAuthenticatorFromEnvironment(options.ServiceName)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "env-auth-error", common.GetComponentInfo())
 			return
 		}
 	}
 
 	usageReports, err = NewUsageReportsV4(options)
+	err = core.RepurposeSDKProblem(err, "new-client-error")
 	if err != nil {
 		return
 	}
 
 	err = usageReports.Service.ConfigureService(options.ServiceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client-config-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = usageReports.Service.SetServiceURL(options.URL)
+		err = core.RepurposeSDKProblem(err, "url-set-error")
 	}
 	return
 }
@@ -92,12 +96,14 @@ func NewUsageReportsV4(options *UsageReportsV4Options) (service *UsageReportsV4,
 
 	baseService, err := core.NewBaseService(serviceOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "new-base-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = baseService.SetServiceURL(options.URL)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "set-url-error", common.GetComponentInfo())
 			return
 		}
 	}
@@ -111,7 +117,7 @@ func NewUsageReportsV4(options *UsageReportsV4Options) (service *UsageReportsV4,
 
 // GetServiceURLForRegion returns the service URL to be used for the specified region
 func GetServiceURLForRegion(region string) (string, error) {
-	return "", fmt.Errorf("service does not support regional URLs")
+	return "", core.SDKErrorf(nil, "service does not support regional URLs", "no-regional-support", common.GetComponentInfo())
 }
 
 // Clone makes a copy of "usageReports" suitable for processing requests.
@@ -126,7 +132,11 @@ func (usageReports *UsageReportsV4) Clone() *UsageReportsV4 {
 
 // SetServiceURL sets the service URL
 func (usageReports *UsageReportsV4) SetServiceURL(url string) error {
-	return usageReports.Service.SetServiceURL(url)
+	err := usageReports.Service.SetServiceURL(url)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-set-error", common.GetComponentInfo())
+	}
+	return err
 }
 
 // GetServiceURL returns the service URL
@@ -163,22 +173,26 @@ func (usageReports *UsageReportsV4) DisableRetries() {
 // GetAccountSummary : Get account summary
 // Returns the summary for the account for a given month. Account billing managers are authorized to access this report.
 func (usageReports *UsageReportsV4) GetAccountSummary(getAccountSummaryOptions *GetAccountSummaryOptions) (result *AccountSummary, response *core.DetailedResponse, err error) {
-	return usageReports.GetAccountSummaryWithContext(context.Background(), getAccountSummaryOptions)
+	result, response, err = usageReports.GetAccountSummaryWithContext(context.Background(), getAccountSummaryOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAccountSummaryWithContext is an alternate form of the GetAccountSummary method which supports a Context parameter
 func (usageReports *UsageReportsV4) GetAccountSummaryWithContext(ctx context.Context, getAccountSummaryOptions *GetAccountSummaryOptions) (result *AccountSummary, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getAccountSummaryOptions, "getAccountSummaryOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getAccountSummaryOptions, "getAccountSummaryOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"account_id":   *getAccountSummaryOptions.AccountID,
+		"account_id": *getAccountSummaryOptions.AccountID,
 		"billingmonth": *getAccountSummaryOptions.Billingmonth,
 	}
 
@@ -187,6 +201,7 @@ func (usageReports *UsageReportsV4) GetAccountSummaryWithContext(ctx context.Con
 	builder.EnableGzipCompression = usageReports.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(usageReports.Service.Options.URL, `/v4/accounts/{account_id}/summary/{billingmonth}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -202,17 +217,21 @@ func (usageReports *UsageReportsV4) GetAccountSummaryWithContext(ctx context.Con
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = usageReports.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_account_summary", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSummary)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -225,22 +244,26 @@ func (usageReports *UsageReportsV4) GetAccountSummaryWithContext(ctx context.Con
 // Usage for all the resources and plans in an account for a given month. Account billing managers are authorized to
 // access this report.
 func (usageReports *UsageReportsV4) GetAccountUsage(getAccountUsageOptions *GetAccountUsageOptions) (result *AccountUsage, response *core.DetailedResponse, err error) {
-	return usageReports.GetAccountUsageWithContext(context.Background(), getAccountUsageOptions)
+	result, response, err = usageReports.GetAccountUsageWithContext(context.Background(), getAccountUsageOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAccountUsageWithContext is an alternate form of the GetAccountUsage method which supports a Context parameter
 func (usageReports *UsageReportsV4) GetAccountUsageWithContext(ctx context.Context, getAccountUsageOptions *GetAccountUsageOptions) (result *AccountUsage, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getAccountUsageOptions, "getAccountUsageOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getAccountUsageOptions, "getAccountUsageOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"account_id":   *getAccountUsageOptions.AccountID,
+		"account_id": *getAccountUsageOptions.AccountID,
 		"billingmonth": *getAccountUsageOptions.Billingmonth,
 	}
 
@@ -249,6 +272,7 @@ func (usageReports *UsageReportsV4) GetAccountUsageWithContext(ctx context.Conte
 	builder.EnableGzipCompression = usageReports.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(usageReports.Service.Options.URL, `/v4/accounts/{account_id}/usage/{billingmonth}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -271,17 +295,21 @@ func (usageReports *UsageReportsV4) GetAccountUsageWithContext(ctx context.Conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = usageReports.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_account_usage", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountUsage)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -294,24 +322,28 @@ func (usageReports *UsageReportsV4) GetAccountUsageWithContext(ctx context.Conte
 // Usage for all the resources and plans in a resource group in a given month. Account billing managers or resource
 // group billing managers are authorized to access this report.
 func (usageReports *UsageReportsV4) GetResourceGroupUsage(getResourceGroupUsageOptions *GetResourceGroupUsageOptions) (result *ResourceGroupUsage, response *core.DetailedResponse, err error) {
-	return usageReports.GetResourceGroupUsageWithContext(context.Background(), getResourceGroupUsageOptions)
+	result, response, err = usageReports.GetResourceGroupUsageWithContext(context.Background(), getResourceGroupUsageOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetResourceGroupUsageWithContext is an alternate form of the GetResourceGroupUsage method which supports a Context parameter
 func (usageReports *UsageReportsV4) GetResourceGroupUsageWithContext(ctx context.Context, getResourceGroupUsageOptions *GetResourceGroupUsageOptions) (result *ResourceGroupUsage, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getResourceGroupUsageOptions, "getResourceGroupUsageOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getResourceGroupUsageOptions, "getResourceGroupUsageOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"account_id":        *getResourceGroupUsageOptions.AccountID,
+		"account_id": *getResourceGroupUsageOptions.AccountID,
 		"resource_group_id": *getResourceGroupUsageOptions.ResourceGroupID,
-		"billingmonth":      *getResourceGroupUsageOptions.Billingmonth,
+		"billingmonth": *getResourceGroupUsageOptions.Billingmonth,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -319,6 +351,7 @@ func (usageReports *UsageReportsV4) GetResourceGroupUsageWithContext(ctx context
 	builder.EnableGzipCompression = usageReports.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(usageReports.Service.Options.URL, `/v4/accounts/{account_id}/resource_groups/{resource_group_id}/usage/{billingmonth}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -341,17 +374,21 @@ func (usageReports *UsageReportsV4) GetResourceGroupUsageWithContext(ctx context
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = usageReports.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_resource_group_usage", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceGroupUsage)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -364,22 +401,26 @@ func (usageReports *UsageReportsV4) GetResourceGroupUsageWithContext(ctx context
 // Query for resource instance usage in an account. Filter the results with query parameters. Account billing
 // administrator is authorized to access this report.
 func (usageReports *UsageReportsV4) GetResourceUsageAccount(getResourceUsageAccountOptions *GetResourceUsageAccountOptions) (result *InstancesUsage, response *core.DetailedResponse, err error) {
-	return usageReports.GetResourceUsageAccountWithContext(context.Background(), getResourceUsageAccountOptions)
+	result, response, err = usageReports.GetResourceUsageAccountWithContext(context.Background(), getResourceUsageAccountOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetResourceUsageAccountWithContext is an alternate form of the GetResourceUsageAccount method which supports a Context parameter
 func (usageReports *UsageReportsV4) GetResourceUsageAccountWithContext(ctx context.Context, getResourceUsageAccountOptions *GetResourceUsageAccountOptions) (result *InstancesUsage, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getResourceUsageAccountOptions, "getResourceUsageAccountOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getResourceUsageAccountOptions, "getResourceUsageAccountOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"account_id":   *getResourceUsageAccountOptions.AccountID,
+		"account_id": *getResourceUsageAccountOptions.AccountID,
 		"billingmonth": *getResourceUsageAccountOptions.Billingmonth,
 	}
 
@@ -388,6 +429,7 @@ func (usageReports *UsageReportsV4) GetResourceUsageAccountWithContext(ctx conte
 	builder.EnableGzipCompression = usageReports.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(usageReports.Service.Options.URL, `/v4/accounts/{account_id}/resource_instances/usage/{billingmonth}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -406,6 +448,9 @@ func (usageReports *UsageReportsV4) GetResourceUsageAccountWithContext(ctx conte
 
 	if getResourceUsageAccountOptions.Names != nil {
 		builder.AddQuery("_names", fmt.Sprint(*getResourceUsageAccountOptions.Names))
+	}
+	if getResourceUsageAccountOptions.Tags != nil {
+		builder.AddQuery("_tags", fmt.Sprint(*getResourceUsageAccountOptions.Tags))
 	}
 	if getResourceUsageAccountOptions.Limit != nil {
 		builder.AddQuery("_limit", fmt.Sprint(*getResourceUsageAccountOptions.Limit))
@@ -434,17 +479,21 @@ func (usageReports *UsageReportsV4) GetResourceUsageAccountWithContext(ctx conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = usageReports.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_resource_usage_account", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalInstancesUsage)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -457,24 +506,28 @@ func (usageReports *UsageReportsV4) GetResourceUsageAccountWithContext(ctx conte
 // Query for resource instance usage in a resource group. Filter the results with query parameters. Account billing
 // administrator and resource group billing administrators are authorized to access this report.
 func (usageReports *UsageReportsV4) GetResourceUsageResourceGroup(getResourceUsageResourceGroupOptions *GetResourceUsageResourceGroupOptions) (result *InstancesUsage, response *core.DetailedResponse, err error) {
-	return usageReports.GetResourceUsageResourceGroupWithContext(context.Background(), getResourceUsageResourceGroupOptions)
+	result, response, err = usageReports.GetResourceUsageResourceGroupWithContext(context.Background(), getResourceUsageResourceGroupOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetResourceUsageResourceGroupWithContext is an alternate form of the GetResourceUsageResourceGroup method which supports a Context parameter
 func (usageReports *UsageReportsV4) GetResourceUsageResourceGroupWithContext(ctx context.Context, getResourceUsageResourceGroupOptions *GetResourceUsageResourceGroupOptions) (result *InstancesUsage, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getResourceUsageResourceGroupOptions, "getResourceUsageResourceGroupOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getResourceUsageResourceGroupOptions, "getResourceUsageResourceGroupOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"account_id":        *getResourceUsageResourceGroupOptions.AccountID,
+		"account_id": *getResourceUsageResourceGroupOptions.AccountID,
 		"resource_group_id": *getResourceUsageResourceGroupOptions.ResourceGroupID,
-		"billingmonth":      *getResourceUsageResourceGroupOptions.Billingmonth,
+		"billingmonth": *getResourceUsageResourceGroupOptions.Billingmonth,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -482,6 +535,7 @@ func (usageReports *UsageReportsV4) GetResourceUsageResourceGroupWithContext(ctx
 	builder.EnableGzipCompression = usageReports.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(usageReports.Service.Options.URL, `/v4/accounts/{account_id}/resource_groups/{resource_group_id}/resource_instances/usage/{billingmonth}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -500,6 +554,9 @@ func (usageReports *UsageReportsV4) GetResourceUsageResourceGroupWithContext(ctx
 
 	if getResourceUsageResourceGroupOptions.Names != nil {
 		builder.AddQuery("_names", fmt.Sprint(*getResourceUsageResourceGroupOptions.Names))
+	}
+	if getResourceUsageResourceGroupOptions.Tags != nil {
+		builder.AddQuery("_tags", fmt.Sprint(*getResourceUsageResourceGroupOptions.Tags))
 	}
 	if getResourceUsageResourceGroupOptions.Limit != nil {
 		builder.AddQuery("_limit", fmt.Sprint(*getResourceUsageResourceGroupOptions.Limit))
@@ -522,17 +579,21 @@ func (usageReports *UsageReportsV4) GetResourceUsageResourceGroupWithContext(ctx
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = usageReports.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_resource_usage_resource_group", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalInstancesUsage)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -545,24 +606,28 @@ func (usageReports *UsageReportsV4) GetResourceUsageResourceGroupWithContext(ctx
 // Query for resource instance usage in an organization. Filter the results with query parameters. Account billing
 // administrator and organization billing administrators are authorized to access this report.
 func (usageReports *UsageReportsV4) GetResourceUsageOrg(getResourceUsageOrgOptions *GetResourceUsageOrgOptions) (result *InstancesUsage, response *core.DetailedResponse, err error) {
-	return usageReports.GetResourceUsageOrgWithContext(context.Background(), getResourceUsageOrgOptions)
+	result, response, err = usageReports.GetResourceUsageOrgWithContext(context.Background(), getResourceUsageOrgOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetResourceUsageOrgWithContext is an alternate form of the GetResourceUsageOrg method which supports a Context parameter
 func (usageReports *UsageReportsV4) GetResourceUsageOrgWithContext(ctx context.Context, getResourceUsageOrgOptions *GetResourceUsageOrgOptions) (result *InstancesUsage, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getResourceUsageOrgOptions, "getResourceUsageOrgOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getResourceUsageOrgOptions, "getResourceUsageOrgOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"account_id":      *getResourceUsageOrgOptions.AccountID,
+		"account_id": *getResourceUsageOrgOptions.AccountID,
 		"organization_id": *getResourceUsageOrgOptions.OrganizationID,
-		"billingmonth":    *getResourceUsageOrgOptions.Billingmonth,
+		"billingmonth": *getResourceUsageOrgOptions.Billingmonth,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -570,6 +635,7 @@ func (usageReports *UsageReportsV4) GetResourceUsageOrgWithContext(ctx context.C
 	builder.EnableGzipCompression = usageReports.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(usageReports.Service.Options.URL, `/v4/accounts/{account_id}/organizations/{organization_id}/resource_instances/usage/{billingmonth}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -588,6 +654,9 @@ func (usageReports *UsageReportsV4) GetResourceUsageOrgWithContext(ctx context.C
 
 	if getResourceUsageOrgOptions.Names != nil {
 		builder.AddQuery("_names", fmt.Sprint(*getResourceUsageOrgOptions.Names))
+	}
+	if getResourceUsageOrgOptions.Tags != nil {
+		builder.AddQuery("_tags", fmt.Sprint(*getResourceUsageOrgOptions.Tags))
 	}
 	if getResourceUsageOrgOptions.Limit != nil {
 		builder.AddQuery("_limit", fmt.Sprint(*getResourceUsageOrgOptions.Limit))
@@ -610,17 +679,21 @@ func (usageReports *UsageReportsV4) GetResourceUsageOrgWithContext(ctx context.C
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = usageReports.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_resource_usage_org", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalInstancesUsage)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -633,24 +706,28 @@ func (usageReports *UsageReportsV4) GetResourceUsageOrgWithContext(ctx context.C
 // Usage for all the resources and plans in an organization in a given month. Account billing managers or organization
 // billing managers are authorized to access this report.
 func (usageReports *UsageReportsV4) GetOrgUsage(getOrgUsageOptions *GetOrgUsageOptions) (result *OrgUsage, response *core.DetailedResponse, err error) {
-	return usageReports.GetOrgUsageWithContext(context.Background(), getOrgUsageOptions)
+	result, response, err = usageReports.GetOrgUsageWithContext(context.Background(), getOrgUsageOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetOrgUsageWithContext is an alternate form of the GetOrgUsage method which supports a Context parameter
 func (usageReports *UsageReportsV4) GetOrgUsageWithContext(ctx context.Context, getOrgUsageOptions *GetOrgUsageOptions) (result *OrgUsage, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getOrgUsageOptions, "getOrgUsageOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getOrgUsageOptions, "getOrgUsageOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"account_id":      *getOrgUsageOptions.AccountID,
+		"account_id": *getOrgUsageOptions.AccountID,
 		"organization_id": *getOrgUsageOptions.OrganizationID,
-		"billingmonth":    *getOrgUsageOptions.Billingmonth,
+		"billingmonth": *getOrgUsageOptions.Billingmonth,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -658,6 +735,7 @@ func (usageReports *UsageReportsV4) GetOrgUsageWithContext(ctx context.Context, 
 	builder.EnableGzipCompression = usageReports.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(usageReports.Service.Options.URL, `/v4/accounts/{account_id}/organizations/{organization_id}/usage/{billingmonth}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -680,17 +758,21 @@ func (usageReports *UsageReportsV4) GetOrgUsageWithContext(ctx context.Context, 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = usageReports.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_org_usage", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOrgUsage)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -703,17 +785,21 @@ func (usageReports *UsageReportsV4) GetOrgUsageWithContext(ctx context.Context, 
 // Snapshots of the billing reports would be taken on a periodic interval and stored based on the configuration setup by
 // the customer for the given Account Id.
 func (usageReports *UsageReportsV4) CreateReportsSnapshotConfig(createReportsSnapshotConfigOptions *CreateReportsSnapshotConfigOptions) (result *SnapshotConfig, response *core.DetailedResponse, err error) {
-	return usageReports.CreateReportsSnapshotConfigWithContext(context.Background(), createReportsSnapshotConfigOptions)
+	result, response, err = usageReports.CreateReportsSnapshotConfigWithContext(context.Background(), createReportsSnapshotConfigOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateReportsSnapshotConfigWithContext is an alternate form of the CreateReportsSnapshotConfig method which supports a Context parameter
 func (usageReports *UsageReportsV4) CreateReportsSnapshotConfigWithContext(ctx context.Context, createReportsSnapshotConfigOptions *CreateReportsSnapshotConfigOptions) (result *SnapshotConfig, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createReportsSnapshotConfigOptions, "createReportsSnapshotConfigOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createReportsSnapshotConfigOptions, "createReportsSnapshotConfigOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -722,6 +808,7 @@ func (usageReports *UsageReportsV4) CreateReportsSnapshotConfigWithContext(ctx c
 	builder.EnableGzipCompression = usageReports.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(usageReports.Service.Options.URL, `/v1/billing-reports-snapshot-config`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -760,22 +847,27 @@ func (usageReports *UsageReportsV4) CreateReportsSnapshotConfigWithContext(ctx c
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = usageReports.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_reports_snapshot_config", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSnapshotConfig)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -787,17 +879,21 @@ func (usageReports *UsageReportsV4) CreateReportsSnapshotConfigWithContext(ctx c
 // GetReportsSnapshotConfig : Fetch the snapshot configuration
 // Returns the configuration of snapshot of the billing reports setup by the customer for the given Account Id.
 func (usageReports *UsageReportsV4) GetReportsSnapshotConfig(getReportsSnapshotConfigOptions *GetReportsSnapshotConfigOptions) (result *SnapshotConfig, response *core.DetailedResponse, err error) {
-	return usageReports.GetReportsSnapshotConfigWithContext(context.Background(), getReportsSnapshotConfigOptions)
+	result, response, err = usageReports.GetReportsSnapshotConfigWithContext(context.Background(), getReportsSnapshotConfigOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetReportsSnapshotConfigWithContext is an alternate form of the GetReportsSnapshotConfig method which supports a Context parameter
 func (usageReports *UsageReportsV4) GetReportsSnapshotConfigWithContext(ctx context.Context, getReportsSnapshotConfigOptions *GetReportsSnapshotConfigOptions) (result *SnapshotConfig, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getReportsSnapshotConfigOptions, "getReportsSnapshotConfigOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getReportsSnapshotConfigOptions, "getReportsSnapshotConfigOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -806,6 +902,7 @@ func (usageReports *UsageReportsV4) GetReportsSnapshotConfigWithContext(ctx cont
 	builder.EnableGzipCompression = usageReports.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(usageReports.Service.Options.URL, `/v1/billing-reports-snapshot-config`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -823,17 +920,21 @@ func (usageReports *UsageReportsV4) GetReportsSnapshotConfigWithContext(ctx cont
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = usageReports.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_reports_snapshot_config", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSnapshotConfig)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -845,17 +946,21 @@ func (usageReports *UsageReportsV4) GetReportsSnapshotConfigWithContext(ctx cont
 // UpdateReportsSnapshotConfig : Update the snapshot configuration
 // Updates the configuration of snapshot of the billing reports setup by the customer for the given Account Id.
 func (usageReports *UsageReportsV4) UpdateReportsSnapshotConfig(updateReportsSnapshotConfigOptions *UpdateReportsSnapshotConfigOptions) (result *SnapshotConfig, response *core.DetailedResponse, err error) {
-	return usageReports.UpdateReportsSnapshotConfigWithContext(context.Background(), updateReportsSnapshotConfigOptions)
+	result, response, err = usageReports.UpdateReportsSnapshotConfigWithContext(context.Background(), updateReportsSnapshotConfigOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateReportsSnapshotConfigWithContext is an alternate form of the UpdateReportsSnapshotConfig method which supports a Context parameter
 func (usageReports *UsageReportsV4) UpdateReportsSnapshotConfigWithContext(ctx context.Context, updateReportsSnapshotConfigOptions *UpdateReportsSnapshotConfigOptions) (result *SnapshotConfig, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateReportsSnapshotConfigOptions, "updateReportsSnapshotConfigOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateReportsSnapshotConfigOptions, "updateReportsSnapshotConfigOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -864,6 +969,7 @@ func (usageReports *UsageReportsV4) UpdateReportsSnapshotConfigWithContext(ctx c
 	builder.EnableGzipCompression = usageReports.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(usageReports.Service.Options.URL, `/v1/billing-reports-snapshot-config`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -902,22 +1008,27 @@ func (usageReports *UsageReportsV4) UpdateReportsSnapshotConfigWithContext(ctx c
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = usageReports.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_reports_snapshot_config", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSnapshotConfig)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -929,17 +1040,21 @@ func (usageReports *UsageReportsV4) UpdateReportsSnapshotConfigWithContext(ctx c
 // DeleteReportsSnapshotConfig : Delete the snapshot configuration
 // Delete the configuration of snapshot of the billing reports setup by the customer for the given Account Id.
 func (usageReports *UsageReportsV4) DeleteReportsSnapshotConfig(deleteReportsSnapshotConfigOptions *DeleteReportsSnapshotConfigOptions) (response *core.DetailedResponse, err error) {
-	return usageReports.DeleteReportsSnapshotConfigWithContext(context.Background(), deleteReportsSnapshotConfigOptions)
+	response, err = usageReports.DeleteReportsSnapshotConfigWithContext(context.Background(), deleteReportsSnapshotConfigOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteReportsSnapshotConfigWithContext is an alternate form of the DeleteReportsSnapshotConfig method which supports a Context parameter
 func (usageReports *UsageReportsV4) DeleteReportsSnapshotConfigWithContext(ctx context.Context, deleteReportsSnapshotConfigOptions *DeleteReportsSnapshotConfigOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteReportsSnapshotConfigOptions, "deleteReportsSnapshotConfigOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteReportsSnapshotConfigOptions, "deleteReportsSnapshotConfigOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -948,6 +1063,7 @@ func (usageReports *UsageReportsV4) DeleteReportsSnapshotConfigWithContext(ctx c
 	builder.EnableGzipCompression = usageReports.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(usageReports.Service.Options.URL, `/v1/billing-reports-snapshot-config`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -964,10 +1080,16 @@ func (usageReports *UsageReportsV4) DeleteReportsSnapshotConfigWithContext(ctx c
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = usageReports.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_reports_snapshot_config", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -976,17 +1098,21 @@ func (usageReports *UsageReportsV4) DeleteReportsSnapshotConfigWithContext(ctx c
 // Verify billing service to COS bucket authorization for the given account_id. If COS bucket information is not
 // provided, COS bucket information is retrieved from the configuration file.
 func (usageReports *UsageReportsV4) ValidateReportsSnapshotConfig(validateReportsSnapshotConfigOptions *ValidateReportsSnapshotConfigOptions) (result *SnapshotConfigValidateResponse, response *core.DetailedResponse, err error) {
-	return usageReports.ValidateReportsSnapshotConfigWithContext(context.Background(), validateReportsSnapshotConfigOptions)
+	result, response, err = usageReports.ValidateReportsSnapshotConfigWithContext(context.Background(), validateReportsSnapshotConfigOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ValidateReportsSnapshotConfigWithContext is an alternate form of the ValidateReportsSnapshotConfig method which supports a Context parameter
 func (usageReports *UsageReportsV4) ValidateReportsSnapshotConfigWithContext(ctx context.Context, validateReportsSnapshotConfigOptions *ValidateReportsSnapshotConfigOptions) (result *SnapshotConfigValidateResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(validateReportsSnapshotConfigOptions, "validateReportsSnapshotConfigOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(validateReportsSnapshotConfigOptions, "validateReportsSnapshotConfigOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -995,6 +1121,7 @@ func (usageReports *UsageReportsV4) ValidateReportsSnapshotConfigWithContext(ctx
 	builder.EnableGzipCompression = usageReports.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(usageReports.Service.Options.URL, `/v1/billing-reports-snapshot-config/validate`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1033,22 +1160,27 @@ func (usageReports *UsageReportsV4) ValidateReportsSnapshotConfigWithContext(ctx
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = usageReports.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "validate_reports_snapshot_config", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSnapshotConfigValidateResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1060,17 +1192,21 @@ func (usageReports *UsageReportsV4) ValidateReportsSnapshotConfigWithContext(ctx
 // GetReportsSnapshot : Fetch the current or past snapshots
 // Returns the billing reports snapshots captured for the given Account Id in the specific time period.
 func (usageReports *UsageReportsV4) GetReportsSnapshot(getReportsSnapshotOptions *GetReportsSnapshotOptions) (result *SnapshotList, response *core.DetailedResponse, err error) {
-	return usageReports.GetReportsSnapshotWithContext(context.Background(), getReportsSnapshotOptions)
+	result, response, err = usageReports.GetReportsSnapshotWithContext(context.Background(), getReportsSnapshotOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetReportsSnapshotWithContext is an alternate form of the GetReportsSnapshot method which supports a Context parameter
 func (usageReports *UsageReportsV4) GetReportsSnapshotWithContext(ctx context.Context, getReportsSnapshotOptions *GetReportsSnapshotOptions) (result *SnapshotList, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getReportsSnapshotOptions, "getReportsSnapshotOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getReportsSnapshotOptions, "getReportsSnapshotOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1079,6 +1215,7 @@ func (usageReports *UsageReportsV4) GetReportsSnapshotWithContext(ctx context.Co
 	builder.EnableGzipCompression = usageReports.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(usageReports.Service.Options.URL, `/v1/billing-reports-snapshots`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1109,23 +1246,30 @@ func (usageReports *UsageReportsV4) GetReportsSnapshotWithContext(ctx context.Co
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = usageReports.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_reports_snapshot", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSnapshotList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
 	}
 
 	return
+}
+func getServiceComponentInfo() *core.ProblemComponent {
+	return core.NewProblemComponent(DefaultServiceName, "4.0.6")
 }
 
 // AccountSummary : A summary of charges and credits for an account.
@@ -1166,42 +1310,52 @@ func UnmarshalAccountSummary(m map[string]json.RawMessage, result interface{}) (
 	obj := new(AccountSummary)
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "account_resources", &obj.AccountResources, UnmarshalResource)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_resources-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "month", &obj.Month)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "month-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "billing_country_code", &obj.BillingCountryCode)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "billing_country_code-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "billing_currency_code", &obj.BillingCurrencyCode)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "billing_currency_code-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalResourcesSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "offers", &obj.Offers, UnmarshalOffer)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offers-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "support", &obj.Support, UnmarshalSupportSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "support-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "support_resources", &obj.SupportResources)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "support_resources-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "subscription", &obj.Subscription, UnmarshalSubscriptionSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subscription-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1234,26 +1388,32 @@ func UnmarshalAccountUsage(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(AccountUsage)
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pricing_country", &obj.PricingCountry)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pricing_country-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "currency_code", &obj.CurrencyCode)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "currency_code-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "month", &obj.Month)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "month-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalResource)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "currency_rate", &obj.CurrencyRate)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "currency_rate-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1298,24 +1458,24 @@ const (
 // Constants associated with the CreateReportsSnapshotConfigOptions.ReportTypes property.
 const (
 	CreateReportsSnapshotConfigOptionsReportTypesAccountResourceInstanceUsageConst = "account_resource_instance_usage"
-	CreateReportsSnapshotConfigOptionsReportTypesAccountSummaryConst               = "account_summary"
-	CreateReportsSnapshotConfigOptionsReportTypesEnterpriseSummaryConst            = "enterprise_summary"
+	CreateReportsSnapshotConfigOptionsReportTypesAccountSummaryConst = "account_summary"
+	CreateReportsSnapshotConfigOptionsReportTypesEnterpriseSummaryConst = "enterprise_summary"
 )
 
 // Constants associated with the CreateReportsSnapshotConfigOptions.Versioning property.
 // A new version of report is created or the existing report version is overwritten with every update. Defaults to
 // "new".
 const (
-	CreateReportsSnapshotConfigOptionsVersioningNewConst       = "new"
+	CreateReportsSnapshotConfigOptionsVersioningNewConst = "new"
 	CreateReportsSnapshotConfigOptionsVersioningOverwriteConst = "overwrite"
 )
 
 // NewCreateReportsSnapshotConfigOptions : Instantiate CreateReportsSnapshotConfigOptions
 func (*UsageReportsV4) NewCreateReportsSnapshotConfigOptions(accountID string, interval string, cosBucket string, cosLocation string) *CreateReportsSnapshotConfigOptions {
 	return &CreateReportsSnapshotConfigOptions{
-		AccountID:   core.StringPtr(accountID),
-		Interval:    core.StringPtr(interval),
-		CosBucket:   core.StringPtr(cosBucket),
+		AccountID: core.StringPtr(accountID),
+		Interval: core.StringPtr(interval),
+		CosBucket: core.StringPtr(cosBucket),
 		CosLocation: core.StringPtr(cosLocation),
 	}
 }
@@ -1416,18 +1576,22 @@ func UnmarshalDiscount(m map[string]json.RawMessage, result interface{}) (err er
 	obj := new(Discount)
 	err = core.UnmarshalPrimitive(m, "ref", &obj.Ref)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ref-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "display_name", &obj.DisplayName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "display_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "discount", &obj.Discount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "discount-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1449,7 +1613,7 @@ type GetAccountSummaryOptions struct {
 // NewGetAccountSummaryOptions : Instantiate GetAccountSummaryOptions
 func (*UsageReportsV4) NewGetAccountSummaryOptions(accountID string, billingmonth string) *GetAccountSummaryOptions {
 	return &GetAccountSummaryOptions{
-		AccountID:    core.StringPtr(accountID),
+		AccountID: core.StringPtr(accountID),
 		Billingmonth: core.StringPtr(billingmonth),
 	}
 }
@@ -1493,7 +1657,7 @@ type GetAccountUsageOptions struct {
 // NewGetAccountUsageOptions : Instantiate GetAccountUsageOptions
 func (*UsageReportsV4) NewGetAccountUsageOptions(accountID string, billingmonth string) *GetAccountUsageOptions {
 	return &GetAccountUsageOptions{
-		AccountID:    core.StringPtr(accountID),
+		AccountID: core.StringPtr(accountID),
 		Billingmonth: core.StringPtr(billingmonth),
 	}
 }
@@ -1552,9 +1716,9 @@ type GetOrgUsageOptions struct {
 // NewGetOrgUsageOptions : Instantiate GetOrgUsageOptions
 func (*UsageReportsV4) NewGetOrgUsageOptions(accountID string, organizationID string, billingmonth string) *GetOrgUsageOptions {
 	return &GetOrgUsageOptions{
-		AccountID:      core.StringPtr(accountID),
+		AccountID: core.StringPtr(accountID),
 		OrganizationID: core.StringPtr(organizationID),
-		Billingmonth:   core.StringPtr(billingmonth),
+		Billingmonth: core.StringPtr(billingmonth),
 	}
 }
 
@@ -1650,7 +1814,7 @@ type GetReportsSnapshotOptions struct {
 func (*UsageReportsV4) NewGetReportsSnapshotOptions(accountID string, month string) *GetReportsSnapshotOptions {
 	return &GetReportsSnapshotOptions{
 		AccountID: core.StringPtr(accountID),
-		Month:     core.StringPtr(month),
+		Month: core.StringPtr(month),
 	}
 }
 
@@ -1720,9 +1884,9 @@ type GetResourceGroupUsageOptions struct {
 // NewGetResourceGroupUsageOptions : Instantiate GetResourceGroupUsageOptions
 func (*UsageReportsV4) NewGetResourceGroupUsageOptions(accountID string, resourceGroupID string, billingmonth string) *GetResourceGroupUsageOptions {
 	return &GetResourceGroupUsageOptions{
-		AccountID:       core.StringPtr(accountID),
+		AccountID: core.StringPtr(accountID),
 		ResourceGroupID: core.StringPtr(resourceGroupID),
-		Billingmonth:    core.StringPtr(billingmonth),
+		Billingmonth: core.StringPtr(billingmonth),
 	}
 }
 
@@ -1773,6 +1937,9 @@ type GetResourceUsageAccountOptions struct {
 	// Include the name of every resource, plan, resource instance, organization, and resource group.
 	Names *bool `json:"_names,omitempty"`
 
+	// Include the tags associated with every resource instance. By default it is always `true`.
+	Tags *bool `json:"_tags,omitempty"`
+
 	// Prioritize the names returned in the order of the specified languages. Language will default to English.
 	AcceptLanguage *string `json:"Accept-Language,omitempty"`
 
@@ -1807,7 +1974,7 @@ type GetResourceUsageAccountOptions struct {
 // NewGetResourceUsageAccountOptions : Instantiate GetResourceUsageAccountOptions
 func (*UsageReportsV4) NewGetResourceUsageAccountOptions(accountID string, billingmonth string) *GetResourceUsageAccountOptions {
 	return &GetResourceUsageAccountOptions{
-		AccountID:    core.StringPtr(accountID),
+		AccountID: core.StringPtr(accountID),
 		Billingmonth: core.StringPtr(billingmonth),
 	}
 }
@@ -1827,6 +1994,12 @@ func (_options *GetResourceUsageAccountOptions) SetBillingmonth(billingmonth str
 // SetNames : Allow user to set Names
 func (_options *GetResourceUsageAccountOptions) SetNames(names bool) *GetResourceUsageAccountOptions {
 	_options.Names = core.BoolPtr(names)
+	return _options
+}
+
+// SetTags : Allow user to set Tags
+func (_options *GetResourceUsageAccountOptions) SetTags(tags bool) *GetResourceUsageAccountOptions {
+	_options.Tags = core.BoolPtr(tags)
 	return _options
 }
 
@@ -1904,6 +2077,9 @@ type GetResourceUsageOrgOptions struct {
 	// Include the name of every resource, plan, resource instance, organization, and resource group.
 	Names *bool `json:"_names,omitempty"`
 
+	// Include the tags associated with every resource instance. By default it is always `true`.
+	Tags *bool `json:"_tags,omitempty"`
+
 	// Prioritize the names returned in the order of the specified languages. Language will default to English.
 	AcceptLanguage *string `json:"Accept-Language,omitempty"`
 
@@ -1932,9 +2108,9 @@ type GetResourceUsageOrgOptions struct {
 // NewGetResourceUsageOrgOptions : Instantiate GetResourceUsageOrgOptions
 func (*UsageReportsV4) NewGetResourceUsageOrgOptions(accountID string, organizationID string, billingmonth string) *GetResourceUsageOrgOptions {
 	return &GetResourceUsageOrgOptions{
-		AccountID:      core.StringPtr(accountID),
+		AccountID: core.StringPtr(accountID),
 		OrganizationID: core.StringPtr(organizationID),
-		Billingmonth:   core.StringPtr(billingmonth),
+		Billingmonth: core.StringPtr(billingmonth),
 	}
 }
 
@@ -1959,6 +2135,12 @@ func (_options *GetResourceUsageOrgOptions) SetBillingmonth(billingmonth string)
 // SetNames : Allow user to set Names
 func (_options *GetResourceUsageOrgOptions) SetNames(names bool) *GetResourceUsageOrgOptions {
 	_options.Names = core.BoolPtr(names)
+	return _options
+}
+
+// SetTags : Allow user to set Tags
+func (_options *GetResourceUsageOrgOptions) SetTags(tags bool) *GetResourceUsageOrgOptions {
+	_options.Tags = core.BoolPtr(tags)
 	return _options
 }
 
@@ -2024,6 +2206,9 @@ type GetResourceUsageResourceGroupOptions struct {
 	// Include the name of every resource, plan, resource instance, organization, and resource group.
 	Names *bool `json:"_names,omitempty"`
 
+	// Include the tags associated with every resource instance. By default it is always `true`.
+	Tags *bool `json:"_tags,omitempty"`
+
 	// Prioritize the names returned in the order of the specified languages. Language will default to English.
 	AcceptLanguage *string `json:"Accept-Language,omitempty"`
 
@@ -2052,9 +2237,9 @@ type GetResourceUsageResourceGroupOptions struct {
 // NewGetResourceUsageResourceGroupOptions : Instantiate GetResourceUsageResourceGroupOptions
 func (*UsageReportsV4) NewGetResourceUsageResourceGroupOptions(accountID string, resourceGroupID string, billingmonth string) *GetResourceUsageResourceGroupOptions {
 	return &GetResourceUsageResourceGroupOptions{
-		AccountID:       core.StringPtr(accountID),
+		AccountID: core.StringPtr(accountID),
 		ResourceGroupID: core.StringPtr(resourceGroupID),
-		Billingmonth:    core.StringPtr(billingmonth),
+		Billingmonth: core.StringPtr(billingmonth),
 	}
 }
 
@@ -2079,6 +2264,12 @@ func (_options *GetResourceUsageResourceGroupOptions) SetBillingmonth(billingmon
 // SetNames : Allow user to set Names
 func (_options *GetResourceUsageResourceGroupOptions) SetNames(names bool) *GetResourceUsageResourceGroupOptions {
 	_options.Names = core.BoolPtr(names)
+	return _options
+}
+
+// SetTags : Allow user to set Tags
+func (_options *GetResourceUsageResourceGroupOptions) SetTags(tags bool) *GetResourceUsageResourceGroupOptions {
+	_options.Tags = core.BoolPtr(tags)
 	return _options
 }
 
@@ -2144,6 +2335,9 @@ type InstanceUsage struct {
 	// The ID of the resource.
 	ResourceID *string `json:"resource_id" validate:"required"`
 
+	// The catalog ID of the resource.
+	CatalogID *string `json:"catalog_id,omitempty"`
+
 	// The name of the resource.
 	ResourceName *string `json:"resource_name,omitempty"`
 
@@ -2183,11 +2377,17 @@ type InstanceUsage struct {
 	// Is the cost charged to the account.
 	Billable *bool `json:"billable" validate:"required"`
 
+	// The resource instance id of the parent resource associated with this instance.
+	ParentResourceInstanceID *string `json:"parent_resource_instance_id,omitempty"`
+
 	// The ID of the plan where the instance was provisioned and rated.
 	PlanID *string `json:"plan_id" validate:"required"`
 
 	// The name of the plan where the instance was provisioned and rated.
 	PlanName *string `json:"plan_name,omitempty"`
+
+	// The ID of the pricing plan used to rate the usage.
+	PricingPlanID *string `json:"pricing_plan_id,omitempty"`
 
 	// The month.
 	Month *string `json:"month" validate:"required"`
@@ -2200,6 +2400,12 @@ type InstanceUsage struct {
 
 	// The value of the account's currency in USD.
 	CurrencyRate *float64 `json:"currency_rate,omitempty"`
+
+	// The user tags associated with a resource instance.
+	Tags []interface{} `json:"tags,omitempty"`
+
+	// The service tags associated with a resource instance.
+	ServiceTags []interface{} `json:"service_tags,omitempty"`
 }
 
 // UnmarshalInstanceUsage unmarshals an instance of InstanceUsage from the specified map of raw messages.
@@ -2207,94 +2413,142 @@ func UnmarshalInstanceUsage(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(InstanceUsage)
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_instance_id", &obj.ResourceInstanceID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_instance_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_instance_name", &obj.ResourceInstanceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_instance_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_id", &obj.ResourceID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "catalog_id", &obj.CatalogID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_name", &obj.ResourceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_group_id", &obj.ResourceGroupID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_group_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_group_name", &obj.ResourceGroupName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_group_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "organization_id", &obj.OrganizationID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "organization_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "organization_name", &obj.OrganizationName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "organization_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "space_id", &obj.SpaceID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "space_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "space_name", &obj.SpaceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "space_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "consumer_id", &obj.ConsumerID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "consumer_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "region", &obj.Region)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "region-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pricing_region", &obj.PricingRegion)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pricing_region-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pricing_country", &obj.PricingCountry)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pricing_country-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "currency_code", &obj.CurrencyCode)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "currency_code-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "billable", &obj.Billable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "billable-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "parent_resource_instance_id", &obj.ParentResourceInstanceID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "parent_resource_instance_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "plan_id", &obj.PlanID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "plan_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "plan_name", &obj.PlanName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "plan_name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "pricing_plan_id", &obj.PricingPlanID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "pricing_plan_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "month", &obj.Month)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "month-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "usage", &obj.Usage, UnmarshalMetric)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "usage-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pending", &obj.Pending)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pending-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "currency_rate", &obj.CurrencyRate)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "currency_rate-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "tags", &obj.Tags)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "tags-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "service_tags", &obj.ServiceTags)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "service_tags-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2312,6 +2566,7 @@ func UnmarshalInstancesUsageFirst(m map[string]json.RawMessage, result interface
 	obj := new(InstancesUsageFirst)
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2332,10 +2587,12 @@ func UnmarshalInstancesUsageNext(m map[string]json.RawMessage, result interface{
 	obj := new(InstancesUsageNext)
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2365,22 +2622,27 @@ func UnmarshalInstancesUsage(m map[string]json.RawMessage, result interface{}) (
 	obj := new(InstancesUsage)
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "count", &obj.Count)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalInstancesUsageFirst)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalInstancesUsageNext)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalInstanceUsage)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2393,8 +2655,11 @@ func (resp *InstancesUsage) GetNextStart() (*string, error) {
 		return nil, nil
 	}
 	_start, err := core.GetQueryParam(resp.Next.Href, "_start")
-	if err != nil || _start == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if _start == nil {
+		return nil, nil
 	}
 	return _start, nil
 }
@@ -2433,6 +2698,12 @@ type Metric struct {
 
 	// All the discounts applicable to the metric.
 	Discounts []Discount `json:"discounts" validate:"required"`
+
+	// This percentage reflects the reduction to the original cost that you receive under a volume based pricing structure.
+	VolumeDiscount *float64 `json:"volume_discount,omitempty"`
+
+	// The original cost adjusted for volume based discounts that are applied at the account level.
+	VolumeCost *float64 `json:"volume_cost,omitempty"`
 }
 
 // UnmarshalMetric unmarshals an instance of Metric from the specified map of raw messages.
@@ -2440,46 +2711,67 @@ func UnmarshalMetric(m map[string]json.RawMessage, result interface{}) (err erro
 	obj := new(Metric)
 	err = core.UnmarshalPrimitive(m, "metric", &obj.Metric)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "metric-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "metric_name", &obj.MetricName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "metric_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "quantity", &obj.Quantity)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "quantity-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "rateable_quantity", &obj.RateableQuantity)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rateable_quantity-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cost", &obj.Cost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "rated_cost", &obj.RatedCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rated_cost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "price", &obj.Price)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "price-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "unit", &obj.Unit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "unit_name", &obj.UnitName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unit_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "non_chargeable", &obj.NonChargeable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "non_chargeable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "discounts", &obj.Discounts, UnmarshalDiscount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "discounts-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "volume_discount", &obj.VolumeDiscount)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_discount-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "volume_cost", &obj.VolumeCost)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_cost-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2512,26 +2804,32 @@ func UnmarshalOffer(m map[string]json.RawMessage, result interface{}) (err error
 	obj := new(Offer)
 	err = core.UnmarshalPrimitive(m, "offer_id", &obj.OfferID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offer_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "credits_total", &obj.CreditsTotal)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "credits_total-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offer_template", &obj.OfferTemplate)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offer_template-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "valid_from", &obj.ValidFrom)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "valid_from-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "expires_on", &obj.ExpiresOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "expires_on-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "credits", &obj.Credits, UnmarshalOfferCredits)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "credits-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2555,14 +2853,17 @@ func UnmarshalOfferCredits(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(OfferCredits)
 	err = core.UnmarshalPrimitive(m, "starting_balance", &obj.StartingBalance)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "starting_balance-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "used", &obj.Used)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "used-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "balance", &obj.Balance)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "balance-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2601,34 +2902,42 @@ func UnmarshalOrgUsage(m map[string]json.RawMessage, result interface{}) (err er
 	obj := new(OrgUsage)
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "organization_id", &obj.OrganizationID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "organization_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "organization_name", &obj.OrganizationName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "organization_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pricing_country", &obj.PricingCountry)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pricing_country-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "currency_code", &obj.CurrencyCode)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "currency_code-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "month", &obj.Month)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "month-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalResource)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "currency_rate", &obj.CurrencyRate)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "currency_rate-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2646,6 +2955,7 @@ type Plan struct {
 	// The pricing region for the plan.
 	PricingRegion *string `json:"pricing_region,omitempty"`
 
+	// The ID of the pricing plan used to rate the usage.
 	PricingPlanID *string `json:"pricing_plan_id,omitempty"`
 
 	// Indicates if the plan charges are billed to the customer.
@@ -2672,42 +2982,52 @@ func UnmarshalPlan(m map[string]json.RawMessage, result interface{}) (err error)
 	obj := new(Plan)
 	err = core.UnmarshalPrimitive(m, "plan_id", &obj.PlanID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "plan_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "plan_name", &obj.PlanName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "plan_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pricing_region", &obj.PricingRegion)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pricing_region-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pricing_plan_id", &obj.PricingPlanID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pricing_plan_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "billable", &obj.Billable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "billable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cost", &obj.Cost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "rated_cost", &obj.RatedCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rated_cost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "usage", &obj.Usage, UnmarshalMetric)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "usage-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "discounts", &obj.Discounts, UnmarshalDiscount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "discounts-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pending", &obj.Pending)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pending-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2718,6 +3038,9 @@ func UnmarshalPlan(m map[string]json.RawMessage, result interface{}) (err error)
 type Resource struct {
 	// The ID of the resource.
 	ResourceID *string `json:"resource_id" validate:"required"`
+
+	// The catalog ID of the resource.
+	CatalogID *string `json:"catalog_id,omitempty"`
 
 	// The name of the resource.
 	ResourceName *string `json:"resource_name,omitempty"`
@@ -2746,34 +3069,47 @@ func UnmarshalResource(m map[string]json.RawMessage, result interface{}) (err er
 	obj := new(Resource)
 	err = core.UnmarshalPrimitive(m, "resource_id", &obj.ResourceID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "catalog_id", &obj.CatalogID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_name", &obj.ResourceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "billable_cost", &obj.BillableCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "billable_cost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "billable_rated_cost", &obj.BillableRatedCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "billable_rated_cost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "non_billable_cost", &obj.NonBillableCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "non_billable_cost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "non_billable_rated_cost", &obj.NonBillableRatedCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "non_billable_rated_cost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "plans", &obj.Plans, UnmarshalPlan)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "plans-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "discounts", &obj.Discounts, UnmarshalDiscount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "discounts-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2812,34 +3148,42 @@ func UnmarshalResourceGroupUsage(m map[string]json.RawMessage, result interface{
 	obj := new(ResourceGroupUsage)
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_group_id", &obj.ResourceGroupID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_group_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_group_name", &obj.ResourceGroupName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_group_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pricing_country", &obj.PricingCountry)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pricing_country-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "currency_code", &obj.CurrencyCode)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "currency_code-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "month", &obj.Month)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "month-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalResource)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "currency_rate", &obj.CurrencyRate)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "currency_rate-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2860,10 +3204,12 @@ func UnmarshalResourcesSummary(m map[string]json.RawMessage, result interface{})
 	obj := new(ResourcesSummary)
 	err = core.UnmarshalPrimitive(m, "billable_cost", &obj.BillableCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "billable_cost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "non_billable_cost", &obj.NonBillableCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "non_billable_cost-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2923,13 +3269,13 @@ type SnapshotConfigHistoryItem struct {
 // Status of the billing snapshot configuration. Possible values are [enabled, disabled].
 const (
 	SnapshotConfigHistoryItemStateDisabledConst = "disabled"
-	SnapshotConfigHistoryItemStateEnabledConst  = "enabled"
+	SnapshotConfigHistoryItemStateEnabledConst = "enabled"
 )
 
 // Constants associated with the SnapshotConfigHistoryItem.AccountType property.
 // Type of account. Possible values [enterprise, account].
 const (
-	SnapshotConfigHistoryItemAccountTypeAccountConst    = "account"
+	SnapshotConfigHistoryItemAccountTypeAccountConst = "account"
 	SnapshotConfigHistoryItemAccountTypeEnterpriseConst = "enterprise"
 )
 
@@ -2942,15 +3288,15 @@ const (
 // Constants associated with the SnapshotConfigHistoryItem.Versioning property.
 // A new version of report is created or the existing report version is overwritten with every update.
 const (
-	SnapshotConfigHistoryItemVersioningNewConst       = "new"
+	SnapshotConfigHistoryItemVersioningNewConst = "new"
 	SnapshotConfigHistoryItemVersioningOverwriteConst = "overwrite"
 )
 
 // Constants associated with the SnapshotConfigHistoryItem.ReportTypes property.
 const (
 	SnapshotConfigHistoryItemReportTypesAccountResourceInstanceUsageConst = "account_resource_instance_usage"
-	SnapshotConfigHistoryItemReportTypesAccountSummaryConst               = "account_summary"
-	SnapshotConfigHistoryItemReportTypesEnterpriseSummaryConst            = "enterprise_summary"
+	SnapshotConfigHistoryItemReportTypesAccountSummaryConst = "account_summary"
+	SnapshotConfigHistoryItemReportTypesEnterpriseSummaryConst = "enterprise_summary"
 )
 
 // UnmarshalSnapshotConfigHistoryItem unmarshals an instance of SnapshotConfigHistoryItem from the specified map of raw messages.
@@ -2958,62 +3304,77 @@ func UnmarshalSnapshotConfigHistoryItem(m map[string]json.RawMessage, result int
 	obj := new(SnapshotConfigHistoryItem)
 	err = core.UnmarshalPrimitive(m, "start_time", &obj.StartTime)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "start_time-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "end_time", &obj.EndTime)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "end_time-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_by", &obj.UpdatedBy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_by-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "state", &obj.State)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account_type", &obj.AccountType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "interval", &obj.Interval)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "interval-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "versioning", &obj.Versioning)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "versioning-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "report_types", &obj.ReportTypes)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "report_types-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "compression", &obj.Compression)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "compression-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "content_type", &obj.ContentType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "content_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cos_reports_folder", &obj.CosReportsFolder)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cos_reports_folder-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cos_bucket", &obj.CosBucket)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cos_bucket-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cos_location", &obj.CosLocation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cos_location-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cos_endpoint", &obj.CosEndpoint)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cos_endpoint-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3039,18 +3400,22 @@ func UnmarshalSnapshotList(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(SnapshotList)
 	err = core.UnmarshalPrimitive(m, "count", &obj.Count)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalSnapshotListFirst)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalSnapshotListNext)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "snapshots", &obj.Snapshots, UnmarshalSnapshotListSnapshotsItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "snapshots-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3063,8 +3428,11 @@ func (resp *SnapshotList) GetNextStart() (*string, error) {
 		return nil, nil
 	}
 	_start, err := core.GetQueryParam(resp.Next.Href, "_start")
-	if err != nil || _start == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if _start == nil {
+		return nil, nil
 	}
 	return _start, nil
 }
@@ -3079,6 +3447,7 @@ func UnmarshalSnapshotListFirst(m map[string]json.RawMessage, result interface{}
 	obj := new(SnapshotListFirst)
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3089,6 +3458,7 @@ func UnmarshalSnapshotListFirst(m map[string]json.RawMessage, result interface{}
 type SnapshotListNext struct {
 	Href *string `json:"href,omitempty"`
 
+	// The value of the `_start` query parameter to fetch the next page.
 	Offset *string `json:"offset,omitempty"`
 }
 
@@ -3097,10 +3467,12 @@ func UnmarshalSnapshotListNext(m map[string]json.RawMessage, result interface{})
 	obj := new(SnapshotListNext)
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3161,7 +3533,7 @@ type SnapshotListSnapshotsItem struct {
 // Constants associated with the SnapshotListSnapshotsItem.AccountType property.
 // Type of account. Possible values are [enterprise, account].
 const (
-	SnapshotListSnapshotsItemAccountTypeAccountConst    = "account"
+	SnapshotListSnapshotsItemAccountTypeAccountConst = "account"
 	SnapshotListSnapshotsItemAccountTypeEnterpriseConst = "enterprise"
 )
 
@@ -3169,7 +3541,7 @@ const (
 // Status of the billing snapshot configuration. Possible values are [enabled, disabled].
 const (
 	SnapshotListSnapshotsItemStateDisabledConst = "disabled"
-	SnapshotListSnapshotsItemStateEnabledConst  = "enabled"
+	SnapshotListSnapshotsItemStateEnabledConst = "enabled"
 )
 
 // UnmarshalSnapshotListSnapshotsItem unmarshals an instance of SnapshotListSnapshotsItem from the specified map of raw messages.
@@ -3177,66 +3549,82 @@ func UnmarshalSnapshotListSnapshotsItem(m map[string]json.RawMessage, result int
 	obj := new(SnapshotListSnapshotsItem)
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "month", &obj.Month)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "month-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account_type", &obj.AccountType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "expected_processed_at", &obj.ExpectedProcessedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "expected_processed_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "state", &obj.State)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "billing_period", &obj.BillingPeriod, UnmarshalSnapshotListSnapshotsItemBillingPeriod)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "billing_period-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "snapshot_id", &obj.SnapshotID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "snapshot_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "charset", &obj.Charset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "charset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "compression", &obj.Compression)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "compression-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "content_type", &obj.ContentType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "content_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "bucket", &obj.Bucket)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "bucket-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_on", &obj.CreatedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_on-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "report_types", &obj.ReportTypes, UnmarshalSnapshotListSnapshotsItemReportTypesItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "report_types-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "files", &obj.Files, UnmarshalSnapshotListSnapshotsItemFilesItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "files-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "processed_at", &obj.ProcessedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "processed_at-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3257,10 +3645,12 @@ func UnmarshalSnapshotListSnapshotsItemBillingPeriod(m map[string]json.RawMessag
 	obj := new(SnapshotListSnapshotsItemBillingPeriod)
 	err = core.UnmarshalPrimitive(m, "start", &obj.Start)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "start-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "end", &obj.End)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "end-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3285,8 +3675,8 @@ type SnapshotListSnapshotsItemFilesItem struct {
 // account_resource_instance_usage].
 const (
 	SnapshotListSnapshotsItemFilesItemReportTypesAccountResourceInstanceUsageConst = "account_resource_instance_usage"
-	SnapshotListSnapshotsItemFilesItemReportTypesAccountSummaryConst               = "account_summary"
-	SnapshotListSnapshotsItemFilesItemReportTypesEnterpriseSummaryConst            = "enterprise_summary"
+	SnapshotListSnapshotsItemFilesItemReportTypesAccountSummaryConst = "account_summary"
+	SnapshotListSnapshotsItemFilesItemReportTypesEnterpriseSummaryConst = "enterprise_summary"
 )
 
 // UnmarshalSnapshotListSnapshotsItemFilesItem unmarshals an instance of SnapshotListSnapshotsItemFilesItem from the specified map of raw messages.
@@ -3294,14 +3684,17 @@ func UnmarshalSnapshotListSnapshotsItemFilesItem(m map[string]json.RawMessage, r
 	obj := new(SnapshotListSnapshotsItemFilesItem)
 	err = core.UnmarshalPrimitive(m, "report_types", &obj.ReportTypes)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "report_types-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "location", &obj.Location)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "location-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3323,8 +3716,8 @@ type SnapshotListSnapshotsItemReportTypesItem struct {
 // account_resource_instance_usage].
 const (
 	SnapshotListSnapshotsItemReportTypesItemTypeAccountResourceInstanceUsageConst = "account_resource_instance_usage"
-	SnapshotListSnapshotsItemReportTypesItemTypeAccountSummaryConst               = "account_summary"
-	SnapshotListSnapshotsItemReportTypesItemTypeEnterpriseSummaryConst            = "enterprise_summary"
+	SnapshotListSnapshotsItemReportTypesItemTypeAccountSummaryConst = "account_summary"
+	SnapshotListSnapshotsItemReportTypesItemTypeEnterpriseSummaryConst = "enterprise_summary"
 )
 
 // UnmarshalSnapshotListSnapshotsItemReportTypesItem unmarshals an instance of SnapshotListSnapshotsItemReportTypesItem from the specified map of raw messages.
@@ -3332,10 +3725,12 @@ func UnmarshalSnapshotListSnapshotsItemReportTypesItem(m map[string]json.RawMess
 	obj := new(SnapshotListSnapshotsItemReportTypesItem)
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3395,13 +3790,13 @@ type SnapshotConfig struct {
 // Status of the billing snapshot configuration. Possible values are [enabled, disabled].
 const (
 	SnapshotConfigStateDisabledConst = "disabled"
-	SnapshotConfigStateEnabledConst  = "enabled"
+	SnapshotConfigStateEnabledConst = "enabled"
 )
 
 // Constants associated with the SnapshotConfig.AccountType property.
 // Type of account. Possible values are [enterprise, account].
 const (
-	SnapshotConfigAccountTypeAccountConst    = "account"
+	SnapshotConfigAccountTypeAccountConst = "account"
 	SnapshotConfigAccountTypeEnterpriseConst = "enterprise"
 )
 
@@ -3414,15 +3809,15 @@ const (
 // Constants associated with the SnapshotConfig.Versioning property.
 // A new version of report is created or the existing report version is overwritten with every update.
 const (
-	SnapshotConfigVersioningNewConst       = "new"
+	SnapshotConfigVersioningNewConst = "new"
 	SnapshotConfigVersioningOverwriteConst = "overwrite"
 )
 
 // Constants associated with the SnapshotConfig.ReportTypes property.
 const (
 	SnapshotConfigReportTypesAccountResourceInstanceUsageConst = "account_resource_instance_usage"
-	SnapshotConfigReportTypesAccountSummaryConst               = "account_summary"
-	SnapshotConfigReportTypesEnterpriseSummaryConst            = "enterprise_summary"
+	SnapshotConfigReportTypesAccountSummaryConst = "account_summary"
+	SnapshotConfigReportTypesEnterpriseSummaryConst = "enterprise_summary"
 )
 
 // UnmarshalSnapshotConfig unmarshals an instance of SnapshotConfig from the specified map of raw messages.
@@ -3430,62 +3825,77 @@ func UnmarshalSnapshotConfig(m map[string]json.RawMessage, result interface{}) (
 	obj := new(SnapshotConfig)
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "state", &obj.State)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account_type", &obj.AccountType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "interval", &obj.Interval)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "interval-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "versioning", &obj.Versioning)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "versioning-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "report_types", &obj.ReportTypes)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "report_types-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "compression", &obj.Compression)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "compression-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "content_type", &obj.ContentType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "content_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cos_reports_folder", &obj.CosReportsFolder)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cos_reports_folder-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cos_bucket", &obj.CosBucket)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cos_bucket-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cos_location", &obj.CosLocation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cos_location-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cos_endpoint", &obj.CosEndpoint)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cos_endpoint-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_updated_at", &obj.LastUpdatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_updated_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "history", &obj.History, UnmarshalSnapshotConfigHistoryItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "history-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3509,14 +3919,17 @@ func UnmarshalSnapshotConfigValidateResponse(m map[string]json.RawMessage, resul
 	obj := new(SnapshotConfigValidateResponse)
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cos_bucket", &obj.CosBucket)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cos_bucket-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cos_location", &obj.CosLocation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cos_location-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3555,34 +3968,42 @@ func UnmarshalSubscription(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(Subscription)
 	err = core.UnmarshalPrimitive(m, "subscription_id", &obj.SubscriptionID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subscription_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "charge_agreement_number", &obj.ChargeAgreementNumber)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "charge_agreement_number-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "subscription_amount", &obj.SubscriptionAmount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subscription_amount-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "start", &obj.Start)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "start-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "end", &obj.End)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "end-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "credits_total", &obj.CreditsTotal)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "credits_total-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "terms", &obj.Terms, UnmarshalSubscriptionTerm)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "terms-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3603,10 +4024,12 @@ func UnmarshalSubscriptionSummary(m map[string]json.RawMessage, result interface
 	obj := new(SubscriptionSummary)
 	err = core.UnmarshalPrimitive(m, "overage", &obj.Overage)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "overage-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "subscriptions", &obj.Subscriptions, UnmarshalSubscription)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subscriptions-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3630,14 +4053,17 @@ func UnmarshalSubscriptionTerm(m map[string]json.RawMessage, result interface{})
 	obj := new(SubscriptionTerm)
 	err = core.UnmarshalPrimitive(m, "start", &obj.Start)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "start-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "end", &obj.End)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "end-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "credits", &obj.Credits, UnmarshalSubscriptionTermCredits)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "credits-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3664,18 +4090,22 @@ func UnmarshalSubscriptionTermCredits(m map[string]json.RawMessage, result inter
 	obj := new(SubscriptionTermCredits)
 	err = core.UnmarshalPrimitive(m, "total", &obj.Total)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "starting_balance", &obj.StartingBalance)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "starting_balance-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "used", &obj.Used)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "used-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "balance", &obj.Balance)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "balance-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3699,14 +4129,17 @@ func UnmarshalSupportSummary(m map[string]json.RawMessage, result interface{}) (
 	obj := new(SupportSummary)
 	err = core.UnmarshalPrimitive(m, "cost", &obj.Cost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "overage", &obj.Overage)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "overage-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3750,14 +4183,14 @@ const (
 // Constants associated with the UpdateReportsSnapshotConfigOptions.ReportTypes property.
 const (
 	UpdateReportsSnapshotConfigOptionsReportTypesAccountResourceInstanceUsageConst = "account_resource_instance_usage"
-	UpdateReportsSnapshotConfigOptionsReportTypesAccountSummaryConst               = "account_summary"
-	UpdateReportsSnapshotConfigOptionsReportTypesEnterpriseSummaryConst            = "enterprise_summary"
+	UpdateReportsSnapshotConfigOptionsReportTypesAccountSummaryConst = "account_summary"
+	UpdateReportsSnapshotConfigOptionsReportTypesEnterpriseSummaryConst = "enterprise_summary"
 )
 
 // Constants associated with the UpdateReportsSnapshotConfigOptions.Versioning property.
 // A new version of report is created or the existing report version is overwritten with every update.
 const (
-	UpdateReportsSnapshotConfigOptionsVersioningNewConst       = "new"
+	UpdateReportsSnapshotConfigOptionsVersioningNewConst = "new"
 	UpdateReportsSnapshotConfigOptionsVersioningOverwriteConst = "overwrite"
 )
 
@@ -3854,15 +4287,15 @@ const (
 // Constants associated with the ValidateReportsSnapshotConfigOptions.ReportTypes property.
 const (
 	ValidateReportsSnapshotConfigOptionsReportTypesAccountResourceInstanceUsageConst = "account_resource_instance_usage"
-	ValidateReportsSnapshotConfigOptionsReportTypesAccountSummaryConst               = "account_summary"
-	ValidateReportsSnapshotConfigOptionsReportTypesEnterpriseSummaryConst            = "enterprise_summary"
+	ValidateReportsSnapshotConfigOptionsReportTypesAccountSummaryConst = "account_summary"
+	ValidateReportsSnapshotConfigOptionsReportTypesEnterpriseSummaryConst = "enterprise_summary"
 )
 
 // Constants associated with the ValidateReportsSnapshotConfigOptions.Versioning property.
 // A new version of report is created or the existing report version is overwritten with every update. Defaults to
 // "new".
 const (
-	ValidateReportsSnapshotConfigOptionsVersioningNewConst       = "new"
+	ValidateReportsSnapshotConfigOptionsVersioningNewConst = "new"
 	ValidateReportsSnapshotConfigOptionsVersioningOverwriteConst = "overwrite"
 )
 
@@ -3921,11 +4354,13 @@ func (options *ValidateReportsSnapshotConfigOptions) SetHeaders(param map[string
 	return options
 }
 
+//
 // GetResourceUsageAccountPager can be used to simplify the use of the "GetResourceUsageAccount" method.
+//
 type GetResourceUsageAccountPager struct {
-	hasNext     bool
-	options     *GetResourceUsageAccountOptions
-	client      *UsageReportsV4
+	hasNext bool
+	options *GetResourceUsageAccountOptions
+	client  *UsageReportsV4
 	pageContext struct {
 		next *string
 	}
@@ -3934,7 +4369,7 @@ type GetResourceUsageAccountPager struct {
 // NewGetResourceUsageAccountPager returns a new GetResourceUsageAccountPager instance.
 func (usageReports *UsageReportsV4) NewGetResourceUsageAccountPager(options *GetResourceUsageAccountOptions) (pager *GetResourceUsageAccountPager, err error) {
 	if options.Start != nil && *options.Start != "" {
-		err = fmt.Errorf("the 'options.Start' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -3962,6 +4397,7 @@ func (pager *GetResourceUsageAccountPager) GetNextWithContext(ctx context.Contex
 
 	result, _, err := pager.client.GetResourceUsageAccountWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -3970,7 +4406,8 @@ func (pager *GetResourceUsageAccountPager) GetNextWithContext(ctx context.Contex
 		var _start *string
 		_start, err = core.GetQueryParam(result.Next.Href, "_start")
 		if err != nil {
-			err = fmt.Errorf("error retrieving '_start' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving '_start' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = _start
@@ -3989,6 +4426,7 @@ func (pager *GetResourceUsageAccountPager) GetAllWithContext(ctx context.Context
 		var nextPage []InstanceUsage
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -3998,19 +4436,25 @@ func (pager *GetResourceUsageAccountPager) GetAllWithContext(ctx context.Context
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *GetResourceUsageAccountPager) GetNext() (page []InstanceUsage, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *GetResourceUsageAccountPager) GetAll() (allItems []InstanceUsage, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
+//
 // GetResourceUsageResourceGroupPager can be used to simplify the use of the "GetResourceUsageResourceGroup" method.
+//
 type GetResourceUsageResourceGroupPager struct {
-	hasNext     bool
-	options     *GetResourceUsageResourceGroupOptions
-	client      *UsageReportsV4
+	hasNext bool
+	options *GetResourceUsageResourceGroupOptions
+	client  *UsageReportsV4
 	pageContext struct {
 		next *string
 	}
@@ -4019,7 +4463,7 @@ type GetResourceUsageResourceGroupPager struct {
 // NewGetResourceUsageResourceGroupPager returns a new GetResourceUsageResourceGroupPager instance.
 func (usageReports *UsageReportsV4) NewGetResourceUsageResourceGroupPager(options *GetResourceUsageResourceGroupOptions) (pager *GetResourceUsageResourceGroupPager, err error) {
 	if options.Start != nil && *options.Start != "" {
-		err = fmt.Errorf("the 'options.Start' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -4047,6 +4491,7 @@ func (pager *GetResourceUsageResourceGroupPager) GetNextWithContext(ctx context.
 
 	result, _, err := pager.client.GetResourceUsageResourceGroupWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -4055,7 +4500,8 @@ func (pager *GetResourceUsageResourceGroupPager) GetNextWithContext(ctx context.
 		var _start *string
 		_start, err = core.GetQueryParam(result.Next.Href, "_start")
 		if err != nil {
-			err = fmt.Errorf("error retrieving '_start' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving '_start' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = _start
@@ -4074,6 +4520,7 @@ func (pager *GetResourceUsageResourceGroupPager) GetAllWithContext(ctx context.C
 		var nextPage []InstanceUsage
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -4083,19 +4530,25 @@ func (pager *GetResourceUsageResourceGroupPager) GetAllWithContext(ctx context.C
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *GetResourceUsageResourceGroupPager) GetNext() (page []InstanceUsage, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *GetResourceUsageResourceGroupPager) GetAll() (allItems []InstanceUsage, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
+//
 // GetResourceUsageOrgPager can be used to simplify the use of the "GetResourceUsageOrg" method.
+//
 type GetResourceUsageOrgPager struct {
-	hasNext     bool
-	options     *GetResourceUsageOrgOptions
-	client      *UsageReportsV4
+	hasNext bool
+	options *GetResourceUsageOrgOptions
+	client  *UsageReportsV4
 	pageContext struct {
 		next *string
 	}
@@ -4104,7 +4557,7 @@ type GetResourceUsageOrgPager struct {
 // NewGetResourceUsageOrgPager returns a new GetResourceUsageOrgPager instance.
 func (usageReports *UsageReportsV4) NewGetResourceUsageOrgPager(options *GetResourceUsageOrgOptions) (pager *GetResourceUsageOrgPager, err error) {
 	if options.Start != nil && *options.Start != "" {
-		err = fmt.Errorf("the 'options.Start' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -4132,6 +4585,7 @@ func (pager *GetResourceUsageOrgPager) GetNextWithContext(ctx context.Context) (
 
 	result, _, err := pager.client.GetResourceUsageOrgWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -4140,7 +4594,8 @@ func (pager *GetResourceUsageOrgPager) GetNextWithContext(ctx context.Context) (
 		var _start *string
 		_start, err = core.GetQueryParam(result.Next.Href, "_start")
 		if err != nil {
-			err = fmt.Errorf("error retrieving '_start' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving '_start' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = _start
@@ -4159,6 +4614,7 @@ func (pager *GetResourceUsageOrgPager) GetAllWithContext(ctx context.Context) (a
 		var nextPage []InstanceUsage
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -4168,19 +4624,25 @@ func (pager *GetResourceUsageOrgPager) GetAllWithContext(ctx context.Context) (a
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *GetResourceUsageOrgPager) GetNext() (page []InstanceUsage, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *GetResourceUsageOrgPager) GetAll() (allItems []InstanceUsage, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
+//
 // GetReportsSnapshotPager can be used to simplify the use of the "GetReportsSnapshot" method.
+//
 type GetReportsSnapshotPager struct {
-	hasNext     bool
-	options     *GetReportsSnapshotOptions
-	client      *UsageReportsV4
+	hasNext bool
+	options *GetReportsSnapshotOptions
+	client  *UsageReportsV4
 	pageContext struct {
 		next *string
 	}
@@ -4189,7 +4651,7 @@ type GetReportsSnapshotPager struct {
 // NewGetReportsSnapshotPager returns a new GetReportsSnapshotPager instance.
 func (usageReports *UsageReportsV4) NewGetReportsSnapshotPager(options *GetReportsSnapshotOptions) (pager *GetReportsSnapshotPager, err error) {
 	if options.Start != nil && *options.Start != "" {
-		err = fmt.Errorf("the 'options.Start' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -4217,6 +4679,7 @@ func (pager *GetReportsSnapshotPager) GetNextWithContext(ctx context.Context) (p
 
 	result, _, err := pager.client.GetReportsSnapshotWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -4225,7 +4688,8 @@ func (pager *GetReportsSnapshotPager) GetNextWithContext(ctx context.Context) (p
 		var _start *string
 		_start, err = core.GetQueryParam(result.Next.Href, "_start")
 		if err != nil {
-			err = fmt.Errorf("error retrieving '_start' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving '_start' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = _start
@@ -4244,6 +4708,7 @@ func (pager *GetReportsSnapshotPager) GetAllWithContext(ctx context.Context) (al
 		var nextPage []SnapshotListSnapshotsItem
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -4253,10 +4718,14 @@ func (pager *GetReportsSnapshotPager) GetAllWithContext(ctx context.Context) (al
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *GetReportsSnapshotPager) GetNext() (page []SnapshotListSnapshotsItem, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *GetReportsSnapshotPager) GetAll() (allItems []SnapshotListSnapshotsItem, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }

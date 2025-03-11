@@ -20,6 +20,9 @@ type ALBConfig struct {
 	ALBIP             string `json:"albip" description:"BYOIP VIP to use for ALB. Currently supported only for private ALB"`
 	Zone              string `json:"zone" description:"Zone to use for adding ALB. This is indicative of the AZ in which ALB will be deployed"`
 	DisableDeployment bool   `json:"disableDeployment" description:"Indicate whether to disable deployment only on disable alb"`
+	VlanID            string `json:"vlanID" description:"The VLAN ID. This VLAN must match the ALB 'type' and must be in the same 'zone' as the ALB"`
+	ALBBuild          string `json:"albBuild" description:"The ALB image version"`
+	Status            string `json:"status" description:"Current status of the ALB"`
 }
 
 // AlbCreateResp used to send back the albid on a create request

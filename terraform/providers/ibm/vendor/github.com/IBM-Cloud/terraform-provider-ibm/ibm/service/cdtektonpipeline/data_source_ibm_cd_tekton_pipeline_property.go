@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2023 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package cdtektonpipeline
@@ -58,6 +58,11 @@ func DataSourceIBMCdTektonPipelineProperty() *schema.Resource {
 				Computed:    true,
 				Description: "Property type.",
 			},
+			"locked": &schema.Schema{
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "When true, this property cannot be overridden by a trigger property or at runtime. Attempting to override it will result in run requests being rejected. The default is false.",
+			},
 			"path": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -100,6 +105,10 @@ func dataSourceIBMCdTektonPipelinePropertyRead(context context.Context, d *schem
 
 	if err = d.Set("type", property.Type); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting type: %s", err))
+	}
+
+	if err = d.Set("locked", property.Locked); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting locked: %s", err))
 	}
 
 	if err = d.Set("path", property.Path); err != nil {

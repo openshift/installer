@@ -66,6 +66,7 @@ func ResourceIBMAppRoute() *schema.Resource {
 				Set:      schema.HashString,
 			},
 		},
+		DeprecationMessage: "This service is deprecated.",
 	}
 }
 

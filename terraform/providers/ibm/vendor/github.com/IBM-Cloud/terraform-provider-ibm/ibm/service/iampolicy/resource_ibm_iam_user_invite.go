@@ -818,7 +818,7 @@ func resourceIBMIAMGetUserProfileExists(d *schema.ResourceData, meta interface{}
 	for _, user := range usersList {
 
 		for _, userInfo := range res {
-			if strings.Compare(userInfo.Email, user) == 0 {
+			if strings.EqualFold(userInfo.Email, user) {
 				isFound = true
 			}
 		}
@@ -857,7 +857,7 @@ func getUserIAMID(d *schema.ResourceData, meta interface{}, user string) (string
 	}
 
 	for _, userInfo := range res {
-		if strings.Compare(userInfo.Email, user) == 0 {
+		if strings.EqualFold(userInfo.Email, user) {
 			return userInfo.IamID, nil
 		}
 	}

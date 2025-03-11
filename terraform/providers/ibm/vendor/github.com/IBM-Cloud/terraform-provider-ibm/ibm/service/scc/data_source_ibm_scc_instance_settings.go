@@ -5,13 +5,13 @@ package scc
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/scc-go-sdk/v5/securityandcompliancecenterapiv3"
 )
@@ -103,7 +103,7 @@ func dataSourceIbmSccInstanceSettingsRead(context context.Context, d *schema.Res
 			return nil
 		}
 		log.Printf("[DEBUG] GetSettingsWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetSettingsWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("GetSettingsWithContext failed %s\n%s", err, response))
 	}
 
 	if !core.IsNil(settings.EventNotifications) {
@@ -113,7 +113,7 @@ func dataSourceIbmSccInstanceSettingsRead(context context.Context, d *schema.Res
 		}
 
 		if err = d.Set("event_notifications", []map[string]interface{}{eventNotificationsMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting event_notifications: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting event_notifications: %s", err))
 		}
 	}
 	if !core.IsNil(settings.ObjectStorage) {
@@ -122,7 +122,7 @@ func dataSourceIbmSccInstanceSettingsRead(context context.Context, d *schema.Res
 			return diag.FromErr(err)
 		}
 		if err = d.Set("object_storage", []map[string]interface{}{objectStorageMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting object_storage: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting object_storage: %s", err))
 		}
 	}
 	return nil

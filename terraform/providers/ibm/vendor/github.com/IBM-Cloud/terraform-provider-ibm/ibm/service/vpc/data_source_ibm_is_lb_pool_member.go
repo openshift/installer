@@ -202,7 +202,7 @@ func dataSourceLoadBalancerPoolMemberTargetToMap(targetItem vpcv1.LoadBalancerPo
 	return targetMap
 }
 
-func dataSourceLoadBalancerPoolMemberTargetDeletedToMap(deletedItem vpcv1.InstanceReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceLoadBalancerPoolMemberTargetDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {

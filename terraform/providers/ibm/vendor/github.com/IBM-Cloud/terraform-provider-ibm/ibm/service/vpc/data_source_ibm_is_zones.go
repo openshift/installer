@@ -12,6 +12,7 @@ import (
 
 const (
 	isZoneNames = "zones"
+	isZonesInfo = "zone_info"
 )
 
 func DataSourceIBMISZones() *schema.Resource {
@@ -34,6 +35,31 @@ func DataSourceIBMISZones() *schema.Resource {
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+			isZonesInfo: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The zones information in the region",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						isZoneName: {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						isZoneUniversalName: {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						isZoneDataCenter: {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						isZoneStatus: {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -59,13 +85,25 @@ func zonesList(d *schema.ResourceData, meta interface{}, regionName string) erro
 	}
 	names := make([]string, 0)
 	status := d.Get(isZoneStatus).(string)
+	zonesList := make([]map[string]interface{}, 0)
 	for _, zone := range availableZones.Zones {
+		zoneInfo := map[string]interface{}{}
 		if status == "" || *zone.Status == status {
 			names = append(names, *zone.Name)
+			zoneInfo[isZoneName] = *zone.Name
+			zoneInfo[isZoneStatus] = *zone.Status
+			if zone.DataCenter != nil {
+				zoneInfo[isZoneDataCenter] = *zone.DataCenter
+			}
+			if zone.UniversalName != nil {
+				zoneInfo[isZoneUniversalName] = *zone.UniversalName
+			}
 		}
+		zonesList = append(zonesList, zoneInfo)
 	}
 	d.SetId(dataSourceIBMISZonesId(d))
 	d.Set(isZoneNames, names)
+	d.Set(isZonesInfo, zonesList)
 	return nil
 }
 

@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2023 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package codeengine
@@ -27,127 +27,132 @@ func ResourceIbmCodeEngineBuild() *schema.Resource {
 		Importer:      &schema.ResourceImporter{},
 
 		Schema: map[string]*schema.Schema{
-			"project_id": &schema.Schema{
+			"project_id": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_code_engine_build", "project_id"),
 				Description:  "The ID of the project.",
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_code_engine_build", "name"),
-				Description:  "The name of the build. Use a name that is unique within the project.",
+				Description:  "The name of the build.",
 			},
-			"output_image": &schema.Schema{
+			"output_image": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_code_engine_build", "output_image"),
 				Description:  "The name of the image.",
 			},
-			"output_secret": &schema.Schema{
+			"output_secret": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_code_engine_build", "output_secret"),
 				Description:  "The secret that is required to access the image registry. Make sure that the secret is granted with push permissions towards the specified container registry namespace.",
 			},
-			"strategy_type": &schema.Schema{
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validate.InvokeValidator("ibm_code_engine_build", "strategy_type"),
-				Description:  "The strategy to use for building the image.",
-			},
-			"source_context_dir": &schema.Schema{
+			"source_context_dir": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_code_engine_build", "source_context_dir"),
-				Description:  "Option directory in the repository that contains the buildpacks file or the Dockerfile.",
+				Description:  "Optional directory in the repository that contains the buildpacks file or the Dockerfile.",
 			},
-			"source_revision": &schema.Schema{
+			"source_revision": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_code_engine_build", "source_revision"),
 				Description:  "Commit, tag, or branch in the source repository to pull. This field is optional if the `source_type` is `git` and uses the HEAD of default branch if not specified. If the `source_type` value is `local`, this field must be omitted.",
 			},
-			"source_secret": &schema.Schema{
+			"source_secret": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_code_engine_build", "source_secret"),
 				Description:  "Name of the secret that is used access the repository source. This field is optional if the `source_type` is `git`. Additionally, if the `source_url` points to a repository that requires authentication, the build will be created but cannot access any source code, until this property is provided, too. If the `source_type` value is `local`, this field must be omitted.",
 			},
-			"source_type": &schema.Schema{
+			"source_type": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Default:      "git",
 				ValidateFunc: validate.InvokeValidator("ibm_code_engine_build", "source_type"),
 				Description:  "Specifies the type of source to determine if your build source is in a repository or based on local source code.* local - For builds from local source code.* git - For builds from git version controlled source code.",
 			},
-			"source_url": &schema.Schema{
+			"source_url": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_code_engine_build", "source_url"),
 				Description:  "The URL of the code repository. This field is required if the `source_type` is `git`. If the `source_type` value is `local`, this field must be omitted. If the repository is publicly available you can provide a 'https' URL like `https://github.com/IBM/CodeEngine`. If the repository requires authentication, you need to provide a 'ssh' URL like `git@github.com:IBM/CodeEngine.git` along with a `source_secret` that points to a secret of format `ssh_auth`.",
 			},
-			"strategy_size": &schema.Schema{
+			"strategy_size": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Default:      "medium",
 				ValidateFunc: validate.InvokeValidator("ibm_code_engine_build", "strategy_size"),
-				Description:  "Optional size for the build, which determines the amount of resources used. Build sizes are `small`, `medium`, `large`, `xlarge`.",
+				Description:  "Optional size for the build, which determines the amount of resources used. Build sizes are `small`, `medium`, `large`, `xlarge`, `xxlarge`.",
 			},
-			"strategy_spec_file": &schema.Schema{
+			"strategy_spec_file": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Default:      "Dockerfile",
 				ValidateFunc: validate.InvokeValidator("ibm_code_engine_build", "strategy_spec_file"),
 				Description:  "Optional path to the specification file that is used for build strategies for building an image.",
 			},
-			"timeout": &schema.Schema{
+			"strategy_type": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validate.InvokeValidator("ibm_code_engine_build", "strategy_type"),
+				Description:  "The strategy to use for building the image.",
+			},
+			"timeout": {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Default:      600,
 				ValidateFunc: validate.InvokeValidator("ibm_code_engine_build", "timeout"),
 				Description:  "The maximum amount of time, in seconds, that can pass before the build must succeed or fail.",
 			},
-			"created_at": &schema.Schema{
+			"created_at": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The timestamp when the resource was created.",
 			},
-			"entity_tag": &schema.Schema{
+			"entity_tag": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The version of the build instance, which is used to achieve optimistic locking.",
 			},
-			"href": &schema.Schema{
+			"href": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "When you provision a new build,  a URL is created identifying the location of the instance.",
 			},
-			"build_id": &schema.Schema{
+			"build_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The identifier of the resource.",
 			},
-			"resource_type": &schema.Schema{
+			"region": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The region of the project the resource is located in. Possible values: 'au-syd', 'br-sao', 'ca-tor', 'eu-de', 'eu-gb', 'jp-osa', 'jp-tok', 'us-east', 'us-south'.",
+			},
+			"resource_type": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The type of the build.",
 			},
-			"status": &schema.Schema{
+			"status": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The current status of the build.",
 			},
-			"status_details": &schema.Schema{
+			"status_details": {
 				Type:        schema.TypeList,
 				Computed:    true,
 				Description: "The detailed status of the build.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"reason": &schema.Schema{
+						"reason": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Optional information to provide more context in case of a 'failed' or 'warning' status.",
@@ -155,7 +160,7 @@ func ResourceIbmCodeEngineBuild() *schema.Resource {
 					},
 				},
 			},
-			"etag": &schema.Schema{
+			"etag": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -199,15 +204,6 @@ func ResourceIbmCodeEngineBuildValidator() *validate.ResourceValidator {
 			Type:                       validate.TypeString,
 			Required:                   true,
 			Regexp:                     `^[a-z0-9]([\-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([\-a-z0-9]*[a-z0-9])?)*$`,
-			MinValueLength:             1,
-			MaxValueLength:             253,
-		},
-		validate.ValidateSchema{
-			Identifier:                 "strategy_type",
-			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
-			Type:                       validate.TypeString,
-			Required:                   true,
-			Regexp:                     `[\S]*`,
 			MinValueLength:             1,
 			MaxValueLength:             253,
 		},
@@ -273,6 +269,15 @@ func ResourceIbmCodeEngineBuildValidator() *validate.ResourceValidator {
 			MaxValueLength:             253,
 		},
 		validate.ValidateSchema{
+			Identifier:                 "strategy_type",
+			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			Regexp:                     `[\S]*`,
+			MinValueLength:             1,
+			MaxValueLength:             253,
+		},
+		validate.ValidateSchema{
 			Identifier:                 "timeout",
 			ValidateFunctionIdentifier: validate.IntBetween,
 			Type:                       validate.TypeInt,
@@ -289,7 +294,9 @@ func ResourceIbmCodeEngineBuildValidator() *validate.ResourceValidator {
 func resourceIbmCodeEngineBuildCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_build", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	createBuildOptions := &codeenginev2.CreateBuildOptions{}
@@ -324,10 +331,11 @@ func resourceIbmCodeEngineBuildCreate(context context.Context, d *schema.Resourc
 		createBuildOptions.SetTimeout(int64(d.Get("timeout").(int)))
 	}
 
-	build, response, err := codeEngineClient.CreateBuildWithContext(context, createBuildOptions)
+	build, _, err := codeEngineClient.CreateBuildWithContext(context, createBuildOptions)
 	if err != nil {
-		log.Printf("[DEBUG] CreateBuildWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateBuildWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateBuildWithContext failed: %s", err.Error()), "ibm_code_engine_build", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *createBuildOptions.ProjectID, *build.Name))
@@ -338,14 +346,17 @@ func resourceIbmCodeEngineBuildCreate(context context.Context, d *schema.Resourc
 func resourceIbmCodeEngineBuildRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getBuildOptions := &codeenginev2.GetBuildOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read")
+		return tfErr.GetDiag()
 	}
 
 	getBuildOptions.SetProjectID(parts[0])
@@ -357,91 +368,97 @@ func resourceIbmCodeEngineBuildRead(context context.Context, d *schema.ResourceD
 			d.SetId("")
 			return nil
 		}
-		log.Printf("[DEBUG] GetBuildWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetBuildWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetBuildWithContext failed: %s", err.Error()), "ibm_code_engine_build", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("project_id", build.ProjectID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting project_id: %s", err))
+		return diag.FromErr(fmt.Errorf("error setting project_id: %s", err))
 	}
 	if err = d.Set("name", build.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		return diag.FromErr(fmt.Errorf("error setting name: %s", err))
 	}
 	if err = d.Set("output_image", build.OutputImage); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting output_image: %s", err))
+		return diag.FromErr(fmt.Errorf("error setting output_image: %s", err))
 	}
 	if err = d.Set("output_secret", build.OutputSecret); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting output_secret: %s", err))
-	}
-	if err = d.Set("strategy_type", build.StrategyType); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting strategy_type: %s", err))
+		return diag.FromErr(fmt.Errorf("error setting output_secret: %s", err))
 	}
 	if !core.IsNil(build.SourceContextDir) {
 		if err = d.Set("source_context_dir", build.SourceContextDir); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting source_context_dir: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting source_context_dir: %s", err))
 		}
 	}
 	if !core.IsNil(build.SourceRevision) {
 		if err = d.Set("source_revision", build.SourceRevision); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting source_revision: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting source_revision: %s", err))
 		}
 	}
 	if !core.IsNil(build.SourceSecret) {
 		if err = d.Set("source_secret", build.SourceSecret); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting source_secret: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting source_secret: %s", err))
 		}
 	}
 	if !core.IsNil(build.SourceType) {
 		if err = d.Set("source_type", build.SourceType); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting source_type: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting source_type: %s", err))
 		}
 	}
 	if !core.IsNil(build.SourceURL) {
 		if err = d.Set("source_url", build.SourceURL); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting source_url: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting source_url: %s", err))
 		}
 	}
 	if !core.IsNil(build.StrategySize) {
 		if err = d.Set("strategy_size", build.StrategySize); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting strategy_size: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting strategy_size: %s", err))
 		}
 	}
 	if !core.IsNil(build.StrategySpecFile) {
 		if err = d.Set("strategy_spec_file", build.StrategySpecFile); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting strategy_spec_file: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting strategy_spec_file: %s", err))
 		}
+	}
+	if err = d.Set("strategy_type", build.StrategyType); err != nil {
+		return diag.FromErr(fmt.Errorf("error setting strategy_type: %s", err))
 	}
 	if !core.IsNil(build.Timeout) {
 		if err = d.Set("timeout", flex.IntValue(build.Timeout)); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting timeout: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting timeout: %s", err))
 		}
 	}
 	if !core.IsNil(build.CreatedAt) {
 		if err = d.Set("created_at", build.CreatedAt); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting created_at: %s", err))
 		}
 	}
 	if err = d.Set("entity_tag", build.EntityTag); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting entity_tag: %s", err))
+		return diag.FromErr(fmt.Errorf("error setting entity_tag: %s", err))
 	}
 	if !core.IsNil(build.Href) {
 		if err = d.Set("href", build.Href); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting href: %s", err))
 		}
 	}
 	if !core.IsNil(build.ID) {
 		if err = d.Set("build_id", build.ID); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting build_id: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting build_id: %s", err))
+		}
+	}
+	if !core.IsNil(build.Region) {
+		if err = d.Set("region", build.Region); err != nil {
+			return diag.FromErr(fmt.Errorf("error setting region: %s", err))
 		}
 	}
 	if !core.IsNil(build.ResourceType) {
 		if err = d.Set("resource_type", build.ResourceType); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting resource_type: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting resource_type: %s", err))
 		}
 	}
 	if !core.IsNil(build.Status) {
 		if err = d.Set("status", build.Status); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting status: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting status: %s", err))
 		}
 	}
 	if !core.IsNil(build.StatusDetails) {
@@ -450,11 +467,12 @@ func resourceIbmCodeEngineBuildRead(context context.Context, d *schema.ResourceD
 			return diag.FromErr(err)
 		}
 		if err = d.Set("status_details", []map[string]interface{}{statusDetailsMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting status_details: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting status_details: %s", err))
 		}
 	}
 	if err = d.Set("etag", response.Headers.Get("Etag")); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting etag: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting etag: %s", err), "ibm_code_engine_build", "read")
+		return tfErr.GetDiag()
 	}
 
 	return nil
@@ -463,14 +481,17 @@ func resourceIbmCodeEngineBuildRead(context context.Context, d *schema.ResourceD
 func resourceIbmCodeEngineBuildUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_build", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	updateBuildOptions := &codeenginev2.UpdateBuildOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_build", "update")
+		return tfErr.GetDiag()
 	}
 
 	updateBuildOptions.SetProjectID(parts[0])
@@ -480,20 +501,19 @@ func resourceIbmCodeEngineBuildUpdate(context context.Context, d *schema.Resourc
 
 	patchVals := &codeenginev2.BuildPatch{}
 	if d.HasChange("project_id") {
-		return diag.FromErr(fmt.Errorf("Cannot update resource property \"%s\" with the ForceNew annotation."+
-			" The resource must be re-created to update this property.", "project_id"))
+		errMsg := fmt.Sprintf("Cannot update resource property \"%s\" with the ForceNew annotation."+
+			" The resource must be re-created to update this property.", "project_id")
+		tfErr := flex.TerraformErrorf(err, errMsg, "ibm_code_engine_build", "update")
+		return tfErr.GetDiag()
 	}
-	if d.HasChange("name") {
-		return diag.FromErr(fmt.Errorf("Cannot update resource property \"%s\" with the ForceNew annotation."+
-			" The resource must be re-created to update this property.", "name"))
-	}
-	if d.HasChange("output_image") || d.HasChange("output_secret") || d.HasChange("strategy_type") {
+	if d.HasChange("output_image") {
 		newOutputImage := d.Get("output_image").(string)
 		patchVals.OutputImage = &newOutputImage
+		hasChange = true
+	}
+	if d.HasChange("output_secret") {
 		newOutputSecret := d.Get("output_secret").(string)
 		patchVals.OutputSecret = &newOutputSecret
-		newStrategyType := d.Get("strategy_type").(string)
-		patchVals.StrategyType = &newStrategyType
 		hasChange = true
 	}
 	if d.HasChange("source_context_dir") {
@@ -531,6 +551,11 @@ func resourceIbmCodeEngineBuildUpdate(context context.Context, d *schema.Resourc
 		patchVals.StrategySpecFile = &newStrategySpecFile
 		hasChange = true
 	}
+	if d.HasChange("strategy_type") {
+		newStrategyType := d.Get("strategy_type").(string)
+		patchVals.StrategyType = &newStrategyType
+		hasChange = true
+	}
 	if d.HasChange("timeout") {
 		newTimeout := int64(d.Get("timeout").(int))
 		patchVals.Timeout = &newTimeout
@@ -540,10 +565,11 @@ func resourceIbmCodeEngineBuildUpdate(context context.Context, d *schema.Resourc
 
 	if hasChange {
 		updateBuildOptions.Build, _ = patchVals.AsPatch()
-		_, response, err := codeEngineClient.UpdateBuildWithContext(context, updateBuildOptions)
+		_, _, err = codeEngineClient.UpdateBuildWithContext(context, updateBuildOptions)
 		if err != nil {
-			log.Printf("[DEBUG] UpdateBuildWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("UpdateBuildWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateBuildWithContext failed: %s", err.Error()), "ibm_code_engine_build", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -553,23 +579,27 @@ func resourceIbmCodeEngineBuildUpdate(context context.Context, d *schema.Resourc
 func resourceIbmCodeEngineBuildDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_build", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	deleteBuildOptions := &codeenginev2.DeleteBuildOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_build", "delete")
+		return tfErr.GetDiag()
 	}
 
 	deleteBuildOptions.SetProjectID(parts[0])
 	deleteBuildOptions.SetName(parts[1])
 
-	response, err := codeEngineClient.DeleteBuildWithContext(context, deleteBuildOptions)
+	_, err = codeEngineClient.DeleteBuildWithContext(context, deleteBuildOptions)
 	if err != nil {
-		log.Printf("[DEBUG] DeleteBuildWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteBuildWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteBuildWithContext failed: %s", err.Error()), "ibm_code_engine_build", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")

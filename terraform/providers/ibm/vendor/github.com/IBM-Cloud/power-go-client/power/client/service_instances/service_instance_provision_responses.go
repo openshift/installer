@@ -6,6 +6,7 @@ package service_instances
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -127,11 +128,13 @@ func (o *ServiceInstanceProvisionOK) Code() int {
 }
 
 func (o *ServiceInstanceProvisionOK) Error() string {
-	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionOK %s", 200, payload)
 }
 
 func (o *ServiceInstanceProvisionOK) String() string {
-	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionOK %s", 200, payload)
 }
 
 func (o *ServiceInstanceProvisionOK) GetPayload() *models.ServiceInstanceProvision {
@@ -195,11 +198,13 @@ func (o *ServiceInstanceProvisionCreated) Code() int {
 }
 
 func (o *ServiceInstanceProvisionCreated) Error() string {
-	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionCreated  %+v", 201, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionCreated %s", 201, payload)
 }
 
 func (o *ServiceInstanceProvisionCreated) String() string {
-	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionCreated  %+v", 201, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionCreated %s", 201, payload)
 }
 
 func (o *ServiceInstanceProvisionCreated) GetPayload() *models.ServiceInstanceProvision {
@@ -263,11 +268,13 @@ func (o *ServiceInstanceProvisionAccepted) Code() int {
 }
 
 func (o *ServiceInstanceProvisionAccepted) Error() string {
-	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionAccepted  %+v", 202, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionAccepted %s", 202, payload)
 }
 
 func (o *ServiceInstanceProvisionAccepted) String() string {
-	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionAccepted  %+v", 202, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionAccepted %s", 202, payload)
 }
 
 func (o *ServiceInstanceProvisionAccepted) GetPayload() *models.ServiceInstanceAsyncOperation {
@@ -331,11 +338,13 @@ func (o *ServiceInstanceProvisionBadRequest) Code() int {
 }
 
 func (o *ServiceInstanceProvisionBadRequest) Error() string {
-	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionBadRequest %s", 400, payload)
 }
 
 func (o *ServiceInstanceProvisionBadRequest) String() string {
-	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionBadRequest %s", 400, payload)
 }
 
 func (o *ServiceInstanceProvisionBadRequest) GetPayload() *models.Error {
@@ -399,11 +408,13 @@ func (o *ServiceInstanceProvisionUnauthorized) Code() int {
 }
 
 func (o *ServiceInstanceProvisionUnauthorized) Error() string {
-	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionUnauthorized %s", 401, payload)
 }
 
 func (o *ServiceInstanceProvisionUnauthorized) String() string {
-	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionUnauthorized %s", 401, payload)
 }
 
 func (o *ServiceInstanceProvisionUnauthorized) GetPayload() *models.Error {
@@ -467,11 +478,13 @@ func (o *ServiceInstanceProvisionForbidden) Code() int {
 }
 
 func (o *ServiceInstanceProvisionForbidden) Error() string {
-	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionForbidden %s", 403, payload)
 }
 
 func (o *ServiceInstanceProvisionForbidden) String() string {
-	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionForbidden %s", 403, payload)
 }
 
 func (o *ServiceInstanceProvisionForbidden) GetPayload() *models.Error {
@@ -535,11 +548,13 @@ func (o *ServiceInstanceProvisionNotFound) Code() int {
 }
 
 func (o *ServiceInstanceProvisionNotFound) Error() string {
-	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionNotFound %s", 404, payload)
 }
 
 func (o *ServiceInstanceProvisionNotFound) String() string {
-	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionNotFound %s", 404, payload)
 }
 
 func (o *ServiceInstanceProvisionNotFound) GetPayload() *models.Error {
@@ -603,11 +618,13 @@ func (o *ServiceInstanceProvisionConflict) Code() int {
 }
 
 func (o *ServiceInstanceProvisionConflict) Error() string {
-	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionConflict  %+v", 409, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionConflict %s", 409, payload)
 }
 
 func (o *ServiceInstanceProvisionConflict) String() string {
-	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionConflict  %+v", 409, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionConflict %s", 409, payload)
 }
 
 func (o *ServiceInstanceProvisionConflict) GetPayload() *models.Error {
@@ -671,11 +688,13 @@ func (o *ServiceInstanceProvisionUnprocessableEntity) Code() int {
 }
 
 func (o *ServiceInstanceProvisionUnprocessableEntity) Error() string {
-	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionUnprocessableEntity  %+v", 422, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionUnprocessableEntity %s", 422, payload)
 }
 
 func (o *ServiceInstanceProvisionUnprocessableEntity) String() string {
-	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionUnprocessableEntity  %+v", 422, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionUnprocessableEntity %s", 422, payload)
 }
 
 func (o *ServiceInstanceProvisionUnprocessableEntity) GetPayload() *models.Error {

@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2023 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package codeengine
@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/code-engine-go-sdk/codeenginev2"
 )
 
@@ -57,7 +58,7 @@ func DataSourceIbmCodeEngineBinding() *schema.Resource {
 			"prefix": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The value that is set as prefix in the component that is bound.",
+				Description: "The value that is set as a prefix in the component that is bound.",
 			},
 			"resource_type": {
 				Type:        schema.TypeString,
@@ -81,7 +82,9 @@ func DataSourceIbmCodeEngineBinding() *schema.Resource {
 func dataSourceIbmCodeEngineBindingRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_binding", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getBindingOptions := &codeenginev2.GetBindingOptions{}
@@ -89,10 +92,11 @@ func dataSourceIbmCodeEngineBindingRead(context context.Context, d *schema.Resou
 	getBindingOptions.SetProjectID(d.Get("project_id").(string))
 	getBindingOptions.SetID(d.Get("binding_id").(string))
 
-	binding, response, err := codeEngineClient.GetBindingWithContext(context, getBindingOptions)
+	binding, _, err := codeEngineClient.GetBindingWithContext(context, getBindingOptions)
 	if err != nil {
-		log.Printf("[DEBUG] GetBindingWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetBindingWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetBindingWithContext failed: %s", err.Error()), "(Data) ibm_code_engine_binding", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *getBindingOptions.ProjectID, *getBindingOptions.ID))
@@ -101,34 +105,39 @@ func dataSourceIbmCodeEngineBindingRead(context context.Context, d *schema.Resou
 	if binding.Component != nil {
 		modelMap, err := dataSourceIbmCodeEngineBindingComponentRefToMap(binding.Component)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_binding", "read")
+			return tfErr.GetDiag()
 		}
 		component = append(component, modelMap)
 	}
-
-	errString := "Error setting %s %s"
 	if err = d.Set("component", component); err != nil {
-		return diag.FromErr(fmt.Errorf(errString, "component", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting component: %s", err), "(Data) ibm_code_engine_binding", "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("href", binding.Href); err != nil {
-		return diag.FromErr(fmt.Errorf(errString, "href", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting href: %s", err), "(Data) ibm_code_engine_binding", "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("prefix", binding.Prefix); err != nil {
-		return diag.FromErr(fmt.Errorf(errString, "prefix", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting prefix: %s", err), "(Data) ibm_code_engine_binding", "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("resource_type", binding.ResourceType); err != nil {
-		return diag.FromErr(fmt.Errorf(errString, "resource_type", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting resource_type: %s", err), "(Data) ibm_code_engine_binding", "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("secret_name", binding.SecretName); err != nil {
-		return diag.FromErr(fmt.Errorf(errString, "secret_name", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting secret_name: %s", err), "(Data) ibm_code_engine_binding", "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("status", binding.Status); err != nil {
-		return diag.FromErr(fmt.Errorf(errString, "status", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting status: %s", err), "(Data) ibm_code_engine_binding", "read")
+		return tfErr.GetDiag()
 	}
 
 	return nil

@@ -33,7 +33,7 @@ type VPNConnectionCreate struct {
 	// Mode used by this VPNConnection, either policy-based, or route-based, this attribute is set at the creation and cannot be updated later.
 	// Example: policy
 	// Required: true
-	// Enum: [policy route]
+	// Enum: ["policy","route"]
 	Mode *string `json:"mode"`
 
 	// VPN Connection name

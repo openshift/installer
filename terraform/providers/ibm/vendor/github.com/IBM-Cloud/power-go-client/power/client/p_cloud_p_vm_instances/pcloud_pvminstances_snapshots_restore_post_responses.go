@@ -6,6 +6,7 @@ package p_cloud_p_vm_instances
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -115,11 +116,13 @@ func (o *PcloudPvminstancesSnapshotsRestorePostAccepted) Code() int {
 }
 
 func (o *PcloudPvminstancesSnapshotsRestorePostAccepted) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostAccepted  %+v", 202, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostAccepted %s", 202, payload)
 }
 
 func (o *PcloudPvminstancesSnapshotsRestorePostAccepted) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostAccepted  %+v", 202, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostAccepted %s", 202, payload)
 }
 
 func (o *PcloudPvminstancesSnapshotsRestorePostAccepted) GetPayload() *models.Snapshot {
@@ -183,11 +186,13 @@ func (o *PcloudPvminstancesSnapshotsRestorePostBadRequest) Code() int {
 }
 
 func (o *PcloudPvminstancesSnapshotsRestorePostBadRequest) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostBadRequest %s", 400, payload)
 }
 
 func (o *PcloudPvminstancesSnapshotsRestorePostBadRequest) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostBadRequest %s", 400, payload)
 }
 
 func (o *PcloudPvminstancesSnapshotsRestorePostBadRequest) GetPayload() *models.Error {
@@ -251,11 +256,13 @@ func (o *PcloudPvminstancesSnapshotsRestorePostUnauthorized) Code() int {
 }
 
 func (o *PcloudPvminstancesSnapshotsRestorePostUnauthorized) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudPvminstancesSnapshotsRestorePostUnauthorized) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudPvminstancesSnapshotsRestorePostUnauthorized) GetPayload() *models.Error {
@@ -319,11 +326,13 @@ func (o *PcloudPvminstancesSnapshotsRestorePostForbidden) Code() int {
 }
 
 func (o *PcloudPvminstancesSnapshotsRestorePostForbidden) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostForbidden %s", 403, payload)
 }
 
 func (o *PcloudPvminstancesSnapshotsRestorePostForbidden) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostForbidden %s", 403, payload)
 }
 
 func (o *PcloudPvminstancesSnapshotsRestorePostForbidden) GetPayload() *models.Error {
@@ -387,11 +396,13 @@ func (o *PcloudPvminstancesSnapshotsRestorePostNotFound) Code() int {
 }
 
 func (o *PcloudPvminstancesSnapshotsRestorePostNotFound) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostNotFound %s", 404, payload)
 }
 
 func (o *PcloudPvminstancesSnapshotsRestorePostNotFound) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostNotFound %s", 404, payload)
 }
 
 func (o *PcloudPvminstancesSnapshotsRestorePostNotFound) GetPayload() *models.Error {
@@ -455,11 +466,13 @@ func (o *PcloudPvminstancesSnapshotsRestorePostConflict) Code() int {
 }
 
 func (o *PcloudPvminstancesSnapshotsRestorePostConflict) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostConflict  %+v", 409, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostConflict %s", 409, payload)
 }
 
 func (o *PcloudPvminstancesSnapshotsRestorePostConflict) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostConflict  %+v", 409, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostConflict %s", 409, payload)
 }
 
 func (o *PcloudPvminstancesSnapshotsRestorePostConflict) GetPayload() *models.Error {
@@ -523,11 +536,13 @@ func (o *PcloudPvminstancesSnapshotsRestorePostInternalServerError) Code() int {
 }
 
 func (o *PcloudPvminstancesSnapshotsRestorePostInternalServerError) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudPvminstancesSnapshotsRestorePostInternalServerError) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudPvminstancesSnapshotsRestorePostInternalServerError) GetPayload() *models.Error {

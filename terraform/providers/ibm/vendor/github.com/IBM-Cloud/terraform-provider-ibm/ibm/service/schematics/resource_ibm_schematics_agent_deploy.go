@@ -27,9 +27,9 @@ func ResourceIbmSchematicsAgentDeploy() *schema.Resource {
 		DeleteContext: resourceIbmSchematicsAgentDeployDelete,
 		Importer:      &schema.ResourceImporter{},
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(10 * time.Minute),
-			Update: schema.DefaultTimeout(10 * time.Minute),
-			Delete: schema.DefaultTimeout(10 * time.Minute),
+			Create: schema.DefaultTimeout(30 * time.Minute),
+			Update: schema.DefaultTimeout(30 * time.Minute),
+			Delete: schema.DefaultTimeout(30 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -102,9 +102,8 @@ func resourceIbmSchematicsAgentDeployCreate(context context.Context, d *schema.R
 
 	deployAgentJobOptions := &schematicsv1.DeployAgentJobOptions{}
 	ff := map[string]string{
-		"X-Feature-Agents": "true",
-		"Authorization":    iamAccessToken,
-		"refresh_token":    iamRefreshToken,
+		"Authorization": iamAccessToken,
+		"refresh_token": iamRefreshToken,
 	}
 	deployAgentJobOptions.Headers = ff
 	deployAgentJobOptions.SetAgentID(d.Get("agent_id").(string))
@@ -130,17 +129,21 @@ func resourceIbmSchematicsAgentDeployCreate(context context.Context, d *schema.R
 }
 
 const (
-	agentProvisioningTriggered = "Triggered deployment"
-	agentProvisioningDone      = "success"
-	agentProvisioningPending   = "PENDING"
-	agentProvisioninFailed     = "Job Failed"
+	agentProvisioningStatusCodeJobCancelled      = "job_cancelled"
+	agentProvisioningStatusCodeJobFailed         = "job_failed"
+	agentProvisioningStatusCodeJobFinished       = "job_finished"
+	agentProvisioningStatusCodeJobInProgress     = "job_in_progress"
+	agentProvisioningStatusCodeJobPending        = "job_pending"
+	agentProvisioningStatusCodeJobReadyToExecute = "job_ready_to_execute"
+	agentProvisioningStatusCodeJobStopInProgress = "job_stop_in_progress"
+	agentProvisioningStatusCodeJobStopped        = "job_stopped"
 )
 
 func isWaitForAgentAvailable(context context.Context, schematicsClient *schematicsv1.SchematicsV1, id string, timeout time.Duration) (interface{}, error) {
 	log.Printf("Waiting for agent (%s) to be available.", id)
 	stateConf := &resource.StateChangeConf{
-		Pending:    []string{"retry", agentProvisioningPending, agentProvisioningTriggered},
-		Target:     []string{agentProvisioningDone, agentProvisioninFailed, ""},
+		Pending:    []string{"retry", agentProvisioningStatusCodeJobInProgress, agentProvisioningStatusCodeJobPending, agentProvisioningStatusCodeJobReadyToExecute, agentProvisioningStatusCodeJobStopInProgress},
+		Target:     []string{agentProvisioningStatusCodeJobFinished, agentProvisioningStatusCodeJobFailed, agentProvisioningStatusCodeJobCancelled, agentProvisioningStatusCodeJobStopped, ""},
 		Refresh:    agentRefreshFunc(schematicsClient, id),
 		Timeout:    timeout,
 		Delay:      10 * time.Second,
@@ -154,19 +157,15 @@ func agentRefreshFunc(schematicsClient *schematicsv1.SchematicsV1, id string) re
 			AgentID: core.StringPtr(id),
 			Profile: core.StringPtr("detailed"),
 		}
-		ff := map[string]string{
-			"X-Feature-Agents": "true",
-		}
-		getAgentDataOptions.Headers = ff
 
 		agent, response, err := schematicsClient.GetAgentData(getAgentDataOptions)
 		if err != nil {
 			return nil, "", fmt.Errorf("[ERROR] Error Getting Agent: %s\n%s", err, response)
 		}
-		if *agent.RecentDeployJob.StatusMessage == agentProvisioninFailed || *agent.RecentDeployJob.StatusMessage == agentProvisioningDone {
-			return agent, agentProvisioningDone, nil
+		if agent.RecentDeployJob.StatusCode != nil {
+			return agent, *agent.RecentDeployJob.StatusCode, nil
 		}
-		return agent, agentProvisioningPending, nil
+		return agent, agentProvisioningStatusCodeJobPending, nil
 	}
 }
 
@@ -184,10 +183,6 @@ func resourceIbmSchematicsAgentDeployRead(context context.Context, d *schema.Res
 	getAgentDataOptions := &schematicsv1.GetAgentDataOptions{
 		Profile: core.StringPtr("detailed"),
 	}
-	ff := map[string]string{
-		"X-Feature-Agents": "true",
-	}
-	getAgentDataOptions.Headers = ff
 
 	getAgentDataOptions.SetAgentID(parts[0])
 	agentData, response, err := schematicsClient.GetAgentDataWithContext(context, getAgentDataOptions)
@@ -243,9 +238,8 @@ func resourceIbmSchematicsAgentDeployUpdate(context context.Context, d *schema.R
 	iamRefreshToken := session.Config.IAMRefreshToken
 	deployAgentJobOptions := &schematicsv1.DeployAgentJobOptions{}
 	ff := map[string]string{
-		"X-Feature-Agents": "true",
-		"Authorization":    iamAccessToken,
-		"refresh_token":    iamRefreshToken,
+		"Authorization": iamAccessToken,
+		"refresh_token": iamRefreshToken,
 	}
 	deployAgentJobOptions.Headers = ff
 

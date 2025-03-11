@@ -6,6 +6,7 @@ package internal_storage_regions
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -109,11 +110,13 @@ func (o *InternalV1StorageRegionsStoragePoolsPutOK) Code() int {
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsPutOK) Error() string {
-	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutOK %s", 200, payload)
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsPutOK) String() string {
-	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutOK %s", 200, payload)
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsPutOK) GetPayload() *models.StoragePool {
@@ -177,11 +180,13 @@ func (o *InternalV1StorageRegionsStoragePoolsPutBadRequest) Code() int {
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsPutBadRequest) Error() string {
-	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutBadRequest %s", 400, payload)
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsPutBadRequest) String() string {
-	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutBadRequest %s", 400, payload)
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsPutBadRequest) GetPayload() *models.Error {
@@ -245,11 +250,13 @@ func (o *InternalV1StorageRegionsStoragePoolsPutUnauthorized) Code() int {
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsPutUnauthorized) Error() string {
-	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutUnauthorized %s", 401, payload)
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsPutUnauthorized) String() string {
-	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutUnauthorized %s", 401, payload)
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsPutUnauthorized) GetPayload() *models.Error {
@@ -313,11 +320,13 @@ func (o *InternalV1StorageRegionsStoragePoolsPutForbidden) Code() int {
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsPutForbidden) Error() string {
-	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutForbidden %s", 403, payload)
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsPutForbidden) String() string {
-	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutForbidden %s", 403, payload)
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsPutForbidden) GetPayload() *models.Error {
@@ -381,11 +390,13 @@ func (o *InternalV1StorageRegionsStoragePoolsPutNotFound) Code() int {
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsPutNotFound) Error() string {
-	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutNotFound %s", 404, payload)
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsPutNotFound) String() string {
-	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutNotFound %s", 404, payload)
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsPutNotFound) GetPayload() *models.Error {
@@ -449,11 +460,13 @@ func (o *InternalV1StorageRegionsStoragePoolsPutInternalServerError) Code() int 
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsPutInternalServerError) Error() string {
-	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutInternalServerError %s", 500, payload)
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsPutInternalServerError) String() string {
-	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutInternalServerError %s", 500, payload)
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsPutInternalServerError) GetPayload() *models.Error {

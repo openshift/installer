@@ -11,7 +11,6 @@ import (
 	"log"
 	"net/url"
 	"os"
-	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
@@ -250,8 +249,7 @@ func ResourceIBMDatabaseInstance() *schema.Resource {
 			"service_endpoints": {
 				Description:  "Types of the service endpoints. Possible values are 'public', 'private', 'public-and-private'.",
 				Type:         schema.TypeString,
-				Optional:     true,
-				Default:      "public",
+				Required:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_database", "service_endpoints"),
 			},
 			"backup_id": {
@@ -342,88 +340,6 @@ func ResourceIBMDatabaseInstance() *schema.Resource {
 						},
 					},
 				},
-			},
-			"connectionstrings": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": {
-							Description: "User name",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
-						"composed": {
-							Description: "Connection string",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
-						"scheme": {
-							Description: "DB scheme",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
-						"certname": {
-							Description: "Certificate Name",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
-						"certbase64": {
-							Description: "Certificate in base64 encoding",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
-						"bundlename": {
-							Description: "Cassandra Bundle Name",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
-						"bundlebase64": {
-							Description: "Cassandra base64 encoding",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
-						"password": {
-							Description: "Password",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
-						"queryoptions": {
-							Description: "DB query options",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
-						"database": {
-							Description: "DB name",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
-						"path": {
-							Description: "DB path",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
-						"hosts": {
-							Type:     schema.TypeList,
-							Optional: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"hostname": {
-										Description: "DB host name",
-										Type:        schema.TypeString,
-										Computed:    true,
-									},
-									"port": {
-										Description: "DB port",
-										Type:        schema.TypeString,
-										Computed:    true,
-									},
-								},
-							},
-						},
-					},
-				},
-				Deprecated: "This field is deprecated, please use ibm_database_connection instead",
 			},
 			"allowlist": {
 				Type:     schema.TypeSet,
@@ -530,6 +446,27 @@ func ResourceIBMDatabaseInstance() *schema.Resource {
 								},
 							},
 						},
+						"host_flavor": {
+							Optional: true,
+							Type:     schema.TypeSet,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"id": {
+										Type:     schema.TypeString,
+										Required: true,
+										ValidateFunc: validation.StringInSlice([]string{
+											"multitenant",
+											"b3c.4x16.encrypted",
+											"b3c.8x32.encrypted",
+											"m3c.8x64.encrypted",
+											"b3c.16x64.encrypted",
+											"b3c.32x128.encrypted",
+											"m3c.30x240.encrypted"}, false),
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -582,6 +519,16 @@ func ResourceIBMDatabaseInstance() *schema.Resource {
 										Type:        schema.TypeBool,
 										Computed:    true,
 										Description: "Can memory scale down as well as up.",
+									},
+									"cpu_enforcement_ratio_ceiling_mb": {
+										Type:        schema.TypeInt,
+										Optional:    true,
+										Description: "The amount of memory required before the cpu/memory ratio is no longer enforced. (multitenant only).",
+									},
+									"cpu_enforcement_ratio_mb": {
+										Type:        schema.TypeInt,
+										Optional:    true,
+										Description: "The maximum memory allowed per CPU until the ratio ceiling is reached. (multitenant only).",
 									},
 								},
 							},
@@ -658,6 +605,29 @@ func ResourceIBMDatabaseInstance() *schema.Resource {
 										Type:        schema.TypeBool,
 										Computed:    true,
 										Description: "Can the disk size be scaled down as well as up",
+									},
+								},
+							},
+						},
+						"host_flavor": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"id": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The host flavor id",
+									},
+									"name": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The host flavor name",
+									},
+									"hosting_size": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The host flavor size",
 									},
 								},
 							},
@@ -832,6 +802,13 @@ func ResourceIBMDatabaseInstance() *schema.Resource {
 					},
 				},
 			},
+			flex.DeletionProtection: {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Whether Terraform will be prevented from destroying the instance",
+			},
+
 			flex.ResourceName: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -896,7 +873,7 @@ func ResourceIBMICDValidator() *validate.ResourceValidator {
 			Identifier:                 "service",
 			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
 			Type:                       validate.TypeString,
-			AllowedValues:              "databases-for-etcd, databases-for-postgresql, databases-for-redis, databases-for-elasticsearch, databases-for-mongodb, messages-for-rabbitmq, databases-for-mysql, databases-for-cassandra, databases-for-enterprisedb",
+			AllowedValues:              "databases-for-etcd, databases-for-postgresql, databases-for-redis, databases-for-elasticsearch, databases-for-mongodb, messages-for-rabbitmq, databases-for-mysql, databases-for-enterprisedb",
 			Required:                   true})
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
@@ -911,13 +888,13 @@ func ResourceIBMICDValidator() *validate.ResourceValidator {
 			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
 			Type:                       validate.TypeString,
 			AllowedValues:              "public, private, public-and-private",
-			Required:                   true})
+			Required:                   false})
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
 			Identifier:                 "group_id",
 			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
 			Type:                       validate.TypeString,
-			AllowedValues:              "member, analytics, bi_connector, search",
+			AllowedValues:              "member, analytics, bi_connector",
 			Required:                   true})
 
 	ibmICDResourceValidator := validate.ResourceValidator{ResourceName: "ibm_database", Schema: validateSchema}
@@ -931,6 +908,7 @@ type Params struct {
 	Memory              int     `json:"members_memory_allocation_mb,omitempty"`
 	Disk                int     `json:"members_disk_allocation_mb,omitempty"`
 	CPU                 int     `json:"members_cpu_allocation_count,omitempty"`
+	HostFlavor          string  `json:"members_host_flavor,omitempty"`
 	KeyProtectInstance  string  `json:"disk_encryption_instance_crn,omitempty"`
 	ServiceEndpoints    string  `json:"service-endpoints,omitempty"`
 	BackupID            string  `json:"backup-id,omitempty"`
@@ -941,25 +919,32 @@ type Params struct {
 }
 
 type Group struct {
-	ID      string
-	Members *GroupResource
-	Memory  *GroupResource
-	Disk    *GroupResource
-	CPU     *GroupResource
+	ID         string
+	Members    *GroupResource
+	Memory     *GroupResource
+	Disk       *GroupResource
+	CPU        *GroupResource
+	HostFlavor *HostFlavorGroupResource
 }
 
 type GroupResource struct {
-	Units        string
-	Allocation   int
-	Minimum      int
-	Maximum      int
-	StepSize     int
-	IsAdjustable bool
-	IsOptional   bool
-	CanScaleDown bool
+	Units                        string
+	Allocation                   int
+	Minimum                      int
+	Maximum                      int
+	StepSize                     int
+	IsAdjustable                 bool
+	IsOptional                   bool
+	CanScaleDown                 bool
+	CPUEnforcementRatioCeilingMb int
+	CPUEnforcementRatioMb        int
 }
 
-func getDefaultScalingGroups(_service string, _plan string, meta interface{}) (groups []clouddatabasesv5.Group, err error) {
+type HostFlavorGroupResource struct {
+	ID string
+}
+
+func getDefaultScalingGroups(_service string, _plan string, _hostFlavor string, meta interface{}) (groups []clouddatabasesv5.Group, err error) {
 	cloudDatabasesClient, err := meta.(conns.ClientSession).CloudDatabasesV5()
 	if err != nil {
 		return groups, fmt.Errorf("[ERROR] Error getting database client settings: %s", err)
@@ -974,10 +959,6 @@ func getDefaultScalingGroups(_service string, _plan string, meta interface{}) (g
 
 	service := match[1]
 
-	if service == "cassandra" {
-		service = "datastax_enterprise_full"
-	}
-
 	if service == "mongodb" && _plan == "enterprise" {
 		service = "mongodbee"
 	}
@@ -991,9 +972,15 @@ func getDefaultScalingGroups(_service string, _plan string, meta interface{}) (g
 	}
 
 	getDefaultScalingGroupsOptions := cloudDatabasesClient.NewGetDefaultScalingGroupsOptions(service)
+	if _hostFlavor != "" {
+		getDefaultScalingGroupsOptions.SetHostFlavor(_hostFlavor)
+	}
 
-	getDefaultScalingGroupsResponse, _, err := cloudDatabasesClient.GetDefaultScalingGroups(getDefaultScalingGroupsOptions)
+	getDefaultScalingGroupsResponse, response, err := cloudDatabasesClient.GetDefaultScalingGroups(getDefaultScalingGroupsOptions)
 	if err != nil {
+		if response.StatusCode == 422 {
+			return groups, fmt.Errorf("%s is not available on multitenant", service)
+		}
 		return groups, err
 	}
 
@@ -1001,7 +988,7 @@ func getDefaultScalingGroups(_service string, _plan string, meta interface{}) (g
 }
 
 func getInitialNodeCount(service string, plan string, meta interface{}) (int, error) {
-	groups, err := getDefaultScalingGroups(service, plan, meta)
+	groups, err := getDefaultScalingGroups(service, plan, "", meta)
 
 	if err != nil {
 		return 0, err
@@ -1212,6 +1199,10 @@ func resourceIBMDatabaseInstanceCreate(context context.Context, d *schema.Resour
 			if memberGroup.CPU != nil {
 				params.CPU = memberGroup.CPU.Allocation * initialNodeCount
 			}
+
+			if memberGroup.HostFlavor != nil {
+				params.HostFlavor = memberGroup.HostFlavor.ID
+			}
 		}
 	}
 	if version, ok := d.GetOk("version"); ok {
@@ -1316,8 +1307,11 @@ func resourceIBMDatabaseInstanceCreate(context context.Context, d *schema.Resour
 			if g.CPU != nil && g.CPU.Allocation*nodeCount != currentGroup.CPU.Allocation {
 				groupScaling.CPU = &clouddatabasesv5.GroupScalingCPU{AllocationCount: core.Int64Ptr(int64(g.CPU.Allocation * nodeCount))}
 			}
+			if g.HostFlavor != nil && g.HostFlavor.ID != currentGroup.HostFlavor.ID {
+				groupScaling.HostFlavor = &clouddatabasesv5.GroupScalingHostFlavor{ID: core.StringPtr(g.HostFlavor.ID)}
+			}
 
-			if groupScaling.Members != nil || groupScaling.Memory != nil || groupScaling.Disk != nil || groupScaling.CPU != nil {
+			if groupScaling.Members != nil || groupScaling.Memory != nil || groupScaling.Disk != nil || groupScaling.CPU != nil || groupScaling.HostFlavor != nil {
 				setDeploymentScalingGroupOptions := &clouddatabasesv5.SetDeploymentScalingGroupOptions{
 					ID:      instance.ID,
 					GroupID: &g.ID,
@@ -1563,7 +1557,6 @@ func resourceIBMDatabaseInstanceRead(context context.Context, d *schema.Resource
 	}
 
 	instanceID := d.Id()
-	connectionEndpoint := "public"
 	rsInst := rc.GetResourceInstanceOptions{
 		ID: &instanceID,
 	}
@@ -1602,9 +1595,6 @@ func resourceIBMDatabaseInstanceRead(context context.Context, d *schema.Resource
 
 	if instance.Parameters != nil {
 		if endpoint, ok := instance.Parameters["service-endpoints"]; ok {
-			if endpoint == "private" {
-				connectionEndpoint = "private"
-			}
 			d.Set("service_endpoints", endpoint)
 		}
 
@@ -1669,11 +1659,14 @@ func resourceIBMDatabaseInstanceRead(context context.Context, d *schema.Resource
 	d.Set("adminuser", deployment.AdminUsernames["database"])
 	d.Set("version", deployment.Version)
 
-	groupList, err := icdClient.Groups().GetGroups(icdId)
+	listDeploymentScalingGroupsOptions := &clouddatabasesv5.ListDeploymentScalingGroupsOptions{
+		ID: core.StringPtr(instanceID),
+	}
+	groupList, _, err := cloudDatabasesClient.ListDeploymentScalingGroups(listDeploymentScalingGroupsOptions)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error getting database groups: %s", err))
 	}
-	if groupList.Groups[0].Members.AllocationCount == 0 {
+	if len(groupList.Groups) == 0 || groupList.Groups[0].Members == nil || groupList.Groups[0].Members.AllocationCount == nil || *groupList.Groups[0].Members.AllocationCount == 0 {
 		return diag.FromErr(fmt.Errorf("[ERROR] This database appears to have have 0 members. Unable to proceed"))
 	}
 
@@ -1686,7 +1679,7 @@ func resourceIBMDatabaseInstanceRead(context context.Context, d *schema.Resource
 
 	autoscalingGroup, _, err := cloudDatabasesClient.GetAutoscalingConditions(getAutoscalingConditionsOptions)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error getting database autoscaling groups: %s", err))
+		return diag.FromErr(fmt.Errorf("[ERROR] Error getting database autoscaling groups: %s\n Hint: Check if there is a mismatch between your database location and IBMCLOUD_REGION", err))
 	}
 	d.Set("auto_scaling", flattenAutoScalingGroup(*autoscalingGroup))
 
@@ -1702,7 +1695,6 @@ func resourceIBMDatabaseInstanceRead(context context.Context, d *schema.Resource
 
 	d.Set("allowlist", flex.FlattenAllowlist(allowlist.IPAddresses))
 
-	var connectionStrings []flex.CsEntry
 	//ICD does not implement a GetUsers API. Users populated from tf configuration.
 	tfusers := d.Get("users").(*schema.Set)
 	users := flex.ExpandUsers(tfusers)
@@ -1710,15 +1702,6 @@ func resourceIBMDatabaseInstanceRead(context context.Context, d *schema.Resource
 		UserName: deployment.AdminUsernames["database"],
 	}
 	users = append(users, user)
-	for _, user := range users {
-		userName := user.UserName
-		csEntry, err := getConnectionString(d, userName, connectionEndpoint, meta)
-		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error getting user connection string for user (%s): %s", userName, err))
-		}
-		connectionStrings = append(connectionStrings, csEntry)
-	}
-	d.Set("connectionstrings", flex.FlattenConnectionStrings(connectionStrings))
 
 	if serviceOff == "databases-for-postgresql" || serviceOff == "databases-for-redis" || serviceOff == "databases-for-enterprisedb" {
 		configSchema, err := icdClient.Configurations().GetConfiguration(icdId)
@@ -1734,7 +1717,19 @@ func resourceIBMDatabaseInstanceRead(context context.Context, d *schema.Resource
 			return diag.FromErr(fmt.Errorf("[ERROR] Error setting the database configuration schema: %s", err))
 		}
 	}
+
+	// This can be removed any time after August once all old multitenant instances are switched over to the new multitenant
+	if groupList.Groups[0].HostFlavor == nil && (groupList.Groups[0].CPU != nil && *groupList.Groups[0].CPU.AllocationCount == 0) {
+		return appendSwitchoverWarning()
+	}
+
+	endpoint, _ := instance.Parameters["service-endpoints"]
+	if endpoint == "public" || endpoint == "public-and-private" {
+		return publicServiceEndpointsWarning()
+	}
+
 	return nil
+
 }
 
 func resourceIBMDatabaseInstanceUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -1882,8 +1877,11 @@ func resourceIBMDatabaseInstanceUpdate(context context.Context, d *schema.Resour
 			if group.CPU != nil && group.CPU.Allocation*nodeCount != currentGroup.CPU.Allocation {
 				groupScaling.CPU = &clouddatabasesv5.GroupScalingCPU{AllocationCount: core.Int64Ptr(int64(group.CPU.Allocation * nodeCount))}
 			}
+			if group.HostFlavor != nil && group.HostFlavor.ID != currentGroup.HostFlavor.ID {
+				groupScaling.HostFlavor = &clouddatabasesv5.GroupScalingHostFlavor{ID: core.StringPtr(group.HostFlavor.ID)}
+			}
 
-			if groupScaling.Members != nil || groupScaling.Memory != nil || groupScaling.Disk != nil || groupScaling.CPU != nil {
+			if groupScaling.Members != nil || groupScaling.Memory != nil || groupScaling.Disk != nil || groupScaling.CPU != nil || groupScaling.HostFlavor != nil {
 				setDeploymentScalingGroupOptions := &clouddatabasesv5.SetDeploymentScalingGroupOptions{
 					ID:      &instanceID,
 					GroupID: &group.ID,
@@ -2141,85 +2139,6 @@ func resourceIBMDatabaseInstanceUpdate(context context.Context, d *schema.Resour
 	return resourceIBMDatabaseInstanceRead(context, d, meta)
 }
 
-func getConnectionString(d *schema.ResourceData, userName, connectionEndpoint string, meta interface{}) (flex.CsEntry, error) {
-	csEntry := flex.CsEntry{}
-	icdClient, err := meta.(conns.ClientSession).ICDAPI()
-	if err != nil {
-		return csEntry, fmt.Errorf("[ERROR] Error getting database client settings: %s", err)
-	}
-
-	icdId := d.Id()
-	connection, err := icdClient.Connections().GetConnection(icdId, userName, connectionEndpoint)
-	if err != nil {
-		return csEntry, fmt.Errorf("[ERROR] Error getting database user connection string via ICD API: %s", err)
-	}
-
-	service := d.Get("service")
-	dbConnection := icdv4.Uri{}
-	var cassandraConnection icdv4.CassandraUri
-
-	switch service {
-	case "databases-for-postgresql":
-		dbConnection = connection.Postgres
-	case "databases-for-redis":
-		dbConnection = connection.Rediss
-	case "databases-for-mongodb":
-		dbConnection = connection.Mongo
-	case "databases-for-mysql":
-		dbConnection = connection.Mysql
-	case "databases-for-elasticsearch":
-		dbConnection = connection.Https
-	case "databases-for-cassandra":
-		cassandraConnection = connection.Secure
-	case "databases-for-etcd":
-		dbConnection = connection.Grpc
-	case "messages-for-rabbitmq":
-		dbConnection = connection.Amqps
-	case "databases-for-enterprisedb":
-		dbConnection = connection.Postgres
-	default:
-		return csEntry, fmt.Errorf("[ERROR] Unrecognised database type during connection string lookup: %s", service)
-	}
-
-	if !reflect.DeepEqual(cassandraConnection, icdv4.CassandraUri{}) {
-		csEntry = flex.CsEntry{
-			Name:         userName,
-			Hosts:        cassandraConnection.Hosts,
-			BundleName:   cassandraConnection.Bundle.Name,
-			BundleBase64: cassandraConnection.Bundle.BundleBase64,
-		}
-	} else {
-		csEntry = flex.CsEntry{
-			Name:     userName,
-			Password: "",
-			// Populate only first 'composed' connection string as an example
-			Composed:     dbConnection.Composed[0],
-			CertName:     dbConnection.Certificate.Name,
-			CertBase64:   dbConnection.Certificate.CertificateBase64,
-			Hosts:        dbConnection.Hosts,
-			Scheme:       dbConnection.Scheme,
-			Path:         dbConnection.Path,
-			QueryOptions: dbConnection.QueryOptions.(map[string]interface{}),
-		}
-
-		// Postgres DB name is of type string, Redis is json.Number, others are nil
-		if dbConnection.Database != nil {
-			switch v := dbConnection.Database.(type) {
-			default:
-				return csEntry, fmt.Errorf("Unexpected data type: %T", v)
-			case json.Number:
-				csEntry.Database = dbConnection.Database.(json.Number).String()
-			case string:
-				csEntry.Database = dbConnection.Database.(string)
-			}
-		} else {
-			csEntry.Database = ""
-		}
-	}
-
-	return csEntry, nil
-}
-
 func resourceIBMDatabaseInstanceDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	rsConClient, err := meta.(conns.ClientSession).ResourceControllerV2API()
 	if err != nil {
@@ -2295,7 +2214,7 @@ func waitForICDReady(meta interface{}, instanceID string) error {
 			if apiErr, ok := err.(bmxerror.RequestFailure); ok && apiErr.StatusCode() == 404 {
 				return fmt.Errorf("[ERROR] The database instance was not found in the region set for the Provider, or the default of us-south. Specify the correct region in the provider definition, or create a provider alias for the correct region. %v", err)
 			}
-			return fmt.Errorf("[ERROR] Error getting database config for: %s with error %s\n", icdId, err)
+			return fmt.Errorf("[ERROR] Error getting database config for: %s with error %s\n", icdId, cdbErr)
 		}
 		return nil
 	})
@@ -2647,14 +2566,16 @@ func normalizeGroups(_groups []clouddatabasesv5.Group) (groups []Group) {
 		}
 
 		group.Memory = &GroupResource{
-			Units:        *g.Memory.Units,
-			Allocation:   int(*g.Memory.AllocationMb),
-			Minimum:      int(*g.Memory.MinimumMb),
-			Maximum:      int(*g.Memory.MaximumMb),
-			StepSize:     int(*g.Memory.StepSizeMb),
-			IsAdjustable: *g.Memory.IsAdjustable,
-			IsOptional:   *g.Memory.IsOptional,
-			CanScaleDown: *g.Memory.CanScaleDown,
+			Units:                        *g.Memory.Units,
+			Allocation:                   int(*g.Memory.AllocationMb),
+			Minimum:                      int(*g.Memory.MinimumMb),
+			Maximum:                      int(*g.Memory.MaximumMb),
+			StepSize:                     int(*g.Memory.StepSizeMb),
+			IsAdjustable:                 *g.Memory.IsAdjustable,
+			IsOptional:                   *g.Memory.IsOptional,
+			CanScaleDown:                 *g.Memory.CanScaleDown,
+			CPUEnforcementRatioCeilingMb: getCPUEnforcementRatioCeilingMb(g.Memory),
+			CPUEnforcementRatioMb:        getCPUEnforcementRatioMb(g.Memory),
 		}
 
 		group.Disk = &GroupResource{
@@ -2679,10 +2600,31 @@ func normalizeGroups(_groups []clouddatabasesv5.Group) (groups []Group) {
 			CanScaleDown: *g.CPU.CanScaleDown,
 		}
 
+		group.HostFlavor = &HostFlavorGroupResource{}
+		if g.HostFlavor != nil {
+			group.HostFlavor.ID = *g.HostFlavor.ID
+		}
+
 		groups = append(groups, group)
 	}
 
 	return groups
+}
+
+func getCPUEnforcementRatioCeilingMb(groupMemory *clouddatabasesv5.GroupMemory) int {
+	if groupMemory.CPUEnforcementRatioCeilingMb != nil {
+		return int(*groupMemory.CPUEnforcementRatioCeilingMb)
+	}
+
+	return 0
+}
+
+func getCPUEnforcementRatioMb(groupMemory *clouddatabasesv5.GroupMemory) int {
+	if groupMemory.CPUEnforcementRatioMb != nil {
+		return int(*groupMemory.CPUEnforcementRatioMb)
+	}
+
+	return 0
 }
 
 func expandGroups(_groups []interface{}) []*Group {
@@ -2721,6 +2663,13 @@ func expandGroups(_groups []interface{}) []*Group {
 				cpu := cpuSet.List()
 				if len(cpu) != 0 {
 					group.CPU = &GroupResource{Allocation: cpu[0].(map[string]interface{})["allocation_count"].(int)}
+				}
+			}
+
+			if hostflavorSet, ok := tfGroup["host_flavor"].(*schema.Set); ok {
+				hostflavor := hostflavorSet.List()
+				if len(hostflavor) != 0 {
+					group.HostFlavor = &HostFlavorGroupResource{ID: hostflavor[0].(map[string]interface{})["id"].(string)}
 				}
 			}
 
@@ -2763,6 +2712,55 @@ func validateGroupScaling(groupId string, resourceName string, value int, resour
 	return nil
 }
 
+func validateGroupHostFlavor(groupId string, resourceName string, group *Group) error {
+	if group.CPU != nil || group.Memory != nil {
+		return fmt.Errorf("%s must not be set with cpu and memory", resourceName)
+	}
+	return nil
+}
+
+func validateMultitenantMemoryCpu(resourceDefaults *Group, group *Group, cpuEnforcementRatioCeiling int, cpuEnforcementRatioMb int) error {
+	// TODO: Replace this with  cpuEnforcementRatioCeiling when it is fixed
+	cpuEnforcementRatioCeilingTemp := 16384
+
+	if group.CPU == nil || group.CPU.Allocation == 0 {
+		return nil
+	}
+
+	if group.CPU.Allocation >= cpuEnforcementRatioCeilingTemp/cpuEnforcementRatioMb {
+		return nil
+	} else {
+		return fmt.Errorf("The current cpu allocation of %d is not valid for your current configuration.", group.CPU.Allocation)
+	}
+}
+
+// This can be removed any time after August once all old multitenant instances are switched over to the new multitenant
+func appendSwitchoverWarning() diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	warning := diag.Diagnostic{
+		Severity: diag.Warning,
+		Summary:  "Note: IBM Cloud Databases released new Hosting Models on May 1. All existing multi-tenant instances will have their resources adjusted to Shared Compute allocations during August 2024. To monitor your current resource needs, and learn about how the transition to Shared Compute will impact your instance, see our documentation https://cloud.ibm.com/docs/cloud-databases?topic=cloud-databases-hosting-models",
+	}
+
+	diags = append(diags, warning)
+
+	return diags
+}
+
+func publicServiceEndpointsWarning() diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	warning := diag.Diagnostic{
+		Severity: diag.Warning,
+		Summary:  "IBM recommends using private endpoints only to improve security by restricting access to your database to the IBM Cloud private network. For more information, please refer to our security best practices, https://cloud.ibm.com/docs/cloud-databases?topic=cloud-databases-manage-security-compliance.",
+	}
+
+	diags = append(diags, warning)
+
+	return diags
+}
+
 func validateGroupsDiff(_ context.Context, diff *schema.ResourceDiff, meta interface{}) (err error) {
 	instanceID := diff.Id()
 	service := diff.Get("service").(string)
@@ -2772,11 +2770,23 @@ func validateGroupsDiff(_ context.Context, diff *schema.ResourceDiff, meta inter
 		var currentGroups []Group
 		var groupList []clouddatabasesv5.Group
 		var groupIds []string
+		groups := expandGroups(group.(*schema.Set).List())
+		var memberGroup *Group
+		for _, g := range groups {
+			if g.ID == "member" {
+				memberGroup = g
+				break
+			}
+		}
 
 		if instanceID != "" {
 			groupList, err = getGroups(instanceID, meta)
 		} else {
-			groupList, err = getDefaultScalingGroups(service, plan, meta)
+			if memberGroup.HostFlavor != nil {
+				groupList, err = getDefaultScalingGroups(service, plan, memberGroup.HostFlavor.ID, meta)
+			} else {
+				groupList, err = getDefaultScalingGroups(service, plan, "", meta)
+			}
 		}
 
 		if err != nil {
@@ -2786,6 +2796,16 @@ func validateGroupsDiff(_ context.Context, diff *schema.ResourceDiff, meta inter
 		currentGroups = normalizeGroups(groupList)
 
 		tfGroups := expandGroups(group.(*schema.Set).List())
+
+		cpuEnforcementRatioCeiling, cpuEnforcementRatioMb := 0, 0
+
+		if memberGroup.HostFlavor != nil && memberGroup.HostFlavor.ID == "multitenant" {
+			err, cpuEnforcementRatioCeiling, cpuEnforcementRatioMb = getCpuEnforcementRatios(service, plan, memberGroup.HostFlavor.ID, meta, group)
+
+			if err != nil {
+				return err
+			}
+		}
 
 		// validate group_ids are unique
 		groupIds = make([]string, 0, len(tfGroups))
@@ -2818,6 +2838,13 @@ func validateGroupsDiff(_ context.Context, diff *schema.ResourceDiff, meta inter
 			// set current nodeCount
 			nodeCount := groupDefaults.Members.Allocation
 
+			if group.HostFlavor != nil && group.HostFlavor.ID != "" && group.HostFlavor.ID != "multitenant" {
+				err = validateGroupHostFlavor(groupId, "host_flavor", group)
+				if err != nil {
+					return err
+				}
+			}
+
 			if group.Members != nil {
 				err = validateGroupScaling(groupId, "members", group.Members.Allocation, groupDefaults.Members, 1)
 				if err != nil {
@@ -2829,6 +2856,13 @@ func validateGroupsDiff(_ context.Context, diff *schema.ResourceDiff, meta inter
 				err = validateGroupScaling(groupId, "memory", group.Memory.Allocation, groupDefaults.Memory, nodeCount)
 				if err != nil {
 					return err
+				}
+
+				if group.HostFlavor != nil && group.HostFlavor.ID != "" && group.HostFlavor.ID == "multitenant" && cpuEnforcementRatioCeiling != 0 && cpuEnforcementRatioMb != 0 {
+					err = validateMultitenantMemoryCpu(groupDefaults, group, cpuEnforcementRatioCeiling, cpuEnforcementRatioMb)
+					if err != nil {
+						return err
+					}
 				}
 			}
 
@@ -2849,6 +2883,41 @@ func validateGroupsDiff(_ context.Context, diff *schema.ResourceDiff, meta inter
 	}
 
 	return nil
+}
+
+func getCpuEnforcementRatios(service string, plan string, hostFlavor string, meta interface{}, group interface{}) (err error, cpuEnforcementRatioCeiling int, cpuEnforcementRatioMb int) {
+	var currentGroups []Group
+	defaultList, err := getDefaultScalingGroups(service, plan, hostFlavor, meta)
+
+	if err != nil {
+		return err, 0, 0
+	}
+
+	currentGroups = normalizeGroups(defaultList)
+	tfGroups := expandGroups(group.(*schema.Set).List())
+
+	// Get default or current group scaling values
+	for _, group := range tfGroups {
+		if group == nil {
+			continue
+		}
+
+		groupId := group.ID
+		var groupDefaults *Group
+		for _, g := range currentGroups {
+			if g.ID == groupId {
+				groupDefaults = &g
+				break
+			}
+		}
+
+		if groupDefaults.Memory != nil {
+			return nil, groupDefaults.Memory.CPUEnforcementRatioCeilingMb, groupDefaults.Memory.CPUEnforcementRatioMb
+		}
+
+	}
+
+	return nil, 0, 0
 }
 
 func validateUsersDiff(_ context.Context, diff *schema.ResourceDiff, meta interface{}) (err error) {
@@ -2891,7 +2960,7 @@ func validateUsersDiff(_ context.Context, diff *schema.ResourceDiff, meta interf
 
 			// TODO: Use Capability API
 			// RBAC roles supported for Redis 6.0 and above
-			if service == "databases-for-redis" && !(version > 0 && version < 6) {
+			if (service == "databases-for-redis") && !(version > 0 && version < 6) {
 				err = change.New.ValidateRBACRole()
 			} else if service == "databases-for-mongodb" && change.New.Type == "ops_manager" {
 				err = change.New.ValidateOpsManagerRole()

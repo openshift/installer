@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2023 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package usagereports
@@ -22,68 +22,74 @@ func DataSourceIBMBillingSnapshotList() *schema.Resource {
 		ReadContext: dataSourceIBMBillingSnapshotListRead,
 
 		Schema: map[string]*schema.Schema{
-			"month": {
+			"month": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "The month for which billing report snapshot is requested.  Format is yyyy-mm.",
 			},
-			"date_from": {
+			"date_from": &schema.Schema{
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "Timestamp in milliseconds for which billing report snapshot is requested.",
 			},
-			"date_to": {
+			"date_to": &schema.Schema{
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "Timestamp in milliseconds for which billing report snapshot is requested.",
 			},
-			"snapshotcount": {
+			"limit": &schema.Schema{
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     30,
+				Description: "Number of usage records returned. The default value is 30. Maximum value is 200.",
+			},
+			"snapshotcount": &schema.Schema{
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Number of total snapshots.",
 			},
-			"snapshots": {
+			"snapshots": &schema.Schema{
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"account_id": {
+						"account_id": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Account ID for which billing report snapshot is configured.",
 						},
-						"month": {
+						"month": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Month of captured snapshot.",
 						},
-						"account_type": {
+						"account_type": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Type of account. Possible values are [enterprise, account].",
 						},
-						"expected_processed_at": {
+						"expected_processed_at": &schema.Schema{
 							Type:        schema.TypeInt,
 							Computed:    true,
 							Description: "Timestamp of snapshot processed.",
 						},
-						"state": {
+						"state": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Status of the billing snapshot configuration. Possible values are [enabled, disabled].",
 						},
-						"billing_period": {
+						"billing_period": &schema.Schema{
 							Type:        schema.TypeList,
 							Computed:    true,
 							Description: "Period of billing in snapshot.",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"start": {
+									"start": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "Date and time of start of billing in the respective snapshot.",
 									},
-									"end": {
+									"end": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "Date and time of end of billing in the respective snapshot.",
@@ -91,53 +97,53 @@ func DataSourceIBMBillingSnapshotList() *schema.Resource {
 								},
 							},
 						},
-						"snapshot_id": {
+						"snapshot_id": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Id of the snapshot captured.",
 						},
-						"charset": {
+						"charset": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Character encoding used.",
 						},
-						"compression": {
+						"compression": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Compression format of the snapshot report.",
 						},
-						"content_type": {
+						"content_type": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Type of content stored in snapshot report.",
 						},
-						"bucket": {
+						"bucket": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The name of the COS bucket to store the snapshot of the billing reports.",
 						},
-						"version": {
+						"version": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Version of the snapshot.",
 						},
-						"created_on": {
+						"created_on": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Date and time of creation of snapshot.",
 						},
-						"report_types": {
+						"report_types": &schema.Schema{
 							Type:        schema.TypeList,
 							Computed:    true,
 							Description: "List of report types configured for the snapshot.",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"type": {
+									"type": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "The type of billing report of the snapshot. Possible values are [account_summary, enterprise_summary, account_resource_instance_usage].",
 									},
-									"version": {
+									"version": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "Version of the snapshot.",
@@ -145,23 +151,23 @@ func DataSourceIBMBillingSnapshotList() *schema.Resource {
 								},
 							},
 						},
-						"files": {
+						"files": &schema.Schema{
 							Type:        schema.TypeList,
 							Computed:    true,
 							Description: "List of location of reports.",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"report_types": {
+									"report_types": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "The type of billing report stored. Possible values are [account_summary, enterprise_summary, account_resource_instance_usage].",
 									},
-									"location": {
+									"location": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "Absolute path of the billing report in the COS instance.",
 									},
-									"account_id": {
+									"account_id": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "Account ID for which billing report is captured.",
@@ -169,7 +175,7 @@ func DataSourceIBMBillingSnapshotList() *schema.Resource {
 								},
 							},
 						},
-						"processed_at": {
+						"processed_at": &schema.Schema{
 							Type:        schema.TypeInt,
 							Computed:    true,
 							Description: "Timestamp at which snapshot is captured.",
@@ -184,67 +190,61 @@ func DataSourceIBMBillingSnapshotList() *schema.Resource {
 func dataSourceIBMBillingSnapshotListRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	usageReportsClient, err := meta.(conns.ClientSession).UsageReportsV4()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_billing_snapshot_list", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
-
-	var next_ref string
-	var snapshotList []usagereportsv4.SnapshotListSnapshotsItem
 	userDetails, err := meta.(conns.ClientSession).BluemixUserDetails()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_billing_snapshot_list", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
-	for {
-		getReportsSnapshotOptions := &usagereportsv4.GetReportsSnapshotOptions{}
-		if next_ref != "" {
-			getReportsSnapshotOptions.SetStart(next_ref)
-		}
 
-		getReportsSnapshotOptions.SetAccountID(userDetails.UserAccount)
-		getReportsSnapshotOptions.SetMonth(d.Get("month").(string))
-		if _, ok := d.GetOk("date_from"); ok {
-			getReportsSnapshotOptions.SetDateFrom(int64(d.Get("date_from").(int)))
-		}
-		if _, ok := d.GetOk("date_to"); ok {
-			getReportsSnapshotOptions.SetDateTo(int64(d.Get("date_to").(int)))
-		}
+	getReportsSnapshotOptions := &usagereportsv4.GetReportsSnapshotOptions{}
 
-		snapshotListResponse, response, err := usageReportsClient.GetReportsSnapshotWithContext(context, getReportsSnapshotOptions)
-		if err != nil {
-			log.Printf("[DEBUG] GetReportsSnapshotWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("GetReportsSnapshotWithContext failed %s\n%s", err, response))
-		}
-		if snapshotListResponse.Snapshots != nil && len(snapshotListResponse.Snapshots) > 0 {
-			snapshotList = append(snapshotList, snapshotListResponse.Snapshots...)
-		}
-		if snapshotListResponse.Next == nil || snapshotListResponse.Next.Offset == nil {
-			break
-		}
-		next_ref = *snapshotListResponse.Next.Offset
-		if err != nil {
-			log.Printf("[DEBUG] ListAccountGroupsWithContext failed. Error occurred while parsing NextURL: %s", err)
-			return diag.FromErr(err)
-		}
-		if next_ref == "" {
-			break
-		}
+	getReportsSnapshotOptions.SetAccountID(userDetails.UserAccount)
+	getReportsSnapshotOptions.SetMonth(d.Get("month").(string))
+	if _, ok := d.GetOk("date_from"); ok {
+		getReportsSnapshotOptions.SetDateFrom(int64(d.Get("date_from").(int)))
+	}
+	if _, ok := d.GetOk("date_to"); ok {
+		getReportsSnapshotOptions.SetDateTo(int64(d.Get("date_to").(int)))
+	}
+	if _, ok := d.GetOk("limit"); ok {
+		getReportsSnapshotOptions.SetLimit(int64(d.Get("limit").(int)))
+	}
+
+	var pager *usagereportsv4.GetReportsSnapshotPager
+	pager, err = usageReportsClient.NewGetReportsSnapshotPager(getReportsSnapshotOptions)
+	if err != nil {
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_billing_snapshot_list", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+	}
+
+	snapshotList, err := pager.GetAll()
+	if err != nil {
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetReportsSnapshotPager.GetAll() failed %s", err), "(Data) ibm_billing_snapshot_list", "read")
+		log.Printf("[DEBUG] %s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(dataSourceIBMBillingSnapshotListID(d))
-
-	if len(snapshotList) == 0 {
-		return diag.FromErr(fmt.Errorf("no snapshots found for account: %s", userDetails.UserAccount))
-	}
 
 	snapshots := []map[string]interface{}{}
 	for _, modelItem := range snapshotList {
 		modelMap, err := dataSourceIBMBillingSnapshotListSnapshotListSnapshotsItemToMap(&modelItem)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_billing_snapshot_list", "read")
+			return tfErr.GetDiag()
 		}
 		snapshots = append(snapshots, modelMap)
 	}
+
 	if err = d.Set("snapshots", snapshots); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting snapshots %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting snapshots %s", err), "(Data) ibm_billing_snapshot_list", "read")
+		return tfErr.GetDiag()
 	}
 
 	return nil

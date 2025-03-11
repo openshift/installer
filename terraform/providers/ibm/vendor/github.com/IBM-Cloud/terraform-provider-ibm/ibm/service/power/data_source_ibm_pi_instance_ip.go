@@ -10,7 +10,6 @@ import (
 	"strconv"
 
 	"github.com/IBM-Cloud/power-go-client/clients/instance"
-	"github.com/IBM-Cloud/power-go-client/helpers"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -18,51 +17,59 @@ import (
 )
 
 func DataSourceIBMPIInstanceIP() *schema.Resource {
-
 	return &schema.Resource{
 		ReadContext: dataSourceIBMPIInstancesIPRead,
 		Schema: map[string]*schema.Schema{
-			helpers.PIInstanceName: {
-				Type:         schema.TypeString,
+			// Arguments
+			Arg_CloudInstanceID: {
+				Description:  "The GUID of the service instance associated with an account.",
 				Required:     true,
-				Description:  "Server Name to be used for pvminstances",
+				Type:         schema.TypeString,
 				ValidateFunc: validation.NoZeroValues,
 			},
-			helpers.PICloudInstanceId: {
-				Type:         schema.TypeString,
+			Arg_InstanceName: {
+				Description:  "The unique identifier or name of the instance.",
 				Required:     true,
+				Type:         schema.TypeString,
 				ValidateFunc: validation.NoZeroValues,
 			},
-			helpers.PINetworkName: {
-				Type:         schema.TypeString,
+			Arg_NetworkName: {
+				Description:  "The subnet that the instance belongs to.",
 				Required:     true,
+				Type:         schema.TypeString,
 				ValidateFunc: validation.NoZeroValues,
 			},
 
-			// Computed attributes
-			"ip": {
-				Type:     schema.TypeString,
-				Computed: true,
+			// Attributes
+			Attr_ExternalIP: {
+				Computed:    true,
+				Description: "The external IP of the network that is attached to this instance.",
+				Type:        schema.TypeString,
 			},
-			"ipoctet": {
-				Type:     schema.TypeString,
-				Computed: true,
+			Attr_IP: {
+				Computed:    true,
+				Description: "The IP address that is attached to this instance from the subnet.",
+				Type:        schema.TypeString,
 			},
-			"macaddress": {
-				Type:     schema.TypeString,
-				Computed: true,
+			Attr_IPOctet: {
+				Computed:    true,
+				Description: "The IP octet of the network that is attached to this instance.",
+				Type:        schema.TypeString,
 			},
-			"network_id": {
-				Type:     schema.TypeString,
-				Computed: true,
+			Attr_Macaddress: {
+				Computed:    true,
+				Description: "The MAC address of the network that is attached to this instance.",
+				Type:        schema.TypeString,
 			},
-			"type": {
-				Type:     schema.TypeString,
-				Computed: true,
+			Attr_NetworkID: {
+				Computed:    true,
+				Description: "ID of the network.",
+				Type:        schema.TypeString,
 			},
-			"external_ip": {
-				Type:     schema.TypeString,
-				Computed: true,
+			Attr_Type: {
+				Computed:    true,
+				Description: "The type of the network that is attached to this instance.",
+				Type:        schema.TypeString,
 			},
 		},
 	}
@@ -74,11 +81,11 @@ func dataSourceIBMPIInstancesIPRead(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
-	networkName := d.Get(helpers.PINetworkName).(string)
+	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
+	networkName := d.Get(Arg_NetworkName).(string)
 	powerC := instance.NewIBMPIInstanceClient(ctx, sess, cloudInstanceID)
 
-	powervmdata, err := powerC.Get(d.Get(helpers.PIInstanceName).(string))
+	powervmdata, err := powerC.Get(d.Get(Arg_InstanceName).(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -87,17 +94,16 @@ func dataSourceIBMPIInstancesIPRead(ctx context.Context, d *schema.ResourceData,
 		if network.NetworkName == networkName {
 			log.Printf("Printing the ip %s", network.IPAddress)
 			d.SetId(network.NetworkID)
-			d.Set("ip", network.IPAddress)
-			d.Set("network_id", network.NetworkID)
-			d.Set("macaddress", network.MacAddress)
-			d.Set("external_ip", network.ExternalIP)
-			d.Set("type", network.Type)
+			d.Set(Attr_ExternalIP, network.ExternalIP)
+			d.Set(Attr_IP, network.IPAddress)
+			d.Set(Attr_Macaddress, network.MacAddress)
+			d.Set(Attr_NetworkID, network.NetworkID)
+			d.Set(Attr_Type, network.Type)
 
 			IPObject := net.ParseIP(network.IPAddress).To4()
 			if len(IPObject) > 0 {
-				d.Set("ipoctet", strconv.Itoa(int(IPObject[3])))
+				d.Set(Attr_IPOctet, strconv.Itoa(int(IPObject[3])))
 			}
-
 			return nil
 		}
 	}

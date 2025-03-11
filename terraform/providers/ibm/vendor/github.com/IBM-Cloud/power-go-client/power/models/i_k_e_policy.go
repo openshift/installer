@@ -27,13 +27,13 @@ type IKEPolicy struct {
 	// DH group of the IKE Policy
 	// Example: 2
 	// Required: true
-	// Enum: [1 2 5 14 19 20 24]
+	// Enum: [1,2,5,14,19,20,24]
 	DhGroup *int64 `json:"dhGroup"`
 
 	// encryption of the IKE Policy
 	// Example: aes-256-cbc
 	// Required: true
-	// Enum: [aes-256-cbc aes-192-cbc aes-128-cbc aes-256-gcm aes-128-gcm 3des-cbc]
+	// Enum: ["aes-256-cbc","aes-192-cbc","aes-128-cbc","aes-256-gcm","aes-128-gcm","3des-cbc"]
 	Encryption *string `json:"encryption"`
 
 	// unique identifier of the IKE Policy object
@@ -53,7 +53,7 @@ type IKEPolicy struct {
 	// version of the IKE Policy
 	// Example: 2
 	// Required: true
-	// Enum: [1 2]
+	// Enum: [1,2]
 	Version *int64 `json:"version"`
 }
 

@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2022 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package database
@@ -8,11 +8,12 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/cloud-databases-go-sdk/clouddatabasesv5"
 )
 
@@ -57,7 +58,9 @@ func DataSourceIBMDatabasePointInTimeRecoveryValidator() *validate.ResourceValid
 func DataSourceIBMDatabasePointInTimeRecoveryRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cloudDatabasesClient, err := meta.(conns.ClientSession).CloudDatabasesV5()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_database_pitr", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getPitrDataOptions := &clouddatabasesv5.GetPitrDataOptions{}
@@ -66,8 +69,9 @@ func DataSourceIBMDatabasePointInTimeRecoveryRead(context context.Context, d *sc
 
 	pointInTimeRecoveryData, response, err := cloudDatabasesClient.GetPitrDataWithContext(context, getPitrDataOptions)
 	if err != nil {
-		log.Printf("[DEBUG] GetPitrDataWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetPitrDataWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetPitrDataWithContext failed %s\n%s", err.Error(), response), "(Data) ibm_database_pitr", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(d.Get("deployment_id").(string))
@@ -75,7 +79,8 @@ func DataSourceIBMDatabasePointInTimeRecoveryRead(context context.Context, d *sc
 	if pointInTimeRecoveryData.PointInTimeRecoveryData.EarliestPointInTimeRecoveryTime != nil {
 		pitr := pointInTimeRecoveryData.PointInTimeRecoveryData.EarliestPointInTimeRecoveryTime
 		if err = d.Set("earliest_point_in_time_recovery_time", pitr); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting earliest_point_in_time_recovery_time: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting earliest_point_in_time_recovery_time: %s", err), "(Data) ibm_database_pitr", "read")
+			return tfErr.GetDiag()
 		}
 	}
 

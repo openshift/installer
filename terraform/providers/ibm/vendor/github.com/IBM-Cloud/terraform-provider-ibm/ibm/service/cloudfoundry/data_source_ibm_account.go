@@ -45,6 +45,7 @@ func DataSourceIBMAccount() *schema.Resource {
 				},
 			},
 		},
+		DeprecationMessage: "This service is deprecated.",
 	}
 }
 

@@ -192,10 +192,12 @@ func resourceIBMdlGatewayVCRead(d *schema.ResourceData, meta interface{}) error 
 	getGatewayOptions := &directlinkv1.GetGatewayOptions{
 		ID: &gatewayId,
 	}
-	dlgw, response, err := directLink.GetGateway(getGatewayOptions)
-	if err != nil {
+	instanceIntf, response, err := directLink.GetGateway(getGatewayOptions)
+
+	if (err != nil) || (instanceIntf == nil) {
 		return fmt.Errorf("[ERROR] Error Getting Direct Link Gateway (Dedicated Template): %s\n%s", err, response)
 	}
+	dlgw := instanceIntf.(*directlinkv1.GetGatewayResponse)
 	d.Set(flex.RelatedCRN, *dlgw.Crn)
 	return nil
 }

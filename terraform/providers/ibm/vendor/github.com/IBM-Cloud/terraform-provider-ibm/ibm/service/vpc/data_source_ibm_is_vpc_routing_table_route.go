@@ -390,7 +390,7 @@ func dataSourceIBMIBMIsVPCRoutingTableRouteRouteNextHopToMap(model vpcv1.RouteNe
 	}
 }
 
-func dataSourceIBMIBMIsVPCRoutingTableRouteVPNGatewayConnectionReferenceDeletedToMap(model *vpcv1.VPNGatewayConnectionReferenceDeleted) (map[string]interface{}, error) {
+func dataSourceIBMIBMIsVPCRoutingTableRouteVPNGatewayConnectionReferenceDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
 	modelMap := map[string]interface{}{}
 	if model.MoreInfo != nil {
 		modelMap[rMoreInfo] = *model.MoreInfo

@@ -76,6 +76,7 @@ func DataSourceIBMOrgQuota() *schema.Resource {
 				Computed:    true,
 			},
 		},
+		DeprecationMessage: "This service is deprecated.",
 	}
 }
 

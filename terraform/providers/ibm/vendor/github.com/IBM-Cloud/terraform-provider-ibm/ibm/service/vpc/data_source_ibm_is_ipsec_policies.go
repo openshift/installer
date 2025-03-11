@@ -283,7 +283,7 @@ func dataSourceIPsecPolicyCollectionIpsecPoliciesConnectionsToMap(connectionsIte
 	return connectionsMap
 }
 
-func dataSourceIPsecPolicyCollectionConnectionsDeletedToMap(deletedItem vpcv1.VPNGatewayConnectionReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceIPsecPolicyCollectionConnectionsDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {

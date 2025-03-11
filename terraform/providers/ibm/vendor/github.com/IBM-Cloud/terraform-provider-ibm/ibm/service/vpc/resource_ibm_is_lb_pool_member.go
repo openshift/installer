@@ -333,7 +333,9 @@ func lbpmemberGet(d *schema.ResourceData, meta interface{}, lbID, lbPoolID, lbPo
 	if target.ID != nil {
 		d.Set(isLBPoolMemberTargetID, *target.ID)
 	}
-	d.Set(isLBPoolMemberWeight, *lbPoolMem.Weight)
+	if lbPoolMem.Weight != nil {
+		d.Set(isLBPoolMemberWeight, *lbPoolMem.Weight)
+	}
 	d.Set(isLBPoolMemberProvisioningStatus, *lbPoolMem.ProvisioningStatus)
 	d.Set(isLBPoolMemberHealth, *lbPoolMem.Health)
 	d.Set(isLBPoolMemberHref, *lbPoolMem.Href)
@@ -410,13 +412,13 @@ func lbpmemberUpdate(d *schema.ResourceData, meta interface{}, lbID, lbPoolID, l
 			Weight: &weight,
 		}
 
-		if _, ok := d.GetOk(isLBPoolMemberTargetAddress); ok {
+		if d.HasChange(isLBPoolMemberTargetAddress) {
 			targetAddress := d.Get(isLBPoolMemberTargetAddress).(string)
 			target := &vpcv1.LoadBalancerPoolMemberTargetPrototypeIP{
 				Address: &targetAddress,
 			}
 			loadBalancerPoolMemberPatchModel.Target = target
-		} else {
+		} else if d.HasChange(isLBPoolMemberTargetID) {
 			targetID := d.Get(isLBPoolMemberTargetID).(string)
 			target := &vpcv1.LoadBalancerPoolMemberTargetPrototype{
 				ID: &targetID,

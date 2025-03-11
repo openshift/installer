@@ -59,10 +59,9 @@ func ResourceIBMCISFilter() *schema.Resource {
 				Description: "Filter Expression",
 			},
 			cisFilterDescription: {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Description:  "Filter Description",
-				ValidateFunc: validate.InvokeValidator(ibmCISFilters, cisFilterDescription),
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Filter Description",
 			},
 		},
 	}

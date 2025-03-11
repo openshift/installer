@@ -47,7 +47,9 @@ func DataSourceIBMAppRoute() *schema.Resource {
 				ValidateFunc: validate.ValidateRoutePort,
 			},
 		},
+		DeprecationMessage: "This service is deprecated.",
 	}
+
 }
 
 func dataSourceIBMAppRouteRead(d *schema.ResourceData, meta interface{}) error {

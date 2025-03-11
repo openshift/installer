@@ -4,6 +4,8 @@
 package vpc
 
 import (
+	"fmt"
+
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -25,6 +27,60 @@ func DataSourceIBMISInstanceProfile() *schema.Resource {
 			isInstanceProfileName: {
 				Type:     schema.TypeString,
 				Required: true,
+			},
+
+			"confidential_compute_modes": &schema.Schema{
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"default": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The default confidential compute mode for this profile.",
+						},
+						"type": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The type for this profile field.",
+						},
+						"values": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The supported confidential compute modes.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
+				},
+			},
+
+			"secure_boot_modes": &schema.Schema{
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"default": &schema.Schema{
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "The default secure boot mode for this profile.",
+						},
+						"type": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The type for this profile field.",
+						},
+						"values": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The supported `enable_secure_boot` values for an instance using this profile.",
+							Elem: &schema.Schema{
+								Type: schema.TypeBool,
+							},
+						},
+					},
+				},
 			},
 
 			isInstanceProfileFamily: {
@@ -231,6 +287,28 @@ func DataSourceIBMISInstanceProfile() *schema.Resource {
 							Type:        schema.TypeList,
 							Computed:    true,
 							Description: "The possible GPU model(s) for an instance with this profile",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
+				},
+			},
+			"reservation_terms": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The type for this profile field",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The type for this profile field.",
+						},
+						"values": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The supported committed use terms for a reservation using this profile",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -486,6 +564,29 @@ func DataSourceIBMISInstanceProfile() *schema.Resource {
 					},
 				},
 			},
+			"network_attachment_count": {
+				Type:     schema.TypeSet,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"max": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The maximum value for this profile field",
+						},
+						"min": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The minimum value for this profile field",
+						},
+						"type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The type for this profile field.",
+						},
+					},
+				},
+			},
 			"numa_count": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -664,6 +765,31 @@ func instanceProfileGet(d *schema.ResourceData, meta interface{}, name string) e
 	if profile.Status != nil {
 		d.Set("status", profile.Status)
 	}
+
+	confidentialComputeModes := []map[string]interface{}{}
+	if profile.ConfidentialComputeModes != nil {
+		modelMap, err := dataSourceIBMIsInstanceProfileInstanceProfileSupportedConfidentialComputeModesToMap(profile.ConfidentialComputeModes)
+		if err != nil {
+			return (err)
+		}
+		confidentialComputeModes = append(confidentialComputeModes, modelMap)
+	}
+	if err = d.Set("confidential_compute_modes", confidentialComputeModes); err != nil {
+		return fmt.Errorf("Error setting confidential_compute_modes %s", err)
+	}
+
+	secureBootModes := []map[string]interface{}{}
+	if profile.SecureBootModes != nil {
+		modelMap, err := dataSourceIBMIsInstanceProfileInstanceProfileSupportedSecureBootModesToMap(profile.SecureBootModes)
+		if err != nil {
+			return err
+		}
+		secureBootModes = append(secureBootModes, modelMap)
+	}
+	if err = d.Set("secure_boot_modes", secureBootModes); err != nil {
+		return fmt.Errorf("Error setting secure_boot_modes %s", err)
+	}
+
 	if profile.Bandwidth != nil {
 		err = d.Set("bandwidth", dataSourceInstanceProfileFlattenBandwidth(*profile.Bandwidth.(*vpcv1.InstanceProfileBandwidth)))
 		if err != nil {
@@ -694,6 +820,12 @@ func instanceProfileGet(d *schema.ResourceData, meta interface{}, name string) e
 			return err
 		}
 	}
+	if profile.ReservationTerms != nil {
+		err = d.Set("reservation_terms", dataSourceInstanceProfileFlattenReservationTerms(*profile.ReservationTerms))
+		if err != nil {
+			return err
+		}
+	}
 	if profile.TotalVolumeBandwidth != nil {
 		err = d.Set("total_volume_bandwidth", dataSourceInstanceProfileFlattenTotalVolumeBandwidth(*profile.TotalVolumeBandwidth.(*vpcv1.InstanceProfileVolumeBandwidth)))
 		if err != nil {
@@ -718,6 +850,12 @@ func instanceProfileGet(d *schema.ResourceData, meta interface{}, name string) e
 	}
 	if profile.NetworkInterfaceCount != nil {
 		err = d.Set("network_interface_count", dataSourceInstanceProfileFlattenNetworkInterfaceCount(*profile.NetworkInterfaceCount.(*vpcv1.InstanceProfileNetworkInterfaceCount)))
+		if err != nil {
+			return err
+		}
+	}
+	if profile.NetworkAttachmentCount != nil {
+		err = d.Set("network_attachment_count", dataSourceInstanceProfileFlattenNetworkAttachmentCount(*profile.NetworkAttachmentCount.(*vpcv1.InstanceProfileNetworkAttachmentCount)))
 		if err != nil {
 			return err
 		}
@@ -873,6 +1011,27 @@ func dataSourceInstanceProfileGPUModelToMap(bandwidthItem vpcv1.InstanceProfileG
 	return gpuModelMap
 }
 
+func dataSourceInstanceProfileFlattenReservationTerms(result vpcv1.InstanceProfileReservationTerms) (finalList []map[string]interface{}) {
+	finalList = []map[string]interface{}{}
+	finalMap := dataSourceInstanceProfileReservationTermsToMap(result)
+	finalList = append(finalList, finalMap)
+
+	return finalList
+}
+
+func dataSourceInstanceProfileReservationTermsToMap(resTermItem vpcv1.InstanceProfileReservationTerms) map[string]interface{} {
+	resTermMap := map[string]interface{}{}
+
+	if resTermItem.Type != nil {
+		resTermMap["type"] = resTermItem.Type
+	}
+	if resTermItem.Values != nil {
+		resTermMap["values"] = resTermItem.Values
+	}
+
+	return resTermMap
+}
+
 func dataSourceInstanceProfileFlattenGPUMemory(result vpcv1.InstanceProfileGpuMemory) (finalList []map[string]interface{}) {
 	finalList = []map[string]interface{}{}
 	finalMap := dataSourceInstanceProfileGPUMemoryToMap(result)
@@ -951,6 +1110,28 @@ func dataSourceInstanceProfileFlattenNetworkInterfaceCount(result vpcv1.Instance
 	finalList = append(finalList, finalMap)
 
 	return finalList
+}
+func dataSourceInstanceProfileFlattenNetworkAttachmentCount(result vpcv1.InstanceProfileNetworkAttachmentCount) (finalList []map[string]interface{}) {
+	finalList = []map[string]interface{}{}
+	finalMap := dataSourceInstanceProfileNetworkAttachmentCount(result)
+	finalList = append(finalList, finalMap)
+
+	return finalList
+}
+
+func dataSourceInstanceProfileNetworkAttachmentCount(networkAttachmentCountItem vpcv1.InstanceProfileNetworkAttachmentCount) (networkAttachmentCountMap map[string]interface{}) {
+	networkAttachmentCountMap = map[string]interface{}{}
+
+	if networkAttachmentCountItem.Max != nil {
+		networkAttachmentCountMap["max"] = networkAttachmentCountItem.Max
+	}
+	if networkAttachmentCountItem.Min != nil {
+		networkAttachmentCountMap["min"] = networkAttachmentCountItem.Min
+	}
+	if networkAttachmentCountItem.Type != nil {
+		networkAttachmentCountMap["type"] = networkAttachmentCountItem.Type
+	}
+	return networkAttachmentCountMap
 }
 
 func dataSourceInstanceProfileNetworkInterfaceCount(networkInterfaceCountItem vpcv1.InstanceProfileNetworkInterfaceCount) (networkInterfaceCountMap map[string]interface{}) {
@@ -1234,4 +1415,20 @@ func dataSourceInstanceProfileNumaCountToMap(numaItem vpcv1.InstanceProfileNumaC
 	}
 
 	return numaMap
+}
+
+func dataSourceIBMIsInstanceProfileInstanceProfileSupportedSecureBootModesToMap(model *vpcv1.InstanceProfileSupportedSecureBootModes) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["default"] = model.Default
+	modelMap["type"] = model.Type
+	modelMap["values"] = model.Values
+	return modelMap, nil
+}
+
+func dataSourceIBMIsInstanceProfileInstanceProfileSupportedConfidentialComputeModesToMap(model *vpcv1.InstanceProfileSupportedConfidentialComputeModes) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["default"] = model.Default
+	modelMap["type"] = model.Type
+	modelMap["values"] = model.Values
+	return modelMap, nil
 }
