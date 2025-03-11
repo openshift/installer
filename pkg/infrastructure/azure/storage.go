@@ -251,8 +251,8 @@ func CreatePageBlob(ctx context.Context, in *CreatePageBlobInput) (string, error
 		sharedKeyCredential,
 		&pageblob.ClientOptions{
 			ClientOptions: azcore.ClientOptions{
-				Cloud:      in.ClientOpts.Cloud,
-				APIVersion: in.ClientOpts.APIVersion,
+				Cloud: in.ClientOpts.Cloud,
+				//APIVersion: in.ClientOpts.APIVersion,
 			},
 		},
 	)
@@ -468,8 +468,8 @@ func CreateBlockBlob(ctx context.Context, in *CreateBlockBlobInput) (string, err
 		sharedKeyCredential,
 		&blockblob.ClientOptions{
 			ClientOptions: azcore.ClientOptions{
-				Cloud:      in.ClientOpts.Cloud,
-				APIVersion: in.ClientOpts.APIVersion,
+				Cloud: in.ClientOpts.Cloud,
+				//APIVersion: in.ClientOpts.APIVersion,
 			},
 		},
 	)

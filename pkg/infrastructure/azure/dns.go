@@ -87,6 +87,7 @@ func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBF
 	}
 	subscriptionID := session.Credentials.SubscriptionID
 
+	opts.APIVersion = "2018-05-01" // This is the version supported by DNS. TODO refactor opts.
 	recordSetClient, err := armdns.NewRecordSetsClient(subscriptionID, session.TokenCreds, opts)
 	if err != nil {
 		return fmt.Errorf("failed to create public record client: %w", err)
