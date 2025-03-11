@@ -20,11 +20,13 @@ package datacatalog
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"regexp"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -109,6 +111,11 @@ func ResourceDataCatalogTagTemplate() *schema.Resource {
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+			tpgresource.DefaultProviderRegion,
+		),
+
 		Schema: map[string]*schema.Schema{
 			"fields": {
 				Type:        schema.TypeSet,
@@ -143,7 +150,7 @@ values must be case-insensitively unique within this set. Currently,
 enum values can only be added to the list of allowed values. Deletion
 and renaming of enum values are not supported.
 Can have up to 500 allowed values.`,
-													Elem: datacatalogTagTemplateFieldsFieldsTypeEnumTypeAllowedValuesSchema(),
+													Elem: datacatalogTagTemplateFieldsFieldTypeEnumTypeAllowedValuesSchema(),
 													// Default schema.HashSchema is used.
 												},
 											},
@@ -235,7 +242,7 @@ Multiple fields can have the same order, and field orders within a tag do not ha
 	}
 }
 
-func datacatalogTagTemplateFieldsFieldsTypeEnumTypeAllowedValuesSchema() *schema.Resource {
+func datacatalogTagTemplateFieldsFieldTypeEnumTypeAllowedValuesSchema() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"display_name": {
@@ -287,6 +294,7 @@ func resourceDataCatalogTagTemplateCreate(d *schema.ResourceData, meta interface
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -295,6 +303,7 @@ func resourceDataCatalogTagTemplateCreate(d *schema.ResourceData, meta interface
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating TagTemplate: %s", err)
@@ -340,12 +349,14 @@ func resourceDataCatalogTagTemplateRead(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DataCatalogTagTemplate %q", d.Id()))
@@ -411,6 +422,7 @@ func resourceDataCatalogTagTemplateUpdate(d *schema.ResourceData, meta interface
 	}
 
 	log.Printf("[DEBUG] Updating TagTemplate %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("display_name") {
@@ -439,6 +451,7 @@ func resourceDataCatalogTagTemplateUpdate(d *schema.ResourceData, meta interface
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
 		})
 
 		if err != nil {
@@ -603,13 +616,15 @@ func resourceDataCatalogTagTemplateDelete(d *schema.ResourceData, meta interface
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting TagTemplate %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting TagTemplate %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -618,6 +633,7 @@ func resourceDataCatalogTagTemplateDelete(d *schema.ResourceData, meta interface
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "TagTemplate")
@@ -731,7 +747,7 @@ func flattenDataCatalogTagTemplateFieldsTypeEnumTypeAllowedValues(v interface{},
 		return v
 	}
 	l := v.([]interface{})
-	transformed := schema.NewSet(schema.HashResource(datacatalogTagTemplateFieldsFieldsTypeEnumTypeAllowedValuesSchema()), []interface{}{})
+	transformed := schema.NewSet(schema.HashResource(datacatalogTagTemplateFieldsFieldTypeEnumTypeAllowedValuesSchema()), []interface{}{})
 	for _, raw := range l {
 		original := raw.(map[string]interface{})
 		if len(original) < 1 {

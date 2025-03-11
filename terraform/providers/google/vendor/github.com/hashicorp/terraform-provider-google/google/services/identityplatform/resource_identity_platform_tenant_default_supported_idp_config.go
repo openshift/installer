@@ -20,10 +20,12 @@ package identityplatform
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -46,6 +48,10 @@ func ResourceIdentityPlatformTenantDefaultSupportedIdpConfig() *schema.Resource 
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"client_id": {
@@ -157,6 +163,7 @@ func resourceIdentityPlatformTenantDefaultSupportedIdpConfigCreate(d *schema.Res
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -165,6 +172,7 @@ func resourceIdentityPlatformTenantDefaultSupportedIdpConfigCreate(d *schema.Res
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating TenantDefaultSupportedIdpConfig: %s", err)
@@ -210,12 +218,14 @@ func resourceIdentityPlatformTenantDefaultSupportedIdpConfigRead(d *schema.Resou
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("IdentityPlatformTenantDefaultSupportedIdpConfig %q", d.Id()))
@@ -282,6 +292,7 @@ func resourceIdentityPlatformTenantDefaultSupportedIdpConfigUpdate(d *schema.Res
 	}
 
 	log.Printf("[DEBUG] Updating TenantDefaultSupportedIdpConfig %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("client_id") {
@@ -307,20 +318,25 @@ func resourceIdentityPlatformTenantDefaultSupportedIdpConfigUpdate(d *schema.Res
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating TenantDefaultSupportedIdpConfig %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating TenantDefaultSupportedIdpConfig %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating TenantDefaultSupportedIdpConfig %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating TenantDefaultSupportedIdpConfig %q: %#v", d.Id(), res)
+		}
+
 	}
 
 	return resourceIdentityPlatformTenantDefaultSupportedIdpConfigRead(d, meta)
@@ -347,13 +363,15 @@ func resourceIdentityPlatformTenantDefaultSupportedIdpConfigDelete(d *schema.Res
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting TenantDefaultSupportedIdpConfig %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting TenantDefaultSupportedIdpConfig %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -362,6 +380,7 @@ func resourceIdentityPlatformTenantDefaultSupportedIdpConfigDelete(d *schema.Res
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "TenantDefaultSupportedIdpConfig")
@@ -374,9 +393,9 @@ func resourceIdentityPlatformTenantDefaultSupportedIdpConfigDelete(d *schema.Res
 func resourceIdentityPlatformTenantDefaultSupportedIdpConfigImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/tenants/(?P<tenant>[^/]+)/defaultSupportedIdpConfigs/(?P<idp_id>[^/]+)",
-		"(?P<project>[^/]+)/(?P<tenant>[^/]+)/(?P<idp_id>[^/]+)",
-		"(?P<tenant>[^/]+)/(?P<idp_id>[^/]+)",
+		"^projects/(?P<project>[^/]+)/tenants/(?P<tenant>[^/]+)/defaultSupportedIdpConfigs/(?P<idp_id>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<tenant>[^/]+)/(?P<idp_id>[^/]+)$",
+		"^(?P<tenant>[^/]+)/(?P<idp_id>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

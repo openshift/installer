@@ -1,21 +1,30 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package schema
 
 import (
+	"context"
+
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
+
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/internal/fwschema"
 	"github.com/hashicorp/terraform-plugin-framework/internal/fwschema/fwxschema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
-// Ensure the implementation satisifies the desired interfaces.
+// Ensure the implementation satisfies the desired interfaces.
 var (
-	_ Attribute                                = BoolAttribute{}
-	_ fwxschema.AttributeWithBoolPlanModifiers = BoolAttribute{}
-	_ fwxschema.AttributeWithBoolValidators    = BoolAttribute{}
+	_ Attribute                                    = BoolAttribute{}
+	_ fwschema.AttributeWithValidateImplementation = BoolAttribute{}
+	_ fwschema.AttributeWithBoolDefaultValue       = BoolAttribute{}
+	_ fwxschema.AttributeWithBoolPlanModifiers     = BoolAttribute{}
+	_ fwxschema.AttributeWithBoolValidators        = BoolAttribute{}
 )
 
 // BoolAttribute represents a schema attribute that is a boolean. When
@@ -135,12 +144,25 @@ type BoolAttribute struct {
 	//
 	// Any errors will prevent further execution of this sequence or modifiers.
 	PlanModifiers []planmodifier.Bool
+
+	// Default defines a proposed new state (plan) value for the attribute
+	// if the configuration value is null. Default prevents the framework
+	// from automatically marking the value as unknown during planning when
+	// other proposed new state changes are detected. If the attribute is
+	// computed and the value could be altered by other changes then a default
+	// should be avoided and a plan modifier should be used instead.
+	Default defaults.Bool
 }
 
 // ApplyTerraform5AttributePathStep always returns an error as it is not
 // possible to step further into a BoolAttribute.
 func (a BoolAttribute) ApplyTerraform5AttributePathStep(step tftypes.AttributePathStep) (interface{}, error) {
 	return a.GetType().ApplyTerraform5AttributePathStep(step)
+}
+
+// BoolDefaultValue returns the Default field value.
+func (a BoolAttribute) BoolDefaultValue() defaults.Bool {
+	return a.Default
 }
 
 // BoolPlanModifiers returns the PlanModifiers field value.
@@ -205,4 +227,14 @@ func (a BoolAttribute) IsRequired() bool {
 // IsSensitive returns the Sensitive field value.
 func (a BoolAttribute) IsSensitive() bool {
 	return a.Sensitive
+}
+
+// ValidateImplementation contains logic for validating the
+// provider-defined implementation of the attribute to prevent unexpected
+// errors or panics. This logic runs during the GetProviderSchema RPC and
+// should never include false positives.
+func (a BoolAttribute) ValidateImplementation(ctx context.Context, req fwschema.ValidateImplementationRequest, resp *fwschema.ValidateImplementationResponse) {
+	if !a.IsComputed() && a.BoolDefaultValue() != nil {
+		resp.Diagnostics.Append(nonComputedAttributeWithDefaultDiag(req.Path))
+	}
 }

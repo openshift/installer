@@ -17,7 +17,7 @@
  */
 
 // Package clusterresolver contains the implementation of the
-// xds_cluster_resolver_experimental LB policy which resolves endpoint addresses
+// cluster_resolver_experimental LB policy which resolves endpoint addresses
 // using a list of one or more discovery mechanisms.
 package clusterresolver
 
@@ -32,7 +32,6 @@ import (
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/internal/balancer/nop"
 	"google.golang.org/grpc/internal/buffer"
-	"google.golang.org/grpc/internal/envconfig"
 	"google.golang.org/grpc/internal/grpclog"
 	"google.golang.org/grpc/internal/grpcsync"
 	"google.golang.org/grpc/internal/pretty"
@@ -85,9 +84,10 @@ func (bb) Build(cc balancer.ClientConn, opts balancer.BuildOptions) balancer.Bal
 	b.logger = prefixLogger(b)
 	b.logger.Infof("Created")
 
-	b.resourceWatcher = newResourceResolver(b)
+	b.resourceWatcher = newResourceResolver(b, b.logger)
 	b.cc = &ccWrapper{
 		ClientConn:      cc,
+		b:               b,
 		resourceWatcher: b.resourceWatcher,
 	}
 
@@ -117,20 +117,18 @@ func (bb) ParseConfig(j json.RawMessage) (serviceconfig.LoadBalancingConfig, err
 		return nil, fmt.Errorf("unable to unmarshal balancer config %s into cluster-resolver config, error: %v", string(j), err)
 	}
 
-	if envconfig.XDSOutlierDetection {
-		for i, dm := range cfg.DiscoveryMechanisms {
-			lbCfg, err := odParser.ParseConfig(dm.OutlierDetection)
-			if err != nil {
-				return nil, fmt.Errorf("error parsing Outlier Detection config %v: %v", dm.OutlierDetection, err)
-			}
-			odCfg, ok := lbCfg.(*outlierdetection.LBConfig)
-			if !ok {
-				// Shouldn't happen, Parser built at build time with Outlier Detection
-				// builder pulled from gRPC LB Registry.
-				return nil, fmt.Errorf("odParser returned config with unexpected type %T: %v", lbCfg, lbCfg)
-			}
-			cfg.DiscoveryMechanisms[i].outlierDetection = *odCfg
+	for i, dm := range cfg.DiscoveryMechanisms {
+		lbCfg, err := odParser.ParseConfig(dm.OutlierDetection)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing Outlier Detection config %v: %v", dm.OutlierDetection, err)
 		}
+		odCfg, ok := lbCfg.(*outlierdetection.LBConfig)
+		if !ok {
+			// Shouldn't happen, Parser built at build time with Outlier Detection
+			// builder pulled from gRPC LB Registry.
+			return nil, fmt.Errorf("odParser returned config with unexpected type %T: %v", lbCfg, lbCfg)
+		}
+		cfg.DiscoveryMechanisms[i].outlierDetection = *odCfg
 	}
 	if err := json.Unmarshal(cfg.XDSLBPolicy, &cfg.xdsLBPolicy); err != nil {
 		// This will never occur, valid configuration is emitted from the xDS
@@ -138,7 +136,7 @@ func (bb) ParseConfig(j json.RawMessage) (serviceconfig.LoadBalancingConfig, err
 		// double validation is present because Unmarshalling and Validating are
 		// coupled into one json.Unmarshal operation). We will switch this in
 		// the future to two separate operations.
-		return nil, fmt.Errorf("error unmarshaling xDS LB Policy: %v", err)
+		return nil, fmt.Errorf("error unmarshalling xDS LB Policy: %v", err)
 	}
 	return cfg, nil
 }
@@ -147,13 +145,6 @@ func (bb) ParseConfig(j json.RawMessage) (serviceconfig.LoadBalancingConfig, err
 type ccUpdate struct {
 	state balancer.ClientConnState
 	err   error
-}
-
-// scUpdate wraps a subConn update received from gRPC. This is directly passed
-// on to the child policy.
-type scUpdate struct {
-	subConn balancer.SubConn
-	state   balancer.SubConnState
 }
 
 type exitIdle struct{}
@@ -251,10 +242,19 @@ func (b *clusterResolverBalancer) updateChildConfig() {
 		b.logger.Warningf("Failed to parse child policy config. This should never happen because the config was generated: %v", err)
 		return
 	}
-	b.logger.Infof("Built child policy config: %v", pretty.ToJSON(childCfg))
+	if b.logger.V(2) {
+		b.logger.Infof("Built child policy config: %s", pretty.ToJSON(childCfg))
+	}
 
+	endpoints := make([]resolver.Endpoint, len(addrs))
+	for i, a := range addrs {
+		endpoints[i].Attributes = a.BalancerAttributes
+		endpoints[i].Addresses = []resolver.Address{a}
+		endpoints[i].Addresses[0].BalancerAttributes = nil
+	}
 	if err := b.child.UpdateClientConnState(balancer.ClientConnState{
 		ResolverState: resolver.State{
+			Endpoints:     endpoints,
 			Addresses:     addrs,
 			ServiceConfig: b.configRaw,
 			Attributes:    b.attrsWithClient,
@@ -279,7 +279,7 @@ func (b *clusterResolverBalancer) handleErrorFromUpdate(err error, fromParent bo
 	// EDS resource was removed. No action needs to be taken for this, and we
 	// should continue watching the same EDS resource.
 	if fromParent && xdsresource.ErrType(err) == xdsresource.ErrorTypeResourceNotFound {
-		b.resourceWatcher.stop()
+		b.resourceWatcher.stop(false)
 	}
 
 	if b.child != nil {
@@ -306,14 +306,6 @@ func (b *clusterResolverBalancer) run() {
 			switch update := u.(type) {
 			case *ccUpdate:
 				b.handleClientConnUpdate(update)
-			case *scUpdate:
-				// SubConn updates are simply handed over to the underlying
-				// child balancer.
-				if b.child == nil {
-					b.logger.Errorf("Received a SubConn update {%+v} with no child policy", update)
-					break
-				}
-				b.child.UpdateSubConnState(update.subConn, update.state)
 			case exitIdle:
 				if b.child == nil {
 					b.logger.Errorf("xds: received ExitIdle with no child balancer")
@@ -333,7 +325,7 @@ func (b *clusterResolverBalancer) run() {
 		// Close results in stopping the endpoint resolvers and closing the
 		// underlying child policy and is the only way to exit this goroutine.
 		case <-b.closed.Done():
-			b.resourceWatcher.stop()
+			b.resourceWatcher.stop(true)
 
 			if b.child != nil {
 				b.child.Close()
@@ -380,11 +372,7 @@ func (b *clusterResolverBalancer) ResolverError(err error) {
 
 // UpdateSubConnState handles subConn updates from gRPC.
 func (b *clusterResolverBalancer) UpdateSubConnState(sc balancer.SubConn, state balancer.SubConnState) {
-	if b.closed.HasFired() {
-		b.logger.Warningf("Received subConn update {%v, %v} after close", sc, state)
-		return
-	}
-	b.updateCh.Put(&scUpdate{subConn: sc, state: state})
+	b.logger.Errorf("UpdateSubConnState(%v, %+v) called unexpectedly", sc, state)
 }
 
 // Close closes the cdsBalancer and the underlying child balancer.
@@ -398,9 +386,13 @@ func (b *clusterResolverBalancer) ExitIdle() {
 }
 
 // ccWrapper overrides ResolveNow(), so that re-resolution from the child
-// policies will trigger the DNS resolver in cluster_resolver balancer.
+// policies will trigger the DNS resolver in cluster_resolver balancer.  It
+// also intercepts NewSubConn calls in case children don't set the
+// StateListener, to allow redirection to happen via this cluster_resolver
+// balancer.
 type ccWrapper struct {
 	balancer.ClientConn
+	b               *clusterResolverBalancer
 	resourceWatcher *resourceResolver
 }
 

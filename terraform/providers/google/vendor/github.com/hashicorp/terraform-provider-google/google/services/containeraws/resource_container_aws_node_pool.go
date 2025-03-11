@@ -24,6 +24,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	dcl "github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl"
@@ -50,6 +51,10 @@ func ResourceContainerAwsNodePool() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+			tpgresource.SetAnnotationsDiff,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"autoscaling": {
@@ -112,11 +117,19 @@ func ResourceContainerAwsNodePool() *schema.Resource {
 				Description: "The Kubernetes version to run on this node pool (e.g. `1.19.10-gke.1000`). You can list all supported versions on a given Google Cloud region by calling GetAwsServerConfig.",
 			},
 
-			"annotations": {
+			"effective_annotations": {
 				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "All of annotations (key/value pairs) present on the resource in GCP, including the annotations configured through Terraform, other clients and services.",
+			},
+
+			"management": {
+				Type:        schema.TypeList,
+				Computed:    true,
 				Optional:    true,
-				Description: "Optional. Annotations on the node pool. This field has the same restrictions as Kubernetes annotations. The total size of all keys and values combined is limited to 256k. Key can have 2 segments: prefix (optional) and name (required), separated by a slash (/). Prefix must be a DNS subdomain. Name must be 63 characters or less, begin and end with alphanumerics, with dashes (-), underscores (_), dots (.), and alphanumerics between.",
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "The Management configuration for this node pool.",
+				MaxItems:    1,
+				Elem:        ContainerAwsNodePoolManagementSchema(),
 			},
 
 			"project": {
@@ -126,6 +139,22 @@ func ResourceContainerAwsNodePool() *schema.Resource {
 				ForceNew:         true,
 				DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
 				Description:      "The project for the resource",
+			},
+
+			"update_settings": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Optional:    true,
+				Description: "Optional. Update settings control the speed and disruption of the node pool update.",
+				MaxItems:    1,
+				Elem:        ContainerAwsNodePoolUpdateSettingsSchema(),
+			},
+
+			"annotations": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "Optional. Annotations on the node pool. This field has the same restrictions as Kubernetes annotations. The total size of all keys and values combined is limited to 256k. Key can have 2 segments: prefix (optional) and name (required), separated by a slash (/). Prefix must be a DNS subdomain. Name must be 63 characters or less, begin and end with alphanumerics, with dashes (-), underscores (_), dots (.), and alphanumerics between.\n\n**Note**: This field is non-authoritative, and will only manage the annotations present in your configuration.\nPlease refer to the field `effective_annotations` for all of the annotations present on the resource.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"create_time": {
@@ -214,14 +243,12 @@ func ContainerAwsNodePoolConfigSchema() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Optional. The AWS instance type. When unspecified, it defaults to `m5.large`.",
 			},
 
 			"labels": {
 				Type:        schema.TypeMap,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Optional. The initial labels assigned to nodes of this node pool. An object containing a list of \"key\": value pairs. Example: { \"name\": \"wrench\", \"mass\": \"1.3kg\", \"count\": \"3\" }.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
@@ -352,14 +379,15 @@ func ContainerAwsNodePoolConfigRootVolumeSchema() *schema.Resource {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Optional:    true,
-				Description: "Optional. The throughput to provision for the volume, in MiB/s. Only valid if the volume type is GP3.",
+				Description: "Optional. The throughput to provision for the volume, in MiB/s. Only valid if the volume type is GP3. If volume type is gp3 and throughput is not specified, the throughput will defaults to 125.",
 			},
 
 			"volume_type": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Optional:    true,
-				Description: "Optional. Type of the EBS volume. When unspecified, it defaults to GP2 volume. Possible values: VOLUME_TYPE_UNSPECIFIED, GP2, GP3",
+				Type:             schema.TypeString,
+				Computed:         true,
+				Optional:         true,
+				DiffSuppressFunc: tpgresource.CaseDiffSuppress,
+				Description:      "Optional. Type of the EBS volume. When unspecified, it defaults to GP2 volume. Possible values: VOLUME_TYPE_UNSPECIFIED, GP2, GP3",
 			},
 		},
 	}
@@ -381,10 +409,11 @@ func ContainerAwsNodePoolConfigTaintsSchema() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"effect": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "The taint effect. Possible values: EFFECT_UNSPECIFIED, NO_SCHEDULE, PREFER_NO_SCHEDULE, NO_EXECUTE",
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         true,
+				DiffSuppressFunc: tpgresource.CaseDiffSuppress,
+				Description:      "The taint effect. Possible values: EFFECT_UNSPECIFIED, NO_SCHEDULE, PREFER_NO_SCHEDULE, NO_EXECUTE",
 			},
 
 			"key": {
@@ -417,6 +446,54 @@ func ContainerAwsNodePoolMaxPodsConstraintSchema() *schema.Resource {
 	}
 }
 
+func ContainerAwsNodePoolManagementSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"auto_repair": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Optional:    true,
+				Description: "Optional. Whether or not the nodes will be automatically repaired.",
+			},
+		},
+	}
+}
+
+func ContainerAwsNodePoolUpdateSettingsSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"surge_settings": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Optional:    true,
+				Description: "Optional. Settings for surge update.",
+				MaxItems:    1,
+				Elem:        ContainerAwsNodePoolUpdateSettingsSurgeSettingsSchema(),
+			},
+		},
+	}
+}
+
+func ContainerAwsNodePoolUpdateSettingsSurgeSettingsSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"max_surge": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Optional:    true,
+				Description: "Optional. The maximum number of nodes that can be created beyond the current size of the node pool during the update process.",
+			},
+
+			"max_unavailable": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Optional:    true,
+				Description: "Optional. The maximum number of nodes that can be simultaneously unavailable during the update process. A node is considered unavailable if its status is not Ready.",
+			},
+		},
+	}
+}
+
 func resourceContainerAwsNodePoolCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*transport_tpg.Config)
 	project, err := tpgresource.GetProject(d, config)
@@ -433,8 +510,10 @@ func resourceContainerAwsNodePoolCreate(d *schema.ResourceData, meta interface{}
 		Name:              dcl.String(d.Get("name").(string)),
 		SubnetId:          dcl.String(d.Get("subnet_id").(string)),
 		Version:           dcl.String(d.Get("version").(string)),
-		Annotations:       tpgresource.CheckStringMap(d.Get("annotations")),
+		Annotations:       tpgresource.CheckStringMap(d.Get("effective_annotations")),
+		Management:        expandContainerAwsNodePoolManagement(d.Get("management")),
 		Project:           dcl.String(project),
+		UpdateSettings:    expandContainerAwsNodePoolUpdateSettings(d.Get("update_settings")),
 	}
 
 	id, err := obj.ID()
@@ -490,8 +569,10 @@ func resourceContainerAwsNodePoolRead(d *schema.ResourceData, meta interface{}) 
 		Name:              dcl.String(d.Get("name").(string)),
 		SubnetId:          dcl.String(d.Get("subnet_id").(string)),
 		Version:           dcl.String(d.Get("version").(string)),
-		Annotations:       tpgresource.CheckStringMap(d.Get("annotations")),
+		Annotations:       tpgresource.CheckStringMap(d.Get("effective_annotations")),
+		Management:        expandContainerAwsNodePoolManagement(d.Get("management")),
 		Project:           dcl.String(project),
+		UpdateSettings:    expandContainerAwsNodePoolUpdateSettings(d.Get("update_settings")),
 	}
 
 	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
@@ -540,11 +621,20 @@ func resourceContainerAwsNodePoolRead(d *schema.ResourceData, meta interface{}) 
 	if err = d.Set("version", res.Version); err != nil {
 		return fmt.Errorf("error setting version in state: %s", err)
 	}
-	if err = d.Set("annotations", res.Annotations); err != nil {
-		return fmt.Errorf("error setting annotations in state: %s", err)
+	if err = d.Set("effective_annotations", res.Annotations); err != nil {
+		return fmt.Errorf("error setting effective_annotations in state: %s", err)
+	}
+	if err = d.Set("management", tpgresource.FlattenContainerAwsNodePoolManagement(res.Management, d, config)); err != nil {
+		return fmt.Errorf("error setting management in state: %s", err)
 	}
 	if err = d.Set("project", res.Project); err != nil {
 		return fmt.Errorf("error setting project in state: %s", err)
+	}
+	if err = d.Set("update_settings", flattenContainerAwsNodePoolUpdateSettings(res.UpdateSettings)); err != nil {
+		return fmt.Errorf("error setting update_settings in state: %s", err)
+	}
+	if err = d.Set("annotations", flattenContainerAwsNodePoolAnnotations(res.Annotations, d)); err != nil {
+		return fmt.Errorf("error setting annotations in state: %s", err)
 	}
 	if err = d.Set("create_time", res.CreateTime); err != nil {
 		return fmt.Errorf("error setting create_time in state: %s", err)
@@ -583,8 +673,10 @@ func resourceContainerAwsNodePoolUpdate(d *schema.ResourceData, meta interface{}
 		Name:              dcl.String(d.Get("name").(string)),
 		SubnetId:          dcl.String(d.Get("subnet_id").(string)),
 		Version:           dcl.String(d.Get("version").(string)),
-		Annotations:       tpgresource.CheckStringMap(d.Get("annotations")),
+		Annotations:       tpgresource.CheckStringMap(d.Get("effective_annotations")),
+		Management:        expandContainerAwsNodePoolManagement(d.Get("management")),
 		Project:           dcl.String(project),
+		UpdateSettings:    expandContainerAwsNodePoolUpdateSettings(d.Get("update_settings")),
 	}
 	directive := tpgdclresource.UpdateDirective
 	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
@@ -635,8 +727,10 @@ func resourceContainerAwsNodePoolDelete(d *schema.ResourceData, meta interface{}
 		Name:              dcl.String(d.Get("name").(string)),
 		SubnetId:          dcl.String(d.Get("subnet_id").(string)),
 		Version:           dcl.String(d.Get("version").(string)),
-		Annotations:       tpgresource.CheckStringMap(d.Get("annotations")),
+		Annotations:       tpgresource.CheckStringMap(d.Get("effective_annotations")),
+		Management:        expandContainerAwsNodePoolManagement(d.Get("management")),
 		Project:           dcl.String(project),
+		UpdateSettings:    expandContainerAwsNodePoolUpdateSettings(d.Get("update_settings")),
 	}
 
 	log.Printf("[DEBUG] Deleting NodePool %q", d.Id())
@@ -984,4 +1078,99 @@ func flattenContainerAwsNodePoolMaxPodsConstraint(obj *containeraws.NodePoolMaxP
 
 	return []interface{}{transformed}
 
+}
+
+func expandContainerAwsNodePoolManagement(o interface{}) *containeraws.NodePoolManagement {
+	if o == nil {
+		return nil
+	}
+	objArr := o.([]interface{})
+	if len(objArr) == 0 || objArr[0] == nil {
+		return nil
+	}
+	obj := objArr[0].(map[string]interface{})
+	return &containeraws.NodePoolManagement{
+		AutoRepair: dcl.Bool(obj["auto_repair"].(bool)),
+	}
+}
+
+func flattenContainerAwsNodePoolManagement(obj *containeraws.NodePoolManagement) interface{} {
+	if obj == nil || obj.Empty() {
+		return nil
+	}
+	transformed := map[string]interface{}{
+		"auto_repair": obj.AutoRepair,
+	}
+
+	return []interface{}{transformed}
+
+}
+
+func expandContainerAwsNodePoolUpdateSettings(o interface{}) *containeraws.NodePoolUpdateSettings {
+	if o == nil {
+		return nil
+	}
+	objArr := o.([]interface{})
+	if len(objArr) == 0 || objArr[0] == nil {
+		return nil
+	}
+	obj := objArr[0].(map[string]interface{})
+	return &containeraws.NodePoolUpdateSettings{
+		SurgeSettings: expandContainerAwsNodePoolUpdateSettingsSurgeSettings(obj["surge_settings"]),
+	}
+}
+
+func flattenContainerAwsNodePoolUpdateSettings(obj *containeraws.NodePoolUpdateSettings) interface{} {
+	if obj == nil || obj.Empty() {
+		return nil
+	}
+	transformed := map[string]interface{}{
+		"surge_settings": flattenContainerAwsNodePoolUpdateSettingsSurgeSettings(obj.SurgeSettings),
+	}
+
+	return []interface{}{transformed}
+
+}
+
+func expandContainerAwsNodePoolUpdateSettingsSurgeSettings(o interface{}) *containeraws.NodePoolUpdateSettingsSurgeSettings {
+	if o == nil {
+		return nil
+	}
+	objArr := o.([]interface{})
+	if len(objArr) == 0 || objArr[0] == nil {
+		return nil
+	}
+	obj := objArr[0].(map[string]interface{})
+	return &containeraws.NodePoolUpdateSettingsSurgeSettings{
+		MaxSurge:       dcl.Int64OrNil(int64(obj["max_surge"].(int))),
+		MaxUnavailable: dcl.Int64OrNil(int64(obj["max_unavailable"].(int))),
+	}
+}
+
+func flattenContainerAwsNodePoolUpdateSettingsSurgeSettings(obj *containeraws.NodePoolUpdateSettingsSurgeSettings) interface{} {
+	if obj == nil || obj.Empty() {
+		return nil
+	}
+	transformed := map[string]interface{}{
+		"max_surge":       obj.MaxSurge,
+		"max_unavailable": obj.MaxUnavailable,
+	}
+
+	return []interface{}{transformed}
+
+}
+
+func flattenContainerAwsNodePoolAnnotations(v map[string]string, d *schema.ResourceData) interface{} {
+	if v == nil {
+		return nil
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.Get("annotations").(map[string]interface{}); ok {
+		for k, _ := range l {
+			transformed[k] = v[k]
+		}
+	}
+
+	return transformed
 }

@@ -16,12 +16,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	dataflow "google.golang.org/api/dataflow/v1b3"
 	"google.golang.org/api/googleapi"
 )
 
-const resourceDataflowJobGoogleProvidedLabelPrefix = "labels.goog-dataflow-provided"
+const resourceDataflowJobGoogleLabelPrefix = "goog-dataflow-provided"
+const resourceDataflowJobGoogleProvidedLabelPrefix = "labels." + resourceDataflowJobGoogleLabelPrefix
 
 var DataflowTerminatingStatesMap = map[string]struct{}{
 	"JOB_STATE_CANCELLING": {},
@@ -62,10 +63,19 @@ func ResourceDataflowJob() *schema.Resource {
 			Update: schema.DefaultTimeout(10 * time.Minute),
 		},
 		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
 			resourceDataflowJobTypeCustomizeDiff,
 		),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
+		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceDataflowJobResourceV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: ResourceDataflowJobStateUpgradeV0,
+				Version: 0,
+			},
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -119,11 +129,24 @@ func ResourceDataflowJob() *schema.Resource {
 			},
 
 			"labels": {
-				Type:             schema.TypeMap,
-				Optional:         true,
-				Computed:         true,
-				DiffSuppressFunc: resourceDataflowJobLabelDiffSuppress,
-				Description:      `User labels to be specified for the job. Keys and values should follow the restrictions specified in the labeling restrictions page. NOTE: Google-provided Dataflow templates often provide default labels that begin with goog-dataflow-provided. Unless explicitly set in config, these labels will be ignored to prevent diffs on re-apply.`,
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `User labels to be specified for the job. Keys and values should follow the restrictions specified in the labeling restrictions page. NOTE: This field is non-authoritative, and will only manage the labels present in your configuration.
+				Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
+			},
+
+			"terraform_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `The combination of labels configured directly on the resource and default labels configured on the provider.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"transform_name_mapping": {
@@ -239,12 +262,8 @@ func resourceDataflowJobTypeCustomizeDiff(_ context.Context, d *schema.ResourceD
 			if field == "on_delete" {
 				continue
 			}
-			// Labels map will likely have suppressed changes, so we check each key instead of the parent field
-			if field == "labels" {
-				if err := resourceDataflowJobIterateMapForceNew(field, d); err != nil {
-					return err
-				}
-			} else if d.HasChange(field) {
+
+			if field != "terraform_labels" && d.HasChange(field) {
 				if err := d.ForceNew(field); err != nil {
 					return err
 				}
@@ -344,32 +363,43 @@ func resourceDataflowJobRead(d *schema.ResourceData, meta interface{}) error {
 	if err := d.Set("project", project); err != nil {
 		return fmt.Errorf("Error setting project: %s", err)
 	}
-	if err := d.Set("labels", job.Labels); err != nil {
+	if err := tpgresource.SetLabels(job.Labels, d, "labels"); err != nil {
 		return fmt.Errorf("Error setting labels: %s", err)
+	}
+	if err := tpgresource.SetLabels(job.Labels, d, "terraform_labels"); err != nil {
+		return fmt.Errorf("Error setting terraform_labels: %s", err)
+	}
+	if err := d.Set("effective_labels", job.Labels); err != nil {
+		return fmt.Errorf("Error setting effective_labels: %s", err)
+	}
+	if job.Environment == nil {
+		return fmt.Errorf("Error accessing Environment proto: proto is nil")
 	}
 	if err := d.Set("kms_key_name", job.Environment.ServiceKmsKeyName); err != nil {
 		return fmt.Errorf("Error setting kms_key_name: %s", err)
 	}
 
+	// This map isn't provided on all responses. It's not clear why but we only want to set these fields
+	// if the API returns. Otherwise this execution will crash for the user.
+	// https://github.com/hashicorp/terraform-provider-google/issues/7449
 	sdkPipelineOptions, err := tpgresource.ConvertToMap(job.Environment.SdkPipelineOptions)
-	if err != nil {
-		return err
-	}
-	optionsMap := sdkPipelineOptions["options"].(map[string]interface{})
-	if err := d.Set("template_gcs_path", optionsMap["templateLocation"]); err != nil {
-		return fmt.Errorf("Error setting template_gcs_path: %s", err)
-	}
-	if err := d.Set("temp_gcs_location", optionsMap["tempLocation"]); err != nil {
-		return fmt.Errorf("Error setting temp_gcs_location: %s", err)
-	}
-	if err := d.Set("machine_type", optionsMap["machineType"]); err != nil {
-		return fmt.Errorf("Error setting machine_type: %s", err)
-	}
-	if err := d.Set("network", optionsMap["network"]); err != nil {
-		return fmt.Errorf("Error setting network: %s", err)
-	}
-	if err := d.Set("service_account_email", optionsMap["serviceAccountEmail"]); err != nil {
-		return fmt.Errorf("Error setting service_account_email: %s", err)
+	if err == nil {
+		optionsMap := sdkPipelineOptions["options"].(map[string]interface{})
+		if err := d.Set("template_gcs_path", optionsMap["templateLocation"]); err != nil {
+			return fmt.Errorf("Error setting template_gcs_path: %s", err)
+		}
+		if err := d.Set("temp_gcs_location", optionsMap["tempLocation"]); err != nil {
+			return fmt.Errorf("Error setting temp_gcs_location: %s", err)
+		}
+		if err := d.Set("machine_type", optionsMap["machineType"]); err != nil {
+			return fmt.Errorf("Error setting machine_type: %s", err)
+		}
+		if err := d.Set("network", optionsMap["network"]); err != nil {
+			return fmt.Errorf("Error setting network: %s", err)
+		}
+		if err := d.Set("service_account_email", optionsMap["serviceAccountEmail"]); err != nil {
+			return fmt.Errorf("Error setting service_account_email: %s", err)
+		}
 	}
 
 	if ok := shouldStopDataflowJobDeleteQuery(job.CurrentState, d.Get("skip_wait_on_job_termination").(bool)); ok {
@@ -389,57 +419,58 @@ func resourceDataflowJobUpdateByReplacement(d *schema.ResourceData, meta interfa
 		return nil
 	}
 
-	config := meta.(*transport_tpg.Config)
-	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
-	if err != nil {
-		return err
+	if jobHasUpdate(d, ResourceDataflowJob().Schema) {
+		config := meta.(*transport_tpg.Config)
+		userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
+		if err != nil {
+			return err
+		}
+
+		project, err := tpgresource.GetProject(d, config)
+		if err != nil {
+			return err
+		}
+
+		region, err := tpgresource.GetRegion(d, config)
+		if err != nil {
+			return err
+		}
+
+		params := tpgresource.ExpandStringMap(d, "parameters")
+		tnamemapping := tpgresource.ExpandStringMap(d, "transform_name_mapping")
+
+		env, err := resourceDataflowJobSetupEnv(d, config)
+		if err != nil {
+			return err
+		}
+
+		request := dataflow.LaunchTemplateParameters{
+			JobName:              d.Get("name").(string),
+			Parameters:           params,
+			TransformNameMapping: tnamemapping,
+			Environment:          &env,
+			Update:               true,
+		}
+
+		var response *dataflow.LaunchTemplateResponse
+		err = transport_tpg.Retry(transport_tpg.RetryOptions{
+			RetryFunc: func() (updateErr error) {
+				response, updateErr = resourceDataflowJobLaunchTemplate(config, project, region, userAgent, d.Get("template_gcs_path").(string), &request)
+				return updateErr
+			},
+			Timeout:              time.Minute * time.Duration(5),
+			ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsDataflowJobUpdateRetryableError},
+		})
+		if err != nil {
+			return err
+		}
+
+		if err := waitForDataflowJobToBeUpdated(d, config, response.Job.Id, userAgent, d.Timeout(schema.TimeoutUpdate)); err != nil {
+			return fmt.Errorf("Error updating job with job ID %q: %v", d.Id(), err)
+		}
+
+		d.SetId(response.Job.Id)
 	}
-
-	project, err := tpgresource.GetProject(d, config)
-	if err != nil {
-		return err
-	}
-
-	region, err := tpgresource.GetRegion(d, config)
-	if err != nil {
-		return err
-	}
-
-	params := tpgresource.ExpandStringMap(d, "parameters")
-	tnamemapping := tpgresource.ExpandStringMap(d, "transform_name_mapping")
-
-	env, err := resourceDataflowJobSetupEnv(d, config)
-	if err != nil {
-		return err
-	}
-
-	request := dataflow.LaunchTemplateParameters{
-		JobName:              d.Get("name").(string),
-		Parameters:           params,
-		TransformNameMapping: tnamemapping,
-		Environment:          &env,
-		Update:               true,
-	}
-
-	var response *dataflow.LaunchTemplateResponse
-	err = transport_tpg.Retry(transport_tpg.RetryOptions{
-		RetryFunc: func() (updateErr error) {
-			response, updateErr = resourceDataflowJobLaunchTemplate(config, project, region, userAgent, d.Get("template_gcs_path").(string), &request)
-			return updateErr
-		},
-		Timeout:              time.Minute * time.Duration(5),
-		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsDataflowJobUpdateRetryableError},
-	})
-	if err != nil {
-		return err
-	}
-
-	if err := waitForDataflowJobToBeUpdated(d, config, response.Job.Id, userAgent, d.Timeout(schema.TimeoutUpdate)); err != nil {
-		return fmt.Errorf("Error updating job with job ID %q: %v", d.Id(), err)
-	}
-
-	d.SetId(response.Job.Id)
-
 	return resourceDataflowJobRead(d, meta)
 }
 
@@ -468,7 +499,7 @@ func resourceDataflowJobDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Retry updating the state while the job is not ready to be canceled/drained.
-	err = resource.Retry(time.Minute*time.Duration(15), func() *resource.RetryError {
+	err = retry.Retry(time.Minute*time.Duration(15), func() *retry.RetryError {
 		// To terminate a dataflow job, we update the job with a requested
 		// terminal state.
 		job := &dataflow.Job{
@@ -480,14 +511,14 @@ func resourceDataflowJobDelete(d *schema.ResourceData, meta interface{}) error {
 			gerr, isGoogleErr := updateErr.(*googleapi.Error)
 			if !isGoogleErr {
 				// If we have an error and it's not a google-specific error, we should go ahead and return.
-				return resource.NonRetryableError(updateErr)
+				return retry.NonRetryableError(updateErr)
 			}
 
 			if strings.Contains(gerr.Message, "not yet ready for canceling") {
 				// Retry cancelling job if it's not ready.
 				// Sleep to avoid hitting update quota with repeated attempts.
 				time.Sleep(5 * time.Second)
-				return resource.RetryableError(updateErr)
+				return retry.RetryableError(updateErr)
 			}
 
 			if strings.Contains(gerr.Message, "Job has terminated") {
@@ -567,7 +598,7 @@ func resourceDataflowJobLaunchTemplate(config *transport_tpg.Config, project, re
 func resourceDataflowJobSetupEnv(d *schema.ResourceData, config *transport_tpg.Config) (dataflow.RuntimeEnvironment, error) {
 	zone, _ := tpgresource.GetZone(d, config)
 
-	labels := tpgresource.ExpandStringMap(d, "labels")
+	labels := tpgresource.ExpandStringMap(d, "effective_labels")
 
 	additionalExperiments := tpgresource.ConvertStringSet(d.Get("additional_experiments").(*schema.Set))
 
@@ -621,9 +652,8 @@ func resourceDataflowJobIsVirtualUpdate(d *schema.ResourceData, resourceSchema m
 			if field == "on_delete" {
 				continue
 			}
-			// Labels map will likely have suppressed changes, so we check each key instead of the parent field
-			if (field == "labels" && resourceDataflowJobIterateMapHasChange(field, d)) ||
-				(field != "labels" && d.HasChange(field)) {
+
+			if d.HasChange(field) {
 				return false
 			}
 		}
@@ -634,32 +664,51 @@ func resourceDataflowJobIsVirtualUpdate(d *schema.ResourceData, resourceSchema m
 	return false
 }
 
+// If only fields on_delete, terraform_labels are changing, no update request is needed
+func jobHasUpdate(d *schema.ResourceData, resourceSchema map[string]*schema.Schema) bool {
+	if d.HasChange("on_delete") || d.HasChange("labels") || d.HasChange("terraform_labels") {
+		for field := range resourceSchema {
+			if field == "on_delete" || field == "labels" || field == "terraform_labels" {
+				continue
+			}
+
+			if d.HasChange(field) {
+				return true
+			}
+		}
+		// on_delete, or terraform_labels are changing, but nothing else
+		return false
+	}
+
+	return true
+}
+
 func waitForDataflowJobToBeUpdated(d *schema.ResourceData, config *transport_tpg.Config, replacementJobID, userAgent string, timeout time.Duration) error {
-	return resource.Retry(timeout, func() *resource.RetryError {
+	return retry.Retry(timeout, func() *retry.RetryError {
 		project, err := tpgresource.GetProject(d, config)
 		if err != nil {
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 
 		region, err := tpgresource.GetRegion(d, config)
 		if err != nil {
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 
 		replacementJob, err := resourceDataflowJobGetJob(config, project, region, userAgent, replacementJobID)
 		if err != nil {
 			if transport_tpg.IsRetryableError(err, nil, nil) {
-				return resource.RetryableError(err)
+				return retry.RetryableError(err)
 			}
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 
 		state := replacementJob.CurrentState
 		switch state {
 		case "", "JOB_STATE_PENDING":
-			return resource.RetryableError(fmt.Errorf("the replacement job with ID %q has pending state %q.", replacementJobID, state))
+			return retry.RetryableError(fmt.Errorf("the replacement job with ID %q has pending state %q.", replacementJobID, state))
 		case "JOB_STATE_FAILED":
-			return resource.NonRetryableError(fmt.Errorf("the replacement job with ID %q failed with state %q.", replacementJobID, state))
+			return retry.NonRetryableError(fmt.Errorf("the replacement job with ID %q failed with state %q.", replacementJobID, state))
 		default:
 			log.Printf("[DEBUG] the replacement job with ID %q has state %q.", replacementJobID, state)
 			return nil

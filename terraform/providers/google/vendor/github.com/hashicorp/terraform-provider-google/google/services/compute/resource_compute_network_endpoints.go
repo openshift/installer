@@ -20,9 +20,11 @@ package compute
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -146,6 +148,11 @@ func ResourceComputeNetworkEndpoints() *schema.Resource {
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+			tpgresource.DefaultProviderZone,
+		),
+
 		Schema: map[string]*schema.Schema{
 			"network_endpoint_group": {
 				Type:             schema.TypeString,
@@ -255,6 +262,7 @@ func resourceComputeNetworkEndpointsCreate(d *schema.ResourceData, meta interfac
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	chunkSize := 500 // API only accepts 500 endpoints at a time
 	lastPage, err := networkEndpointsPaginatedMutate(d, obj["networkEndpoints"].([]interface{}), config, userAgent, url, project, billingProject, chunkSize, true)
 	if err != nil {
@@ -270,6 +278,7 @@ func resourceComputeNetworkEndpointsCreate(d *schema.ResourceData, meta interfac
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating NetworkEndpoints: %s", err)
@@ -322,12 +331,14 @@ func resourceComputeNetworkEndpointsRead(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeNetworkEndpoints %q", d.Id()))
@@ -346,6 +357,14 @@ func resourceComputeNetworkEndpointsRead(d *schema.ResourceData, meta interface{
 	}
 
 	if err := d.Set("project", project); err != nil {
+		return fmt.Errorf("Error reading NetworkEndpoints: %s", err)
+	}
+
+	zone, err := tpgresource.GetZone(d, config)
+	if err != nil {
+		return err
+	}
+	if err := d.Set("zone", zone); err != nil {
 		return fmt.Errorf("Error reading NetworkEndpoints: %s", err)
 	}
 
@@ -397,6 +416,7 @@ func resourceComputeNetworkEndpointsUpdate(d *schema.ResourceData, meta interfac
 	}
 
 	log.Printf("[DEBUG] Updating NetworkEndpoints %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	detachUrl, err := tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/zones/{{zone}}/networkEndpointGroups/{{network_endpoint_group}}/detachNetworkEndpoints")
 	o, n := d.GetChange("network_endpoints")
 
@@ -472,6 +492,7 @@ func resourceComputeNetworkEndpointsUpdate(d *schema.ResourceData, meta interfac
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
+		Headers:   headers,
 	})
 
 	if err != nil {
@@ -519,6 +540,13 @@ func resourceComputeNetworkEndpointsDelete(d *schema.ResourceData, meta interfac
 	}
 
 	var obj map[string]interface{}
+
+	// err == nil indicates that the billing_project value was found
+	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+		billingProject = bp
+	}
+
+	headers := make(http.Header)
 	var endpointsToDelete []interface{}
 
 	endpoints := d.Get("network_endpoints").(*schema.Set).List()
@@ -560,13 +588,8 @@ func resourceComputeNetworkEndpointsDelete(d *schema.ResourceData, meta interfac
 	obj = map[string]interface{}{
 		"networkEndpoints": lastPage,
 	}
+
 	log.Printf("[DEBUG] Deleting NetworkEndpoints %q", d.Id())
-
-	// err == nil indicates that the billing_project value was found
-	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
-		billingProject = bp
-	}
-
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -575,6 +598,7 @@ func resourceComputeNetworkEndpointsDelete(d *schema.ResourceData, meta interfac
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "NetworkEndpoints")
@@ -595,10 +619,10 @@ func resourceComputeNetworkEndpointsDelete(d *schema.ResourceData, meta interfac
 func resourceComputeNetworkEndpointsImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/zones/(?P<zone>[^/]+)/networkEndpointGroups/(?P<network_endpoint_group>[^/]+)",
-		"(?P<project>[^/]+)/(?P<zone>[^/]+)/(?P<network_endpoint_group>[^/]+)",
-		"(?P<zone>[^/]+)/(?P<network_endpoint_group>[^/]+)",
-		"(?P<network_endpoint_group>[^/]+)",
+		"^projects/(?P<project>[^/]+)/zones/(?P<zone>[^/]+)/networkEndpointGroups/(?P<network_endpoint_group>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<zone>[^/]+)/(?P<network_endpoint_group>[^/]+)$",
+		"^(?P<zone>[^/]+)/(?P<network_endpoint_group>[^/]+)$",
+		"^(?P<network_endpoint_group>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

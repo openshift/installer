@@ -20,10 +20,12 @@ package monitoring
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -52,6 +54,10 @@ func ResourceMonitoringAlertPolicy() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"combiner": {
@@ -353,6 +359,83 @@ condition to be triggered.`,
 												},
 											},
 										},
+									},
+								},
+							},
+						},
+						"condition_prometheus_query_language": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Description: `A condition type that allows alert policies to be defined using
+Prometheus Query Language (PromQL).
+
+The PrometheusQueryLanguageCondition message contains information
+from a Prometheus alerting rule and its associated rule group.`,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"query": {
+										Type:     schema.TypeString,
+										Required: true,
+										Description: `The PromQL expression to evaluate. Every evaluation cycle this
+expression is evaluated at the current time, and all resultant time
+series become pending/firing alerts. This field must not be empty.`,
+									},
+									"alert_rule": {
+										Type:     schema.TypeString,
+										Optional: true,
+										Description: `The alerting rule name of this alert in the corresponding Prometheus
+configuration file.
+
+Some external tools may require this field to be populated correctly
+in order to refer to the original Prometheus configuration file.
+The rule group name and the alert name are necessary to update the
+relevant AlertPolicies in case the definition of the rule group changes
+in the future.
+
+This field is optional. If this field is not empty, then it must be a
+valid Prometheus label name.`,
+									},
+									"duration": {
+										Type:     schema.TypeString,
+										Optional: true,
+										Description: `Alerts are considered firing once their PromQL expression evaluated
+to be "true" for this long. Alerts whose PromQL expression was not
+evaluated to be "true" for long enough are considered pending. The
+default value is zero. Must be zero or positive.`,
+									},
+									"evaluation_interval": {
+										Type:     schema.TypeString,
+										Optional: true,
+										Description: `How often this rule should be evaluated. Must be a positive multiple
+of 30 seconds or missing. The default value is 30 seconds. If this
+PrometheusQueryLanguageCondition was generated from a Prometheus
+alerting rule, then this value should be taken from the enclosing
+rule group.`,
+									},
+									"labels": {
+										Type:     schema.TypeMap,
+										Optional: true,
+										Description: `Labels to add to or overwrite in the PromQL query result. Label names
+must be valid.
+
+Label values can be templatized by using variables. The only available
+variable names are the names of the labels in the PromQL result, including
+"__name__" and "value". "labels" may be empty. This field is intended to be
+used for organizing and identifying the AlertPolicy`,
+										Elem: &schema.Schema{Type: schema.TypeString},
+									},
+									"rule_group": {
+										Type:     schema.TypeString,
+										Optional: true,
+										Description: `The rule group name of this alert in the corresponding Prometheus
+configuration file.
+
+Some external tools may require this field to be populated correctly
+in order to refer to the original Prometheus configuration file.
+The rule group name and the alert name are necessary to update the
+relevant AlertPolicies in case the definition of the rule group changes
+in the future. This field is optional.`,
 									},
 								},
 							},
@@ -808,9 +891,10 @@ This limit is not implemented for alert policies that are not log-based.`,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"period": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: `Not more than one notification per period.`,
+										Type:     schema.TypeString,
+										Optional: true,
+										Description: `Not more than one notification per period.
+A duration in seconds with up to nine fractional digits, terminated by 's'. Example "60.5s".`,
 									},
 								},
 							},
@@ -836,7 +920,27 @@ limited capacity might not show this documentation.`,
 The content may not exceed 8,192 Unicode characters and may not
 exceed more than 10,240 bytes when encoded in UTF-8 format,
 whichever is smaller.`,
-							AtLeastOneOf: []string{"documentation.0.content", "documentation.0.mime_type"},
+							AtLeastOneOf: []string{"documentation.0.content", "documentation.0.mime_type", "documentation.0.subject", "documentation.0.links"},
+						},
+						"links": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `Links to content such as playbooks, repositories, and other resources. This field can contain up to 3 entries.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"display_name": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: `A short display name for the link. The display name must not be empty or exceed 63 characters. Example: "playbook".`,
+									},
+									"url": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: `The url of a webpage. A url can be templatized by using variables in the path or the query parameters. The total length of a URL should not exceed 2083 characters before and after variable expansion. Example: "https://my_domain.com/playbook?name=${resource.name}".`,
+									},
+								},
+							},
+							AtLeastOneOf: []string{"documentation.0.content", "documentation.0.mime_type", "documentation.0.subject", "documentation.0.links"},
 						},
 						"mime_type": {
 							Type:     schema.TypeString,
@@ -844,7 +948,16 @@ whichever is smaller.`,
 							Description: `The format of the content field. Presently, only the value
 "text/markdown" is supported.`,
 							Default:      "text/markdown",
-							AtLeastOneOf: []string{"documentation.0.content", "documentation.0.mime_type"},
+							AtLeastOneOf: []string{"documentation.0.content", "documentation.0.mime_type", "documentation.0.subject", "documentation.0.links"},
+						},
+						"subject": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Description: `The subject line of the notification. The subject line may not
+exceed 10,240 bytes. In notifications generated by this policy the contents
+of the subject line after variable expansion will be truncated to 255 bytes
+or shorter at the latest UTF-8 character boundary.`,
+							AtLeastOneOf: []string{"documentation.0.content", "documentation.0.mime_type", "documentation.0.subject", "documentation.0.links"},
 						},
 					},
 				},
@@ -868,6 +981,14 @@ entries in this field is
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+			},
+			"severity": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: verify.ValidateEnum([]string{"CRITICAL", "ERROR", "WARNING", ""}),
+				Description: `The severity of an alert policy indicates how important incidents generated
+by that policy are. The severity level will be displayed on the Incident
+detail page and in notifications. Possible values: ["CRITICAL", "ERROR", "WARNING"]`,
 			},
 			"user_labels": {
 				Type:     schema.TypeMap,
@@ -967,6 +1088,12 @@ func resourceMonitoringAlertPolicyCreate(d *schema.ResourceData, meta interface{
 	} else if v, ok := d.GetOkExists("user_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(userLabelsProp)) && (ok || !reflect.DeepEqual(v, userLabelsProp)) {
 		obj["userLabels"] = userLabelsProp
 	}
+	severityProp, err := expandMonitoringAlertPolicySeverity(d.Get("severity"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("severity"); !tpgresource.IsEmptyValue(reflect.ValueOf(severityProp)) && (ok || !reflect.DeepEqual(v, severityProp)) {
+		obj["severity"] = severityProp
+	}
 	documentationProp, err := expandMonitoringAlertPolicyDocumentation(d.Get("documentation"), d, config)
 	if err != nil {
 		return err
@@ -1000,6 +1127,7 @@ func resourceMonitoringAlertPolicyCreate(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "POST",
@@ -1008,6 +1136,7 @@ func resourceMonitoringAlertPolicyCreate(d *schema.ResourceData, meta interface{
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutCreate),
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsMonitoringConcurrentEditError},
 		ErrorAbortPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.Is429QuotaError},
 	})
@@ -1073,12 +1202,14 @@ func resourceMonitoringAlertPolicyRead(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "GET",
 		Project:              billingProject,
 		RawURL:               url,
 		UserAgent:            userAgent,
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsMonitoringConcurrentEditError},
 		ErrorAbortPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.Is429QuotaError},
 	})
@@ -1115,6 +1246,9 @@ func resourceMonitoringAlertPolicyRead(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("Error reading AlertPolicy: %s", err)
 	}
 	if err := d.Set("user_labels", flattenMonitoringAlertPolicyUserLabels(res["userLabels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading AlertPolicy: %s", err)
+	}
+	if err := d.Set("severity", flattenMonitoringAlertPolicySeverity(res["severity"], d, config)); err != nil {
 		return fmt.Errorf("Error reading AlertPolicy: %s", err)
 	}
 	if err := d.Set("documentation", flattenMonitoringAlertPolicyDocumentation(res["documentation"], d, config)); err != nil {
@@ -1182,6 +1316,12 @@ func resourceMonitoringAlertPolicyUpdate(d *schema.ResourceData, meta interface{
 	} else if v, ok := d.GetOkExists("user_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, userLabelsProp)) {
 		obj["userLabels"] = userLabelsProp
 	}
+	severityProp, err := expandMonitoringAlertPolicySeverity(d.Get("severity"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("severity"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, severityProp)) {
+		obj["severity"] = severityProp
+	}
 	documentationProp, err := expandMonitoringAlertPolicyDocumentation(d.Get("documentation"), d, config)
 	if err != nil {
 		return err
@@ -1202,6 +1342,7 @@ func resourceMonitoringAlertPolicyUpdate(d *schema.ResourceData, meta interface{
 	}
 
 	log.Printf("[DEBUG] Updating AlertPolicy %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("display_name") {
@@ -1232,6 +1373,10 @@ func resourceMonitoringAlertPolicyUpdate(d *schema.ResourceData, meta interface{
 		updateMask = append(updateMask, "userLabels")
 	}
 
+	if d.HasChange("severity") {
+		updateMask = append(updateMask, "severity")
+	}
+
 	if d.HasChange("documentation") {
 		updateMask = append(updateMask, "documentation")
 	}
@@ -1247,22 +1392,27 @@ func resourceMonitoringAlertPolicyUpdate(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:               config,
-		Method:               "PATCH",
-		Project:              billingProject,
-		RawURL:               url,
-		UserAgent:            userAgent,
-		Body:                 obj,
-		Timeout:              d.Timeout(schema.TimeoutUpdate),
-		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsMonitoringConcurrentEditError},
-		ErrorAbortPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.Is429QuotaError},
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:               config,
+			Method:               "PATCH",
+			Project:              billingProject,
+			RawURL:               url,
+			UserAgent:            userAgent,
+			Body:                 obj,
+			Timeout:              d.Timeout(schema.TimeoutUpdate),
+			Headers:              headers,
+			ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsMonitoringConcurrentEditError},
+			ErrorAbortPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.Is429QuotaError},
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating AlertPolicy %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating AlertPolicy %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating AlertPolicy %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating AlertPolicy %q: %#v", d.Id(), res)
+		}
+
 	}
 
 	return resourceMonitoringAlertPolicyRead(d, meta)
@@ -1296,13 +1446,15 @@ func resourceMonitoringAlertPolicyDelete(d *schema.ResourceData, meta interface{
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting AlertPolicy %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting AlertPolicy %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "DELETE",
@@ -1311,6 +1463,7 @@ func resourceMonitoringAlertPolicyDelete(d *schema.ResourceData, meta interface{
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutDelete),
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsMonitoringConcurrentEditError},
 		ErrorAbortPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.Is429QuotaError},
 	})
@@ -1392,6 +1545,7 @@ func flattenMonitoringAlertPolicyConditions(v interface{}, d *schema.ResourceDat
 			"condition_threshold":                 flattenMonitoringAlertPolicyConditionsConditionThreshold(original["conditionThreshold"], d, config),
 			"display_name":                        flattenMonitoringAlertPolicyConditionsDisplayName(original["displayName"], d, config),
 			"condition_matched_log":               flattenMonitoringAlertPolicyConditionsConditionMatchedLog(original["conditionMatchedLog"], d, config),
+			"condition_prometheus_query_language": flattenMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguage(original["conditionPrometheusQueryLanguage"], d, config),
 		})
 	}
 	return transformed
@@ -1776,6 +1930,53 @@ func flattenMonitoringAlertPolicyConditionsConditionMatchedLogLabelExtractors(v 
 	return v
 }
 
+func flattenMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguage(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["query"] =
+		flattenMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguageQuery(original["query"], d, config)
+	transformed["duration"] =
+		flattenMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguageDuration(original["duration"], d, config)
+	transformed["evaluation_interval"] =
+		flattenMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguageEvaluationInterval(original["evaluationInterval"], d, config)
+	transformed["labels"] =
+		flattenMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguageLabels(original["labels"], d, config)
+	transformed["rule_group"] =
+		flattenMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguageRuleGroup(original["ruleGroup"], d, config)
+	transformed["alert_rule"] =
+		flattenMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguageAlertRule(original["alertRule"], d, config)
+	return []interface{}{transformed}
+}
+func flattenMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguageQuery(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguageDuration(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguageEvaluationInterval(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguageLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguageRuleGroup(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguageAlertRule(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func flattenMonitoringAlertPolicyNotificationChannels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
@@ -1849,6 +2050,10 @@ func flattenMonitoringAlertPolicyUserLabels(v interface{}, d *schema.ResourceDat
 	return v
 }
 
+func flattenMonitoringAlertPolicySeverity(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func flattenMonitoringAlertPolicyDocumentation(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return nil
@@ -1862,6 +2067,10 @@ func flattenMonitoringAlertPolicyDocumentation(v interface{}, d *schema.Resource
 		flattenMonitoringAlertPolicyDocumentationContent(original["content"], d, config)
 	transformed["mime_type"] =
 		flattenMonitoringAlertPolicyDocumentationMimeType(original["mimeType"], d, config)
+	transformed["subject"] =
+		flattenMonitoringAlertPolicyDocumentationSubject(original["subject"], d, config)
+	transformed["links"] =
+		flattenMonitoringAlertPolicyDocumentationLinks(original["links"], d, config)
 	return []interface{}{transformed}
 }
 func flattenMonitoringAlertPolicyDocumentationContent(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1869,6 +2078,37 @@ func flattenMonitoringAlertPolicyDocumentationContent(v interface{}, d *schema.R
 }
 
 func flattenMonitoringAlertPolicyDocumentationMimeType(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenMonitoringAlertPolicyDocumentationSubject(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenMonitoringAlertPolicyDocumentationLinks(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"display_name": flattenMonitoringAlertPolicyDocumentationLinksDisplayName(original["displayName"], d, config),
+			"url":          flattenMonitoringAlertPolicyDocumentationLinksUrl(original["url"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenMonitoringAlertPolicyDocumentationLinksDisplayName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenMonitoringAlertPolicyDocumentationLinksUrl(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1934,6 +2174,13 @@ func expandMonitoringAlertPolicyConditions(v interface{}, d tpgresource.Terrafor
 			return nil, err
 		} else if val := reflect.ValueOf(transformedConditionMatchedLog); val.IsValid() && !tpgresource.IsEmptyValue(val) {
 			transformed["conditionMatchedLog"] = transformedConditionMatchedLog
+		}
+
+		transformedConditionPrometheusQueryLanguage, err := expandMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguage(original["condition_prometheus_query_language"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedConditionPrometheusQueryLanguage); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["conditionPrometheusQueryLanguage"] = transformedConditionPrometheusQueryLanguage
 		}
 
 		req = append(req, transformed)
@@ -2498,6 +2745,91 @@ func expandMonitoringAlertPolicyConditionsConditionMatchedLogLabelExtractors(v i
 	return m, nil
 }
 
+func expandMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguage(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedQuery, err := expandMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguageQuery(original["query"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedQuery); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["query"] = transformedQuery
+	}
+
+	transformedDuration, err := expandMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguageDuration(original["duration"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedDuration); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["duration"] = transformedDuration
+	}
+
+	transformedEvaluationInterval, err := expandMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguageEvaluationInterval(original["evaluation_interval"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedEvaluationInterval); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["evaluationInterval"] = transformedEvaluationInterval
+	}
+
+	transformedLabels, err := expandMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguageLabels(original["labels"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedLabels); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["labels"] = transformedLabels
+	}
+
+	transformedRuleGroup, err := expandMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguageRuleGroup(original["rule_group"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedRuleGroup); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["ruleGroup"] = transformedRuleGroup
+	}
+
+	transformedAlertRule, err := expandMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguageAlertRule(original["alert_rule"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAlertRule); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["alertRule"] = transformedAlertRule
+	}
+
+	return transformed, nil
+}
+
+func expandMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguageQuery(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguageDuration(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguageEvaluationInterval(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguageLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
+}
+
+func expandMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguageRuleGroup(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandMonitoringAlertPolicyConditionsConditionPrometheusQueryLanguageAlertRule(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandMonitoringAlertPolicyNotificationChannels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
@@ -2610,6 +2942,10 @@ func expandMonitoringAlertPolicyUserLabels(v interface{}, d tpgresource.Terrafor
 	return m, nil
 }
 
+func expandMonitoringAlertPolicySeverity(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandMonitoringAlertPolicyDocumentation(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
@@ -2633,6 +2969,20 @@ func expandMonitoringAlertPolicyDocumentation(v interface{}, d tpgresource.Terra
 		transformed["mimeType"] = transformedMimeType
 	}
 
+	transformedSubject, err := expandMonitoringAlertPolicyDocumentationSubject(original["subject"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSubject); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["subject"] = transformedSubject
+	}
+
+	transformedLinks, err := expandMonitoringAlertPolicyDocumentationLinks(original["links"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedLinks); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["links"] = transformedLinks
+	}
+
 	return transformed, nil
 }
 
@@ -2641,5 +2991,46 @@ func expandMonitoringAlertPolicyDocumentationContent(v interface{}, d tpgresourc
 }
 
 func expandMonitoringAlertPolicyDocumentationMimeType(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandMonitoringAlertPolicyDocumentationSubject(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandMonitoringAlertPolicyDocumentationLinks(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedDisplayName, err := expandMonitoringAlertPolicyDocumentationLinksDisplayName(original["display_name"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedDisplayName); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["displayName"] = transformedDisplayName
+		}
+
+		transformedUrl, err := expandMonitoringAlertPolicyDocumentationLinksUrl(original["url"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedUrl); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["url"] = transformedUrl
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandMonitoringAlertPolicyDocumentationLinksDisplayName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandMonitoringAlertPolicyDocumentationLinksUrl(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }

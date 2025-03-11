@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC. All Rights Reserved.
+# Copyright 2024 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -93,6 +93,7 @@ components:
             Rules Releases will **always** have the name ''cloud.firestore'''
           x-kubernetes-immutable: true
           x-dcl-forward-slash-allowed: true
+          x-dcl-has-long-form: true
         project:
           type: string
           x-dcl-go-name: Project
@@ -102,14 +103,17 @@ components:
           - resource: Cloudresourcemanager/Project
             field: name
             parent: true
+          x-dcl-parameter: true
         rulesetName:
           type: string
           x-dcl-go-name: RulesetName
           description: Name of the `Ruleset` referred to by this `Release`. The `Ruleset`
             must exist for the `Release` to be created.
+          x-kubernetes-immutable: true
           x-dcl-references:
           - resource: Firebaserules/Ruleset
             field: name
+          x-dcl-has-long-form: true
         updateTime:
           type: string
           format: date-time

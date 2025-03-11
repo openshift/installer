@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC. All Rights Reserved.
+# Copyright 2024 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ info:
   x-dcl-has-iam: false
   x-dcl-ref:
     text: API reference
-    url: https://cloud.google.com/anthos/clusters/docs/multi-cloud/reference/rest/v1/projects.locations.awsClusters
+    url: https://cloud.google.com/kubernetes-engine/multi-cloud/docs/reference/rest/v1/projects.locations.awsClusters
   x-dcl-guides:
   - text: Multicloud overview
-    url: https://cloud.google.com/anthos/clusters/docs/multi-cloud
+    url: https://cloud.google.com/kubernetes-engine/multi-cloud/docs
 paths:
   get:
     description: The function used to get information about a Cluster
@@ -104,6 +104,25 @@ components:
           required:
           - adminUsers
           properties:
+            adminGroups:
+              type: array
+              x-dcl-go-name: AdminGroups
+              description: Groups of users that can perform operations as a cluster
+                admin. A managed ClusterRoleBinding will be created to grant the `cluster-admin`
+                ClusterRole to the groups. Up to ten admin groups can be provided.
+                For more info on RBAC, see https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles
+              x-dcl-send-empty: true
+              x-dcl-list-type: list
+              items:
+                type: object
+                x-dcl-go-type: ClusterAuthorizationAdminGroups
+                required:
+                - group
+                properties:
+                  group:
+                    type: string
+                    x-dcl-go-name: Group
+                    description: The name of the group, e.g. `my-group@domain.com`.
             adminUsers:
               type: array
               x-dcl-go-name: AdminUsers
@@ -130,6 +149,23 @@ components:
             supports a subset of nearby AWS regions. You can call to list all supported
             AWS regions within a given Google Cloud region.
           x-kubernetes-immutable: true
+        binaryAuthorization:
+          type: object
+          x-dcl-go-name: BinaryAuthorization
+          x-dcl-go-type: ClusterBinaryAuthorization
+          description: Configuration options for the Binary Authorization feature.
+          x-dcl-server-default: true
+          properties:
+            evaluationMode:
+              type: string
+              x-dcl-go-name: EvaluationMode
+              x-dcl-go-type: ClusterBinaryAuthorizationEvaluationModeEnum
+              description: 'Mode of operation for Binary Authorization policy evaluation.
+                Possible values: DISABLED, PROJECT_SINGLETON_POLICY_ENFORCE'
+              x-dcl-server-default: true
+              enum:
+              - DISABLED
+              - PROJECT_SINGLETON_POLICY_ENFORCE
         controlPlane:
           type: object
           x-dcl-go-name: ControlPlane
@@ -244,7 +280,9 @@ components:
                   format: int64
                   x-dcl-go-name: Throughput
                   description: Optional. The throughput to provision for the volume,
-                    in MiB/s. Only valid if the volume type is GP3.
+                    in MiB/s. Only valid if the volume type is GP3. If volume type
+                    is gp3 and throughput is not specified, the throughput will defaults
+                    to 125.
                   x-kubernetes-immutable: true
                   x-dcl-server-default: true
                 volumeType:
@@ -316,7 +354,9 @@ components:
                   format: int64
                   x-dcl-go-name: Throughput
                   description: Optional. The throughput to provision for the volume,
-                    in MiB/s. Only valid if the volume type is GP3.
+                    in MiB/s. Only valid if the volume type is GP3. If volume type
+                    is gp3 and throughput is not specified, the throughput will defaults
+                    to 125.
                   x-dcl-server-default: true
                 volumeType:
                   type: string
@@ -436,16 +476,19 @@ components:
               - resource: Cloudresourcemanager/Project
                 field: name
                 parent: true
+              x-dcl-has-long-form: true
         location:
           type: string
           x-dcl-go-name: Location
           description: The location for the resource
           x-kubernetes-immutable: true
+          x-dcl-parameter: true
         name:
           type: string
           x-dcl-go-name: Name
           description: The name of this resource.
           x-kubernetes-immutable: true
+          x-dcl-has-long-form: true
         networking:
           type: object
           x-dcl-go-name: Networking
@@ -504,6 +547,7 @@ components:
           - resource: Cloudresourcemanager/Project
             field: name
             parent: true
+          x-dcl-parameter: true
         reconciling:
           type: boolean
           x-dcl-go-name: Reconciling

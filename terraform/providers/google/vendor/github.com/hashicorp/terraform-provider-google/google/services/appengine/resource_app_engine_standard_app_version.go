@@ -20,9 +20,11 @@ package appengine
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -46,6 +48,10 @@ func ResourceAppEngineStandardAppVersion() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"deployment": {
@@ -608,6 +614,7 @@ func resourceAppEngineStandardAppVersionCreate(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "POST",
@@ -616,6 +623,7 @@ func resourceAppEngineStandardAppVersionCreate(d *schema.ResourceData, meta inte
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutCreate),
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsAppEngineRetryableError},
 	})
 	if err != nil {
@@ -669,12 +677,14 @@ func resourceAppEngineStandardAppVersionRead(d *schema.ResourceData, meta interf
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "GET",
 		Project:              billingProject,
 		RawURL:               url,
 		UserAgent:            userAgent,
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsAppEngineRetryableError},
 	})
 	if err != nil {
@@ -874,6 +884,7 @@ func resourceAppEngineStandardAppVersionUpdate(d *schema.ResourceData, meta inte
 	}
 
 	log.Printf("[DEBUG] Updating StandardAppVersion %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -888,6 +899,7 @@ func resourceAppEngineStandardAppVersionUpdate(d *schema.ResourceData, meta inte
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutUpdate),
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsAppEngineRetryableError},
 	})
 
@@ -997,9 +1009,9 @@ func resourceAppEngineStandardAppVersionDelete(d *schema.ResourceData, meta inte
 func resourceAppEngineStandardAppVersionImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"apps/(?P<project>[^/]+)/services/(?P<service>[^/]+)/versions/(?P<version_id>[^/]+)",
-		"(?P<project>[^/]+)/(?P<service>[^/]+)/(?P<version_id>[^/]+)",
-		"(?P<service>[^/]+)/(?P<version_id>[^/]+)",
+		"^apps/(?P<project>[^/]+)/services/(?P<service>[^/]+)/versions/(?P<version_id>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<service>[^/]+)/(?P<version_id>[^/]+)$",
+		"^(?P<service>[^/]+)/(?P<version_id>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -1242,6 +1254,35 @@ func flattenAppEngineStandardAppVersionAutomaticScaling(v interface{}, d *schema
 		flattenAppEngineStandardAppVersionAutomaticScalingMinPendingLatency(original["minPendingLatency"], d, config)
 	transformed["standard_scheduler_settings"] =
 		flattenAppEngineStandardAppVersionAutomaticScalingStandardSchedulerSettings(original["standardSchedulerSettings"], d, config)
+
+	// begin handwritten code (all other parts of this file are forked from generated code)
+	// solve for the following diff when no scaling settings are configured:
+	//
+	// - automatic_scaling {
+	//   - max_concurrent_requests = 0 -> null
+	//   - max_idle_instances      = 0 -> null
+	//    - min_idle_instances      = 0 -> null
+	// }
+	//
+	// this happens because the field is returned as:
+	//
+	//"automaticScaling": {
+	//   "standardSchedulerSettings": {}
+	// },
+	//
+	// this is hacky but avoids marking the field as computed, since it's in a oneof
+	// if any new fields are added to the block or explicit defaults start getting
+	// returned, it will need to be updated
+	if transformed["max_concurrent_requests"] == nil && // even primitives are nil at this stage if they're not returned by the API
+		transformed["max_idle_instances"] == nil &&
+		transformed["max_pending_latency"] == nil &&
+		transformed["min_idle_instances"] == nil &&
+		transformed["min_pending_latency"] == nil &&
+		transformed["standard_scheduler_settings"] == nil {
+		return nil
+	}
+	// end handwritten code
+
 	return []interface{}{transformed}
 }
 func flattenAppEngineStandardAppVersionAutomaticScalingMaxConcurrentRequests(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {

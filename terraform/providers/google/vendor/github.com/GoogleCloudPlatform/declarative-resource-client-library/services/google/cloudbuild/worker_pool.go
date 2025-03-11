@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,20 +25,21 @@ import (
 )
 
 type WorkerPool struct {
-	Name                *string                        `json:"name"`
-	DisplayName         *string                        `json:"displayName"`
-	Uid                 *string                        `json:"uid"`
-	Annotations         map[string]string              `json:"annotations"`
-	CreateTime          *string                        `json:"createTime"`
-	UpdateTime          *string                        `json:"updateTime"`
-	DeleteTime          *string                        `json:"deleteTime"`
-	State               *WorkerPoolStateEnum           `json:"state"`
-	PrivatePoolV1Config *WorkerPoolPrivatePoolV1Config `json:"privatePoolV1Config"`
-	Etag                *string                        `json:"etag"`
-	WorkerConfig        *WorkerPoolWorkerConfig        `json:"workerConfig"`
-	NetworkConfig       *WorkerPoolNetworkConfig       `json:"networkConfig"`
-	Project             *string                        `json:"project"`
-	Location            *string                        `json:"location"`
+	Name                  *string                          `json:"name"`
+	DisplayName           *string                          `json:"displayName"`
+	Uid                   *string                          `json:"uid"`
+	Annotations           map[string]string                `json:"annotations"`
+	CreateTime            *string                          `json:"createTime"`
+	UpdateTime            *string                          `json:"updateTime"`
+	DeleteTime            *string                          `json:"deleteTime"`
+	State                 *WorkerPoolStateEnum             `json:"state"`
+	PrivatePoolV1Config   *WorkerPoolPrivatePoolV1Config   `json:"privatePoolV1Config"`
+	Etag                  *string                          `json:"etag"`
+	WorkerConfig          *WorkerPoolWorkerConfig          `json:"workerConfig"`
+	NetworkConfig         *WorkerPoolNetworkConfig         `json:"networkConfig"`
+	PrivateServiceConnect *WorkerPoolPrivateServiceConnect `json:"privateServiceConnect"`
+	Project               *string                          `json:"project"`
+	Location              *string                          `json:"location"`
 }
 
 func (r *WorkerPool) String() string {
@@ -100,9 +101,10 @@ func (v WorkerPoolPrivatePoolV1ConfigNetworkConfigEgressOptionEnum) Validate() e
 }
 
 type WorkerPoolPrivatePoolV1Config struct {
-	empty         bool                                        `json:"-"`
-	WorkerConfig  *WorkerPoolPrivatePoolV1ConfigWorkerConfig  `json:"workerConfig"`
-	NetworkConfig *WorkerPoolPrivatePoolV1ConfigNetworkConfig `json:"networkConfig"`
+	empty                 bool                                                `json:"-"`
+	WorkerConfig          *WorkerPoolPrivatePoolV1ConfigWorkerConfig          `json:"workerConfig"`
+	NetworkConfig         *WorkerPoolPrivatePoolV1ConfigNetworkConfig         `json:"networkConfig"`
+	PrivateServiceConnect *WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect `json:"privateServiceConnect"`
 }
 
 type jsonWorkerPoolPrivatePoolV1Config WorkerPoolPrivatePoolV1Config
@@ -124,6 +126,8 @@ func (r *WorkerPoolPrivatePoolV1Config) UnmarshalJSON(data []byte) error {
 
 		r.NetworkConfig = res.NetworkConfig
 
+		r.PrivateServiceConnect = res.PrivateServiceConnect
+
 	}
 	return nil
 }
@@ -144,7 +148,7 @@ func (r *WorkerPoolPrivatePoolV1Config) String() string {
 func (r *WorkerPoolPrivatePoolV1Config) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -193,7 +197,7 @@ func (r *WorkerPoolPrivatePoolV1ConfigWorkerConfig) String() string {
 func (r *WorkerPoolPrivatePoolV1ConfigWorkerConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -245,7 +249,59 @@ func (r *WorkerPoolPrivatePoolV1ConfigNetworkConfig) String() string {
 func (r *WorkerPoolPrivatePoolV1ConfigNetworkConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect struct {
+	empty                   bool    `json:"-"`
+	NetworkAttachment       *string `json:"networkAttachment"`
+	PublicIPAddressDisabled *bool   `json:"publicIPAddressDisabled"`
+	RouteAllTraffic         *bool   `json:"routeAllTraffic"`
+}
+
+type jsonWorkerPoolPrivatePoolV1ConfigPrivateServiceConnect WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect
+
+func (r *WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect) UnmarshalJSON(data []byte) error {
+	var res jsonWorkerPoolPrivatePoolV1ConfigPrivateServiceConnect
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkerPoolPrivatePoolV1ConfigPrivateServiceConnect
+	} else {
+
+		r.NetworkAttachment = res.NetworkAttachment
+
+		r.PublicIPAddressDisabled = res.PublicIPAddressDisabled
+
+		r.RouteAllTraffic = res.RouteAllTraffic
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkerPoolPrivatePoolV1ConfigPrivateServiceConnect *WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect = &WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect{empty: true}
+
+func (r *WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -297,7 +353,7 @@ func (r *WorkerPoolWorkerConfig) String() string {
 func (r *WorkerPoolWorkerConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -346,7 +402,56 @@ func (r *WorkerPoolNetworkConfig) String() string {
 func (r *WorkerPoolNetworkConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkerPoolPrivateServiceConnect struct {
+	empty             bool    `json:"-"`
+	NetworkAttachment *string `json:"networkAttachment"`
+	RouteAllTraffic   *bool   `json:"routeAllTraffic"`
+}
+
+type jsonWorkerPoolPrivateServiceConnect WorkerPoolPrivateServiceConnect
+
+func (r *WorkerPoolPrivateServiceConnect) UnmarshalJSON(data []byte) error {
+	var res jsonWorkerPoolPrivateServiceConnect
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkerPoolPrivateServiceConnect
+	} else {
+
+		r.NetworkAttachment = res.NetworkAttachment
+
+		r.RouteAllTraffic = res.RouteAllTraffic
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkerPoolPrivateServiceConnect is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkerPoolPrivateServiceConnect *WorkerPoolPrivateServiceConnect = &WorkerPoolPrivateServiceConnect{empty: true}
+
+func (r *WorkerPoolPrivateServiceConnect) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkerPoolPrivateServiceConnect) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkerPoolPrivateServiceConnect) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -366,20 +471,21 @@ func (r *WorkerPool) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"name":                   dcl.ValueOrEmptyString(nr.Name),
-		"display_name":           dcl.ValueOrEmptyString(nr.DisplayName),
-		"uid":                    dcl.ValueOrEmptyString(nr.Uid),
-		"annotations":            dcl.ValueOrEmptyString(nr.Annotations),
-		"create_time":            dcl.ValueOrEmptyString(nr.CreateTime),
-		"update_time":            dcl.ValueOrEmptyString(nr.UpdateTime),
-		"delete_time":            dcl.ValueOrEmptyString(nr.DeleteTime),
-		"state":                  dcl.ValueOrEmptyString(nr.State),
-		"private_pool_v1_config": dcl.ValueOrEmptyString(nr.PrivatePoolV1Config),
-		"etag":                   dcl.ValueOrEmptyString(nr.Etag),
-		"worker_config":          dcl.ValueOrEmptyString(nr.WorkerConfig),
-		"network_config":         dcl.ValueOrEmptyString(nr.NetworkConfig),
-		"project":                dcl.ValueOrEmptyString(nr.Project),
-		"location":               dcl.ValueOrEmptyString(nr.Location),
+		"name":                    dcl.ValueOrEmptyString(nr.Name),
+		"display_name":            dcl.ValueOrEmptyString(nr.DisplayName),
+		"uid":                     dcl.ValueOrEmptyString(nr.Uid),
+		"annotations":             dcl.ValueOrEmptyString(nr.Annotations),
+		"create_time":             dcl.ValueOrEmptyString(nr.CreateTime),
+		"update_time":             dcl.ValueOrEmptyString(nr.UpdateTime),
+		"delete_time":             dcl.ValueOrEmptyString(nr.DeleteTime),
+		"state":                   dcl.ValueOrEmptyString(nr.State),
+		"private_pool_v1_config":  dcl.ValueOrEmptyString(nr.PrivatePoolV1Config),
+		"etag":                    dcl.ValueOrEmptyString(nr.Etag),
+		"worker_config":           dcl.ValueOrEmptyString(nr.WorkerConfig),
+		"network_config":          dcl.ValueOrEmptyString(nr.NetworkConfig),
+		"private_service_connect": dcl.ValueOrEmptyString(nr.PrivateServiceConnect),
+		"project":                 dcl.ValueOrEmptyString(nr.Project),
+		"location":                dcl.ValueOrEmptyString(nr.Location),
 	}
 	return dcl.Nprintf("projects/{{project}}/locations/{{location}}/workerPools/{{name}}", params), nil
 }

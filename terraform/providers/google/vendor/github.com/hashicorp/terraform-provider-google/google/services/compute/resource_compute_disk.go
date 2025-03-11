@@ -19,8 +19,10 @@ package compute
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -31,7 +33,6 @@ import (
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
-	"github.com/hashicorp/terraform-provider-google/google/verify"
 )
 
 // diffsupress for hyperdisk provisioned_iops
@@ -312,6 +313,8 @@ func ResourceComputeDisk() *schema.Resource {
 		CustomizeDiff: customdiff.All(
 			customdiff.ForceNewIfChange("size", IsDiskShrinkage),
 			hyperDiskIopsUpdateDiffSupress,
+			tpgresource.SetLabelsDiff,
+			tpgresource.DefaultProviderProject,
 		),
 
 		Schema: map[string]*schema.Schema{
@@ -415,6 +418,14 @@ encryption key that protects this resource.`,
 					},
 				},
 			},
+			"enable_confidential_compute": {
+				Type:     schema.TypeBool,
+				Computed: true,
+				Optional: true,
+				ForceNew: true,
+				Description: `Whether this disk is using confidential compute mode.
+Note: Only supported on hyperdisk skus, disk_encryption_key is required when setting to true`,
+			},
 			"guest_os_features": {
 				Type:     schema.TypeSet,
 				Computed: true,
@@ -441,10 +452,14 @@ For instance, the image 'centos-6-v20180104' includes its family name 'centos-6'
 These images can be referred by family name here.`,
 			},
 			"labels": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: `Labels to apply to this disk.  A list of key->value pairs.`,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `Labels to apply to this disk.  A list of key->value pairs.
+
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"licenses": {
 				Type:        schema.TypeList,
@@ -619,11 +634,21 @@ encryption key that protects this resource.`,
 					},
 				},
 			},
+			"storage_pool": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         true,
+				DiffSuppressFunc: tpgresource.CompareResourceNames,
+				Description: `The URL of the storage pool in which the new disk is created.
+For example:
+* https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/storagePools/{storagePool}
+* /projects/{project}/zones/{zone}/storagePools/{storagePool}`,
+			},
 			"type": {
 				Type:             schema.TypeString,
 				Optional:         true,
 				ForceNew:         true,
-				DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
+				DiffSuppressFunc: tpgresource.CompareResourceNames,
 				Description: `URL of the disk type resource describing which disk type to use to
 create the disk. Provide this when creating the disk.`,
 				Default: "pd-standard",
@@ -636,10 +661,21 @@ create the disk. Provide this when creating the disk.`,
 				DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
 				Description:      `A reference to the zone where the disk resides.`,
 			},
+			"disk_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `The unique identifier for the resource. This identifier is defined by the server.`,
+			},
 			"creation_timestamp": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `Creation timestamp in RFC3339 text format.`,
+			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"label_fingerprint": {
 				Type:     schema.TypeString,
@@ -683,14 +719,20 @@ that was later deleted and recreated under the same name, the source
 snapshot ID would identify the exact version of the snapshot that was
 used.`,
 			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
+			},
 			"users": {
 				Type:     schema.TypeList,
 				Computed: true,
 				Description: `Links to the users of the disk (attached instances) in form:
 project/zones/zone/instances/instance`,
 				Elem: &schema.Schema{
-					Type:             schema.TypeString,
-					DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
+					Type: schema.TypeString,
 				},
 			},
 			"project": {
@@ -712,11 +754,10 @@ func computeDiskGuestOsFeaturesSchema() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"type": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: verify.ValidateEnum([]string{"MULTI_IP_SUBNET", "SECURE_BOOT", "SEV_CAPABLE", "UEFI_COMPATIBLE", "VIRTIO_SCSI_MULTIQUEUE", "WINDOWS", "GVNIC", "SEV_LIVE_MIGRATABLE", "SEV_SNP_CAPABLE", "SUSPEND_RESUME_COMPATIBLE", "TDX_CAPABLE"}),
-				Description:  `The type of supported feature. Read [Enabling guest operating system features](https://cloud.google.com/compute/docs/images/create-delete-deprecate-private-images#guest-os-features) to see a list of available options. Possible values: ["MULTI_IP_SUBNET", "SECURE_BOOT", "SEV_CAPABLE", "UEFI_COMPATIBLE", "VIRTIO_SCSI_MULTIQUEUE", "WINDOWS", "GVNIC", "SEV_LIVE_MIGRATABLE", "SEV_SNP_CAPABLE", "SUSPEND_RESUME_COMPATIBLE", "TDX_CAPABLE"]`,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: `The type of supported feature. Read [Enabling guest operating system features](https://cloud.google.com/compute/docs/images/create-delete-deprecate-private-images#guest-os-features) to see a list of available options.`,
 			},
 		},
 	}
@@ -741,12 +782,6 @@ func resourceComputeDiskCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	} else if v, ok := d.GetOkExists("description"); !tpgresource.IsEmptyValue(reflect.ValueOf(descriptionProp)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
-	}
-	labelsProp, err := expandComputeDiskLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
 	}
 	nameProp, err := expandComputeDiskName(d.Get("name"), d, config)
 	if err != nil {
@@ -784,6 +819,12 @@ func resourceComputeDiskCreate(d *schema.ResourceData, meta interface{}) error {
 	} else if v, ok := d.GetOkExists("image"); !tpgresource.IsEmptyValue(reflect.ValueOf(sourceImageProp)) && (ok || !reflect.DeepEqual(v, sourceImageProp)) {
 		obj["sourceImage"] = sourceImageProp
 	}
+	enableConfidentialComputeProp, err := expandComputeDiskEnableConfidentialCompute(d.Get("enable_confidential_compute"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("enable_confidential_compute"); !tpgresource.IsEmptyValue(reflect.ValueOf(enableConfidentialComputeProp)) && (ok || !reflect.DeepEqual(v, enableConfidentialComputeProp)) {
+		obj["enableConfidentialCompute"] = enableConfidentialComputeProp
+	}
 	provisionedIopsProp, err := expandComputeDiskProvisionedIops(d.Get("provisioned_iops"), d, config)
 	if err != nil {
 		return err
@@ -813,6 +854,18 @@ func resourceComputeDiskCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	} else if v, ok := d.GetOkExists("licenses"); !tpgresource.IsEmptyValue(reflect.ValueOf(licensesProp)) && (ok || !reflect.DeepEqual(v, licensesProp)) {
 		obj["licenses"] = licensesProp
+	}
+	storagePoolProp, err := expandComputeDiskStoragePool(d.Get("storage_pool"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("storage_pool"); !tpgresource.IsEmptyValue(reflect.ValueOf(storagePoolProp)) && (ok || !reflect.DeepEqual(v, storagePoolProp)) {
+		obj["storagePool"] = storagePoolProp
+	}
+	labelsProp, err := expandComputeDiskEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
 	}
 	zoneProp, err := expandComputeDiskZone(d.Get("zone"), d, config)
 	if err != nil {
@@ -869,6 +922,7 @@ func resourceComputeDiskCreate(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -877,6 +931,7 @@ func resourceComputeDiskCreate(d *schema.ResourceData, meta interface{}) error {
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Disk: %s", err)
@@ -929,12 +984,14 @@ func resourceComputeDiskRead(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeDisk %q", d.Id()))
@@ -992,10 +1049,16 @@ func resourceComputeDiskRead(d *schema.ResourceData, meta interface{}) error {
 	if err := d.Set("source_disk_id", flattenComputeDiskSourceDiskId(res["sourceDiskId"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Disk: %s", err)
 	}
+	if err := d.Set("disk_id", flattenComputeDiskDiskId(res["id"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Disk: %s", err)
+	}
 	if err := d.Set("type", flattenComputeDiskType(res["type"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Disk: %s", err)
 	}
 	if err := d.Set("image", flattenComputeDiskImage(res["sourceImage"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Disk: %s", err)
+	}
+	if err := d.Set("enable_confidential_compute", flattenComputeDiskEnableConfidentialCompute(res["enableConfidentialCompute"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Disk: %s", err)
 	}
 	if err := d.Set("provisioned_iops", flattenComputeDiskProvisionedIops(res["provisionedIops"], d, config)); err != nil {
@@ -1011,6 +1074,15 @@ func resourceComputeDiskRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error reading Disk: %s", err)
 	}
 	if err := d.Set("licenses", flattenComputeDiskLicenses(res["licenses"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Disk: %s", err)
+	}
+	if err := d.Set("storage_pool", flattenComputeDiskStoragePool(res["storagePool"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Disk: %s", err)
+	}
+	if err := d.Set("terraform_labels", flattenComputeDiskTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Disk: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenComputeDiskEffectiveLabels(res["labels"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Disk: %s", err)
 	}
 	if err := d.Set("zone", flattenComputeDiskZone(res["zone"], d, config)); err != nil {
@@ -1058,7 +1130,7 @@ func resourceComputeDiskUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	d.Partial(true)
 
-	if d.HasChange("label_fingerprint") || d.HasChange("labels") {
+	if d.HasChange("label_fingerprint") || d.HasChange("effective_labels") {
 		obj := make(map[string]interface{})
 
 		labelFingerprintProp, err := expandComputeDiskLabelFingerprint(d.Get("label_fingerprint"), d, config)
@@ -1067,10 +1139,10 @@ func resourceComputeDiskUpdate(d *schema.ResourceData, meta interface{}) error {
 		} else if v, ok := d.GetOkExists("label_fingerprint"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelFingerprintProp)) {
 			obj["labelFingerprint"] = labelFingerprintProp
 		}
-		labelsProp, err := expandComputeDiskLabels(d.Get("labels"), d, config)
+		labelsProp, err := expandComputeDiskEffectiveLabels(d.Get("effective_labels"), d, config)
 		if err != nil {
 			return err
-		} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
 			obj["labels"] = labelsProp
 		}
 
@@ -1083,6 +1155,8 @@ func resourceComputeDiskUpdate(d *schema.ResourceData, meta interface{}) error {
 		if err != nil {
 			return err
 		}
+
+		headers := make(http.Header)
 
 		// err == nil indicates that the billing_project value was found
 		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -1097,6 +1171,7 @@ func resourceComputeDiskUpdate(d *schema.ResourceData, meta interface{}) error {
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
 		})
 		if err != nil {
 			return fmt.Errorf("Error updating Disk %q: %s", d.Id(), err)
@@ -1131,6 +1206,8 @@ func resourceComputeDiskUpdate(d *schema.ResourceData, meta interface{}) error {
 			return err
 		}
 
+		headers := make(http.Header)
+
 		// err == nil indicates that the billing_project value was found
 		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 			billingProject = bp
@@ -1144,6 +1221,7 @@ func resourceComputeDiskUpdate(d *schema.ResourceData, meta interface{}) error {
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
 		})
 		if err != nil {
 			return fmt.Errorf("Error updating Disk %q: %s", d.Id(), err)
@@ -1178,6 +1256,8 @@ func resourceComputeDiskUpdate(d *schema.ResourceData, meta interface{}) error {
 			return err
 		}
 
+		headers := make(http.Header)
+
 		// err == nil indicates that the billing_project value was found
 		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 			billingProject = bp
@@ -1191,6 +1271,7 @@ func resourceComputeDiskUpdate(d *schema.ResourceData, meta interface{}) error {
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
 		})
 		if err != nil {
 			return fmt.Errorf("Error updating Disk %q: %s", d.Id(), err)
@@ -1225,6 +1306,8 @@ func resourceComputeDiskUpdate(d *schema.ResourceData, meta interface{}) error {
 			return err
 		}
 
+		headers := make(http.Header)
+
 		// err == nil indicates that the billing_project value was found
 		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 			billingProject = bp
@@ -1238,6 +1321,7 @@ func resourceComputeDiskUpdate(d *schema.ResourceData, meta interface{}) error {
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
 		})
 		if err != nil {
 			return fmt.Errorf("Error updating Disk %q: %s", d.Id(), err)
@@ -1279,6 +1363,13 @@ func resourceComputeDiskDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	var obj map[string]interface{}
+
+	// err == nil indicates that the billing_project value was found
+	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+		billingProject = bp
+	}
+
+	headers := make(http.Header)
 	readRes, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
@@ -1331,7 +1422,8 @@ func resourceComputeDiskDelete(d *schema.ResourceData, meta interface{}) error {
 			err = ComputeOperationWaitTime(config, op, call.project,
 				fmt.Sprintf("Detaching disk from %s/%s/%s", call.project, call.zone, call.instance), userAgent, d.Timeout(schema.TimeoutDelete))
 			if err != nil {
-				if opErr, ok := err.(ComputeOperationError); ok && len(opErr.Errors) == 1 && opErr.Errors[0].Code == "RESOURCE_NOT_FOUND" {
+				var opErr ComputeOperationError
+				if errors.As(err, &opErr) && len(opErr.Errors) == 1 && opErr.Errors[0].Code == "RESOURCE_NOT_FOUND" {
 					log.Printf("[WARN] instance %q was deleted while awaiting detach", call.instance)
 					continue
 				}
@@ -1339,13 +1431,8 @@ func resourceComputeDiskDelete(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 	}
+
 	log.Printf("[DEBUG] Deleting Disk %q", d.Id())
-
-	// err == nil indicates that the billing_project value was found
-	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
-		billingProject = bp
-	}
-
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -1354,6 +1441,7 @@ func resourceComputeDiskDelete(d *schema.ResourceData, meta interface{}) error {
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Disk")
@@ -1374,10 +1462,10 @@ func resourceComputeDiskDelete(d *schema.ResourceData, meta interface{}) error {
 func resourceComputeDiskImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/zones/(?P<zone>[^/]+)/disks/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<zone>[^/]+)/(?P<name>[^/]+)",
-		"(?P<zone>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/zones/(?P<zone>[^/]+)/disks/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<zone>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<zone>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -1413,7 +1501,18 @@ func flattenComputeDiskLastDetachTimestamp(v interface{}, d *schema.ResourceData
 }
 
 func flattenComputeDiskLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenComputeDiskName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1469,6 +1568,10 @@ func flattenComputeDiskSourceDiskId(v interface{}, d *schema.ResourceData, confi
 	return v
 }
 
+func flattenComputeDiskDiskId(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func flattenComputeDiskType(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return v
@@ -1477,6 +1580,10 @@ func flattenComputeDiskType(v interface{}, d *schema.ResourceData, config *trans
 }
 
 func flattenComputeDiskImage(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenComputeDiskEnableConfidentialCompute(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1558,6 +1665,32 @@ func flattenComputeDiskLicenses(v interface{}, d *schema.ResourceData, config *t
 		return v
 	}
 	return tpgresource.ConvertAndMapStringArr(v.([]interface{}), tpgresource.ConvertSelfLinkToV1)
+}
+
+func flattenComputeDiskStoragePool(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	return tpgresource.NameFromSelfLinkStateFunc(v)
+}
+
+func flattenComputeDiskTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
+}
+
+func flattenComputeDiskEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
 }
 
 func flattenComputeDiskZone(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1701,17 +1834,6 @@ func expandComputeDiskDescription(v interface{}, d tpgresource.TerraformResource
 	return v, nil
 }
 
-func expandComputeDiskLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
-	if v == nil {
-		return map[string]string{}, nil
-	}
-	m := make(map[string]string)
-	for k, val := range v.(map[string]interface{}) {
-		m[k] = val.(string)
-	}
-	return m, nil
-}
-
 func expandComputeDiskName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
@@ -1737,6 +1859,10 @@ func expandComputeDiskType(v interface{}, d tpgresource.TerraformResourceData, c
 }
 
 func expandComputeDiskImage(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeDiskEnableConfidentialCompute(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -1812,6 +1938,21 @@ func expandComputeDiskLicenses(v interface{}, d tpgresource.TerraformResourceDat
 		req = append(req, f.RelativeLink())
 	}
 	return req, nil
+}
+
+func expandComputeDiskStoragePool(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeDiskEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
 }
 
 func expandComputeDiskZone(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {

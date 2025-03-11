@@ -541,7 +541,7 @@
           ],
           "parameters": {
             "filter": {
-              "description": "Required. A list of query parameters specified as JSON text in the form of: `{\"projectId\":\"my_project_id\", \"jobNames\":[\"jobid1\",\"jobid2\",...], \"operationNames\":[\"opid1\",\"opid2\",...], \"transferStatuses\":[\"status1\",\"status2\",...]}` Since `jobNames`, `operationNames`, and `transferStatuses` support multiple values, they must be specified with array notation. `projectId` is required. `jobNames`, `operationNames`, and `transferStatuses` are optional. The valid values for `transferStatuses` are case-insensitive: IN_PROGRESS, PAUSED, SUCCESS, FAILED, and ABORTED.",
+              "description": "Required. A list of query parameters specified as JSON text in the form of: `{\"projectId\":\"my_project_id\", \"jobNames\":[\"jobid1\",\"jobid2\",...], \"jobNamePattern\": \"job_name_pattern\", \"operationNames\":[\"opid1\",\"opid2\",...], \"operationNamePattern\": \"operation_name_pattern\", \"minCreationTime\": \"min_creation_time\", \"maxCreationTime\": \"max_creation_time\", \"transferStatuses\":[\"status1\",\"status2\",...]}` Since `jobNames`, `operationNames`, and `transferStatuses` support multiple values, they must be specified with array notation. `projectId` is the only argument that is required. If specified, `jobNamePattern` and `operationNamePattern` must match the full job or operation name respectively. '*' is a wildcard matching 0 or more characters. `minCreationTime` and `maxCreationTime` should be timestamps encoded as a string in the [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format. The valid values for `transferStatuses` are case-insensitive: IN_PROGRESS, PAUSED, SUCCESS, FAILED, and ABORTED.",
               "location": "query",
               "required": true,
               "type": "string"
@@ -632,11 +632,11 @@
       }
     }
   },
-  "revision": "20230516",
+  "revision": "20240511",
   "rootUrl": "https://storagetransfer.googleapis.com/",
   "schemas": {
     "AgentPool": {
-      "description": "Represents an On-Premises Agent pool.",
+      "description": "Represents an agent pool.",
       "id": "AgentPool",
       "properties": {
         "bandwidthLimit": {
@@ -661,7 +661,7 @@
           ],
           "enumDescriptions": [
             "Default value. This value is unused.",
-            "This is an initialization state. During this stage, the resources such as Pub/Sub topics are allocated for the AgentPool.",
+            "This is an initialization state. During this stage, resources are allocated for the AgentPool.",
             "Determines that the AgentPool is created for use. At this state, Agents can join the AgentPool and participate in the transfer jobs in that pool.",
             "Determines that the AgentPool deletion has been initiated, and all the resources are scheduled to be cleaned up and freed."
           ],
@@ -725,9 +725,17 @@
           "description": "Required. S3 Bucket name (see [Creating a bucket](https://docs.aws.amazon.com/AmazonS3/latest/dev/create-bucket-get-location-example.html)).",
           "type": "string"
         },
-        "credentialsSecret": {
-          "description": "Optional. The Resource name of a secret in Secret Manager. The Azure SAS token must be stored in Secret Manager in JSON format: { \"sas_token\" : \"SAS_TOKEN\" } GoogleServiceAccount must be granted `roles/secretmanager.secretAccessor` for the resource. See [Configure access to a source: Microsoft Azure Blob Storage] (https://cloud.google.com/storage-transfer/docs/source-microsoft-azure#secret_manager) for more information. If `credentials_secret` is specified, do not specify azure_credentials. This feature is in [preview](https://cloud.google.com/terms/service-terms#1). Format: `projects/{project_number}/secrets/{secret_name}`",
+        "cloudfrontDomain": {
+          "description": "Optional. The CloudFront distribution domain name pointing to this bucket, to use when fetching. See [Transfer from S3 via CloudFront](https://cloud.google.com/storage-transfer/docs/s3-cloudfront) for more information. Format: `https://{id}.cloudfront.net` or any valid custom domain. Must begin with `https://`.",
           "type": "string"
+        },
+        "credentialsSecret": {
+          "description": "Optional. The Resource name of a secret in Secret Manager. AWS credentials must be stored in Secret Manager in JSON format: { \"access_key_id\": \"ACCESS_KEY_ID\", \"secret_access_key\": \"SECRET_ACCESS_KEY\" } GoogleServiceAccount must be granted `roles/secretmanager.secretAccessor` for the resource. See [Configure access to a source: Amazon S3] (https://cloud.google.com/storage-transfer/docs/source-amazon-s3#secret_manager) for more information. If `credentials_secret` is specified, do not specify role_arn or aws_access_key. Format: `projects/{project_number}/secrets/{secret_name}`",
+          "type": "string"
+        },
+        "managedPrivateNetwork": {
+          "description": "Egress bytes over a Google-managed private network. This network is shared between other users of Storage Transfer Service.",
+          "type": "boolean"
         },
         "path": {
           "description": "Root path to transfer objects. Must be an empty string or full path name that ends with a '/'. This field is treated as an object prefix. As such, it should generally not begin with a '/'.",
@@ -753,7 +761,7 @@
           "type": "string"
         },
         "credentialsSecret": {
-          "description": "Optional. The Resource name of a secret in Secret Manager. The Azure SAS token must be stored in Secret Manager in JSON format: { \"sas_token\" : \"SAS_TOKEN\" } GoogleServiceAccount must be granted `roles/secretmanager.secretAccessor` for the resource. See [Configure access to a source: Microsoft Azure Blob Storage] (https://cloud.google.com/storage-transfer/docs/source-microsoft-azure#secret_manager) for more information. If `credentials_secret` is specified, do not specify azure_credentials. This feature is in [preview](https://cloud.google.com/terms/service-terms#1). Format: `projects/{project_number}/secrets/{secret_name}`",
+          "description": "Optional. The Resource name of a secret in Secret Manager. The Azure SAS token must be stored in Secret Manager in JSON format: { \"sas_token\" : \"SAS_TOKEN\" } GoogleServiceAccount must be granted `roles/secretmanager.secretAccessor` for the resource. See [Configure access to a source: Microsoft Azure Blob Storage] (https://cloud.google.com/storage-transfer/docs/source-microsoft-azure#secret_manager) for more information. If `credentials_secret` is specified, do not specify azure_credentials. Format: `projects/{project_number}/secrets/{secret_name}`",
           "type": "string"
         },
         "path": {
@@ -932,6 +940,10 @@
           "description": "Required. Cloud Storage bucket name. Must meet [Bucket Name Requirements](/storage/docs/naming#requirements).",
           "type": "string"
         },
+        "managedFolderTransferEnabled": {
+          "description": "Preview. Enables the transfer of managed folders between Cloud Storage buckets. Set this option on the gcs_data_source. If set to true: - Managed folders in the source bucket are transferred to the destination bucket. - Managed folders in the destination bucket are overwritten. Other OVERWRITE options are not supported. See [Transfer Cloud Storage managed folders](/storage-transfer/docs/managed-folders).",
+          "type": "boolean"
+        },
         "path": {
           "description": "Root path to transfer objects. Must be an empty string or full path name that ends with a '/'. This field is treated as an object prefix. As such, it should generally not begin with a '/'. The root path value must meet [Object Name Requirements](/storage/docs/naming#objectnames).",
           "type": "string"
@@ -949,6 +961,17 @@
         },
         "subjectId": {
           "description": "Unique identifier for the service account.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "HdfsData": {
+      "description": "An HdfsData resource specifies a path within an HDFS entity (e.g. a cluster). All cluster-specific settings, such as namenodes and ports, are configured on the transfer agents servicing requests, so HdfsData only contains the root path to the data in our transfer.",
+      "id": "HdfsData",
+      "properties": {
+        "path": {
+          "description": "Root path to transfer files.",
           "type": "string"
         }
       },
@@ -1020,15 +1043,15 @@
       "type": "object"
     },
     "LoggingConfig": {
-      "description": "Specifies the logging behavior for transfer operations. For cloud-to-cloud transfers, logs are sent to Cloud Logging. See [Read transfer logs](https://cloud.google.com/storage-transfer/docs/read-transfer-logs) for details. For transfers to or from a POSIX file system, logs are stored in the Cloud Storage bucket that is the source or sink of the transfer. See [Managing Transfer for on-premises jobs] (https://cloud.google.com/storage-transfer/docs/managing-on-prem-jobs#viewing-logs) for details.",
+      "description": "Specifies the logging behavior for transfer operations. Logs can be sent to Cloud Logging for all transfer types. See [Read transfer logs](https://cloud.google.com/storage-transfer/docs/read-transfer-logs) for details.",
       "id": "LoggingConfig",
       "properties": {
         "enableOnpremGcsTransferLogs": {
-          "description": "For transfers with a PosixFilesystem source, this option enables the Cloud Storage transfer logs for this transfer.",
+          "description": "For PosixFilesystem transfers, enables [file system transfer logs](https://cloud.google.com/storage-transfer/docs/on-prem-transfer-log-format) instead of, or in addition to, Cloud Logging. This option ignores [LoggableAction] and [LoggableActionState]. If these are set, Cloud Logging will also be enabled for this transfer.",
           "type": "boolean"
         },
         "logActionStates": {
-          "description": "States in which `log_actions` are logged. If empty, no logs are generated. Not supported for transfers with PosixFilesystem data sources; use enable_onprem_gcs_transfer_logs instead.",
+          "description": "States in which `log_actions` are logged. If empty, no logs are generated.",
           "items": {
             "enum": [
               "LOGGABLE_ACTION_STATE_UNSPECIFIED",
@@ -1045,7 +1068,7 @@
           "type": "array"
         },
         "logActions": {
-          "description": "Specifies the actions to be logged. If empty, no logs are generated. Not supported for transfers with PosixFilesystem data sources; use enable_onprem_gcs_transfer_logs instead.",
+          "description": "Specifies the actions to be logged. If empty, no logs are generated.",
           "items": {
             "enum": [
               "LOGGABLE_ACTION_UNSPECIFIED",
@@ -1177,7 +1200,7 @@
           "type": "string"
         },
         "timeCreated": {
-          "description": "Specifies how each object's `timeCreated` metadata is preserved for transfers between Google Cloud Storage buckets. If unspecified, the default behavior is the same as TIME_CREATED_SKIP.",
+          "description": "Specifies how each object's `timeCreated` metadata is preserved for transfers. If unspecified, the default behavior is the same as TIME_CREATED_SKIP. This behavior is supported for transfers to GCS buckets from GCS, S3, Azure, S3 Compatible, and Azure sources.",
           "enum": [
             "TIME_CREATED_UNSPECIFIED",
             "TIME_CREATED_SKIP",
@@ -1186,7 +1209,7 @@
           "enumDescriptions": [
             "TimeCreated behavior is unspecified.",
             "Do not preserve the `timeCreated` metadata from the source object.",
-            "Preserves the source object's `timeCreated` metadata in the `customTime` field in the destination object. Note that any value stored in the source object's `customTime` field will not be propagated to the destination object."
+            "Preserves the source object's `timeCreated` or `lastModified` metadata in the `customTime` field in the destination object. Note that any value stored in the source object's `customTime` field will not be propagated to the destination object."
           ],
           "type": "string"
         },
@@ -1321,7 +1344,7 @@
             "description": "Properties of the object. Contains field @type with type URL.",
             "type": "any"
           },
-          "description": "The normal response of the operation in case of success. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.",
+          "description": "The normal, successful response of the operation. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.",
           "type": "object"
         }
       },
@@ -1340,6 +1363,29 @@
         "rootDirectory": {
           "description": "Root directory path to the filesystem.",
           "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ReplicationSpec": {
+      "description": "Specifies the configuration for running a replication job.",
+      "id": "ReplicationSpec",
+      "properties": {
+        "gcsDataSink": {
+          "$ref": "GcsData",
+          "description": "Specifies cloud Storage data sink."
+        },
+        "gcsDataSource": {
+          "$ref": "GcsData",
+          "description": "Specifies cloud Storage data source."
+        },
+        "objectConditions": {
+          "$ref": "ObjectConditions",
+          "description": "Specifies the object conditions to only include objects that satisfy these conditions in the set of data source objects. Object conditions based on objects' \"last modification time\" do not exclude objects in a data sink."
+        },
+        "transferOptions": {
+          "$ref": "TransferOptions",
+          "description": "Specifies the actions to be performed on the object during replication. Delete options are not supported for replication and when specified, the request fails with an INVALID_ARGUMENT error."
         }
       },
       "type": "object"
@@ -1662,11 +1708,15 @@
         },
         "notificationConfig": {
           "$ref": "NotificationConfig",
-          "description": "Notification configuration. This is not supported for transfers involving PosixFilesystem."
+          "description": "Notification configuration."
         },
         "projectId": {
           "description": "The ID of the Google Cloud project that owns the job.",
           "type": "string"
+        },
+        "replicationSpec": {
+          "$ref": "ReplicationSpec",
+          "description": "Replication specification."
         },
         "schedule": {
           "$ref": "Schedule",
@@ -1848,6 +1898,10 @@
         "gcsIntermediateDataLocation": {
           "$ref": "GcsData",
           "description": "For transfers between file systems, specifies a Cloud Storage bucket to be used as an intermediate location through which to transfer data. See [Transfer data between file systems](https://cloud.google.com/storage-transfer/docs/file-to-file) for more information."
+        },
+        "hdfsDataSource": {
+          "$ref": "HdfsData",
+          "description": "An HDFS cluster data source."
         },
         "httpDataSource": {
           "$ref": "HttpData",

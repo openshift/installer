@@ -10,7 +10,8 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/id"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
@@ -45,6 +46,7 @@ func ResourceContainerNodePool() *schema.Resource {
 		},
 
 		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
 			resourceNodeConfigEmptyGuestAccelerator,
 		),
 
@@ -188,6 +190,35 @@ var schemaNodePool = map[string]*schema.Schema{
 					Required:    true,
 					Description: `Type defines the type of placement policy`,
 				},
+				"policy_name": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					ForceNew:    true,
+					Description: `If set, refers to the name of a custom resource policy supplied by the user. The resource policy must be in the same project and region as the node pool. If not found, InvalidArgument error is returned.`,
+				},
+				"tpu_topology": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: `TPU placement topology for pod slice node pool. https://cloud.google.com/tpu/docs/types-topologies#tpu_topologies`,
+				},
+			},
+		},
+	},
+
+	"queued_provisioning": {
+		Type:        schema.TypeList,
+		Optional:    true,
+		MaxItems:    1,
+		Description: `Specifies the configuration of queued provisioning`,
+		ForceNew:    true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"enabled": {
+					Type:        schema.TypeBool,
+					Required:    true,
+					ForceNew:    true,
+					Description: `Whether nodes in this node pool are obtainable solely through the ProvisioningRequest API`,
+				},
 			},
 		},
 	},
@@ -278,15 +309,15 @@ var schemaNodePool = map[string]*schema.Schema{
 				"auto_repair": {
 					Type:        schema.TypeBool,
 					Optional:    true,
-					Default:     false,
-					Description: `Whether the nodes will be automatically repaired.`,
+					Default:     true,
+					Description: `Whether the nodes will be automatically repaired. Enabled by default.`,
 				},
 
 				"auto_upgrade": {
 					Type:        schema.TypeBool,
 					Optional:    true,
-					Default:     false,
-					Description: `Whether the nodes will be automatically upgraded.`,
+					Default:     true,
+					Description: `Whether the nodes will be automatically upgraded. Enabled by default.`,
 				},
 			},
 		},
@@ -372,6 +403,21 @@ var schemaNodePool = map[string]*schema.Schema{
 							"disabled": {
 								Type:     schema.TypeBool,
 								Required: true,
+							},
+						},
+					},
+				},
+				"network_performance_config": {
+					Type:        schema.TypeList,
+					Optional:    true,
+					MaxItems:    1,
+					Description: `Network bandwidth tier configuration.`,
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"total_egress_bandwidth_tier": {
+								Type:        schema.TypeString,
+								Required:    true,
+								Description: `Specifies the total network bandwidth tier for the NodePool.`,
 							},
 						},
 					},
@@ -503,7 +549,7 @@ func resourceContainerNodePoolCreate(d *schema.ResourceData, meta interface{}) e
 	}
 
 	var operation *container.Operation
-	err = resource.Retry(timeout, func() *resource.RetryError {
+	err = retry.Retry(timeout, func() *retry.RetryError {
 		clusterNodePoolsCreateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Create(nodePoolInfo.parent(), req)
 		if config.UserProjectOverride {
 			clusterNodePoolsCreateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
@@ -511,12 +557,14 @@ func resourceContainerNodePoolCreate(d *schema.ResourceData, meta interface{}) e
 		operation, err = clusterNodePoolsCreateCall.Do()
 
 		if err != nil {
-			if tpgresource.IsFailedPreconditionError(err) {
+			if tpgresource.IsFailedPreconditionError(err) || tpgresource.IsQuotaError(err) {
 				// We get failed precondition errors if the cluster is updating
 				// while we try to add the node pool.
-				return resource.RetryableError(err)
+				// We get quota errors if there the number of running concurrent
+				// operations reaches the quota.
+				return retry.RetryableError(err)
 			}
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 		return nil
 	})
@@ -708,7 +756,7 @@ func resourceContainerNodePoolDelete(d *schema.ResourceData, meta interface{}) e
 	startTime := time.Now()
 
 	var operation *container.Operation
-	err = resource.Retry(timeout, func() *resource.RetryError {
+	err = retry.Retry(timeout, func() *retry.RetryError {
 		clusterNodePoolsDeleteCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Delete(nodePoolInfo.fullyQualifiedName(name))
 		if config.UserProjectOverride {
 			clusterNodePoolsDeleteCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
@@ -716,12 +764,14 @@ func resourceContainerNodePoolDelete(d *schema.ResourceData, meta interface{}) e
 		operation, err = clusterNodePoolsDeleteCall.Do()
 
 		if err != nil {
-			if tpgresource.IsFailedPreconditionError(err) {
+			if tpgresource.IsFailedPreconditionError(err) || tpgresource.IsQuotaError(err) {
 				// We get failed precondition errors if the cluster is updating
 				// while we try to delete the node pool.
-				return resource.RetryableError(err)
+				// We get quota errors if there the number of running concurrent
+				// operations reaches the quota.
+				return retry.RetryableError(err)
 			}
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 
 		return nil
@@ -825,9 +875,9 @@ func expandNodePool(d *schema.ResourceData, prefix string) (*container.NodePool,
 		}
 		name = v.(string)
 	} else if v, ok := d.GetOk(prefix + "name_prefix"); ok {
-		name = resource.PrefixedUniqueId(v.(string))
+		name = id.PrefixedUniqueId(v.(string))
 	} else {
-		name = resource.UniqueId()
+		name = id.UniqueId()
 	}
 
 	nodeCount := 0
@@ -856,15 +906,16 @@ func expandNodePool(d *schema.ResourceData, prefix string) (*container.NodePool,
 	}
 
 	if v, ok := d.GetOk(prefix + "autoscaling"); ok {
-		autoscaling := v.([]interface{})[0].(map[string]interface{})
-		np.Autoscaling = &container.NodePoolAutoscaling{
-			Enabled:           true,
-			MinNodeCount:      int64(autoscaling["min_node_count"].(int)),
-			MaxNodeCount:      int64(autoscaling["max_node_count"].(int)),
-			TotalMinNodeCount: int64(autoscaling["total_min_node_count"].(int)),
-			TotalMaxNodeCount: int64(autoscaling["total_max_node_count"].(int)),
-			LocationPolicy:    autoscaling["location_policy"].(string),
-			ForceSendFields:   []string{"MinNodeCount", "MaxNodeCount", "TotalMinNodeCount", "TotalMaxNodeCount"},
+		if autoscaling, ok := v.([]interface{})[0].(map[string]interface{}); ok {
+			np.Autoscaling = &container.NodePoolAutoscaling{
+				Enabled:           true,
+				MinNodeCount:      int64(autoscaling["min_node_count"].(int)),
+				MaxNodeCount:      int64(autoscaling["max_node_count"].(int)),
+				TotalMinNodeCount: int64(autoscaling["total_min_node_count"].(int)),
+				TotalMaxNodeCount: int64(autoscaling["total_max_node_count"].(int)),
+				LocationPolicy:    autoscaling["location_policy"].(string),
+				ForceSendFields:   []string{"MinNodeCount", "MaxNodeCount", "TotalMinNodeCount", "TotalMaxNodeCount"},
+			}
 		}
 	}
 
@@ -872,7 +923,18 @@ func expandNodePool(d *schema.ResourceData, prefix string) (*container.NodePool,
 		if v.([]interface{}) != nil && v.([]interface{})[0] != nil {
 			placement_policy := v.([]interface{})[0].(map[string]interface{})
 			np.PlacementPolicy = &container.PlacementPolicy{
-				Type: placement_policy["type"].(string),
+				Type:        placement_policy["type"].(string),
+				PolicyName:  placement_policy["policy_name"].(string),
+				TpuTopology: placement_policy["tpu_topology"].(string),
+			}
+		}
+	}
+
+	if v, ok := d.GetOk(prefix + "queued_provisioning"); ok {
+		if v.([]interface{}) != nil && v.([]interface{})[0] != nil {
+			queued_provisioning := v.([]interface{})[0].(map[string]interface{})
+			np.QueuedProvisioning = &container.QueuedProvisioning{
+				Enabled: queued_provisioning["enabled"].(bool),
 			}
 		}
 	}
@@ -1037,7 +1099,7 @@ func flattenNodePool(d *schema.ResourceData, config *transport_tpg.Config, np *c
 		"initial_node_count":          np.InitialNodeCount,
 		"node_locations":              schema.NewSet(schema.HashString, tpgresource.ConvertStringArrToInterface(np.Locations)),
 		"node_count":                  nodeCount,
-		"node_config":                 flattenNodeConfig(np.Config),
+		"node_config":                 flattenNodeConfig(np.Config, d.Get(prefix+"node_config")),
 		"instance_group_urls":         igmUrls,
 		"managed_instance_group_urls": managedIgmUrls,
 		"version":                     np.Version,
@@ -1063,7 +1125,17 @@ func flattenNodePool(d *schema.ResourceData, config *transport_tpg.Config, np *c
 	if np.PlacementPolicy != nil {
 		nodePool["placement_policy"] = []map[string]interface{}{
 			{
-				"type": np.PlacementPolicy.Type,
+				"type":         np.PlacementPolicy.Type,
+				"policy_name":  np.PlacementPolicy.PolicyName,
+				"tpu_topology": np.PlacementPolicy.TpuTopology,
+			},
+		}
+	}
+
+	if np.QueuedProvisioning != nil {
+		nodePool["queued_provisioning"] = []map[string]interface{}{
+			{
+				"enabled": np.QueuedProvisioning.Enabled,
 			},
 		}
 	}
@@ -1097,6 +1169,17 @@ func flattenNodeNetworkConfig(c *container.NodeNetworkConfig, d *schema.Resource
 			"pod_range":                     c.PodRange,
 			"enable_private_nodes":          c.EnablePrivateNodes,
 			"pod_cidr_overprovision_config": flattenPodCidrOverprovisionConfig(c.PodCidrOverprovisionConfig),
+			"network_performance_config":    flattenNodeNetworkPerformanceConfig(c.NetworkPerformanceConfig),
+		})
+	}
+	return result
+}
+
+func flattenNodeNetworkPerformanceConfig(c *container.NetworkPerformanceConfig) []map[string]interface{} {
+	result := []map[string]interface{}{}
+	if c != nil {
+		result = append(result, map[string]interface{}{
+			"total_egress_bandwidth_tier": c.TotalEgressBandwidthTier,
 		})
 	}
 	return result
@@ -1131,6 +1214,14 @@ func expandNodeNetworkConfig(v interface{}) *container.NodeNetworkConfig {
 	}
 
 	nnc.PodCidrOverprovisionConfig = expandPodCidrOverprovisionConfig(networkNodeConfig["pod_cidr_overprovision_config"])
+
+	if v, ok := networkNodeConfig["network_performance_config"]; ok && len(v.([]interface{})) > 0 {
+		nnc.NetworkPerformanceConfig = &container.NetworkPerformanceConfig{}
+		network_performance_config := v.([]interface{})[0].(map[string]interface{})
+		if total_egress_bandwidth_tier, ok := network_performance_config["total_egress_bandwidth_tier"]; ok {
+			nnc.NetworkPerformanceConfig.TotalEgressBandwidthTier = total_egress_bandwidth_tier.(string)
+		}
+	}
 
 	return nnc
 }
@@ -1194,7 +1285,7 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 				timeout)
 		}
 
-		if err := tpgresource.RetryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+		if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
 			return err
 		}
 		log.Printf("[INFO] Updated autoscaling in Node Pool %s", d.Id())
@@ -1232,12 +1323,101 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 						timeout)
 				}
 
-				if err := tpgresource.RetryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+				if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
 					return err
 				}
 
 				log.Printf("[INFO] Updated logging_variant for node pool %s", name)
 			}
+		}
+
+		if d.HasChange("node_config.0.disk_size_gb") ||
+			d.HasChange("node_config.0.disk_type") ||
+			d.HasChange("node_config.0.machine_type") {
+			req := &container.UpdateNodePoolRequest{
+				Name:        name,
+				DiskSizeGb:  int64(d.Get("node_config.0.disk_size_gb").(int)),
+				DiskType:    d.Get("node_config.0.disk_type").(string),
+				MachineType: d.Get("node_config.0.machine_type").(string),
+			}
+			updateF := func() error {
+				clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+				if config.UserProjectOverride {
+					clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
+				}
+				op, err := clusterNodePoolsUpdateCall.Do()
+				if err != nil {
+					return err
+				}
+
+				// Wait until it's updated
+				return ContainerOperationWait(config, op,
+					nodePoolInfo.project,
+					nodePoolInfo.location,
+					"updating GKE node pool disk_size_gb/disk_type/machine_type", userAgent,
+					timeout)
+			}
+
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+				return err
+			}
+			log.Printf("[INFO] Updated disk disk_size_gb/disk_type/machine_type for Node Pool %s", d.Id())
+		}
+
+		if d.HasChange(prefix + "node_config.0.taint") {
+			req := &container.UpdateNodePoolRequest{
+				Name: name,
+			}
+			if v, ok := d.GetOk(prefix + "node_config.0.taint"); ok {
+				taintsList := v.([]interface{})
+				taints := make([]*container.NodeTaint, 0, len(taintsList))
+				for _, v := range taintsList {
+					if v != nil {
+						data := v.(map[string]interface{})
+						taint := &container.NodeTaint{
+							Key:    data["key"].(string),
+							Value:  data["value"].(string),
+							Effect: data["effect"].(string),
+						}
+						taints = append(taints, taint)
+					}
+				}
+				ntaints := &container.NodeTaints{
+					Taints: taints,
+				}
+				req.Taints = ntaints
+			}
+
+			if req.Taints == nil {
+				taints := make([]*container.NodeTaint, 0, 0)
+				ntaints := &container.NodeTaints{
+					Taints: taints,
+				}
+				req.Taints = ntaints
+			}
+
+			updateF := func() error {
+				clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+				if config.UserProjectOverride {
+					clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
+				}
+				op, err := clusterNodePoolsUpdateCall.Do()
+				if err != nil {
+					return err
+				}
+
+				// Wait until it's updated
+				return ContainerOperationWait(config, op,
+					nodePoolInfo.project,
+					nodePoolInfo.location,
+					"updating GKE node pool taints", userAgent,
+					timeout)
+			}
+
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+				return err
+			}
+			log.Printf("[INFO] Updated taints for Node Pool %s", d.Id())
 		}
 
 		if d.HasChange(prefix + "node_config.0.tags") {
@@ -1286,10 +1466,52 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 					timeout)
 			}
 
-			if err := tpgresource.RetryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
 				return err
 			}
 			log.Printf("[INFO] Updated tags for node pool %s", name)
+		}
+
+		if d.HasChange(prefix + "node_config.0.resource_manager_tags") {
+			req := &container.UpdateNodePoolRequest{
+				Name: name,
+			}
+			if v, ok := d.GetOk(prefix + "node_config.0.resource_manager_tags"); ok {
+				req.ResourceManagerTags = expandResourceManagerTags(v)
+			}
+
+			// sets resource manager tags to the empty list when user removes a previously defined list of tags entriely
+			// aka the node pool goes from having tags to no longer having any
+			if req.ResourceManagerTags == nil {
+				tags := make(map[string]string)
+				rmTags := &container.ResourceManagerTags{
+					Tags: tags,
+				}
+				req.ResourceManagerTags = rmTags
+			}
+
+			updateF := func() error {
+				clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+				if config.UserProjectOverride {
+					clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
+				}
+				op, err := clusterNodePoolsUpdateCall.Do()
+				if err != nil {
+					return err
+				}
+
+				// Wait until it's updated
+				return ContainerOperationWait(config, op,
+					nodePoolInfo.project,
+					nodePoolInfo.location,
+					"updating GKE node pool resource manager tags", userAgent,
+					timeout)
+			}
+
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+				return err
+			}
+			log.Printf("[INFO] Updated resource manager tags for node pool %s", name)
 		}
 
 		if d.HasChange(prefix + "node_config.0.resource_labels") {
@@ -1323,7 +1545,7 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 			}
 
 			// Call update serially.
-			if err := tpgresource.RetryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
 				return err
 			}
 
@@ -1361,7 +1583,7 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 			}
 
 			// Call update serially.
-			if err := tpgresource.RetryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
 				return err
 			}
 
@@ -1393,7 +1615,7 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 					timeout)
 			}
 
-			if err := tpgresource.RetryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
 				return err
 			}
 			log.Printf("[INFO] Updated image type in Node Pool %s", d.Id())
@@ -1427,7 +1649,7 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 					timeout)
 			}
 
-			if err := tpgresource.RetryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
 				return err
 			}
 			log.Printf("[INFO] Updated workload_metadata_config for node pool %s", name)
@@ -1460,7 +1682,7 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 					timeout)
 			}
 
-			if err := tpgresource.RetryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
 				return err
 			}
 
@@ -1493,13 +1715,47 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 					timeout)
 			}
 
-			if err := tpgresource.RetryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
 				return err
 			}
 
 			log.Printf("[INFO] Updated linux_node_config for node pool %s", name)
 		}
+		if d.HasChange(prefix + "node_config.0.fast_socket") {
+			req := &container.UpdateNodePoolRequest{
+				NodePoolId: name,
+				FastSocket: &container.FastSocket{},
+			}
+			if v, ok := d.GetOk(prefix + "node_config.0.fast_socket"); ok {
+				fastSocket := v.([]interface{})[0].(map[string]interface{})
+				req.FastSocket = &container.FastSocket{
+					Enabled: fastSocket["enabled"].(bool),
+				}
+			}
+			updateF := func() error {
+				clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+				if config.UserProjectOverride {
+					clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
+				}
+				op, err := clusterNodePoolsUpdateCall.Do()
+				if err != nil {
+					return err
+				}
 
+				// Wait until it's updated
+				return ContainerOperationWait(config, op,
+					nodePoolInfo.project,
+					nodePoolInfo.location,
+					"updating GKE node pool fast_socket", userAgent,
+					timeout)
+			}
+
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+				return err
+			}
+
+			log.Printf("[INFO] Updated fast_socket for node pool %s", name)
+		}
 	}
 
 	if d.HasChange(prefix + "node_count") {
@@ -1524,7 +1780,7 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 				nodePoolInfo.location, "updating GKE node pool size", userAgent,
 				timeout)
 		}
-		if err := tpgresource.RetryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+		if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
 			return err
 		}
 		log.Printf("[INFO] GKE node pool %s size has been updated to %d", name, newSize)
@@ -1559,7 +1815,7 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 				nodePoolInfo.location, "updating GKE node pool management", userAgent, timeout)
 		}
 
-		if err := tpgresource.RetryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+		if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
 			return err
 		}
 		log.Printf("[INFO] Updated management in Node Pool %s", name)
@@ -1586,7 +1842,7 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 				nodePoolInfo.project,
 				nodePoolInfo.location, "updating GKE node pool version", userAgent, timeout)
 		}
-		if err := tpgresource.RetryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+		if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
 			return err
 		}
 		log.Printf("[INFO] Updated version in Node Pool %s", name)
@@ -1611,7 +1867,7 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 			return ContainerOperationWait(config, op, nodePoolInfo.project, nodePoolInfo.location, "updating GKE node pool node locations", userAgent, timeout)
 		}
 
-		if err := tpgresource.RetryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+		if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
 			return err
 		}
 		log.Printf("[INFO] Updated node locations in Node Pool %s", name)
@@ -1691,14 +1947,14 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 			// Wait until it's updated
 			return ContainerOperationWait(config, op, nodePoolInfo.project, nodePoolInfo.location, "updating GKE node pool upgrade settings", userAgent, timeout)
 		}
-		if err := tpgresource.RetryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+		if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
 			return err
 		}
 		log.Printf("[INFO] Updated upgrade settings in Node Pool %s", name)
 	}
 
 	if d.HasChange(prefix + "network_config") {
-		if d.HasChange(prefix + "network_config.0.enable_private_nodes") {
+		if d.HasChange(prefix+"network_config.0.enable_private_nodes") || d.HasChange(prefix+"network_config.0.network_performance_config") {
 			req := &container.UpdateNodePoolRequest{
 				NodePoolId:        name,
 				NodeNetworkConfig: expandNodeNetworkConfig(d.Get(prefix + "network_config")),
@@ -1718,15 +1974,15 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 				return ContainerOperationWait(config, op,
 					nodePoolInfo.project,
 					nodePoolInfo.location,
-					"updating GKE node pool workload_metadata_config", userAgent,
+					"updating GKE node pool network_config", userAgent,
 					timeout)
 			}
 
-			if err := tpgresource.RetryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
 				return err
 			}
 
-			log.Printf("[INFO] Updated workload_metadata_config for node pool %s", name)
+			log.Printf("[INFO] Updated network_config for node pool %s", name)
 		}
 	}
 
@@ -1748,14 +2004,14 @@ var containerNodePoolRestingStates = RestingStates{
 // takes in a config object, full node pool name, project name and the current CRUD action timeout
 // returns a state with no error if the state is a resting state, and the last state with an error otherwise
 func containerNodePoolAwaitRestingState(config *transport_tpg.Config, name, project, userAgent string, timeout time.Duration) (state string, err error) {
-	err = resource.Retry(timeout, func() *resource.RetryError {
+	err = retry.Retry(timeout, func() *retry.RetryError {
 		clusterNodePoolsGetCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Get(name)
 		if config.UserProjectOverride {
 			clusterNodePoolsGetCall.Header().Add("X-Goog-User-Project", project)
 		}
 		nodePool, gErr := clusterNodePoolsGetCall.Do()
 		if gErr != nil {
-			return resource.NonRetryableError(gErr)
+			return retry.NonRetryableError(gErr)
 		}
 
 		state = nodePool.Status
@@ -1767,9 +2023,27 @@ func containerNodePoolAwaitRestingState(config *transport_tpg.Config, name, proj
 			log.Printf("[DEBUG] NodePool %q has error state %q with message %q.", name, state, nodePool.StatusMessage)
 			return nil
 		default:
-			return resource.RetryableError(fmt.Errorf("NodePool %q has state %q with message %q", name, state, nodePool.StatusMessage))
+			return retry.RetryableError(fmt.Errorf("NodePool %q has state %q with message %q", name, state, nodePool.StatusMessage))
 		}
 	})
 
 	return state, err
+}
+
+// Retries an operation while the canonical error code is FAILED_PRECONDTION
+// or RESOURCE_EXHAUSTED which indicates there is an incompatible operation
+// already running on the cluster or there are the number of allowed
+// concurrent operations running on the cluster. These errors can be safely
+// retried until the incompatible operation completes, and the newly
+// requested operation can begin.
+func retryWhileIncompatibleOperation(timeout time.Duration, lockKey string, f func() error) error {
+	return retry.Retry(timeout, func() *retry.RetryError {
+		if err := transport_tpg.LockedCall(lockKey, f); err != nil {
+			if tpgresource.IsFailedPreconditionError(err) || tpgresource.IsQuotaError(err) {
+				return retry.RetryableError(err)
+			}
+			return retry.NonRetryableError(err)
+		}
+		return nil
+	})
 }

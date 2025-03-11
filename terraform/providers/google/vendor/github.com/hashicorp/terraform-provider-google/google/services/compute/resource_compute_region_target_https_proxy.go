@@ -20,9 +20,13 @@ package compute
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
+	"regexp"
+	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -46,6 +50,10 @@ func ResourceComputeRegionTargetHttpsProxy() *schema.Resource {
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
+
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
@@ -59,23 +67,24 @@ first character must be a lowercase letter, and all following
 characters must be a dash, lowercase letter, or digit, except the last
 character, which cannot be a dash.`,
 			},
-			"ssl_certificates": {
-				Type:     schema.TypeList,
-				Required: true,
-				Description: `A list of RegionSslCertificate resources that are used to authenticate
-connections between users and the load balancer. Currently, exactly
-one SSL certificate must be specified.`,
-				Elem: &schema.Schema{
-					Type:             schema.TypeString,
-					DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
-				},
-			},
 			"url_map": {
 				Type:             schema.TypeString,
 				Required:         true,
 				DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
 				Description: `A reference to the RegionUrlMap resource that defines the mapping from URL
 to the RegionBackendService.`,
+			},
+			"certificate_manager_certificates": {
+				Type:             schema.TypeList,
+				Optional:         true,
+				DiffSuppressFunc: tpgresource.CompareResourceNames,
+				Description: `URLs to certificate manager certificate resources that are used to authenticate connections between users and the load balancer.
+sslCertificates and certificateManagerCertificates can't be defined together.
+Accepted format is '//certificatemanager.googleapis.com/projects/{project}/locations/{location}/certificates/{resourceName}' or just the self_link 'projects/{project}/locations/{location}/certificates/{resourceName}'`,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				ConflictsWith: []string{"ssl_certificates"},
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -91,6 +100,41 @@ to the RegionBackendService.`,
 				DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
 				Description: `The Region in which the created target https proxy should reside.
 If it is not provided, the provider region is used.`,
+			},
+			"server_tls_policy": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         true,
+				DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
+				Description: `A URL referring to a networksecurity.ServerTlsPolicy
+resource that describes how the proxy should authenticate inbound
+traffic. serverTlsPolicy only applies to a global TargetHttpsProxy
+attached to globalForwardingRules with the loadBalancingScheme
+set to INTERNAL_SELF_MANAGED or EXTERNAL or EXTERNAL_MANAGED.
+For details which ServerTlsPolicy resources are accepted with
+INTERNAL_SELF_MANAGED and which with EXTERNAL, EXTERNAL_MANAGED
+loadBalancingScheme consult ServerTlsPolicy documentation.
+If left blank, communications are not encrypted.`,
+			},
+			"ssl_certificates": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Description: `URLs to SslCertificate resources that are used to authenticate connections between users and the load balancer.
+At least one SSL certificate must be specified. Currently, you may specify up to 15 SSL certificates.
+sslCertificates do not apply when the load balancing scheme is set to INTERNAL_SELF_MANAGED.`,
+				Elem: &schema.Schema{
+					Type:             schema.TypeString,
+					DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
+				},
+				ConflictsWith: []string{"certificate_manager_certificates"},
+			},
+			"ssl_policy": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
+				Description: `A reference to the Region SslPolicy resource that will be associated with
+the TargetHttpsProxy resource. If not set, the TargetHttpsProxy
+resource will not have any SSL policy configured.`,
 			},
 			"creation_timestamp": {
 				Type:        schema.TypeString,
@@ -137,11 +181,23 @@ func resourceComputeRegionTargetHttpsProxyCreate(d *schema.ResourceData, meta in
 	} else if v, ok := d.GetOkExists("name"); !tpgresource.IsEmptyValue(reflect.ValueOf(nameProp)) && (ok || !reflect.DeepEqual(v, nameProp)) {
 		obj["name"] = nameProp
 	}
+	certificateManagerCertificatesProp, err := expandComputeRegionTargetHttpsProxyCertificateManagerCertificates(d.Get("certificate_manager_certificates"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("certificate_manager_certificates"); !tpgresource.IsEmptyValue(reflect.ValueOf(certificateManagerCertificatesProp)) && (ok || !reflect.DeepEqual(v, certificateManagerCertificatesProp)) {
+		obj["certificateManagerCertificates"] = certificateManagerCertificatesProp
+	}
 	sslCertificatesProp, err := expandComputeRegionTargetHttpsProxySslCertificates(d.Get("ssl_certificates"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("ssl_certificates"); !tpgresource.IsEmptyValue(reflect.ValueOf(sslCertificatesProp)) && (ok || !reflect.DeepEqual(v, sslCertificatesProp)) {
 		obj["sslCertificates"] = sslCertificatesProp
+	}
+	sslPolicyProp, err := expandComputeRegionTargetHttpsProxySslPolicy(d.Get("ssl_policy"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("ssl_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(sslPolicyProp)) && (ok || !reflect.DeepEqual(v, sslPolicyProp)) {
+		obj["sslPolicy"] = sslPolicyProp
 	}
 	urlMapProp, err := expandComputeRegionTargetHttpsProxyUrlMap(d.Get("url_map"), d, config)
 	if err != nil {
@@ -149,11 +205,22 @@ func resourceComputeRegionTargetHttpsProxyCreate(d *schema.ResourceData, meta in
 	} else if v, ok := d.GetOkExists("url_map"); !tpgresource.IsEmptyValue(reflect.ValueOf(urlMapProp)) && (ok || !reflect.DeepEqual(v, urlMapProp)) {
 		obj["urlMap"] = urlMapProp
 	}
+	serverTlsPolicyProp, err := expandComputeRegionTargetHttpsProxyServerTlsPolicy(d.Get("server_tls_policy"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("server_tls_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(serverTlsPolicyProp)) && (ok || !reflect.DeepEqual(v, serverTlsPolicyProp)) {
+		obj["serverTlsPolicy"] = serverTlsPolicyProp
+	}
 	regionProp, err := expandComputeRegionTargetHttpsProxyRegion(d.Get("region"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("region"); !tpgresource.IsEmptyValue(reflect.ValueOf(regionProp)) && (ok || !reflect.DeepEqual(v, regionProp)) {
 		obj["region"] = regionProp
+	}
+
+	obj, err = resourceComputeRegionTargetHttpsProxyEncoder(d, meta, obj)
+	if err != nil {
+		return err
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/regions/{{region}}/targetHttpsProxies")
@@ -175,6 +242,7 @@ func resourceComputeRegionTargetHttpsProxyCreate(d *schema.ResourceData, meta in
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -183,6 +251,7 @@ func resourceComputeRegionTargetHttpsProxyCreate(d *schema.ResourceData, meta in
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating RegionTargetHttpsProxy: %s", err)
@@ -235,15 +304,29 @@ func resourceComputeRegionTargetHttpsProxyRead(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeRegionTargetHttpsProxy %q", d.Id()))
+	}
+
+	res, err = resourceComputeRegionTargetHttpsProxyDecoder(d, meta, res)
+	if err != nil {
+		return err
+	}
+
+	if res == nil {
+		// Decoding the object has resulted in it being gone. It may be marked deleted
+		log.Printf("[DEBUG] Removing ComputeRegionTargetHttpsProxy because it no longer exists.")
+		d.SetId("")
+		return nil
 	}
 
 	if err := d.Set("project", project); err != nil {
@@ -262,10 +345,19 @@ func resourceComputeRegionTargetHttpsProxyRead(d *schema.ResourceData, meta inte
 	if err := d.Set("name", flattenComputeRegionTargetHttpsProxyName(res["name"], d, config)); err != nil {
 		return fmt.Errorf("Error reading RegionTargetHttpsProxy: %s", err)
 	}
+	if err := d.Set("certificate_manager_certificates", flattenComputeRegionTargetHttpsProxyCertificateManagerCertificates(res["certificateManagerCertificates"], d, config)); err != nil {
+		return fmt.Errorf("Error reading RegionTargetHttpsProxy: %s", err)
+	}
 	if err := d.Set("ssl_certificates", flattenComputeRegionTargetHttpsProxySslCertificates(res["sslCertificates"], d, config)); err != nil {
 		return fmt.Errorf("Error reading RegionTargetHttpsProxy: %s", err)
 	}
+	if err := d.Set("ssl_policy", flattenComputeRegionTargetHttpsProxySslPolicy(res["sslPolicy"], d, config)); err != nil {
+		return fmt.Errorf("Error reading RegionTargetHttpsProxy: %s", err)
+	}
 	if err := d.Set("url_map", flattenComputeRegionTargetHttpsProxyUrlMap(res["urlMap"], d, config)); err != nil {
+		return fmt.Errorf("Error reading RegionTargetHttpsProxy: %s", err)
+	}
+	if err := d.Set("server_tls_policy", flattenComputeRegionTargetHttpsProxyServerTlsPolicy(res["serverTlsPolicy"], d, config)); err != nil {
 		return fmt.Errorf("Error reading RegionTargetHttpsProxy: %s", err)
 	}
 	if err := d.Set("region", flattenComputeRegionTargetHttpsProxyRegion(res["region"], d, config)); err != nil {
@@ -295,9 +387,15 @@ func resourceComputeRegionTargetHttpsProxyUpdate(d *schema.ResourceData, meta in
 
 	d.Partial(true)
 
-	if d.HasChange("ssl_certificates") {
+	if d.HasChange("certificate_manager_certificates") || d.HasChange("ssl_certificates") {
 		obj := make(map[string]interface{})
 
+		certificateManagerCertificatesProp, err := expandComputeRegionTargetHttpsProxyCertificateManagerCertificates(d.Get("certificate_manager_certificates"), d, config)
+		if err != nil {
+			return err
+		} else if v, ok := d.GetOkExists("certificate_manager_certificates"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, certificateManagerCertificatesProp)) {
+			obj["certificateManagerCertificates"] = certificateManagerCertificatesProp
+		}
 		sslCertificatesProp, err := expandComputeRegionTargetHttpsProxySslCertificates(d.Get("ssl_certificates"), d, config)
 		if err != nil {
 			return err
@@ -305,10 +403,17 @@ func resourceComputeRegionTargetHttpsProxyUpdate(d *schema.ResourceData, meta in
 			obj["sslCertificates"] = sslCertificatesProp
 		}
 
+		obj, err = resourceComputeRegionTargetHttpsProxyUpdateEncoder(d, meta, obj)
+		if err != nil {
+			return err
+		}
+
 		url, err := tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/regions/{{region}}/targetHttpsProxies/{{name}}/setSslCertificates")
 		if err != nil {
 			return err
 		}
+
+		headers := make(http.Header)
 
 		// err == nil indicates that the billing_project value was found
 		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -323,6 +428,7 @@ func resourceComputeRegionTargetHttpsProxyUpdate(d *schema.ResourceData, meta in
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
 		})
 		if err != nil {
 			return fmt.Errorf("Error updating RegionTargetHttpsProxy %q: %s", d.Id(), err)
@@ -347,10 +453,17 @@ func resourceComputeRegionTargetHttpsProxyUpdate(d *schema.ResourceData, meta in
 			obj["urlMap"] = urlMapProp
 		}
 
+		obj, err = resourceComputeRegionTargetHttpsProxyUpdateEncoder(d, meta, obj)
+		if err != nil {
+			return err
+		}
+
 		url, err := tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/regions/{{region}}/targetHttpsProxies/{{name}}/setUrlMap")
 		if err != nil {
 			return err
 		}
+
+		headers := make(http.Header)
 
 		// err == nil indicates that the billing_project value was found
 		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -365,6 +478,80 @@ func resourceComputeRegionTargetHttpsProxyUpdate(d *schema.ResourceData, meta in
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
+		if err != nil {
+			return fmt.Errorf("Error updating RegionTargetHttpsProxy %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating RegionTargetHttpsProxy %q: %#v", d.Id(), res)
+		}
+
+		err = ComputeOperationWaitTime(
+			config, res, project, "Updating RegionTargetHttpsProxy", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
+		if err != nil {
+			return err
+		}
+	}
+	if d.HasChange("ssl_policy") {
+		obj := make(map[string]interface{})
+
+		getUrl, err := tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/regions/{{region}}/targetHttpsProxies/{{name}}")
+		if err != nil {
+			return err
+		}
+
+		// err == nil indicates that the billing_project value was found
+		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+			billingProject = bp
+		}
+
+		getRes, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "GET",
+			Project:   billingProject,
+			RawURL:    getUrl,
+			UserAgent: userAgent,
+		})
+		if err != nil {
+			return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeRegionTargetHttpsProxy %q", d.Id()))
+		}
+
+		obj["fingerprint"] = getRes["fingerprint"]
+
+		sslPolicyProp, err := expandComputeRegionTargetHttpsProxySslPolicy(d.Get("ssl_policy"), d, config)
+		if err != nil {
+			return err
+		} else if v, ok := d.GetOkExists("ssl_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, sslPolicyProp)) {
+			obj["sslPolicy"] = sslPolicyProp
+		}
+
+		obj, err = resourceComputeRegionTargetHttpsProxyUpdateEncoder(d, meta, obj)
+		if err != nil {
+			return err
+		}
+
+		url, err := tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/regions/{{region}}/targetHttpsProxies/{{name}}")
+		if err != nil {
+			return err
+		}
+
+		headers := make(http.Header)
+
+		// err == nil indicates that the billing_project value was found
+		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+			billingProject = bp
+		}
+
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
 		})
 		if err != nil {
 			return fmt.Errorf("Error updating RegionTargetHttpsProxy %q: %s", d.Id(), err)
@@ -406,13 +593,15 @@ func resourceComputeRegionTargetHttpsProxyDelete(d *schema.ResourceData, meta in
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting RegionTargetHttpsProxy %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting RegionTargetHttpsProxy %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -421,6 +610,7 @@ func resourceComputeRegionTargetHttpsProxyDelete(d *schema.ResourceData, meta in
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "RegionTargetHttpsProxy")
@@ -441,10 +631,10 @@ func resourceComputeRegionTargetHttpsProxyDelete(d *schema.ResourceData, meta in
 func resourceComputeRegionTargetHttpsProxyImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/regions/(?P<region>[^/]+)/targetHttpsProxies/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/regions/(?P<region>[^/]+)/targetHttpsProxies/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -488,6 +678,10 @@ func flattenComputeRegionTargetHttpsProxyName(v interface{}, d *schema.ResourceD
 	return v
 }
 
+func flattenComputeRegionTargetHttpsProxyCertificateManagerCertificates(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func flattenComputeRegionTargetHttpsProxySslCertificates(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return v
@@ -495,7 +689,21 @@ func flattenComputeRegionTargetHttpsProxySslCertificates(v interface{}, d *schem
 	return tpgresource.ConvertAndMapStringArr(v.([]interface{}), tpgresource.ConvertSelfLinkToV1)
 }
 
+func flattenComputeRegionTargetHttpsProxySslPolicy(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	return tpgresource.ConvertSelfLinkToV1(v.(string))
+}
+
 func flattenComputeRegionTargetHttpsProxyUrlMap(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	return tpgresource.ConvertSelfLinkToV1(v.(string))
+}
+
+func flattenComputeRegionTargetHttpsProxyServerTlsPolicy(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return v
 	}
@@ -517,6 +725,31 @@ func expandComputeRegionTargetHttpsProxyName(v interface{}, d tpgresource.Terraf
 	return v, nil
 }
 
+func expandComputeRegionTargetHttpsProxyCertificateManagerCertificates(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			return nil, fmt.Errorf("Invalid value for certificate_manager_certificates: nil")
+		}
+		if strings.HasPrefix(raw.(string), "//") || strings.HasPrefix(raw.(string), "https://") {
+			// Any full URL will be passed to the API request (regardless of the resource type). This is to allow self_links of CertificateManagerCeritificate resources.
+			// If the full URL is an invalid reference, that should be handled by the API.
+			req = append(req, raw.(string))
+		} else if reg, _ := regexp.Compile("projects/(.*)/locations/(.*)/certificates/(.*)"); reg.MatchString(raw.(string)) {
+			// If the input is the id pattern of CertificateManagerCertificate resource, a prefix will be added to construct the full URL before constructing the API request.
+			self_link := "https://certificatemanager.googleapis.com/v1/" + raw.(string)
+			req = append(req, self_link)
+		} else {
+			return nil, fmt.Errorf("Invalid value for certificate_manager_certificates: %v is an invalid format for a certificateManagerCertificate resource", raw.(string))
+		}
+	}
+	return req, nil
+}
+
 func expandComputeRegionTargetHttpsProxySslCertificates(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
@@ -533,6 +766,14 @@ func expandComputeRegionTargetHttpsProxySslCertificates(v interface{}, d tpgreso
 	return req, nil
 }
 
+func expandComputeRegionTargetHttpsProxySslPolicy(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	f, err := tpgresource.ParseRegionalFieldValue("sslPolicies", v.(string), "project", "region", "zone", d, config, true)
+	if err != nil {
+		return nil, fmt.Errorf("Invalid value for ssl_policy: %s", err)
+	}
+	return f.RelativeLink(), nil
+}
+
 func expandComputeRegionTargetHttpsProxyUrlMap(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	f, err := tpgresource.ParseRegionalFieldValue("urlMaps", v.(string), "project", "region", "zone", d, config, true)
 	if err != nil {
@@ -541,10 +782,58 @@ func expandComputeRegionTargetHttpsProxyUrlMap(v interface{}, d tpgresource.Terr
 	return f.RelativeLink(), nil
 }
 
+func expandComputeRegionTargetHttpsProxyServerTlsPolicy(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandComputeRegionTargetHttpsProxyRegion(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	f, err := tpgresource.ParseGlobalFieldValue("regions", v.(string), "project", d, config, true)
 	if err != nil {
 		return nil, fmt.Errorf("Invalid value for region: %s", err)
 	}
 	return f.RelativeLink(), nil
+}
+
+func resourceComputeRegionTargetHttpsProxyEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {
+
+	if _, ok := obj["certificateManagerCertificates"]; ok {
+		// The field certificateManagerCertificates should not be included in the API request, and it should be renamed to `sslCertificates`
+		// The API does not allow using both certificate manager certificates and sslCertificates. If that changes
+		// in the future, the encoder logic should change accordingly because this will mean that both fields are no longer mutual exclusive.
+		log.Printf("[DEBUG] converting the field CertificateManagerCertificates to sslCertificates before sending the request")
+		obj["sslCertificates"] = obj["certificateManagerCertificates"]
+		delete(obj, "certificateManagerCertificates")
+	}
+	return obj, nil
+}
+
+func resourceComputeRegionTargetHttpsProxyUpdateEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {
+
+	if _, ok := obj["certificateManagerCertificates"]; ok {
+		// The field certificateManagerCertificates should not be included in the API request, and it should be renamed to `sslCertificates`
+		// The API does not allow using both certificate manager certificates and sslCertificates. If that changes
+		// in the future, the encoder logic should change accordingly because this will mean that both fields are no longer mutual exclusive.
+		log.Printf("[DEBUG] converting the field CertificateManagerCertificates to sslCertificates before sending the request")
+		obj["sslCertificates"] = obj["certificateManagerCertificates"]
+		delete(obj, "certificateManagerCertificates")
+	}
+	return obj, nil
+}
+
+func resourceComputeRegionTargetHttpsProxyDecoder(d *schema.ResourceData, meta interface{}, res map[string]interface{}) (map[string]interface{}, error) {
+	// Since both sslCertificates and certificateManagerCertificates maps to the same API field (sslCertificates), we need to check the types
+	// of certificates that exist in the array and decide whether to change the field to certificateManagerCertificate or not.
+	// The decoder logic depends on the fact that the API does not allow mixed type of certificates and it returns
+	// certificate manager certificates in the format of //certificatemanager.googleapis.com/projects/*/locations/*/certificates/*
+	if sslCertificates, ok := res["sslCertificates"].([]interface{}); ok && len(sslCertificates) > 0 {
+		regPat, _ := regexp.Compile("//certificatemanager.googleapis.com/projects/(.*)/locations/(.*)/certificates/(.*)")
+
+		if regPat.MatchString(sslCertificates[0].(string)) {
+			// It is enough to check only the type of one of the provided certificates beacuse all the certificates should be the same type.
+			log.Printf("[DEBUG] The field sslCertificates contains certificateManagerCertificates, the field name will be converted to certificateManagerCertificates")
+			res["certificateManagerCertificates"] = res["sslCertificates"]
+			delete(res, "sslCertificates")
+		}
+	}
+	return res, nil
 }

@@ -20,10 +20,12 @@ package looker
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
@@ -49,12 +51,16 @@ func ResourceLookerInstance() *schema.Resource {
 			Delete: schema.DefaultTimeout(90 * time.Minute),
 		},
 
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
+
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: verify.ValidateRegexp(`^[a-z][a-z0-9-]{0,39}[a-z0-9]$`),
+				ValidateFunc: verify.ValidateRegexp(`^[a-z][a-z0-9-]{0,61}[a-z0-9]$`),
 				Description:  `The ID of the instance or a fully qualified identifier for the instance.`,
 			},
 			"admin_settings": {
@@ -86,6 +92,26 @@ existing list of allowed email domains.`,
 				Description: `Network name in the consumer project in the format of: projects/{project}/global/networks/{network}
 Note that the consumer network may be in a different GCP project than the consumer
 project that is hosting the Looker Instance.`,
+			},
+			"custom_domain": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `Custom domain settings for a Looker instance.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"domain": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: `Domain name`,
+						},
+						"state": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: `Status of the custom domain.`,
+						},
+					},
+				},
 			},
 			"deny_maintenance_period": {
 				Type:     schema.TypeList,
@@ -308,14 +334,13 @@ disrupt service.`,
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: verify.ValidateEnum([]string{"LOOKER_CORE_TRIAL", "LOOKER_CORE_STANDARD", "LOOKER_CORE_STANDARD_ANNUAL", "LOOKER_CORE_ENTERPRISE_ANNUAL", "LOOKER_CORE_EMBED_ANNUAL", "LOOKER_MODELER", ""}),
+				ValidateFunc: verify.ValidateEnum([]string{"LOOKER_CORE_TRIAL", "LOOKER_CORE_STANDARD", "LOOKER_CORE_STANDARD_ANNUAL", "LOOKER_CORE_ENTERPRISE_ANNUAL", "LOOKER_CORE_EMBED_ANNUAL", ""}),
 				Description: `Platform editions for a Looker instance. Each edition maps to a set of instance features, like its size. Must be one of these values:
-- LOOKER_CORE_TRIAL: trial instance
-- LOOKER_CORE_STANDARD: pay as you go standard instance
+- LOOKER_CORE_TRIAL: trial instance (Currently Unavailable)
+- LOOKER_CORE_STANDARD: pay as you go standard instance (Currently Unavailable)
 - LOOKER_CORE_STANDARD_ANNUAL: subscription standard instance
 - LOOKER_CORE_ENTERPRISE_ANNUAL: subscription enterprise instance
-- LOOKER_CORE_EMBED_ANNUAL: subscription embed instance
-- LOOKER_MODELER: standalone modeling service Default value: "LOOKER_CORE_TRIAL" Possible values: ["LOOKER_CORE_TRIAL", "LOOKER_CORE_STANDARD", "LOOKER_CORE_STANDARD_ANNUAL", "LOOKER_CORE_ENTERPRISE_ANNUAL", "LOOKER_CORE_EMBED_ANNUAL", "LOOKER_MODELER"]`,
+- LOOKER_CORE_EMBED_ANNUAL: subscription embed instance Default value: "LOOKER_CORE_TRIAL" Possible values: ["LOOKER_CORE_TRIAL", "LOOKER_CORE_STANDARD", "LOOKER_CORE_STANDARD_ANNUAL", "LOOKER_CORE_ENTERPRISE_ANNUAL", "LOOKER_CORE_EMBED_ANNUAL"]`,
 				Default: "LOOKER_CORE_TRIAL",
 			},
 			"private_ip_enabled": {
@@ -499,6 +524,12 @@ func resourceLookerInstanceCreate(d *schema.ResourceData, meta interface{}) erro
 	} else if v, ok := d.GetOkExists("user_metadata"); !tpgresource.IsEmptyValue(reflect.ValueOf(userMetadataProp)) && (ok || !reflect.DeepEqual(v, userMetadataProp)) {
 		obj["userMetadata"] = userMetadataProp
 	}
+	customDomainProp, err := expandLookerInstanceCustomDomain(d.Get("custom_domain"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("custom_domain"); !tpgresource.IsEmptyValue(reflect.ValueOf(customDomainProp)) && (ok || !reflect.DeepEqual(v, customDomainProp)) {
+		obj["customDomain"] = customDomainProp
+	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{LookerBasePath}}projects/{{project}}/locations/{{region}}/instances?instanceId={{name}}")
 	if err != nil {
@@ -519,6 +550,7 @@ func resourceLookerInstanceCreate(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "POST",
@@ -527,6 +559,7 @@ func resourceLookerInstanceCreate(d *schema.ResourceData, meta interface{}) erro
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutCreate),
+		Headers:              headers,
 		ErrorAbortPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.Is429QuotaError},
 	})
 	if err != nil {
@@ -590,12 +623,14 @@ func resourceLookerInstanceRead(d *schema.ResourceData, meta interface{}) error 
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "GET",
 		Project:              billingProject,
 		RawURL:               url,
 		UserAgent:            userAgent,
+		Headers:              headers,
 		ErrorAbortPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.Is429QuotaError},
 	})
 	if err != nil {
@@ -655,6 +690,9 @@ func resourceLookerInstanceRead(d *schema.ResourceData, meta interface{}) error 
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
 	if err := d.Set("user_metadata", flattenLookerInstanceUserMetadata(res["userMetadata"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
+	if err := d.Set("custom_domain", flattenLookerInstanceCustomDomain(res["customDomain"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
 
@@ -737,6 +775,12 @@ func resourceLookerInstanceUpdate(d *schema.ResourceData, meta interface{}) erro
 	} else if v, ok := d.GetOkExists("user_metadata"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, userMetadataProp)) {
 		obj["userMetadata"] = userMetadataProp
 	}
+	customDomainProp, err := expandLookerInstanceCustomDomain(d.Get("custom_domain"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("custom_domain"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, customDomainProp)) {
+		obj["customDomain"] = customDomainProp
+	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{LookerBasePath}}projects/{{project}}/locations/{{region}}/instances/{{name}}")
 	if err != nil {
@@ -744,6 +788,7 @@ func resourceLookerInstanceUpdate(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	log.Printf("[DEBUG] Updating Instance %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("admin_settings") {
@@ -785,6 +830,10 @@ func resourceLookerInstanceUpdate(d *schema.ResourceData, meta interface{}) erro
 	if d.HasChange("user_metadata") {
 		updateMask = append(updateMask, "userMetadata")
 	}
+
+	if d.HasChange("custom_domain") {
+		updateMask = append(updateMask, "customDomain")
+	}
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
 	// won't set it
 	url, err = transport_tpg.AddQueryParams(url, map[string]string{"updateMask": strings.Join(updateMask, ",")})
@@ -797,29 +846,33 @@ func resourceLookerInstanceUpdate(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:               config,
-		Method:               "PATCH",
-		Project:              billingProject,
-		RawURL:               url,
-		UserAgent:            userAgent,
-		Body:                 obj,
-		Timeout:              d.Timeout(schema.TimeoutUpdate),
-		ErrorAbortPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.Is429QuotaError},
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:               config,
+			Method:               "PATCH",
+			Project:              billingProject,
+			RawURL:               url,
+			UserAgent:            userAgent,
+			Body:                 obj,
+			Timeout:              d.Timeout(schema.TimeoutUpdate),
+			Headers:              headers,
+			ErrorAbortPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.Is429QuotaError},
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating Instance %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating Instance %q: %#v", d.Id(), res)
-	}
+		if err != nil {
+			return fmt.Errorf("Error updating Instance %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating Instance %q: %#v", d.Id(), res)
+		}
 
-	err = LookerOperationWaitTime(
-		config, res, project, "Updating Instance", userAgent,
-		d.Timeout(schema.TimeoutUpdate))
+		err = LookerOperationWaitTime(
+			config, res, project, "Updating Instance", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return resourceLookerInstanceRead(d, meta)
@@ -846,13 +899,15 @@ func resourceLookerInstanceDelete(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Instance %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Instance %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "DELETE",
@@ -861,6 +916,7 @@ func resourceLookerInstanceDelete(d *schema.ResourceData, meta interface{}) erro
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutDelete),
+		Headers:              headers,
 		ErrorAbortPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.Is429QuotaError},
 	})
 	if err != nil {
@@ -882,10 +938,10 @@ func resourceLookerInstanceDelete(d *schema.ResourceData, meta interface{}) erro
 func resourceLookerInstanceImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/(?P<region>[^/]+)/instances/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/(?P<region>[^/]+)/instances/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -1408,6 +1464,29 @@ func flattenLookerInstanceUserMetadataAdditionalDeveloperUserCount(v interface{}
 	return v // let terraform core handle it otherwise
 }
 
+func flattenLookerInstanceCustomDomain(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["domain"] =
+		flattenLookerInstanceCustomDomainDomain(original["domain"], d, config)
+	transformed["state"] =
+		flattenLookerInstanceCustomDomainState(original["state"], d, config)
+	return []interface{}{transformed}
+}
+func flattenLookerInstanceCustomDomainDomain(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenLookerInstanceCustomDomainState(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func expandLookerInstanceAdminSettings(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
@@ -1837,5 +1916,39 @@ func expandLookerInstanceUserMetadataAdditionalStandardUserCount(v interface{}, 
 }
 
 func expandLookerInstanceUserMetadataAdditionalDeveloperUserCount(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandLookerInstanceCustomDomain(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedDomain, err := expandLookerInstanceCustomDomainDomain(original["domain"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedDomain); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["domain"] = transformedDomain
+	}
+
+	transformedState, err := expandLookerInstanceCustomDomainState(original["state"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedState); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["state"] = transformedState
+	}
+
+	return transformed, nil
+}
+
+func expandLookerInstanceCustomDomainDomain(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandLookerInstanceCustomDomainState(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }

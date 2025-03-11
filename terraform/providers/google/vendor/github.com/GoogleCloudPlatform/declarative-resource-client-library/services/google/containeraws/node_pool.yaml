@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC. All Rights Reserved.
+# Copyright 2024 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ info:
   x-dcl-has-iam: false
   x-dcl-ref:
     text: API reference
-    url: https://cloud.google.com/anthos/clusters/docs/multi-cloud/reference/rest/v1/projects.locations.awsClusters.awsNodePools
+    url: https://cloud.google.com/kubernetes-engine/multi-cloud/docs/reference/rest/v1/projects.locations.awsClusters.awsNodePools
   x-dcl-guides:
   - text: Multicloud overview
-    url: https://cloud.google.com/anthos/clusters/docs/multi-cloud
+    url: https://cloud.google.com/kubernetes-engine/multi-cloud/docs
 paths:
   get:
     description: The function used to get information about a NodePool
@@ -135,6 +135,7 @@ components:
           - resource: Gkemulticloud/Cluster
             field: name
             parent: true
+          x-dcl-parameter: true
         config:
           type: object
           x-dcl-go-name: Config
@@ -193,7 +194,6 @@ components:
               x-dcl-go-name: InstanceType
               description: Optional. The AWS instance type. When unspecified, it defaults
                 to `m5.large`.
-              x-kubernetes-immutable: true
               x-dcl-server-default: true
             labels:
               type: object
@@ -203,7 +203,6 @@ components:
               description: 'Optional. The initial labels assigned to nodes of this
                 node pool. An object containing a list of "key": value pairs. Example:
                 { "name": "wrench", "mass": "1.3kg", "count": "3" }.'
-              x-kubernetes-immutable: true
             proxyConfig:
               type: object
               x-dcl-go-name: ProxyConfig
@@ -260,7 +259,9 @@ components:
                   format: int64
                   x-dcl-go-name: Throughput
                   description: Optional. The throughput to provision for the volume,
-                    in MiB/s. Only valid if the volume type is GP3.
+                    in MiB/s. Only valid if the volume type is GP3. If volume type
+                    is gp3 and throughput is not specified, the throughput will defaults
+                    to 125.
                   x-dcl-server-default: true
                 volumeType:
                   type: string
@@ -365,6 +366,18 @@ components:
           x-dcl-go-name: Location
           description: The location for the resource
           x-kubernetes-immutable: true
+          x-dcl-parameter: true
+        management:
+          type: object
+          x-dcl-go-name: Management
+          x-dcl-go-type: NodePoolManagement
+          description: The Management configuration for this node pool.
+          properties:
+            autoRepair:
+              type: boolean
+              x-dcl-go-name: AutoRepair
+              description: Optional. Whether or not the nodes will be automatically
+                repaired.
         maxPodsConstraint:
           type: object
           x-dcl-go-name: MaxPodsConstraint
@@ -386,6 +399,7 @@ components:
           x-dcl-go-name: Name
           description: The name of this resource.
           x-kubernetes-immutable: true
+          x-dcl-has-long-form: true
         project:
           type: string
           x-dcl-go-name: Project
@@ -395,6 +409,7 @@ components:
           - resource: Cloudresourcemanager/Project
             field: name
             parent: true
+          x-dcl-parameter: true
         reconciling:
           type: boolean
           x-dcl-go-name: Reconciling
@@ -430,6 +445,36 @@ components:
           readOnly: true
           description: Output only. A globally unique identifier for the node pool.
           x-kubernetes-immutable: true
+        updateSettings:
+          type: object
+          x-dcl-go-name: UpdateSettings
+          x-dcl-go-type: NodePoolUpdateSettings
+          description: Optional. Update settings control the speed and disruption
+            of the node pool update.
+          x-dcl-server-default: true
+          properties:
+            surgeSettings:
+              type: object
+              x-dcl-go-name: SurgeSettings
+              x-dcl-go-type: NodePoolUpdateSettingsSurgeSettings
+              description: Optional. Settings for surge update.
+              x-dcl-server-default: true
+              properties:
+                maxSurge:
+                  type: integer
+                  format: int64
+                  x-dcl-go-name: MaxSurge
+                  description: Optional. The maximum number of nodes that can be created
+                    beyond the current size of the node pool during the update process.
+                  x-dcl-server-default: true
+                maxUnavailable:
+                  type: integer
+                  format: int64
+                  x-dcl-go-name: MaxUnavailable
+                  description: Optional. The maximum number of nodes that can be simultaneously
+                    unavailable during the update process. A node is considered unavailable
+                    if its status is not Ready.
+                  x-dcl-server-default: true
         updateTime:
           type: string
           format: date-time

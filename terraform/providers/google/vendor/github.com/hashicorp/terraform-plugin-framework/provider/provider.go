@@ -1,9 +1,13 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package provider
 
 import (
 	"context"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 )
 
@@ -13,6 +17,7 @@ import (
 //
 //   - Validation: Schema-based or entire configuration
 //     via ProviderWithConfigValidators or ProviderWithValidateConfig.
+//   - Functions: ProviderWithFunctions
 //   - Meta Schema: ProviderWithMetaSchema
 type Provider interface {
 	// Metadata should return the metadata for the provider, such as
@@ -63,6 +68,24 @@ type ProviderWithConfigValidators interface {
 
 	// ConfigValidators returns a list of functions which will all be performed during validation.
 	ConfigValidators(context.Context) []ConfigValidator
+}
+
+// ProviderWithFunctions is an interface type that extends Provider to
+// include provider defined functions for usage in practitioner configurations.
+//
+// Provider-defined functions are supported in Terraform version 1.8 and later.
+//
+// NOTE: Provider-defined function support is in technical preview and offered
+// without compatibility promises until Terraform 1.8 is generally available.
+type ProviderWithFunctions interface {
+	Provider
+
+	// Functions returns a slice of functions to instantiate each Function
+	// implementation.
+	//
+	// The function name is determined by the Function implementing its Metadata
+	// method. All functions must have unique names.
+	Functions(context.Context) []func() function.Function
 }
 
 // ProviderWithMetaSchema is a provider with a provider meta schema, which

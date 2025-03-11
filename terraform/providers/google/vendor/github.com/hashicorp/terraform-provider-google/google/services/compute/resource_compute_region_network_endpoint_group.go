@@ -20,9 +20,11 @@ package compute
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -45,6 +47,10 @@ func ResourceComputeRegionNetworkEndpointGroup() *schema.Resource {
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
+
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:         schema.TypeString,
@@ -64,13 +70,14 @@ character, which cannot be a dash.`,
 				Required:         true,
 				ForceNew:         true,
 				DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
-				Description:      `A reference to the region where the Serverless NEGs Reside.`,
+				Description:      `A reference to the region where the regional NEGs reside.`,
 			},
 			"app_engine": {
 				Type:     schema.TypeList,
 				Optional: true,
 				ForceNew: true,
-				Description: `Only valid when networkEndpointType is "SERVERLESS".
+				Description: `This field is only used for SERVERLESS NEGs.
+
 Only one of cloud_run, app_engine, cloud_function or serverless_deployment may be set.`,
 				MaxItems: 1,
 				Elem: &schema.Resource{
@@ -112,7 +119,8 @@ Example value: "v1", "v2".`,
 				Type:     schema.TypeList,
 				Optional: true,
 				ForceNew: true,
-				Description: `Only valid when networkEndpointType is "SERVERLESS".
+				Description: `This field is only used for SERVERLESS NEGs.
+
 Only one of cloud_run, app_engine, cloud_function or serverless_deployment may be set.`,
 				MaxItems: 1,
 				Elem: &schema.Resource{
@@ -147,7 +155,8 @@ will parse them to { function = "function1" } and { function = "function2" } res
 				Type:     schema.TypeList,
 				Optional: true,
 				ForceNew: true,
-				Description: `Only valid when networkEndpointType is "SERVERLESS".
+				Description: `This field is only used for SERVERLESS NEGs.
+
 Only one of cloud_run, app_engine, cloud_function or serverless_deployment may be set.`,
 				MaxItems: 1,
 				Elem: &schema.Resource{
@@ -200,7 +209,8 @@ you create the resource.`,
 				Optional:         true,
 				ForceNew:         true,
 				DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
-				Description: `This field is only used for PSC.
+				Description: `This field is only used for PSC and INTERNET NEGs.
+
 The URL of the network to which all network endpoints in the NEG belong. Uses
 "default" project network if unspecified.`,
 			},
@@ -208,15 +218,17 @@ The URL of the network to which all network endpoints in the NEG belong. Uses
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: verify.ValidateEnum([]string{"SERVERLESS", "PRIVATE_SERVICE_CONNECT", ""}),
-				Description:  `Type of network endpoints in this network endpoint group. Defaults to SERVERLESS Default value: "SERVERLESS" Possible values: ["SERVERLESS", "PRIVATE_SERVICE_CONNECT"]`,
+				ValidateFunc: verify.ValidateEnum([]string{"SERVERLESS", "PRIVATE_SERVICE_CONNECT", "INTERNET_IP_PORT", "INTERNET_FQDN_PORT", "GCE_VM_IP_PORTMAP", ""}),
+				Description:  `Type of network endpoints in this network endpoint group. Defaults to SERVERLESS. Default value: "SERVERLESS" Possible values: ["SERVERLESS", "PRIVATE_SERVICE_CONNECT", "INTERNET_IP_PORT", "INTERNET_FQDN_PORT", "GCE_VM_IP_PORTMAP"]`,
 				Default:      "SERVERLESS",
 			},
 			"psc_target_service": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-				Description: `The target service url used to set up private service connection to
+				Description: `This field is only used for PSC and INTERNET NEGs.
+
+The target service url used to set up private service connection to
 a Google API or a PSC Producer Service Attachment.`,
 			},
 			"subnetwork": {
@@ -224,7 +236,8 @@ a Google API or a PSC Producer Service Attachment.`,
 				Optional:         true,
 				ForceNew:         true,
 				DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
-				Description: `This field is only used for PSC.
+				Description: `This field is only used for PSC NEGs.
+
 Optional URL of the subnetwork to which all network endpoints in the NEG belong.`,
 			},
 			"project": {
@@ -295,7 +308,7 @@ func resourceComputeRegionNetworkEndpointGroupCreate(d *schema.ResourceData, met
 	appEngineProp, err := expandComputeRegionNetworkEndpointGroupAppEngine(d.Get("app_engine"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("app_engine"); !tpgresource.IsEmptyValue(reflect.ValueOf(appEngineProp)) && (ok || !reflect.DeepEqual(v, appEngineProp)) {
+	} else if v, ok := d.GetOkExists("app_engine"); ok || !reflect.DeepEqual(v, appEngineProp) {
 		obj["appEngine"] = appEngineProp
 	}
 	cloudFunctionProp, err := expandComputeRegionNetworkEndpointGroupCloudFunction(d.Get("cloud_function"), d, config)
@@ -330,6 +343,7 @@ func resourceComputeRegionNetworkEndpointGroupCreate(d *schema.ResourceData, met
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -338,6 +352,7 @@ func resourceComputeRegionNetworkEndpointGroupCreate(d *schema.ResourceData, met
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating RegionNetworkEndpointGroup: %s", err)
@@ -390,12 +405,14 @@ func resourceComputeRegionNetworkEndpointGroupRead(d *schema.ResourceData, meta 
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeRegionNetworkEndpointGroup %q", d.Id()))
@@ -463,13 +480,15 @@ func resourceComputeRegionNetworkEndpointGroupDelete(d *schema.ResourceData, met
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting RegionNetworkEndpointGroup %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting RegionNetworkEndpointGroup %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -478,6 +497,7 @@ func resourceComputeRegionNetworkEndpointGroupDelete(d *schema.ResourceData, met
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "RegionNetworkEndpointGroup")
@@ -498,10 +518,10 @@ func resourceComputeRegionNetworkEndpointGroupDelete(d *schema.ResourceData, met
 func resourceComputeRegionNetworkEndpointGroupImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/regions/(?P<region>[^/]+)/networkEndpointGroups/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/regions/(?P<region>[^/]+)/networkEndpointGroups/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

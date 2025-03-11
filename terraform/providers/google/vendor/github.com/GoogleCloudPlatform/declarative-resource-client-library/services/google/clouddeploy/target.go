@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -42,7 +42,9 @@ type Target struct {
 	Project          *string                  `json:"project"`
 	Location         *string                  `json:"location"`
 	Run              *TargetRun               `json:"run"`
+	MultiTarget      *TargetMultiTarget       `json:"multiTarget"`
 	DeployParameters map[string]string        `json:"deployParameters"`
+	CustomTarget     *TargetCustomTarget      `json:"customTarget"`
 }
 
 func (r *Target) String() string {
@@ -121,7 +123,7 @@ func (r *TargetGke) String() string {
 func (r *TargetGke) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -167,7 +169,7 @@ func (r *TargetAnthosCluster) String() string {
 func (r *TargetAnthosCluster) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -178,6 +180,7 @@ type TargetExecutionConfigs struct {
 	ServiceAccount   *string                            `json:"serviceAccount"`
 	ArtifactStorage  *string                            `json:"artifactStorage"`
 	ExecutionTimeout *string                            `json:"executionTimeout"`
+	Verbose          *bool                              `json:"verbose"`
 }
 
 type jsonTargetExecutionConfigs TargetExecutionConfigs
@@ -205,6 +208,8 @@ func (r *TargetExecutionConfigs) UnmarshalJSON(data []byte) error {
 
 		r.ExecutionTimeout = res.ExecutionTimeout
 
+		r.Verbose = res.Verbose
+
 	}
 	return nil
 }
@@ -225,7 +230,7 @@ func (r *TargetExecutionConfigs) String() string {
 func (r *TargetExecutionConfigs) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -271,7 +276,99 @@ func (r *TargetRun) String() string {
 func (r *TargetRun) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type TargetMultiTarget struct {
+	empty     bool     `json:"-"`
+	TargetIds []string `json:"targetIds"`
+}
+
+type jsonTargetMultiTarget TargetMultiTarget
+
+func (r *TargetMultiTarget) UnmarshalJSON(data []byte) error {
+	var res jsonTargetMultiTarget
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyTargetMultiTarget
+	} else {
+
+		r.TargetIds = res.TargetIds
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this TargetMultiTarget is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyTargetMultiTarget *TargetMultiTarget = &TargetMultiTarget{empty: true}
+
+func (r *TargetMultiTarget) Empty() bool {
+	return r.empty
+}
+
+func (r *TargetMultiTarget) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *TargetMultiTarget) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.Sum256([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type TargetCustomTarget struct {
+	empty            bool    `json:"-"`
+	CustomTargetType *string `json:"customTargetType"`
+}
+
+type jsonTargetCustomTarget TargetCustomTarget
+
+func (r *TargetCustomTarget) UnmarshalJSON(data []byte) error {
+	var res jsonTargetCustomTarget
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyTargetCustomTarget
+	} else {
+
+		r.CustomTargetType = res.CustomTargetType
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this TargetCustomTarget is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyTargetCustomTarget *TargetCustomTarget = &TargetCustomTarget{empty: true}
+
+func (r *TargetCustomTarget) Empty() bool {
+	return r.empty
+}
+
+func (r *TargetCustomTarget) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *TargetCustomTarget) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -307,7 +404,9 @@ func (r *Target) ID() (string, error) {
 		"project":           dcl.ValueOrEmptyString(nr.Project),
 		"location":          dcl.ValueOrEmptyString(nr.Location),
 		"run":               dcl.ValueOrEmptyString(nr.Run),
+		"multi_target":      dcl.ValueOrEmptyString(nr.MultiTarget),
 		"deploy_parameters": dcl.ValueOrEmptyString(nr.DeployParameters),
+		"custom_target":     dcl.ValueOrEmptyString(nr.CustomTarget),
 	}
 	return dcl.Nprintf("projects/{{project}}/locations/{{location}}/targets/{{name}}", params), nil
 }
