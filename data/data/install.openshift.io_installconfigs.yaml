@@ -6715,9 +6715,8 @@ spec:
                       Deprecated: Use VCenters.Server
                     type: string
                   vcenters:
-                    description: |-
-                      VCenters holds the connection details for services to communicate with vCenter.
-                      Currently only a single vCenter is supported.
+                    description: VCenters holds the connection details for services
+                      to communicate with vCenter.
                     items:
                       description: |-
                         VCenter stores the vCenter connection fields

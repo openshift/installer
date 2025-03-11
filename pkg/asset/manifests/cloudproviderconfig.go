@@ -11,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
-	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	ibmcloudmachines "github.com/openshift/installer/pkg/asset/machines/ibmcloud"
@@ -329,14 +328,7 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 		}
 		cm.Data[cloudProviderConfigDataKey] = powervsConfig
 	case vspheretypes.Name:
-		var vsphereConfig string
-		var err error
-		// When we GA multi vcenter, we should only support yaml generation here.
-		if installConfig.Config.EnabledFeatureGates().Enabled(features.FeatureGateVSphereMultiVCenters) {
-			vsphereConfig, err = vspheremanifests.CloudProviderConfigYaml(clusterID.InfraID, installConfig.Config.Platform.VSphere)
-		} else {
-			vsphereConfig, err = vspheremanifests.CloudProviderConfigIni(clusterID.InfraID, installConfig.Config.Platform.VSphere)
-		}
+		vsphereConfig, err := vspheremanifests.CloudProviderConfigYaml(clusterID.InfraID, installConfig.Config.Platform.VSphere)
 
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")
