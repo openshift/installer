@@ -740,8 +740,11 @@ var (
 						contactPerson("eggfoobar").
 						productScope(ocpSpecific).
 						enhancementPR("https://github.com/openshift/enhancements/pull/1674").
-						enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
-						mustRegister()
+		// TODO: Do not go GA until jira issue is resolved: https://issues.redhat.com/browse/OCPEDGE-1637
+		// Annotations must correctly handle either DualReplica or HighlyAvailableArbiter going GA with
+		// the other still in TechPreview.
+		enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+		mustRegister()
 
 	FeatureGateCVOConfiguration = newFeatureGate("ClusterVersionOperatorConfiguration").
 					reportProblemsToJiraComponent("Cluster Version Operator").
@@ -752,10 +755,66 @@ var (
 					mustRegister()
 
 	FeatureGateGCPCustomAPIEndpoints = newFeatureGate("GCPCustomAPIEndpoints").
-					reportProblemsToJiraComponent("Installer").
-					contactPerson("barbacbd").
+						reportProblemsToJiraComponent("Installer").
+						contactPerson("barbacbd").
+						productScope(ocpSpecific).
+						enhancementPR("https://github.com/openshift/enhancements/pull/1492").
+						enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+						mustRegister()
+
+	FeatureGateDyanmicServiceEndpointIBMCloud = newFeatureGate("DyanmicServiceEndpointIBMCloud").
+							reportProblemsToJiraComponent("Cloud Compute / IBM Provider").
+							contactPerson("jared-hayes-dev").
+							productScope(ocpSpecific).
+							enhancementPR("https://github.com/openshift/enhancements/pull/1712").
+							enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+							mustRegister()
+
+	FeatureGateSELinuxChangePolicy = newFeatureGate("SELinuxChangePolicy").
+					reportProblemsToJiraComponent("Storage / Kubernetes").
+					contactPerson("jsafrane").
+					productScope(kubernetes).
+					enhancementPR("https://github.com/kubernetes/enhancements/issues/1710").
+					enableIn(configv1.DevPreviewNoUpgrade).
+					mustRegister()
+
+	FeatureGateSELinuxMount = newFeatureGate("SELinuxMount").
+				reportProblemsToJiraComponent("Storage / Kubernetes").
+				contactPerson("jsafrane").
+				productScope(kubernetes).
+				enhancementPR("https://github.com/kubernetes/enhancements/issues/1710").
+				enableIn(configv1.DevPreviewNoUpgrade).
+				mustRegister()
+
+	FeatureGateDualReplica = newFeatureGate("DualReplica").
+				reportProblemsToJiraComponent("Two Node Fencing").
+				contactPerson("jaypoulz").
+				productScope(ocpSpecific).
+				enhancementPR("https://github.com/openshift/enhancements/pull/1675").
+		// TODO: Do not go GA until jira issue is resolved: https://issues.redhat.com/browse/OCPEDGE-1637
+		// Annotations must correctly handle either DualReplica or HighlyAvailableArbiter going GA with
+		// the other still in TechPreview.
+		enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+		mustRegister()
+
+	FeatureGateGatewayAPIController = newFeatureGate("GatewayAPIController").
+					reportProblemsToJiraComponent("Routing").
+					contactPerson("miciah").
 					productScope(ocpSpecific).
-					enhancementPR("https://github.com/openshift/enhancements/pull/1492").
-					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+		// Previously, the "GatewayAPI" feature gate managed both the GatewayAPI CRDs
+		// and the Gateway Controller. However, with the introduction of Gateway CRD
+		// lifecycle management (EP#1756), these responsibilities were separated.
+		// A dedicated feature gate now controls the Gateway Controller to distinguish
+		// its production readiness from that of the CRDs.
+		enhancementPR("https://github.com/openshift/enhancements/pull/1756").
+		enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+		mustRegister()
+
+	FeatureShortCertRotation = newFeatureGate("ShortCertRotation").
+					reportProblemsToJiraComponent("kube-apiserver").
+					contactPerson("vrutkovs").
+					productScope(ocpSpecific).
+					enableIn(configv1.DevPreviewNoUpgrade).
+					enhancementPR("https://github.com/openshift/enhancements/pull/1670").
 					mustRegister()
 )
