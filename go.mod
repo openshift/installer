@@ -115,7 +115,7 @@ require (
 	github.com/vincent-petithory/dataurl v1.0.0
 	github.com/vmware/govmomi v0.46.3
 	go.uber.org/mock v0.5.0
-	golang.org/x/crypto v0.33.0
+	golang.org/x/crypto v0.35.0
 	golang.org/x/oauth2 v0.24.0
 	golang.org/x/sync v0.11.0
 	golang.org/x/sys v0.30.0
