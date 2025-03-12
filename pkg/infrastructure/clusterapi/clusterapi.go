@@ -82,6 +82,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	rhcosImage := new(rhcos.Image)
 	bootstrapIgnAsset := &bootstrap.Bootstrap{}
 	masterIgnAsset := &machine.Master{}
+	workerIgnAsset := &machine.Worker{}
 	tfvarsAsset := &tfvars.TerraformVariables{}
 	rootCA := &tls.RootCA{}
 	parents.Get(
@@ -94,6 +95,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		rhcosImage,
 		bootstrapIgnAsset,
 		masterIgnAsset,
+		workerIgnAsset,
 		capiMachinesAsset,
 		tfvarsAsset,
 		rootCA,
@@ -279,6 +281,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	if err != nil {
 		return fileList, fmt.Errorf("unable to inject installation info: %w", err)
 	}
+	workerIgnData := workerIgnAsset.Files()[0].Data
 	ignitionSecrets := []*corev1.Secret{}
 
 	// The cloud-platform may need to override the default
@@ -288,6 +291,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 			Client:           cl,
 			BootstrapIgnData: bootstrapIgnData,
 			MasterIgnData:    masterIgnData,
+			WorkerIgnData:    workerIgnData,
 			InfraID:          clusterID.InfraID,
 			InstallConfig:    installConfig,
 			TFVarsAsset:      tfvarsAsset,
