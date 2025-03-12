@@ -23,8 +23,7 @@ func editIgnition(ctx context.Context, in clusterapi.IgnitionInput) (*clusterapi
 	if in.InstallConfig.Config.GCP.UserProvisionedDNS != dns.UserProvisionedDNSEnabled {
 		return &clusterapi.IgnitionOutput{
 			UpdatedBootstrapIgn: in.BootstrapIgnData,
-			UpdatedMasterIgn:    in.MasterIgnData,
-			UpdatedWorkerIgn:    in.WorkerIgnData}, nil
+			UpdatedMasterIgn:    in.MasterIgnData}, nil
 	}
 
 	gcpCluster := &capg.GCPCluster{}

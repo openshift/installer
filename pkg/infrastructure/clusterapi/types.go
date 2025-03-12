@@ -76,7 +76,6 @@ type IgnitionInput struct {
 type IgnitionOutput struct {
 	UpdatedBootstrapIgn []byte
 	UpdatedMasterIgn    []byte
-	UpdatedWorkerIgn    []byte
 }
 
 // InfraReadyProvider defines the InfraReady hook, which is

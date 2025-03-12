@@ -80,12 +80,13 @@ func EditIgnition(in IgnitionInput, platform string, publicIPAddresses, privateI
 		return nil, fmt.Errorf("failed to update %s Pointer Ignition: %w", masterRole, err)
 	}
 	logrus.Debugf("Successfully updated %s pointer ignition with API LB IP", masterRole)
-
-	editedWorkerIgn, err := updatePointerIgnition(in, privateIPAddresses, workerRole)
-	if err != nil {
-		return nil, fmt.Errorf("failed to update %s Pointer Ignition: %w", workerRole, err)
-	}
-	logrus.Debugf("Successfully updated %s pointer ignition with API LB IP", workerRole)
+	/*
+		editedWorkerIgn, err := updatePointerIgnition(in, privateIPAddresses, workerRole)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update %s Pointer Ignition: %w", workerRole, err)
+		}
+		logrus.Debugf("Successfully updated %s pointer ignition with API LB IP", workerRole)
+	*/
 
 	err = updateUserDataSecret(in, masterRole, ignData, editedMasterIgn)
 	if err != nil {
@@ -93,11 +94,13 @@ func EditIgnition(in IgnitionInput, platform string, publicIPAddresses, privateI
 	}
 	logrus.Debugf("Successfully updated %s user data secret", masterRole)
 
-	err = updateUserDataSecret(in, workerRole, ignData, editedWorkerIgn)
-	if err != nil {
-		return nil, fmt.Errorf("failed to update %s user data secret: %w", workerRole, err)
-	}
-	logrus.Debugf("Successfully updated %s user data secret", workerRole)
+	/*
+		err = updateUserDataSecret(in, workerRole, ignData, editedWorkerIgn)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update %s user data secret: %w", workerRole, err)
+		}
+		logrus.Debugf("Successfully updated %s user data secret", workerRole)
+	*/
 
 	editedIgnBytes, err := json.Marshal(ignData)
 	if err != nil {
@@ -108,7 +111,6 @@ func EditIgnition(in IgnitionInput, platform string, publicIPAddresses, privateI
 	ignOutput := &IgnitionOutput{
 		UpdatedBootstrapIgn: editedIgnBytes,
 		UpdatedMasterIgn:    editedMasterIgn,
-		UpdatedWorkerIgn:    editedWorkerIgn,
 	}
 	return ignOutput, nil
 }

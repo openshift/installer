@@ -20,8 +20,7 @@ func editIgnition(ctx context.Context, in clusterapi.IgnitionInput) (*clusterapi
 	if in.InstallConfig.Config.AWS.UserProvisionedDNS != dns.UserProvisionedDNSEnabled {
 		return &clusterapi.IgnitionOutput{
 			UpdatedBootstrapIgn: in.BootstrapIgnData,
-			UpdatedMasterIgn:    in.MasterIgnData,
-			UpdatedWorkerIgn:    in.WorkerIgnData}, nil
+			UpdatedMasterIgn:    in.MasterIgnData}, nil
 	}
 
 	awsCluster := &capa.AWSCluster{}
