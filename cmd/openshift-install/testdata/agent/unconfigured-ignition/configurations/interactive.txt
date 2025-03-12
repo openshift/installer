@@ -14,8 +14,8 @@ unconfiguredIgnContains /etc/assisted/manifests/pull-secret.yaml
 
 unconfiguredIgnCmp /etc/assisted/manifests/cluster-image-set.yaml expected/cluster-image-set.yaml
 unconfiguredIgnCmp /etc/assisted/manifests/infraenv.yaml expected/infraenv.yaml
+unconfiguredIgnCmp /etc/assisted/rendezvous-host.env expected/rendezvous-host.env
 
-unconfiguredIgnContains /etc/assisted/rendezvous-host.env
 unconfiguredIgnContains /etc/assisted/no-config-image
 unconfiguredIgnContains /etc/assisted/interactive-ui
 
@@ -88,3 +88,10 @@ status:
     rootfs: ""
   debugInfo:
     eventsURL: ""
+-- expected/rendezvous-host.env --
+NODE_ZERO_IP={{.RendezvousIP}}
+SERVICE_BASE_URL=http://{{.RendezvousIP}}:8090/
+IMAGE_SERVICE_BASE_URL=http://{{.RendezvousIP}}:8888/
+PULL_SECRET_TOKEN=
+USER_AUTH_TOKEN=
+WORKFLOW_TYPE=install-interactive-disconnected

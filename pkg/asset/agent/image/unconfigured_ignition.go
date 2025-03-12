@@ -2,6 +2,7 @@ package image
 
 import (
 	"context"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -176,8 +177,12 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 		if agentConfig.Config != nil {
 			rendezvousIP = agentConfig.Config.RendezvousIP
 		}
-		rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath, "root", 0644,
-			getRendezvousHostEnv("http", rendezvousIP, "", "", agentWorkflow.Workflow))
+		// Avoids escaping in case the template parameter was used.
+		rendezvousHostData, err := url.QueryUnescape(getRendezvousHostEnv("http", rendezvousIP, "", "", agentWorkflow.Workflow))
+		if err != nil {
+			return err
+		}
+		rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath, "root", 0644, rendezvousHostData)
 		config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
 
 		// Explicitly disable the load-config-iso service, not required in the current flow
