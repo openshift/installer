@@ -19,6 +19,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blockblob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/pageblob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/sas"
+	"github.com/Azure/azure-sdk-for-go/storage"
 	"github.com/sirupsen/logrus"
 
 	azic "github.com/openshift/installer/pkg/asset/installconfig/azure"
@@ -443,6 +444,10 @@ type CreateBlockBlobInput struct {
 	BootstrapIgnData   []byte
 	StorageAccountKeys []armstorage.AccountKey
 	ClientOpts         *arm.ClientOptions
+	CloudEnvironment   aztypes.CloudEnvironment
+	ContainerName      string
+	BlobName           string
+	StorageSuffix      string
 }
 
 // CreateBlockBlobOutput contains the return values after creating a block
@@ -462,6 +467,13 @@ func CreateBlockBlob(ctx context.Context, in *CreateBlockBlobInput) (string, err
 		return "", fmt.Errorf("failed to get shared crdentials for storage account: %w", err)
 	}
 
+	if in.CloudEnvironment == aztypes.StackCloud {
+		return createBlockBlobOnStack(in, *in.StorageAccountKeys[0].Value)
+	}
+	return createBlockBlob(ctx, in, sharedKeyCredential)
+}
+
+func createBlockBlob(ctx context.Context, in *CreateBlockBlobInput, sharedKeyCredential *azblob.SharedKeyCredential) (string, error) {
 	logrus.Debugf("Getting block blob client")
 	blockBlobClient, err := blockblob.NewClientWithSharedKeyCredential(
 		in.BlobURL,
@@ -469,7 +481,6 @@ func CreateBlockBlob(ctx context.Context, in *CreateBlockBlobInput) (string, err
 		&blockblob.ClientOptions{
 			ClientOptions: azcore.ClientOptions{
 				Cloud: in.ClientOpts.Cloud,
-				//APIVersion: in.ClientOpts.APIVersion,
 			},
 		},
 	)
@@ -493,6 +504,31 @@ func CreateBlockBlob(ctx context.Context, in *CreateBlockBlobInput) (string, err
 	}
 
 	return sasURL, nil
+}
+
+func createBlockBlobOnStack(in *CreateBlockBlobInput, key string) (string, error) {
+	logrus.Debugf("Creating block blob for bootstrap ignition")
+	storageClient, err := storage.NewClient(in.StorageAccountName, key, in.StorageSuffix, "2016-05-31", true)
+	if err != nil {
+		return "", fmt.Errorf("unable to create blob storage client for azure stack: %w", err)
+	}
+	blobClient := storageClient.GetBlobService()
+	container := blobClient.GetContainerReference(in.ContainerName)
+	blob := container.GetBlobReference(in.BlobName)
+	// blob.Properties = storage.BlobProperties{}
+	//	blob.Metadata = storage.BlobMetadata{}
+	if err := blob.CreateBlockBlobFromReader(bytes.NewReader(in.BootstrapIgnData), nil); err != nil {
+		return "", fmt.Errorf("failed to upload bootstrap ignition blob: %w", err)
+	}
+	logrus.Debugf("Uploaded ignition data")
+	sas, err := blob.GetSASURI(storage.BlobSASOptions{
+		BlobServiceSASPermissions: storage.BlobServiceSASPermissions{Read: true},
+		SASOptions:                storage.SASOptions{Expiry: time.Now().Add(time.Minute * 60), UseHTTPS: true},
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to get SAS URI for bootstrap ignition blob: %w", err)
+	}
+	return sas, nil
 }
 
 // CustomerManagedKeyInput contains the input parameters for creating the

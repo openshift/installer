@@ -867,6 +867,10 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 			StorageAccountKeys: p.StorageAccountKeys,
 			ClientOpts:         p.clientOptions,
 			BootstrapIgnData:   bootstrapIgnData,
+			CloudEnvironment:   in.InstallConfig.Azure.CloudName,
+			ContainerName:      ignitionContainerName,
+			BlobName:           blobName,
+			StorageSuffix:      session.Environment.StorageEndpointSuffix,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create BlockBlob for ignition shim: %w", err)
