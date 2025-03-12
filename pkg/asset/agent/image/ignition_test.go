@@ -407,15 +407,20 @@ func commonFiles() []string {
 	}
 }
 
+func setupEmbeddedResources(t *testing.T) func() {
+	t.Helper()
+	workingDirectory, err := os.Getwd()
+	assert.NoError(t, err)
+	assert.NoError(t, os.Chdir(path.Join(workingDirectory, "../../../../data")))
+	return func() {
+		assert.NoError(t, os.Chdir(workingDirectory))
+	}
+}
+
 func TestIgnition_Generate(t *testing.T) {
 	skipTestIfnmstatectlIsMissing(t)
 
-	// This patch currently allows testing the Ignition asset using the embedded resources.
-	// TODO: Replace it by mocking the filesystem in bootstrap.AddStorageFiles()
-	workingDirectory, err := os.Getwd()
-	assert.NoError(t, err)
-	err = os.Chdir(path.Join(workingDirectory, "../../../../data"))
-	assert.NoError(t, err)
+	defer setupEmbeddedResources(t)()
 
 	cases := []struct {
 		name                string

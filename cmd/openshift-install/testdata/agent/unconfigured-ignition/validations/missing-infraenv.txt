@@ -4,7 +4,7 @@ expandFile cluster-manifests/cluster-image-set.yaml
 
 ! exec openshift-install agent create unconfigured-ignition --dir $WORK
 
-stderr 'failed to generate asset "InfraEnv Config": missing configuration or manifest file'
+stderr 'failed to generate asset "InfraEnv Config File": configuration file not found: cluster-manifests/infraenv.yaml'
 
 ! exists $WORK/unconfigured-agent.ign
 ! exists $WORK/auth/kubeconfig

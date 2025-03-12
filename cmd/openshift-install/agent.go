@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 
 	"github.com/spf13/cobra"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/image"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/password"
 )
@@ -106,7 +108,7 @@ var (
 		command: &cobra.Command{
 			Use:    "unconfigured-ignition",
 			Short:  "Generates an agent ignition that excludes cluster configuration",
-			Args:   cobra.ExactArgs(0),
+			Args:   cobra.MaximumNArgs(1),
 			Hidden: true,
 		},
 		assets: []asset.WritableAsset{
@@ -126,13 +128,29 @@ func newAgentCreateCmd(ctx context.Context) *cobra.Command {
 		},
 	}
 
+	agentCtx := agent.NewContextWrapper(ctx)
 	for _, t := range agentTargets {
 		t.command.Args = cobra.ExactArgs(0)
-		t.command.Run = runTargetCmd(ctx, t.assets...)
+		t.command.Run = runTargetCmd(agentCtx, t.assets...)
 		cmd.AddCommand(t.command)
 	}
 
+	setUnconfiguredIgnitionFlag(agentCtx)
+
 	return cmd
+}
+
+func setUnconfiguredIgnitionFlag(ctx *agent.ContextWrapper) {
+	agentUnconfiguredIgnitionTarget.command.PersistentFlags().Bool("interactive", false, "Enable the interactive disconnected workflow support")
+	agentUnconfiguredIgnitionTarget.command.PreRun = func(cmd *cobra.Command, args []string) {
+		isInteractive, err := cmd.Flags().GetBool("interactive")
+		if err != nil {
+			log.Fatal(err)
+		}
+		if isInteractive {
+			ctx.AddValue(workflow.WorkflowTypeKey, string(workflow.AgentWorkflowTypeInstallInteractiveDisconnected))
+		}
+	}
 }
 
 func newAgentGraphCmd() *cobra.Command {
