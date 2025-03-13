@@ -175,7 +175,7 @@ func (a *PlatformProvisionCheck) Generate(ctx context.Context, dependencies asse
 			return err
 		}
 	case none.Name:
-		err := nonevalidation.ValidateFencingCredentials(ic.Config.None.FencingCredentials, field.NewPath("Platform", "None")).ToAggregate()
+		err := nonevalidation.ValidateFencingCredentials(ic.Config).ToAggregate()
 		if err != nil {
 			return err
 		}
