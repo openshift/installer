@@ -96,6 +96,10 @@ apiVersion: v1
 metadata:
   name: test-cluster
 baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
 platform:
   vsphere:
     apiVips:
@@ -108,7 +112,166 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: [platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, Platform.VSphere.failureDomains.topology.folder: Required value: must specify a folder for agent-based installs]`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, platform.vsphere.ingressVIPs: Required value: must specify at least one VIP for the Ingress, Platform.VSphere.failureDomains.topology.folder: Required value: must specify a folder for agent-based installs]`,
+		},
+		{
+			name: "apiVIPs are missing for vsphere platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  vsphere:
+    ingressVips:
+      - 192.168.122.11
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Required value: must specify at least one VIP for the API, platform.vsphere.apiVIPs: Required value: must specify VIP for API, when VIP for ingress is set]`,
+		},
+		{
+			name: "invalid IP values of api and ingress VIPs for vsphere platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  vsphere:
+    apiVips:
+      - 192.168.122.01
+    ingressVips:
+      - 192.168.122.256
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Invalid value: "192.168.122.01": "192.168.122.01" is not a valid IP, platform.vsphere.apiVIPs: Invalid value: "192.168.122.01": IP expected to be in one of the machine networks: 192.168.122.0/23, platform.vsphere.ingressVIPs: Invalid value: "192.168.122.256": "192.168.122.256" is not a valid IP, platform.vsphere.ingressVIPs: Invalid value: "192.168.122.256": IP expected to be in one of the machine networks: 192.168.122.0/23]`,
+		},
+		{
+			name: "api and ingressVIP's are missing for vsphere platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  vsphere: {}
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Required value: must specify at least one VIP for the API, platform.vsphere.ingressVIPs: Required value: must specify at least one VIP for the Ingress]`,
+		},
+		{
+			name: "ingress and apiVip's must be different when loadbalancer type is not usermanaged for vsphere platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  vsphere:
+    apiVips:
+      - 192.168.122.10
+    ingressVips:
+      - 192.168.122.10
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: platform.vsphere.apiVIPs: Invalid value: "192.168.122.10": VIP for API must not be one of the Ingress VIPs`,
+		},
+		{
+			name: "ingress and apiVip's must be from machine network CIDR when loadbalancer type is not usermanaged for vsphere platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  vsphere:
+    apiVips:
+      - 10.0.0.1
+    ingressVips:
+      - 10.0.0.2
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Invalid value: "10.0.0.1": IP expected to be in one of the machine networks: 192.168.122.0/23, platform.vsphere.ingressVIPs: Invalid value: "10.0.0.2": IP expected to be in one of the machine networks: 192.168.122.0/23]`,
+		},
+		{
+			name: "one must be ipv4 and other must be ipv6 when dual api and ingressVIP's are provided for vsphere platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  vsphere:
+    apiVips:
+      - 192.168.122.10
+      - 192.168.122.11
+    ingressVips:
+      - 192.168.122.12
+      - 192.168.122.13
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Invalid value: []string{"192.168.122.10", "192.168.122.11"}: If two API VIPs are given, one must be an IPv4 address, the other an IPv6, platform.vsphere.ingressVIPs: Invalid value: []string{"192.168.122.12", "192.168.122.13"}: If two Ingress VIPs are given, one must be an IPv4 address, the other an IPv6]`,
+		},
+		{
+			name: "api and ingress vips must belong to primary machine network's family for dual stack ipv4/v6",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 2001:db8:1234:1::/120
+  - cidr: 192.168.122.0/23
+  serviceNetwork:
+  - 2001:db8:5678::/108
+  - 192.168.112.0/23
+  clusterNetwork:
+  - cidr: 2001:db8:abcd::/48
+    hostPrefix: 64
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+platform:
+  vsphere:
+    apiVips:
+      - 192.168.122.10
+    ingressVips:
+      - 192.168.122.11
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Invalid value: "192.168.122.10": VIP for the API must be of the same IP family with machine network's primary IP Family for dual-stack IPv4/IPv6, platform.vsphere.ingressVIPs: Invalid value: "192.168.122.11": VIP for the Ingress must be of the same IP family with machine network's primary IP Family for dual-stack IPv4/IPv6]`,
 		},
 		{
 			name: "ingressVIP missing and vcenter vSphere credentials are present",
@@ -117,6 +280,10 @@ apiVersion: v1
 metadata:
   name: test-cluster
 baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
 platform:
   vsphere:
     apiVips:
@@ -142,7 +309,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, platform.vsphere.ingressVIPs: Required value: must specify at least one VIP for the Ingress]`,
 		},
 		{
 			name: "vcenter vSphere credentials are present but failureDomain server does not match",
@@ -151,6 +318,10 @@ apiVersion: v1
 metadata:
   name: test-cluster
 baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
 platform:
   vsphere:
     apiVips:
@@ -198,6 +369,10 @@ apiVersion: v1
 metadata:
   name: test-cluster
 baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
 platform:
   vsphere:
     apiVips:
@@ -217,6 +392,10 @@ apiVersion: v1
 metadata:
   name: test-cluster
 baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
 platform:
   vsphere:
     apiVips:
@@ -238,6 +417,10 @@ apiVersion: v1
 metadata:
   name: test-cluster
 baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
 platform:
   vsphere:
     apiVips:
@@ -245,7 +428,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, platform.vsphere.ingressVIPs: Required value: must specify at least one VIP for the Ingress]`,
 		},
 		{
 			name: "no compute.replicas set for SNO",
