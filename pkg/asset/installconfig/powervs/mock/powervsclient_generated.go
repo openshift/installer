@@ -295,21 +295,6 @@ func (mr *MockAPIMockRecorder) GetDatacenterCapabilities(ctx, region any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDatacenterCapabilities", reflect.TypeOf((*MockAPI)(nil).GetDatacenterCapabilities), ctx, region)
 }
 
-// GetDatacenterSupportedSystems mocks base method.
-func (m *MockAPI) GetDatacenterSupportedSystems(ctx context.Context, region string) ([]string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDatacenterSupportedSystems", ctx, region)
-	ret0, _ := ret[0].([]string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetDatacenterSupportedSystems indicates an expected call of GetDatacenterSupportedSystems.
-func (mr *MockAPIMockRecorder) GetDatacenterSupportedSystems(ctx, region interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDatacenterSupportedSystems", reflect.TypeOf((*MockAPI)(nil).GetDatacenterSupportedSystems), ctx, region)
-}
-
 // GetPublicGatewayByVPC mocks base method.
 func (m *MockAPI) GetPublicGatewayByVPC(ctx context.Context, vpcName string) (*vpcv1.PublicGateway, error) {
 	m.ctrl.T.Helper()

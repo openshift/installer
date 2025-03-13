@@ -60,7 +60,6 @@ type API interface {
 
 	// Data Center
 	GetDatacenterCapabilities(ctx context.Context, region string) (map[string]bool, error)
-	GetDatacenterSupportedSystems(ctx context.Context, region string) ([]string, error)
 
 	// API
 	GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error)
@@ -1097,23 +1096,6 @@ func (c *Client) GetDatacenterCapabilities(ctx context.Context, region string) (
 		return nil, fmt.Errorf("failed to get datacenter capabilities: %w", err)
 	}
 	return getOk.Payload.Capabilities, nil
-}
-
-// GetDatacenterSupportedSystems retrieves the capabilities of the specified datacenter.
-func (c *Client) GetDatacenterSupportedSystems(ctx context.Context, region string) ([]string, error) {
-	var err error
-	if c.BXCli.PISession == nil {
-		err = c.BXCli.NewPISession()
-		if err != nil {
-			return nil, fmt.Errorf("failed to initialize PISession in GetDatacenterSupportedSystems: %w", err)
-		}
-	}
-	params := datacenters.NewV1DatacentersGetParamsWithContext(ctx).WithDatacenterRegion(region)
-	getOk, err := c.BXCli.PISession.Power.Datacenters.V1DatacentersGet(params)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get datacenter supported systems: %w", err)
-	}
-	return getOk.Payload.CapabilitiesDetails.SupportedSystems.General, nil
 }
 
 // TransitGatewayID checks to see if the name is an existing transit gateway name.

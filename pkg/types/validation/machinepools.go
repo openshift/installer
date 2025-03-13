@@ -121,9 +121,7 @@ func validateMachinePoolPlatform(platform *types.Platform, p *types.MachinePoolP
 		validate(ovirt.Name, p.Ovirt, func(f *field.Path) field.ErrorList { return ovirtvalidation.ValidateMachinePool(p.Ovirt, f) })
 	}
 	if p.PowerVS != nil {
-		validate(powervs.Name, p.PowerVS, func(f *field.Path) field.ErrorList {
-			return powervsvalidation.ValidateMachinePool(platform.PowerVS, p.PowerVS, f)
-		})
+		validate(powervs.Name, p.PowerVS, func(f *field.Path) field.ErrorList { return powervsvalidation.ValidateMachinePool(p.PowerVS, f) })
 	}
 	if p.OpenStack != nil {
 		validate(openstack.Name, p.OpenStack, func(f *field.Path) field.ErrorList {

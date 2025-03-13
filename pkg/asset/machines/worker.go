@@ -32,7 +32,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	icaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
-	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/azure"
 	"github.com/openshift/installer/pkg/asset/machines/baremetal"
@@ -177,55 +176,26 @@ func defaultVSphereMachinePoolPlatform() vspheretypes.MachinePool {
 
 func defaultPowerVSMachinePoolPlatform(ic *types.InstallConfig) powervstypes.MachinePool {
 	var (
-		client   *powervsconfig.Client
-		fallback = false
-		sysTypes []string
-		sysType  = "s922"
-		err      error
+		defaultMp powervstypes.MachinePool
+		sysTypes  []string
+		err       error
 	)
 
-	client, err = powervsconfig.NewClient()
-	if err != nil {
-		fallback = true
-		logrus.Warnf("could not get client in defaultPowerVSMachinePoolPlatform")
-	} else {
-		sysTypes, err = client.GetDatacenterSupportedSystems(context.Background(), ic.PowerVS.Zone)
-		if err != nil {
-			fallback = true
-			logrus.Warnf("For given zone %v, GetDatacenterSupportedSystems returns %v", ic.PowerVS.Zone, err)
-		} else {
-			// Is the hardcoded default of s922 in the list?
-			found := false
-			for _, st := range sysTypes {
-				if st == sysType {
-					found = true
-					break
-				}
-			}
-			if !found {
-				sysType = sysTypes[0]
-			}
-		}
-	}
-
-	if fallback {
-		// Fallback to hardcoded list
-		sysTypes, err = powervstypes.AvailableSysTypes(ic.PowerVS.Region, ic.PowerVS.Zone)
-		if err == nil {
-			sysType = sysTypes[0]
-		} else {
-			logrus.Warnf("For given zone %v, AvailableSysTypes returns %v", ic.PowerVS.Zone, err)
-		}
-	}
-
-	logrus.Debugf("defaultPowerVSMachinePoolPlatform: using a default SysType of %s with values to choose from %v", sysType, sysTypes)
-
-	return powervstypes.MachinePool{
+	defaultMp = powervstypes.MachinePool{
 		MemoryGiB:  32,
 		Processors: intstr.FromString("0.5"),
 		ProcType:   machinev1.PowerVSProcessorTypeShared,
-		SysType:    sysType,
+		SysType:    "s922",
 	}
+
+	sysTypes, err = powervstypes.AvailableSysTypes(ic.PowerVS.Region, ic.PowerVS.Zone)
+	if err == nil {
+		defaultMp.SysType = sysTypes[0]
+	} else {
+		logrus.Warnf("For given zone %v, AvailableSysTypes returns %v", ic.PowerVS.Zone, err)
+	}
+
+	return defaultMp
 }
 
 func defaultNutanixMachinePoolPlatform() nutanixtypes.MachinePool {
