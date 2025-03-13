@@ -368,10 +368,7 @@ func (a *OptionalInstallConfig) validateBMCConfig(installConfig *types.InstallCo
 
 func (a *OptionalInstallConfig) validateFencingCredentials(installConfig *types.InstallConfig) field.ErrorList {
 	var allErrs field.ErrorList
-
-	fieldPath := field.NewPath("Platform", "None")
-	allErrs = append(allErrs, nonevalidation.ValidateFencingCredentials(installConfig.Platform.None.FencingCredentials, fieldPath)...)
-
+	allErrs = append(allErrs, nonevalidation.ValidateFencingCredentials(installConfig)...)
 	return allErrs
 }
 

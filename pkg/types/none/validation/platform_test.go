@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/common"
@@ -19,20 +18,23 @@ func TestValidateProvisioning(t *testing.T) {
 		expected string
 	}{
 		{
-			name: "valid_empty_credentials",
+			config: installConfig().AddCpReplicas(3).build(),
+			name:   "valid_empty_credentials",
 			platform: platform().
 				FencingCredentials().build(),
 			expected: "",
 		},
 		{
-			name: "valid_two_credentials",
+			config: installConfig().AddCpReplicas(2).build(),
+			name:   "valid_two_credentials",
 			platform: platform().
 				FencingCredentials(fc1(),
 					fc2()).build(),
 			expected: "",
 		},
 		{
-			name: "invalid_number_of_credentials",
+			config: installConfig().AddCpReplicas(2).build(),
+			name:   "invalid_number_of_credentials_for_dual_replica",
 			platform: platform().
 				FencingCredentials(fc1(),
 					fc2(),
@@ -40,7 +42,16 @@ func TestValidateProvisioning(t *testing.T) {
 			expected: "Forbidden: there should be exactly two fencingCredentials to support the two node cluster, instead 3 fencingCredentials were found",
 		},
 		{
-			name: "duplicate_bmc_address",
+			config: installConfig().AddCpReplicas(3).build(),
+			name:   "invalid_number_of_credentials_for_non_dual_replica",
+			platform: platform().
+				FencingCredentials(fc1(),
+					fc2()).build(),
+			expected: "platform.none.fencingCredentials: Forbidden: there should not be any fencingCredentials configured for a non dual replica control plane \\(Two Nodes Fencing\\) cluster, instead 2 fencingCredentials were found",
+		},
+		{
+			config: installConfig().AddCpReplicas(2).build(),
+			name:   "duplicate_bmc_address",
 			platform: platform().
 				FencingCredentials(
 					fc1().BMCAddress("ipmi://192.168.111.1"),
@@ -48,25 +59,29 @@ func TestValidateProvisioning(t *testing.T) {
 			expected: "none.fencingCredentials\\[1\\].Address: Duplicate value: \"ipmi://192.168.111.1\"",
 		},
 		{
-			name: "bmc_address_required",
+			config: installConfig().AddCpReplicas(2).build(),
+			name:   "bmc_address_required",
 			platform: platform().
 				FencingCredentials(fc1().BMCAddress("")).build(),
 			expected: "none.fencingCredentials\\[0\\].Address: Required value: missing Address",
 		},
 		{
-			name: "bmc_username_required",
+			config: installConfig().AddCpReplicas(2).build(),
+			name:   "bmc_username_required",
 			platform: platform().
 				FencingCredentials(fc1().BMCUsername("")).build(),
 			expected: "none.fencingCredentials\\[0\\].Username: Required value: missing Username",
 		},
 		{
-			name: "bmc_password_required",
+			config: installConfig().AddCpReplicas(2).build(),
+			name:   "bmc_password_required",
 			platform: platform().
 				FencingCredentials(fc1().BMCPassword("")).build(),
 			expected: "none.fencingCredentials\\[0\\].Password: Required value: missing Password",
 		},
 		{
-			name: "host_name_required",
+			config: installConfig().AddCpReplicas(2).build(),
+			name:   "host_name_required",
 			platform: platform().
 				FencingCredentials(fc1().HostName("")).build(),
 			expected: "none.fencingCredentials\\[0\\].HostName: Required value: missing HostName",
@@ -80,7 +95,7 @@ func TestValidateProvisioning(t *testing.T) {
 			}
 			tc.config.None = tc.platform
 
-			err := ValidateFencingCredentials(tc.platform.FencingCredentials, field.NewPath("none")).ToAggregate()
+			err := ValidateFencingCredentials(tc.config).ToAggregate()
 
 			if tc.expected == "" {
 				assert.NoError(t, err)
@@ -181,6 +196,11 @@ func installConfig() *installConfigBuilder {
 	return &installConfigBuilder{
 		InstallConfig: types.InstallConfig{},
 	}
+}
+
+func (icb *installConfigBuilder) AddCpReplicas(numOfCpReplicas int64) *installConfigBuilder {
+	icb.InstallConfig.ControlPlane = &types.MachinePool{Replicas: &numOfCpReplicas}
+	return icb
 }
 
 func (icb *installConfigBuilder) build() *types.InstallConfig {
