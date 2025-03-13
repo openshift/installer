@@ -67,23 +67,10 @@ func TestFeatureGates(t *testing.T) {
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.FeatureSet = v1.CustomNoUpgrade
-				c.FeatureGates = []string{"VSphereStaticIPs=true"}
 				c.VSphere = validVSpherePlatform()
 				c.VSphere.Hosts = []*vsphere.Host{{Role: "test"}}
 				return c
 			}(),
-		},
-		{
-			name: "vSphere hosts is not allowed with custom Feature Gate disabled",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.FeatureSet = v1.CustomNoUpgrade
-				c.FeatureGates = []string{"VSphereStaticIPs=false"}
-				c.VSphere = validVSpherePlatform()
-				c.VSphere.Hosts = []*vsphere.Host{{Role: "test"}}
-				return c
-			}(),
-			expected: `^platform.vsphere.hosts: Forbidden: this field is protected by the VSphereStaticIPs feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
 		},
 		{
 			name: "vSphere one vcenter is allowed with default Feature Gates",
