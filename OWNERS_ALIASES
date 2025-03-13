@@ -11,6 +11,7 @@ aliases:
     - rna-afk
     - rwsu
     - sadasu
+    - tthvo
   libvirt-approvers:
     - praveenkumar
     - cfergeau
