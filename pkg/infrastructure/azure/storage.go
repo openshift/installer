@@ -10,6 +10,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/streaming"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault"
@@ -70,12 +71,18 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 		storageKind = to.Ptr(armstorage.KindStorage)
 	}
 
+	opts := &arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			Cloud:      in.ClientOpts.Cloud,
+			APIVersion: "2019-06-01",
+		},
+	}
 	allowSharedKeyAccess := true
 	if in.AuthType == azic.ManagedIdentityAuth {
 		allowSharedKeyAccess = false
 	}
 
-	storageClientFactory, err := armstorage.NewClientFactory(in.SubscriptionID, in.TokenCredential, in.ClientOpts)
+	storageClientFactory, err := armstorage.NewClientFactory(in.SubscriptionID, in.TokenCredential, opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get storage account factory %w", err)
 	}

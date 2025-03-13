@@ -138,6 +138,7 @@ func (c *Cache) Get(ctx context.Context, name string, kind ResourceType) (SKU, e
 	}
 
 	for _, sku := range c.data {
+
 		if sku.Name != nil && *sku.Name == name {
 			return SKU(sku), nil
 		}

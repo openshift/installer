@@ -148,10 +148,10 @@ func (m *MachineScope) InitMachineCache(ctx context.Context) error {
 			return errors.Wrapf(err, "failed to get VM SKU %s in compute api", m.AzureMachine.Spec.VMSize)
 		}
 
-		m.cache.availabilitySetSKU, err = skuCache.Get(ctx, string(armcompute.AvailabilitySetSKUTypesAligned), resourceskus.AvailabilitySets)
-		if err != nil {
-			return errors.Wrapf(err, "failed to get availability set SKU %s in compute api", string(armcompute.AvailabilitySetSKUTypesAligned))
-		}
+		// m.cache.availabilitySetSKU, err = skuCache.Get(ctx, string(armcompute.AvailabilitySetSKUTypesAligned), resourceskus.AvailabilitySets)
+		// if err != nil {
+		// 	return errors.Wrapf(err, "failed to get availability set SKU %s in compute api", string(armcompute.AvailabilitySetSKUTypesAligned))
+		// }
 	}
 
 	return nil
@@ -493,13 +493,13 @@ func (m *MachineScope) AvailabilitySetSpec() azure.ResourceSpecGetter {
 		ResourceGroup:  m.NodeResourceGroup(),
 		ClusterName:    m.ClusterName(),
 		Location:       m.Location(),
-		SKU:            nil,
+		SKU:            &resourceskus.SKU{Name: ptr.To(string(armcompute.AvailabilitySetSKUTypesAligned))},
 		AdditionalTags: m.AdditionalTags(),
 	}
 
-	if m.cache != nil {
-		spec.SKU = &m.cache.availabilitySetSKU
-	}
+	// if m.cache != nil {
+	// 	spec.SKU = &m.cache.availabilitySetSKU
+	// }
 
 	return spec
 }

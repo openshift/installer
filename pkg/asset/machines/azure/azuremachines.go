@@ -180,6 +180,17 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 				},
 			},
 		}
+
+		// Do not merge. Temporary workaround waiting for https://github.com/openshift/installer/pull/9538
+		if in.Platform.CloudName == azure.StackCloud {
+			azureMachine.Spec.Identity = capz.VMIdentityNone
+			azureMachine.Spec.UserAssignedIdentities = nil
+			azureMachine.Spec.Diagnostics = &capz.Diagnostics{
+				Boot: &capz.BootDiagnostics{
+					StorageAccountType: capz.DisabledDiagnosticsStorage,
+				},
+			}
+		}
 		azureMachine.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureMachine"))
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_inframachine_%s.yaml", azureMachine.Name)},
@@ -240,6 +251,16 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 			},
 		},
 	}
+	// Do not merge. Temporary workaround waiting for https://github.com/openshift/installer/pull/9538
+	if in.Platform.CloudName == azure.StackCloud {
+		bootstrapAzureMachine.Spec.Identity = capz.VMIdentityNone
+		bootstrapAzureMachine.Spec.UserAssignedIdentities = nil
+		bootstrapAzureMachine.Spec.Diagnostics = &capz.Diagnostics{
+			Boot: &capz.BootDiagnostics{
+				StorageAccountType: capz.DisabledDiagnosticsStorage,
+			},
+		}
+	}
 	bootstrapAzureMachine.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureMachine"))
 
 	result = append(result, &asset.RuntimeFile{
@@ -266,6 +287,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 			},
 		},
 	}
+
 	bootstrapMachine.SetGroupVersionKind(capi.GroupVersion.WithKind("Machine"))
 
 	result = append(result, &asset.RuntimeFile{
