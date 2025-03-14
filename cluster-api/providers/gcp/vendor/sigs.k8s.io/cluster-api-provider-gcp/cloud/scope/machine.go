@@ -37,7 +37,6 @@ import (
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/providerid"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/services/shared"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	capierrors "sigs.k8s.io/cluster-api/errors"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/patch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -201,7 +200,7 @@ func (m *MachineScope) SetFailureMessage(v error) {
 }
 
 // SetFailureReason sets the GCPMachine status failure reason.
-func (m *MachineScope) SetFailureReason(v capierrors.MachineStatusError) {
+func (m *MachineScope) SetFailureReason(v string) {
 	m.GCPMachine.Status.FailureReason = &v
 }
 
@@ -402,6 +401,16 @@ func (m *MachineScope) InstanceSpec(log logr.Logger) *compute.Instance {
 			Preemptible: m.GCPMachine.Spec.Preemptible,
 		},
 	}
+	if m.GCPMachine.Spec.ProvisioningModel != nil {
+		switch *m.GCPMachine.Spec.ProvisioningModel {
+		case infrav1.ProvisioningModelSpot:
+			instance.Scheduling.ProvisioningModel = "SPOT"
+		case infrav1.ProvisioningModelStandard:
+			instance.Scheduling.ProvisioningModel = "STANDARD"
+		default:
+			log.Error(errors.New("Invalid value"), "Unknown ProvisioningModel value", "Spec.ProvisioningModel", *m.GCPMachine.Spec.ProvisioningModel)
+		}
+	}
 
 	instance.CanIpForward = true
 	if m.GCPMachine.Spec.IPForwarding != nil && *m.GCPMachine.Spec.IPForwarding == infrav1.IPForwardingDisabled {
@@ -436,9 +445,18 @@ func (m *MachineScope) InstanceSpec(log logr.Logger) *compute.Instance {
 		instance.Scheduling.OnHostMaintenance = strings.ToUpper(string(*m.GCPMachine.Spec.OnHostMaintenance))
 	}
 	if m.GCPMachine.Spec.ConfidentialCompute != nil {
-		enabled := *m.GCPMachine.Spec.ConfidentialCompute == infrav1.ConfidentialComputePolicyEnabled
+		enabled := *m.GCPMachine.Spec.ConfidentialCompute != infrav1.ConfidentialComputePolicyDisabled
 		instance.ConfidentialInstanceConfig = &compute.ConfidentialInstanceConfig{
 			EnableConfidentialCompute: enabled,
+		}
+		switch *m.GCPMachine.Spec.ConfidentialCompute {
+		case infrav1.ConfidentialComputePolicySEV:
+			instance.ConfidentialInstanceConfig.ConfidentialInstanceType = "SEV"
+		case infrav1.ConfidentialComputePolicySEVSNP:
+			instance.ConfidentialInstanceConfig.ConfidentialInstanceType = "SEV_SNP"
+		case infrav1.ConfidentialComputePolicyTDX:
+			instance.ConfidentialInstanceConfig.ConfidentialInstanceType = "TDX"
+		default:
 		}
 	}
 

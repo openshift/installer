@@ -71,14 +71,14 @@ func NewManagedMachinePoolScope(ctx context.Context, params ManagedMachinePoolSc
 	}
 
 	if params.ManagedClusterClient == nil {
-		managedClusterClient, err := newClusterManagerClient(ctx, params.GCPManagedCluster.Spec.CredentialsRef, params.Client)
+		managedClusterClient, err := newClusterManagerClient(ctx, params.GCPManagedCluster.Spec.CredentialsRef, params.Client, params.GCPManagedCluster.Spec.ServiceEndpoints)
 		if err != nil {
 			return nil, errors.Errorf("failed to create gcp managed cluster client: %v", err)
 		}
 		params.ManagedClusterClient = managedClusterClient
 	}
 	if params.InstanceGroupManagersClient == nil {
-		instanceGroupManagersClient, err := newInstanceGroupManagerClient(ctx, params.GCPManagedCluster.Spec.CredentialsRef, params.Client)
+		instanceGroupManagersClient, err := newInstanceGroupManagerClient(ctx, params.GCPManagedCluster.Spec.CredentialsRef, params.Client, params.GCPManagedCluster.Spec.ServiceEndpoints)
 		if err != nil {
 			return nil, errors.Errorf("failed to create gcp instance group manager client: %v", err)
 		}
@@ -237,7 +237,7 @@ func ConvertToSdkNodePool(nodePool infrav1exp.GCPManagedMachinePool, machinePool
 		sdkNodePool.Config.DiskType = string(*nodePool.Spec.DiskType)
 	}
 	if nodePool.Spec.DiskSizeGB != nil {
-		sdkNodePool.Config.DiskSizeGb = int32(*nodePool.Spec.DiskSizeGB)
+		sdkNodePool.Config.DiskSizeGb = int32(*nodePool.Spec.DiskSizeGB) //nolint:gosec
 	}
 	if len(nodePool.Spec.NodeNetwork.Tags) != 0 {
 		sdkNodePool.Config.Tags = nodePool.Spec.NodeNetwork.Tags
