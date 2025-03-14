@@ -37,6 +37,7 @@ import (
 	gcpvalidation "github.com/openshift/installer/pkg/types/gcp/validation"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	ibmcloudvalidation "github.com/openshift/installer/pkg/types/ibmcloud/validation"
+	nonevalidation "github.com/openshift/installer/pkg/types/none/validation"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	nutanixvalidation "github.com/openshift/installer/pkg/types/nutanix/validation"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -1460,6 +1461,8 @@ func validateGatedFeatures(c *types.InstallConfig) field.ErrorList {
 		gatedFeatures = append(gatedFeatures, gcpvalidation.GatedFeatures(c)...)
 	case c.VSphere != nil:
 		gatedFeatures = append(gatedFeatures, vspherevalidation.GatedFeatures(c)...)
+	case c.None != nil:
+		gatedFeatures = append(gatedFeatures, nonevalidation.GatedFeatures(c)...)
 	case c.AWS != nil:
 		gatedFeatures = append(gatedFeatures, awsvalidation.GatedFeatures(c)...)
 	}
