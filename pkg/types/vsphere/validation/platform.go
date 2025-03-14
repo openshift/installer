@@ -21,15 +21,6 @@ import (
 
 // ValidatePlatform checks that the specified platform is valid.
 func ValidatePlatform(p *vsphere.Platform, agentBasedInstallation bool, fldPath *field.Path, c *types.InstallConfig) field.ErrorList {
-	isLegacyUpi := false
-	// This is to cover existing UPI non-zonal case
-	// where neither network or cluster is required.
-	// In 4.13 we will warn for this, in later releases this
-	// should be removed.
-
-	if p.DeprecatedNetwork == "" && p.DeprecatedCluster == "" && p.DeprecatedVCenter != "" {
-		isLegacyUpi = true
-	}
 
 	allErrs := field.ErrorList{}
 	// diskType is optional, but if provided should pass validation
@@ -46,7 +37,7 @@ func ValidatePlatform(p *vsphere.Platform, agentBasedInstallation bool, fldPath 
 		if len(p.FailureDomains) == 0 {
 			return append(allErrs, field.Required(fldPath.Child("failureDomains"), "must be defined"))
 		}
-		allErrs = append(allErrs, validateFailureDomains(p, fldPath.Child("failureDomains"), isLegacyUpi)...)
+		allErrs = append(allErrs, validateFailureDomains(p, fldPath.Child("failureDomains"))...)
 
 		// Validate hosts if configured for static IP
 		if p.Hosts != nil {
@@ -68,7 +59,7 @@ func ValidatePlatform(p *vsphere.Platform, agentBasedInstallation bool, fldPath 
 			if p.FailureDomains[0].Name != conversion.GeneratedFailureDomainName &&
 				p.FailureDomains[0].Zone != conversion.GeneratedFailureDomainZone &&
 				p.FailureDomains[0].Region != conversion.GeneratedFailureDomainRegion {
-				allErrs = append(allErrs, validateFailureDomains(p, fldPath.Child("failureDomains"), isLegacyUpi)...)
+				allErrs = append(allErrs, validateFailureDomains(p, fldPath.Child("failureDomains"))...)
 			}
 		}
 	}
@@ -151,12 +142,25 @@ func validateVCenters(p *vsphere.Platform, fldPath *field.Path) field.ErrorList 
 	return allErrs
 }
 
-func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path, isLegacyUpi bool) field.ErrorList {
+func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path) field.ErrorList { //nolint:gocyclo
 	var fdNames []string
 	tagUrnPattern := regexp.MustCompile(`^(urn):(vmomi):(InventoryServiceTag):([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}):([^:]+)$`)
 	allErrs := field.ErrorList{}
 	topologyFld := fldPath.Child("topology")
 	var associatedVCenter *vsphere.VCenter
+
+	// ComputeCluster is required in VSpherePlatformTopology. We can no longer allow empty ComputeCluster that
+	// does not have the form `^/.*?/host/.*?` as the api requires it.
+	// https://github.com/openshift/api/blob/8a7efbfb531684ef0ff566a882096df03e0f499c/config/v1/types_infrastructure.go#L1338-L1341
+
+	// Networks are required *but* have no validation beyond count, as such we can still allow an empty string.
+	// https://github.com/openshift/api/blob/8a7efbfb531684ef0ff566a882096df03e0f499c/config/v1/types_infrastructure.go#L1351-L1356
+
+	isLegacyUpi := false
+	if p.DeprecatedNetwork == "" && p.DeprecatedVCenter != "" {
+		isLegacyUpi = true
+	}
+
 	for index, failureDomain := range p.FailureDomains {
 		if failureDomain.ZoneType == "" && failureDomain.RegionType == "" {
 			logrus.Debug("using the defaults regionType is Datacenter and zoneType is ComputeCluster")
@@ -271,12 +275,11 @@ func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path, isLegacyUp
 			}
 		}
 
+		// ComputeCluster is required in VSpherePlatformTopology. We can no longer allow empty ComputeCluster that
+		// does not have the form `^/.*?/host/.*?` as the api requires it.
+		// https://github.com/openshift/api/blob/8a7efbfb531684ef0ff566a882096df03e0f499c/config/v1/types_infrastructure.go#L1338-L1341
 		if len(failureDomain.Topology.ComputeCluster) == 0 {
-			if isLegacyUpi {
-				logrus.Warn("cluster field empty is not deprecated, in later releases this field will be required.")
-			} else {
-				allErrs = append(allErrs, field.Required(topologyFld.Child("computeCluster"), "must specify a computeCluster"))
-			}
+			allErrs = append(allErrs, field.Required(topologyFld.Child("computeCluster"), "must specify a computeCluster"))
 		} else {
 			computeCluster := failureDomain.Topology.ComputeCluster
 			clusterPathRegexp := regexp.MustCompile(`^/(.*?)/host/(.*?)$`)
