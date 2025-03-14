@@ -21,7 +21,6 @@ import (
 	"strings"
 
 	"github.com/google/go-cmp/cmp"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -77,6 +76,7 @@ var _ webhook.Validator = &GCPManagedControlPlane{}
 func (r *GCPManagedControlPlane) ValidateCreate() (admission.Warnings, error) {
 	gcpmanagedcontrolplanelog.Info("validate create", "name", r.Name)
 	var allErrs field.ErrorList
+	var allWarns admission.Warnings
 
 	if len(r.Spec.ClusterName) > maxClusterNameLength {
 		allErrs = append(allErrs,
@@ -89,11 +89,30 @@ func (r *GCPManagedControlPlane) ValidateCreate() (admission.Warnings, error) {
 		allErrs = append(allErrs, field.Required(field.NewPath("spec", "ReleaseChannel"), "Release channel is required for an autopilot enabled cluster"))
 	}
 
-	if len(allErrs) == 0 {
-		return nil, nil
+	if r.Spec.EnableAutopilot && r.Spec.LoggingService != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "LoggingService"),
+			r.Spec.LoggingService, "can't be set when autopilot is enabled"))
 	}
 
-	return nil, apierrors.NewInvalid(GroupVersion.WithKind("GCPManagedControlPlane").GroupKind(), r.Name, allErrs)
+	if r.Spec.EnableAutopilot && r.Spec.MonitoringService != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "MonitoringService"),
+			r.Spec.LoggingService, "can't be set when autopilot is enabled"))
+	}
+
+	if r.Spec.ControlPlaneVersion != nil {
+		if r.Spec.Version != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "ControlPlaneVersion"),
+				r.Spec.LoggingService, "spec.ControlPlaneVersion and spec.Version cannot be set at the same time: please use spec.Version"))
+		} else {
+			allWarns = append(allWarns, "spec.ControlPlaneVersion is deprecated and will soon be removed: please use spec.Version")
+		}
+	}
+
+	if len(allErrs) == 0 {
+		return allWarns, nil
+	}
+
+	return allWarns, apierrors.NewInvalid(GroupVersion.WithKind("GCPManagedControlPlane").GroupKind(), r.Name, allErrs)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
@@ -128,6 +147,37 @@ func (r *GCPManagedControlPlane) ValidateUpdate(oldRaw runtime.Object) (admissio
 			field.Invalid(field.NewPath("spec", "EnableAutopilot"),
 				r.Spec.EnableAutopilot, "field is immutable"),
 		)
+	}
+
+	if old.Spec.EnableAutopilot && r.Spec.LoggingService != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "LoggingService"),
+			r.Spec.LoggingService, "can't be set when autopilot is enabled"))
+	}
+
+	if old.Spec.EnableAutopilot && r.Spec.MonitoringService != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "MonitoringService"),
+			r.Spec.LoggingService, "can't be set when autopilot is enabled"))
+	}
+
+	if old.Spec.Version != nil && r.Spec.ControlPlaneVersion != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "ControlPlaneVersion"),
+			r.Spec.LoggingService, "spec.ControlPlaneVersion and spec.Version cannot be set at the same time: please use spec.Version"))
+	}
+
+	if r.Spec.LoggingService != nil {
+		err := r.Spec.LoggingService.Validate()
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "LoggingService"),
+				r.Spec.LoggingService, err.Error()))
+		}
+	}
+
+	if r.Spec.MonitoringService != nil {
+		err := r.Spec.MonitoringService.Validate()
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "MonitoringService"),
+				r.Spec.MonitoringService, err.Error()))
+		}
 	}
 
 	if len(allErrs) == 0 {

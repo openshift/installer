@@ -68,6 +68,11 @@ type GCPClusterSpec struct {
 	// LoadBalancer contains configuration for one or more LoadBalancers.
 	// +optional
 	LoadBalancer LoadBalancerSpec `json:"loadBalancer,omitempty"`
+
+	// ServiceEndpoints contains the custom GCP Service Endpoint urls for each applicable service.
+	// For instance, the user can specify a new endpoint for the compute service.
+	// +optional
+	ServiceEndpoints *ServiceEndpoints `json:"serviceEndpoints,omitempty"`
 }
 
 // GCPClusterStatus defines the observed state of GCPCluster.

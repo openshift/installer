@@ -5,14 +5,14 @@ aliases:
     - fabriziopandini
     - justinsb
     - neolit123
-    - timothysc
+    - vincepri
 
   cluster-api-admins:
     - CecileRobertMichon
     - vincepri
 
   cluster-api-maintainers:
-    - CecileRobertMichon
+    - chrischdi
     - enxebre
     - fabriziopandini
     - sbueringer
@@ -28,3 +28,4 @@ aliases:
 
   cluster-api-gcp-reviewers:
     - damdo
+    - salasberryfin
