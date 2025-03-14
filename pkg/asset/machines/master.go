@@ -464,9 +464,8 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 		}
 
 		pool.Platform.VSphere = &mpool
-		templateName := clusterID.InfraID + "-rhcos"
 
-		data, err := vsphere.Machines(clusterID.InfraID, ic, &pool, templateName, "master", masterUserDataSecretName)
+		data, err := vsphere.Machines(clusterID.InfraID, ic, &pool, "master", masterUserDataSecretName)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
