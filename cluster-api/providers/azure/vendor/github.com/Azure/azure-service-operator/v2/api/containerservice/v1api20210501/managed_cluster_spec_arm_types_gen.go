@@ -199,6 +199,11 @@ type ExtendedLocationType string
 
 const ExtendedLocationType_EdgeZone = ExtendedLocationType("EdgeZone")
 
+// Mapping from string to ExtendedLocationType
+var extendedLocationType_Values = map[string]ExtendedLocationType{
+	"edgezone": ExtendedLocationType_EdgeZone,
+}
+
 // For more details see [managed AAD on AKS](https://docs.microsoft.com/azure/aks/managed-aad).
 type ManagedClusterAADProfile_ARM struct {
 	// AdminGroupObjectIDs: The list of AAD group object IDs that will have admin role of the cluster.
@@ -403,6 +408,13 @@ const (
 	ManagedClusterIdentity_Type_UserAssigned   = ManagedClusterIdentity_Type("UserAssigned")
 )
 
+// Mapping from string to ManagedClusterIdentity_Type
+var managedClusterIdentity_Type_Values = map[string]ManagedClusterIdentity_Type{
+	"none":           ManagedClusterIdentity_Type_None,
+	"systemassigned": ManagedClusterIdentity_Type_SystemAssigned,
+	"userassigned":   ManagedClusterIdentity_Type_UserAssigned,
+}
+
 // See [use AAD pod identity](https://docs.microsoft.com/azure/aks/use-azure-ad-pod-identity) for more details on pod
 // identity integration.
 type ManagedClusterPodIdentityProfile_ARM struct {
@@ -499,6 +511,11 @@ type ManagedClusterSKU_Name string
 
 const ManagedClusterSKU_Name_Basic = ManagedClusterSKU_Name("Basic")
 
+// Mapping from string to ManagedClusterSKU_Name
+var managedClusterSKU_Name_Values = map[string]ManagedClusterSKU_Name{
+	"basic": ManagedClusterSKU_Name_Basic,
+}
+
 // +kubebuilder:validation:Enum={"Free","Paid"}
 type ManagedClusterSKU_Tier string
 
@@ -506,6 +523,12 @@ const (
 	ManagedClusterSKU_Tier_Free = ManagedClusterSKU_Tier("Free")
 	ManagedClusterSKU_Tier_Paid = ManagedClusterSKU_Tier("Paid")
 )
+
+// Mapping from string to ManagedClusterSKU_Tier
+var managedClusterSKU_Tier_Values = map[string]ManagedClusterSKU_Tier{
+	"free": ManagedClusterSKU_Tier_Free,
+	"paid": ManagedClusterSKU_Tier_Paid,
+}
 
 // Profile for Windows VMs in the managed cluster.
 type ManagedClusterWindowsProfile_ARM struct {

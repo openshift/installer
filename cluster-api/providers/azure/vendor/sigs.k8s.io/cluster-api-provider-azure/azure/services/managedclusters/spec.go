@@ -21,10 +21,11 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net"
+	"sort"
 
-	asocontainerservicev1preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230202preview"
 	asocontainerservicev1 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001"
 	asocontainerservicev1hub "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/storage"
+	asocontainerservicev1preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231102preview"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -714,6 +715,11 @@ func (s *ManagedClusterSpec) Parameters(ctx context.Context, existingObj genrunt
 			prevAgentPoolProfiles = append(prevAgentPoolProfiles, profile)
 		}
 	}
+
+	// keep a consistent order to prevent unnecessary updates
+	sort.Slice(prevAgentPoolProfiles, func(i, j int) bool {
+		return ptr.Deref(prevAgentPoolProfiles[i].Name, "") < ptr.Deref(prevAgentPoolProfiles[j].Name, "")
+	})
 
 	managedCluster.Spec.AgentPoolProfiles = prevAgentPoolProfiles
 

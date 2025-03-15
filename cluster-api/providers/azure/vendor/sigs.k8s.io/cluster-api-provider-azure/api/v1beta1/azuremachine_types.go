@@ -84,7 +84,7 @@ type AzureMachineSpec struct {
 	// SSHPublicKey is the SSH public key string, base64-encoded to add to a Virtual Machine. Linux only.
 	// Refer to documentation on how to set up SSH access on Windows instances.
 	// +optional
-	SSHPublicKey string `json:"sshPublicKey"`
+	SSHPublicKey string `json:"sshPublicKey,omitempty"`
 
 	// AdditionalTags is an optional set of tags to add to an instance, in addition to the ones added by default by the
 	// Azure provider. If both the AzureCluster and the AzureMachine specify the same tag name with different values, the

@@ -33,12 +33,10 @@ import (
 	v5 "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	compute "github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2022-08-01/compute"
 	network "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2022-07-01/network"
-	azure "github.com/Azure/go-autorest/autorest/azure"
 	gomock "go.uber.org/mock/gomock"
 	v1 "k8s.io/api/core/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	cloud_provider "k8s.io/cloud-provider"
-
 	cache "sigs.k8s.io/cloud-provider-azure/pkg/cache"
 )
 
@@ -66,12 +64,11 @@ func (m *MockVMSet) EXPECT() *MockVMSetMockRecorder {
 }
 
 // AttachDisk mocks base method.
-func (m *MockVMSet) AttachDisk(ctx context.Context, nodeName types.NodeName, diskMap map[string]*AttachDiskOptions) (*azure.Future, error) {
+func (m *MockVMSet) AttachDisk(ctx context.Context, nodeName types.NodeName, diskMap map[string]*AttachDiskOptions) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AttachDisk", ctx, nodeName, diskMap)
-	ret0, _ := ret[0].(*azure.Future)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // AttachDisk indicates an expected call of AttachDisk.
@@ -424,33 +421,4 @@ func (m *MockVMSet) UpdateVM(ctx context.Context, nodeName types.NodeName) error
 func (mr *MockVMSetMockRecorder) UpdateVM(ctx, nodeName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateVM", reflect.TypeOf((*MockVMSet)(nil).UpdateVM), ctx, nodeName)
-}
-
-// UpdateVMAsync mocks base method.
-func (m *MockVMSet) UpdateVMAsync(ctx context.Context, nodeName types.NodeName) (*azure.Future, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateVMAsync", ctx, nodeName)
-	ret0, _ := ret[0].(*azure.Future)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpdateVMAsync indicates an expected call of UpdateVMAsync.
-func (mr *MockVMSetMockRecorder) UpdateVMAsync(ctx, nodeName any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateVMAsync", reflect.TypeOf((*MockVMSet)(nil).UpdateVMAsync), ctx, nodeName)
-}
-
-// WaitForUpdateResult mocks base method.
-func (m *MockVMSet) WaitForUpdateResult(ctx context.Context, future *azure.Future, nodeName types.NodeName, source string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WaitForUpdateResult", ctx, future, nodeName, source)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// WaitForUpdateResult indicates an expected call of WaitForUpdateResult.
-func (mr *MockVMSetMockRecorder) WaitForUpdateResult(ctx, future, nodeName, source any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForUpdateResult", reflect.TypeOf((*MockVMSet)(nil).WaitForUpdateResult), ctx, future, nodeName, source)
 }

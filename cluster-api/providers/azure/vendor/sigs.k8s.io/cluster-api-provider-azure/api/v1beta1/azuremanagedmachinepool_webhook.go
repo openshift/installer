@@ -103,44 +103,44 @@ func (mw *azureManagedMachinePoolWebhook) ValidateCreate(ctx context.Context, ob
 
 	errs = append(errs, validateMaxPods(
 		m.Spec.MaxPods,
-		field.NewPath("Spec", "MaxPods")))
+		field.NewPath("spec", "maxPods")))
 
 	errs = append(errs, validateOSType(
 		m.Spec.Mode,
 		m.Spec.OSType,
-		field.NewPath("Spec", "OSType")))
+		field.NewPath("spec", "osType")))
 
 	errs = append(errs, validateMPName(
 		m.Name,
 		m.Spec.Name,
 		m.Spec.OSType,
-		field.NewPath("Spec", "Name")))
+		field.NewPath("spec", "name")))
 
 	errs = append(errs, validateNodeLabels(
 		m.Spec.NodeLabels,
-		field.NewPath("Spec", "NodeLabels")))
+		field.NewPath("spec", "nodeLabels")))
 
 	errs = append(errs, validateNodePublicIPPrefixID(
 		m.Spec.NodePublicIPPrefixID,
-		field.NewPath("Spec", "NodePublicIPPrefixID")))
+		field.NewPath("spec", "nodePublicIPPrefixID")))
 
 	errs = append(errs, validateEnableNodePublicIP(
 		m.Spec.EnableNodePublicIP,
 		m.Spec.NodePublicIPPrefixID,
-		field.NewPath("Spec", "EnableNodePublicIP")))
+		field.NewPath("spec", "enableNodePublicIP")))
 
 	errs = append(errs, validateKubeletConfig(
 		m.Spec.KubeletConfig,
-		field.NewPath("Spec", "KubeletConfig")))
+		field.NewPath("spec", "kubeletConfig")))
 
 	errs = append(errs, validateLinuxOSConfig(
 		m.Spec.LinuxOSConfig,
 		m.Spec.KubeletConfig,
-		field.NewPath("Spec", "LinuxOSConfig")))
+		field.NewPath("spec", "linuxOSConfig")))
 
 	errs = append(errs, validateMPSubnetName(
 		m.Spec.SubnetName,
-		field.NewPath("Spec", "SubnetName")))
+		field.NewPath("spec", "subnetName")))
 
 	return nil, kerrors.NewAggregate(errs)
 }
@@ -158,57 +158,57 @@ func (mw *azureManagedMachinePoolWebhook) ValidateUpdate(ctx context.Context, ol
 	var allErrs field.ErrorList
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Name"),
+		field.NewPath("spec", "name"),
 		old.Spec.Name,
 		m.Spec.Name); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
-	if err := validateNodeLabels(m.Spec.NodeLabels, field.NewPath("Spec", "NodeLabels")); err != nil {
+	if err := validateNodeLabels(m.Spec.NodeLabels, field.NewPath("spec", "nodeLabels")); err != nil {
 		allErrs = append(allErrs,
 			field.Invalid(
-				field.NewPath("Spec", "NodeLabels"),
+				field.NewPath("spec", "nodeLabels"),
 				m.Spec.NodeLabels,
 				err.Error()))
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "OSType"),
+		field.NewPath("spec", "osType"),
 		old.Spec.OSType,
 		m.Spec.OSType); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "SKU"),
+		field.NewPath("spec", "sku"),
 		old.Spec.SKU,
 		m.Spec.SKU); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "OSDiskSizeGB"),
+		field.NewPath("spec", "osDiskSizeGB"),
 		old.Spec.OSDiskSizeGB,
 		m.Spec.OSDiskSizeGB); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "SubnetName"),
+		field.NewPath("spec", "subnetName"),
 		old.Spec.SubnetName,
 		m.Spec.SubnetName); err != nil && old.Spec.SubnetName != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "EnableFIPS"),
+		field.NewPath("spec", "enableFIPS"),
 		old.Spec.EnableFIPS,
 		m.Spec.EnableFIPS); err != nil && old.Spec.EnableFIPS != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "EnableEncryptionAtHost"),
+		field.NewPath("spec", "enableEncryptionAtHost"),
 		old.Spec.EnableEncryptionAtHost,
 		m.Spec.EnableEncryptionAtHost); err != nil && old.Spec.EnableEncryptionAtHost != nil {
 		allErrs = append(allErrs, err)
@@ -217,7 +217,7 @@ func (mw *azureManagedMachinePoolWebhook) ValidateUpdate(ctx context.Context, ol
 	if !webhookutils.EnsureStringSlicesAreEquivalent(m.Spec.AvailabilityZones, old.Spec.AvailabilityZones) {
 		allErrs = append(allErrs,
 			field.Invalid(
-				field.NewPath("Spec", "AvailabilityZones"),
+				field.NewPath("spec", "availabilityZones"),
 				m.Spec.AvailabilityZones,
 				"field is immutable"))
 	}
@@ -226,67 +226,67 @@ func (mw *azureManagedMachinePoolWebhook) ValidateUpdate(ctx context.Context, ol
 		// validate for last system node pool
 		if err := validateLastSystemNodePool(mw.Client, m.Labels, m.Namespace, m.Annotations); err != nil {
 			allErrs = append(allErrs, field.Forbidden(
-				field.NewPath("Spec", "Mode"),
+				field.NewPath("spec", "mode"),
 				"Cannot change node pool mode to User, you must have at least one System node pool in your cluster"))
 		}
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "MaxPods"),
+		field.NewPath("spec", "maxPods"),
 		old.Spec.MaxPods,
 		m.Spec.MaxPods); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "OsDiskType"),
+		field.NewPath("spec", "osDiskType"),
 		old.Spec.OsDiskType,
 		m.Spec.OsDiskType); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "ScaleSetPriority"),
+		field.NewPath("spec", "scaleSetPriority"),
 		old.Spec.ScaleSetPriority,
 		m.Spec.ScaleSetPriority); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "EnableUltraSSD"),
+		field.NewPath("spec", "enableUltraSSD"),
 		old.Spec.EnableUltraSSD,
 		m.Spec.EnableUltraSSD); err != nil {
 		allErrs = append(allErrs, err)
 	}
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "EnableNodePublicIP"),
+		field.NewPath("spec", "enableNodePublicIP"),
 		old.Spec.EnableNodePublicIP,
 		m.Spec.EnableNodePublicIP); err != nil {
 		allErrs = append(allErrs, err)
 	}
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "NodePublicIPPrefixID"),
+		field.NewPath("spec", "nodePublicIPPrefixID"),
 		old.Spec.NodePublicIPPrefixID,
 		m.Spec.NodePublicIPPrefixID); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "KubeletConfig"),
+		field.NewPath("spec", "kubeletConfig"),
 		old.Spec.KubeletConfig,
 		m.Spec.KubeletConfig); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "KubeletDiskType"),
+		field.NewPath("spec", "kubeletDiskType"),
 		old.Spec.KubeletDiskType,
 		m.Spec.KubeletDiskType); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "LinuxOSConfig"),
+		field.NewPath("spec", "linuxOSConfig"),
 		old.Spec.LinuxOSConfig,
 		m.Spec.LinuxOSConfig); err != nil {
 		allErrs = append(allErrs, err)

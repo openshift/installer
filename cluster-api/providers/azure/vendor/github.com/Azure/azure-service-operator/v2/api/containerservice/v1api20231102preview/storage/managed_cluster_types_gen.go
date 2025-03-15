@@ -9155,12 +9155,12 @@ func (profile *ManagedClusterStorageProfile_STATUS) AssignProperties_To_ManagedC
 // Storage version of v1api20231102preview.ManagedClusterWindowsProfile
 // Profile for Windows VMs in the managed cluster.
 type ManagedClusterWindowsProfile struct {
-	AdminPassword  *string                `json:"adminPassword,omitempty"`
-	AdminUsername  *string                `json:"adminUsername,omitempty"`
-	EnableCSIProxy *bool                  `json:"enableCSIProxy,omitempty"`
-	GmsaProfile    *WindowsGmsaProfile    `json:"gmsaProfile,omitempty"`
-	LicenseType    *string                `json:"licenseType,omitempty"`
-	PropertyBag    genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+	AdminPassword  *genruntime.SecretReference `json:"adminPassword,omitempty"`
+	AdminUsername  *string                     `json:"adminUsername,omitempty"`
+	EnableCSIProxy *bool                       `json:"enableCSIProxy,omitempty"`
+	GmsaProfile    *WindowsGmsaProfile         `json:"gmsaProfile,omitempty"`
+	LicenseType    *string                     `json:"licenseType,omitempty"`
+	PropertyBag    genruntime.PropertyBag      `json:"$propertyBag,omitempty"`
 }
 
 // AssignProperties_From_ManagedClusterWindowsProfile populates our ManagedClusterWindowsProfile from the provided source ManagedClusterWindowsProfile
@@ -9169,7 +9169,12 @@ func (profile *ManagedClusterWindowsProfile) AssignProperties_From_ManagedCluste
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
 	// AdminPassword
-	profile.AdminPassword = genruntime.ClonePointerToString(source.AdminPassword)
+	if source.AdminPassword != nil {
+		adminPassword := source.AdminPassword.Copy()
+		profile.AdminPassword = &adminPassword
+	} else {
+		profile.AdminPassword = nil
+	}
 
 	// AdminUsername
 	profile.AdminUsername = genruntime.ClonePointerToString(source.AdminUsername)
@@ -9223,7 +9228,12 @@ func (profile *ManagedClusterWindowsProfile) AssignProperties_To_ManagedClusterW
 	propertyBag := genruntime.NewPropertyBag(profile.PropertyBag)
 
 	// AdminPassword
-	destination.AdminPassword = genruntime.ClonePointerToString(profile.AdminPassword)
+	if profile.AdminPassword != nil {
+		adminPassword := profile.AdminPassword.Copy()
+		destination.AdminPassword = &adminPassword
+	} else {
+		destination.AdminPassword = nil
+	}
 
 	// AdminUsername
 	destination.AdminUsername = genruntime.ClonePointerToString(profile.AdminUsername)
@@ -9274,7 +9284,6 @@ func (profile *ManagedClusterWindowsProfile) AssignProperties_To_ManagedClusterW
 // Storage version of v1api20231102preview.ManagedClusterWindowsProfile_STATUS
 // Profile for Windows VMs in the managed cluster.
 type ManagedClusterWindowsProfile_STATUS struct {
-	AdminPassword  *string                    `json:"adminPassword,omitempty"`
 	AdminUsername  *string                    `json:"adminUsername,omitempty"`
 	EnableCSIProxy *bool                      `json:"enableCSIProxy,omitempty"`
 	GmsaProfile    *WindowsGmsaProfile_STATUS `json:"gmsaProfile,omitempty"`
@@ -9286,9 +9295,6 @@ type ManagedClusterWindowsProfile_STATUS struct {
 func (profile *ManagedClusterWindowsProfile_STATUS) AssignProperties_From_ManagedClusterWindowsProfile_STATUS(source *v20231001s.ManagedClusterWindowsProfile_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
-
-	// AdminPassword
-	profile.AdminPassword = genruntime.ClonePointerToString(source.AdminPassword)
 
 	// AdminUsername
 	profile.AdminUsername = genruntime.ClonePointerToString(source.AdminUsername)
@@ -9340,9 +9346,6 @@ func (profile *ManagedClusterWindowsProfile_STATUS) AssignProperties_From_Manage
 func (profile *ManagedClusterWindowsProfile_STATUS) AssignProperties_To_ManagedClusterWindowsProfile_STATUS(destination *v20231001s.ManagedClusterWindowsProfile_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(profile.PropertyBag)
-
-	// AdminPassword
-	destination.AdminPassword = genruntime.ClonePointerToString(profile.AdminPassword)
 
 	// AdminUsername
 	destination.AdminUsername = genruntime.ClonePointerToString(profile.AdminUsername)
@@ -12904,6 +12907,13 @@ func (maps *ManagedClusterOperatorConfigMaps) AssignProperties_From_ManagedClust
 		maps.OIDCIssuerProfile = nil
 	}
 
+	// PrincipalId
+	if source.PrincipalId != nil {
+		propertyBag.Add("PrincipalId", *source.PrincipalId)
+	} else {
+		propertyBag.Remove("PrincipalId")
+	}
+
 	// Update the property bag
 	if len(propertyBag) > 0 {
 		maps.PropertyBag = propertyBag
@@ -12935,6 +12945,19 @@ func (maps *ManagedClusterOperatorConfigMaps) AssignProperties_To_ManagedCluster
 		destination.OIDCIssuerProfile = &oidcIssuerProfile
 	} else {
 		destination.OIDCIssuerProfile = nil
+	}
+
+	// PrincipalId
+	if propertyBag.Contains("PrincipalId") {
+		var principalId genruntime.ConfigMapDestination
+		err := propertyBag.Pull("PrincipalId", &principalId)
+		if err != nil {
+			return errors.Wrap(err, "pulling 'PrincipalId' from propertyBag")
+		}
+
+		destination.PrincipalId = &principalId
+	} else {
+		destination.PrincipalId = nil
 	}
 
 	// Update the property bag
