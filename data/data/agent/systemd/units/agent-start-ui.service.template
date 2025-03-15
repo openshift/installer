@@ -19,7 +19,7 @@ ExecStart=/bin/bash -c "AIUI_APP_API_URL=${SERVICE_BASE_URL} podman run --net ho
 ExecStop=/usr/bin/podman stop --ignore --cidfile=%t/%n.ctr-id
 ExecStopPost=/usr/bin/podman rm -f --ignore --cidfile=%t/%n.ctr-id
 
-KillMode=none
+KillMode=mixed
 Type=oneshot
 RemainAfterExit=true
 
