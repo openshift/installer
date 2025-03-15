@@ -183,10 +183,8 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		}
 
 		powerVSCluster.Spec.DHCPServer.DNSServer = &dnsServerIP
-		// TODO(mjturek): Restore once work is finished in 4.18 for disconnected scenario.
-		if !(len(installConfig.Config.DeprecatedImageContentSources) == 0 && len(installConfig.Config.ImageDigestSources) == 0) {
-			return nil, fmt.Errorf("deploying a disconnected cluster directly in 4.17 is not supported for Power VS. Please deploy disconnected in 4.16 and upgrade to 4.17")
-		}
+		// Disable SNAT for disconnected scenario.
+		powerVSCluster.Spec.DHCPServer.Snat = ptr.To(len(installConfig.Config.DeprecatedImageContentSources) == 0 && len(installConfig.Config.ImageDigestSources) == 0)
 	}
 
 	// If a VPC was specified, pass all subnets in it to cluster API
