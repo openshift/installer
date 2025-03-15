@@ -6,6 +6,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/azure/defaults"
@@ -78,6 +79,31 @@ func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.
 			allErrs = append(allErrs,
 				field.NotSupported(fldPath.Child("acceleratedNetworking"),
 					p.VMNetworkingType, acceleratedNetworkingOptions.List()))
+		}
+	}
+
+	if p.BootDiagnostics != nil {
+		validValues := sets.NewString(string(capz.DisabledDiagnosticsStorage), string(capz.ManagedDiagnosticsStorage), string(capz.UserManagedDiagnosticsStorage))
+		if !validValues.Has(string(p.BootDiagnostics.Type)) {
+			allErrs = append(allErrs, field.NotSupported(fldPath.Child("bootDiagnostics").Child("type"), p.BootDiagnostics.Type, validValues.List()))
+		}
+		if p.BootDiagnostics.Type == capz.ManagedDiagnosticsStorage && platform.CloudName == azure.StackCloud {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("bootDiagnostics").Child("StorageAccountURI"), p.BootDiagnostics.Type, "managed type not supported by azure stack. Use UserManaged instead."))
+		}
+		if p.BootDiagnostics.Type != capz.UserManagedDiagnosticsStorage {
+			if p.BootDiagnostics.ResourceGroup != "" {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("bootDiagnostics").Child("ResourceGroup"), p.BootDiagnostics.ResourceGroup, "resourceGroup can only be specified if type is set to UserManaged."))
+			}
+			if p.BootDiagnostics.StorageAccountName != "" {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("bootDiagnostics").Child("StorageAccountName"), p.BootDiagnostics.StorageAccountName, "storageAccountName can only be specified if type is set to UserManaged."))
+			}
+		} else if p.BootDiagnostics.Type == capz.UserManagedDiagnosticsStorage {
+			if p.BootDiagnostics.ResourceGroup == "" {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("bootDiagnostics").Child("ResourceGroup"), p.BootDiagnostics.ResourceGroup, "resourceGroup must be specified if type is set to UserManaged."))
+			}
+			if p.BootDiagnostics.StorageAccountName == "" {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("bootDiagnostics").Child("StorageAccountName"), p.BootDiagnostics.StorageAccountName, "storageAccountName must be specified if type is set to UserManaged."))
+			}
 		}
 	}
 
