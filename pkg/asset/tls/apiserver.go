@@ -29,7 +29,7 @@ func (c *KubeAPIServerToKubeletSignerCertKey) Generate(ctx context.Context, pare
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "kube-apiserver-to-kubelet-signer", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityOneYear,
+		Validity:  ValidityFourHours,
 		IsCA:      true,
 	}
 
@@ -192,7 +192,7 @@ func (a *KubeAPIServerLocalhostServerCertKey) Generate(ctx context.Context, depe
 		Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		Validity:     ValidityOneDay,
+		Validity:     ValidityFourHours,
 		DNSNames: []string{
 			"localhost",
 		},
@@ -300,7 +300,7 @@ func (a *KubeAPIServerServiceNetworkServerCertKey) Generate(ctx context.Context,
 		Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		Validity:     ValidityOneDay,
+		Validity:     ValidityFourHours,
 		DNSNames: []string{
 			"kubernetes", "kubernetes.default",
 			"kubernetes.default.svc",
@@ -409,7 +409,7 @@ func (a *KubeAPIServerExternalLBServerCertKey) Generate(ctx context.Context, dep
 		Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		Validity:     ValidityOneDay,
+		Validity:     ValidityFourHours,
 		DNSNames: []string{
 			apiAddress(installConfig.Config),
 		},
@@ -448,7 +448,7 @@ func (a *KubeAPIServerInternalLBServerCertKey) Generate(ctx context.Context, dep
 		Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		Validity:     ValidityOneDay,
+		Validity:     ValidityFourHours,
 		DNSNames: []string{
 			internalAPIAddress(installConfig.Config),
 		},
