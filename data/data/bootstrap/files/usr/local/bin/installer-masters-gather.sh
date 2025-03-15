@@ -30,6 +30,12 @@ do
     journalctl --boot --no-pager --output=short --unit="${service}" > "${ARTIFACTS}/journals/${service}.log"
 done
 
+# Collect pacemaker & corosync log files for Two Node OpenShift with Fencing
+journalctl --boot --no-pager --output=short --unit="pcsd" > "${ARTIFACTS}/journals/pcsd.log"
+cp /var/log/pcsd/pcsd.log > "${ARTIFACTS}/pacemaker/pcsd.log"
+cp /var/log/pacemaker/pacemaker.log > "${ARTIFACTS}/pacemaker/pacemaker.log"
+cp /var/log/cluster/corosync.log > ${ARTIFACTS}/pacemaker/corosync.log
+
 journalctl -o with-unit --no-pager | gzip > "${ARTIFACTS}/journals/journal.log.gz"
 
 echo "Gathering master networking ..."
