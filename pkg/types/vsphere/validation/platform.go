@@ -21,15 +21,6 @@ import (
 
 // ValidatePlatform checks that the specified platform is valid.
 func ValidatePlatform(p *vsphere.Platform, agentBasedInstallation bool, fldPath *field.Path, c *types.InstallConfig) field.ErrorList {
-	isLegacyUpi := false
-	// This is to cover existing UPI non-zonal case
-	// where neither network or cluster is required.
-	// In 4.13 we will warn for this, in later releases this
-	// should be removed.
-
-	if p.DeprecatedNetwork == "" && p.DeprecatedCluster == "" && p.DeprecatedVCenter != "" {
-		isLegacyUpi = true
-	}
 
 	allErrs := field.ErrorList{}
 	// diskType is optional, but if provided should pass validation
@@ -46,7 +37,7 @@ func ValidatePlatform(p *vsphere.Platform, agentBasedInstallation bool, fldPath 
 		if len(p.FailureDomains) == 0 {
 			return append(allErrs, field.Required(fldPath.Child("failureDomains"), "must be defined"))
 		}
-		allErrs = append(allErrs, validateFailureDomains(p, fldPath.Child("failureDomains"), isLegacyUpi)...)
+		allErrs = append(allErrs, validateFailureDomains(p, fldPath.Child("failureDomains"))...)
 
 		// Validate hosts if configured for static IP
 		if p.Hosts != nil {
@@ -68,7 +59,7 @@ func ValidatePlatform(p *vsphere.Platform, agentBasedInstallation bool, fldPath 
 			if p.FailureDomains[0].Name != conversion.GeneratedFailureDomainName &&
 				p.FailureDomains[0].Zone != conversion.GeneratedFailureDomainZone &&
 				p.FailureDomains[0].Region != conversion.GeneratedFailureDomainRegion {
-				allErrs = append(allErrs, validateFailureDomains(p, fldPath.Child("failureDomains"), isLegacyUpi)...)
+				allErrs = append(allErrs, validateFailureDomains(p, fldPath.Child("failureDomains"))...)
 			}
 		}
 	}
@@ -151,12 +142,21 @@ func validateVCenters(p *vsphere.Platform, fldPath *field.Path) field.ErrorList 
 	return allErrs
 }
 
-func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path, isLegacyUpi bool) field.ErrorList {
+func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
 	var fdNames []string
 	tagUrnPattern := regexp.MustCompile(`^(urn):(vmomi):(InventoryServiceTag):([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}):([^:]+)$`)
 	allErrs := field.ErrorList{}
 	topologyFld := fldPath.Child("topology")
 	var associatedVCenter *vsphere.VCenter
+
+	// The only field in api config v1 infrastructure that current does not have validation is
+	// network. This is the only deprecated field that makes sense to be
+	// left empty. Compute Cluster is now required since it is required and validated
+	isLegacyUpi := false
+	if p.DeprecatedNetwork == "" && p.DeprecatedVCenter != "" {
+		isLegacyUpi = true
+	}
+
 	for index, failureDomain := range p.FailureDomains {
 		if failureDomain.ZoneType == "" && failureDomain.RegionType == "" {
 			logrus.Debug("using the defaults regionType is Datacenter and zoneType is ComputeCluster")
@@ -272,11 +272,7 @@ func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path, isLegacyUp
 		}
 
 		if len(failureDomain.Topology.ComputeCluster) == 0 {
-			if isLegacyUpi {
-				logrus.Warn("cluster field empty is not deprecated, in later releases this field will be required.")
-			} else {
-				allErrs = append(allErrs, field.Required(topologyFld.Child("computeCluster"), "must specify a computeCluster"))
-			}
+			allErrs = append(allErrs, field.Required(topologyFld.Child("computeCluster"), "must specify a computeCluster"))
 		} else {
 			computeCluster := failureDomain.Topology.ComputeCluster
 			clusterPathRegexp := regexp.MustCompile(`^/(.*?)/host/(.*?)$`)
