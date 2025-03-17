@@ -17,6 +17,7 @@ import (
 	azstorage "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/Azure/go-autorest/autorest/to"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/utils/ptr"
 )
 
 //go:generate mockgen -source=./client.go -destination=mock/azureclient_generated.go -package=mock
@@ -43,7 +44,11 @@ type API interface {
 	GetAvailabilityZones(ctx context.Context, region string, instanceType string) ([]string, error)
 	GetLocationInfo(ctx context.Context, region string, instanceType string) (*azenc.ResourceSkuLocationInfo, error)
 	CheckIfExistsStorageAccount(ctx context.Context, resourceGroup, storageAccountName, region string) error
+	CheckIfARO(ctx context.Context, groupName string) (bool, error)
 }
+
+var aro *bool
+var aroTag = "installer-aro"
 
 // Client makes calls to the Azure API.
 type Client struct {
@@ -241,6 +246,30 @@ func (c *Client) GetGroup(ctx context.Context, groupName string) (*azres.Group, 
 		return nil, fmt.Errorf("failed to get resource group: %w", err)
 	}
 	return &res, nil
+}
+
+// CheckIfARO checks the existing resource group provided for specific tag
+// to see if the value set is to ARO. If set, the installer will ignore multiple
+// checks/validations and perform ARO specific tasks.
+func (c *Client) CheckIfARO(ctx context.Context, groupName string) (bool, error) {
+	if aro != nil {
+		return *aro, nil
+	}
+	if groupName == "" {
+		return false, nil
+	}
+	group, err := c.GetGroup(ctx, groupName)
+	if err != nil {
+		return false, err
+	}
+	rgTags := group.Tags
+	aro = ptr.To(false)
+	if value, ok := rgTags[aroTag]; ok {
+		if value != nil && *value == "owned" {
+			aro = ptr.To(true)
+		}
+	}
+	return *aro, nil
 }
 
 // ListResourceIDsByGroup returns a list of resource IDs for resource group groupName.
