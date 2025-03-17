@@ -211,6 +211,17 @@ func getProxyValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 	return validIC
 }
 
+// getProxyWithMachineNetworkNoProxy returns a valid optional install config for proxied installation with the machine network in the NoProxy.
+func getProxyWithMachineNetworkNoProxy() *agent.OptionalInstallConfig {
+	validIC := getValidOptionalInstallConfig()
+	validIC.Config.Proxy = &types.Proxy{
+		HTTPProxy:  "http://10.10.10.11:80",
+		HTTPSProxy: "http://my-lab-proxy.org:443",
+		NoProxy:    "internal.com,192.168.0.0/16",
+	}
+	return validIC
+}
+
 // getAdditionalTrustBundleValidOptionalInstallConfig returns a valid optional install config with AdditonalTrustBundle.
 func getAdditionalTrustBundleValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 	validIC := getValidOptionalInstallConfig()
