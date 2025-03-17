@@ -6,6 +6,7 @@ import (
 
 	"github.com/apparentlymart/go-cidr/cidr"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
@@ -25,6 +26,12 @@ func SetPlatformDefaults(p *openstack.Platform, n *types.Networking) {
 			p.Cloud = DefaultCloudName
 		}
 	}
+
+	// When using user-managed loadbalancer do not generate default API and Ingress VIPs
+	if p.LoadBalancer.Type == configv1.LoadBalancerTypeUserManaged {
+		return
+	}
+
 	// APIVIP returns the internal virtual IP address (VIP) put in front
 	// of the Kubernetes API server for use by components inside the
 	// cluster. The DNS static pods running on the nodes resolve the
