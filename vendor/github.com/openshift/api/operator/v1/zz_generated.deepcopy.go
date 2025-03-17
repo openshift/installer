@@ -3178,6 +3178,7 @@ func (in *MachineConfigurationStatus) DeepCopyInto(out *MachineConfigurationStat
 		}
 	}
 	in.NodeDisruptionPolicyStatus.DeepCopyInto(&out.NodeDisruptionPolicyStatus)
+	in.ManagedBootImagesStatus.DeepCopyInto(&out.ManagedBootImagesStatus)
 	return
 }
 
