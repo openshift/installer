@@ -83,6 +83,14 @@ etc_keep=$(ostree admin config-diff | cut -f5 -d' ' | sed -e 's,^,/usr/etc/,')
 echo "Checking out node image content"
 ostree checkout --repo "${ostree_repo}" ${hardlink} coreos/node-image "${ostree_checkout}" --skip-list=<(cat <<< "$etc_keep")
 
+# In some flows, we currently keep using the same bootstrap state and just
+# deploy in a separate stateroot instead of doing something closer to a
+# reinstall. Let's nuke the ref so it eventually gets GC'ed, and also bump the
+# mtime on the tmp dir so OSTree doesn't try to delete it when rebasing (because
+# it won't be able to in this boot).
+ostree refs --repo "${ostree_repo}" --delete coreos/node-image
+touch "${ostree_checkout}"
+
 # in the assisted-installer case, nuke the temporary repo to save RAM
 if grep -q coreos.liveiso= /proc/cmdline; then
     echo "Deleting temporary repo"
