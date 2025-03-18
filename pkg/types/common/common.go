@@ -9,14 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
-// FencingCredential stores the information about a baremetal host's management controller.
-type FencingCredential struct {
-	HostName string `json:"hostName,omitempty" validate:"required,uniqueField"`
-	Username string `json:"username" validate:"required"`
-	Password string `json:"password" validate:"required"`
-	Address  string `json:"address" validate:"required,uniqueField"`
-}
-
 // ValidateUniqueAndRequiredFields validated unique fields are indeed unique and that required fields exist on a generic element.
 func ValidateUniqueAndRequiredFields[T any](elements []T, fldPath *field.Path, filter validator.FilterFunc, fieldName string) field.ErrorList {
 	errs := field.ErrorList{}
@@ -68,22 +60,6 @@ func ValidateUniqueAndRequiredFields[T any](elements []T, fldPath *field.Path, f
 					}
 				}
 			}
-		}
-	}
-	return errs
-}
-
-// ValidateTwoFencingCredentials in case fencing credentials exists validates there are exactly 2.
-func ValidateTwoFencingCredentials(numOfCpReplicas int64, fencingCredentials []*FencingCredential, fldPath *field.Path) field.ErrorList {
-	errs := field.ErrorList{}
-	numOfFencingCredentials := len(fencingCredentials)
-	if numOfCpReplicas == 2 {
-		if numOfFencingCredentials != 2 {
-			errs = append(errs, field.Forbidden(fldPath, fmt.Sprintf("there should be exactly two fencingCredentials to support the two node cluster, instead %d fencingCredentials were found", numOfFencingCredentials)))
-		}
-	} else {
-		if numOfFencingCredentials != 0 {
-			errs = append(errs, field.Forbidden(fldPath, fmt.Sprintf("there should not be any fencingCredentials configured for a non dual replica control plane (Two Nodes Fencing) cluster, instead %d fencingCredentials were found", numOfFencingCredentials)))
 		}
 	}
 	return errs

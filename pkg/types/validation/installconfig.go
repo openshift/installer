@@ -31,13 +31,13 @@ import (
 	azurevalidation "github.com/openshift/installer/pkg/types/azure/validation"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	baremetalvalidation "github.com/openshift/installer/pkg/types/baremetal/validation"
+	"github.com/openshift/installer/pkg/types/common"
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/featuregates"
 	"github.com/openshift/installer/pkg/types/gcp"
 	gcpvalidation "github.com/openshift/installer/pkg/types/gcp/validation"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	ibmcloudvalidation "github.com/openshift/installer/pkg/types/ibmcloud/validation"
-	nonevalidation "github.com/openshift/installer/pkg/types/none/validation"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	nutanixvalidation "github.com/openshift/installer/pkg/types/nutanix/validation"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -123,6 +123,13 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 	allErrs = append(allErrs, validatePlatform(&c.Platform, usingAgentMethod, field.NewPath("platform"), c.Networking, c)...)
 	if c.ControlPlane != nil {
 		allErrs = append(allErrs, validateControlPlane(&c.Platform, c.ControlPlane, field.NewPath("controlPlane"))...)
+		if len(c.ControlPlane.Fencing.Credentials) > 0 {
+			if c.EnabledFeatureGates().Enabled(features.FeatureGateDualReplica) {
+				allErrs = append(allErrs, validateFencingCredentials(c)...)
+			} else {
+				allErrs = append(allErrs, field.Forbidden(field.NewPath("controlPlane").Child("fencing").Child("credentials"), fmt.Sprintf("%s feature must be enabled in order to use Two Node Fencing (TNF) cluster deployment", features.FeatureGateDualReplica)))
+			}
+		}
 	} else {
 		allErrs = append(allErrs, field.Required(field.NewPath("controlPlane"), "controlPlane is required"))
 	}
@@ -1461,8 +1468,6 @@ func validateGatedFeatures(c *types.InstallConfig) field.ErrorList {
 		gatedFeatures = append(gatedFeatures, gcpvalidation.GatedFeatures(c)...)
 	case c.VSphere != nil:
 		gatedFeatures = append(gatedFeatures, vspherevalidation.GatedFeatures(c)...)
-	case c.None != nil:
-		gatedFeatures = append(gatedFeatures, nonevalidation.GatedFeatures(c)...)
 	case c.AWS != nil:
 		gatedFeatures = append(gatedFeatures, awsvalidation.GatedFeatures(c)...)
 	}
@@ -1544,4 +1549,35 @@ func isV4NodeSubnetLargeEnough(cn []types.ClusterNetworkEntry, nodeSubnet *ipnet
 
 	// reserve one IP for the gw, one IP for network and one for broadcasting
 	return maxNodesNum < (1<<(addrLen-intSubnetMask) - 3), nil
+}
+
+// validateCredentialsNumber in case fencing credentials exists validates there are exactly 2.
+func validateCredentialsNumber(numOfCpReplicas int64, fencing *types.Fencing, fldPath *field.Path) field.ErrorList {
+	errs := field.ErrorList{}
+	var numOfCredentials int
+	if fencing != nil {
+		numOfCredentials = len(fencing.Credentials)
+	}
+	if numOfCpReplicas == 2 {
+		if numOfCredentials != 2 {
+			errs = append(errs, field.Forbidden(fldPath, fmt.Sprintf("there should be exactly two fencing credentials to support the two node cluster, instead %d credentials were found", numOfCredentials)))
+		}
+	} else {
+		if numOfCredentials != 0 {
+			errs = append(errs, field.Forbidden(fldPath, fmt.Sprintf("there should not be any fencing credentials configured for a non dual replica control plane (Two Nodes Fencing) cluster, instead %d credentials were found", numOfCredentials)))
+		}
+	}
+	return errs
+}
+
+func validateFencingCredentials(installConfig *types.InstallConfig) (errors field.ErrorList) {
+	fldPath := field.NewPath("controlPlane", "fencing")
+	fencingCredentials := installConfig.ControlPlane.Fencing
+	allErrs := field.ErrorList{}
+	if fencingCredentials != nil {
+		allErrs = append(allErrs, common.ValidateUniqueAndRequiredFields(fencingCredentials.Credentials, fldPath, func([]byte) bool { return false }, "credentials")...)
+	}
+	allErrs = append(allErrs, validateCredentialsNumber(*installConfig.ControlPlane.Replicas, fencingCredentials, fldPath.Child("credentials"))...)
+
+	return allErrs
 }

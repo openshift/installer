@@ -205,10 +205,6 @@ func validNutanixPlatform() *nutanix.Platform {
 	}
 }
 
-func validNonePlatform() *none.Platform {
-	return &none.Platform{}
-}
-
 func validIPv4NetworkingConfig() *types.Networking {
 	return &types.Networking{
 		NetworkType: "OVNKubernetes",
@@ -2800,4 +2796,211 @@ func TestValidateReleaseArchitecture(t *testing.T) {
 			assert.Regexp(t, `^controlPlane\.architecture: Invalid value: \"amd64\": .*$`, errs.ToAggregate())
 		})
 	})
+}
+
+func TestValidateTNF(t *testing.T) {
+	cases := []struct {
+		name        string
+		config      *types.InstallConfig
+		machinePool *types.MachinePool
+		expected    string
+	}{
+		{
+			config:   installConfig().CpReplicas(3).build(),
+			name:     "valid_empty_credentials",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				MachinePool(machinePool().
+					Credential(c1(), c2())).
+				CpReplicas(2).
+				build(),
+			name:     "valid_two_credentials",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				MachinePool(machinePool().
+					Credential(c1(), c2(), c3())).
+				CpReplicas(2).build(),
+			name:     "invalid_number_of_credentials_for_dual_replica",
+			expected: "controlPlane.fencing.credentials: Forbidden: there should be exactly two fencing credentials to support the two node cluster, instead 3 credentials were found",
+		},
+		{
+			config: installConfig().
+				MachinePool(machinePool().
+					Credential(c1(), c2())).
+				CpReplicas(3).build(),
+			name:     "invalid_number_of_credentials_for_non_dual_replica",
+			expected: "controlPlane.fencing.credentials: Forbidden: there should not be any fencing credentials configured for a non dual replica control plane \\(Two Nodes Fencing\\) cluster, instead 2 credentials were found",
+		},
+		{
+			config: installConfig().
+				MachinePool(machinePool().
+					Credential(
+						c1().BMCAddress("ipmi://192.168.111.1"),
+						c2().BMCAddress("ipmi://192.168.111.1"))).
+				CpReplicas(2).build(),
+			name:     "duplicate_bmc_address",
+			expected: "controlPlane.fencing.credentials\\[1\\].Address: Duplicate value: \"ipmi://192.168.111.1\"",
+		},
+		{
+			config: installConfig().
+				MachinePool(machinePool().
+					Credential(c1().BMCAddress(""), c2())).
+				CpReplicas(2).build(),
+			name:     "bmc_address_required",
+			expected: "controlPlane.fencing.credentials\\[0\\].Address: Required value: missing Address",
+		},
+		{
+			config: installConfig().
+				MachinePool(machinePool().
+					Credential(c1(), c2().BMCUsername(""))).
+				CpReplicas(2).build(),
+			name:     "bmc_username_required",
+			expected: "controlPlane.fencing.credentials\\[1\\].Username: Required value: missing Username",
+		},
+		{
+			config: installConfig().
+				MachinePool(machinePool().
+					Credential(c1().BMCPassword(""), c2())).
+				CpReplicas(2).build(),
+			name:     "bmc_password_required",
+			expected: "controlPlane.fencing.credentials\\[0\\].Password: Required value: missing Password",
+		},
+		{
+			config: installConfig().
+				MachinePool(machinePool().
+					Credential(c1().HostName(""), c2())).
+				CpReplicas(2).build(),
+			name:     "host_name_required",
+			expected: "controlPlane.fencing.credentials\\[0\\].HostName: Required value: missing HostName",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Build default wrapping installConfig
+			if tc.config == nil {
+				tc.config = installConfig().build()
+			}
+
+			err := validateFencingCredentials(tc.config).ToAggregate()
+
+			if tc.expected == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Regexp(t, tc.expected, err)
+			}
+		})
+	}
+}
+
+type credentialBuilder struct {
+	types.Credential
+}
+
+func (hb *credentialBuilder) build() *types.Credential {
+	return &hb.Credential
+}
+
+func c1() *credentialBuilder {
+	return &credentialBuilder{
+		types.Credential{
+			HostName: "host1",
+			Username: "root",
+			Password: "password",
+			Address:  "ipmi://192.168.111.1",
+		},
+	}
+}
+
+func c2() *credentialBuilder {
+	return &credentialBuilder{
+		types.Credential{
+			HostName: "host2",
+			Username: "root",
+			Password: "password",
+			Address:  "ipmi://192.168.111.2",
+		},
+	}
+}
+
+func c3() *credentialBuilder {
+	return &credentialBuilder{
+		types.Credential{
+			HostName: "host3",
+			Username: "root",
+			Password: "password",
+			Address:  "ipmi://192.168.111.3",
+		},
+	}
+}
+
+func (hb *credentialBuilder) HostName(value string) *credentialBuilder {
+	hb.Credential.HostName = value
+	return hb
+}
+
+func (hb *credentialBuilder) BMCAddress(value string) *credentialBuilder {
+	hb.Credential.Address = value
+	return hb
+}
+
+func (hb *credentialBuilder) BMCUsername(value string) *credentialBuilder {
+	hb.Credential.Username = value
+	return hb
+}
+
+func (hb *credentialBuilder) BMCPassword(value string) *credentialBuilder {
+	hb.Credential.Password = value
+	return hb
+}
+
+type machinePoolBuilder struct {
+	types.MachinePool
+}
+
+func (pb *machinePoolBuilder) build() *types.MachinePool {
+	return &pb.MachinePool
+}
+
+func machinePool() *machinePoolBuilder {
+	return &machinePoolBuilder{
+		types.MachinePool{}}
+}
+
+func (pb *machinePoolBuilder) Credential(builders ...*credentialBuilder) *machinePoolBuilder {
+	pb.MachinePool.Fencing = &types.Fencing{}
+	for _, builder := range builders {
+		pb.MachinePool.Fencing.Credentials = append(pb.MachinePool.Fencing.Credentials, builder.build())
+	}
+	return pb
+}
+
+type installConfigBuilder struct {
+	types.InstallConfig
+}
+
+func installConfig() *installConfigBuilder {
+	return &installConfigBuilder{
+		InstallConfig: types.InstallConfig{},
+	}
+}
+
+func (icb *installConfigBuilder) CpReplicas(numOfCpReplicas int64) *installConfigBuilder {
+	if icb.InstallConfig.ControlPlane == nil {
+		icb.InstallConfig.ControlPlane = &types.MachinePool{}
+	}
+	icb.InstallConfig.ControlPlane.Replicas = &numOfCpReplicas
+	return icb
+}
+
+func (icb *installConfigBuilder) MachinePool(cpBuilder *machinePoolBuilder) *installConfigBuilder {
+	icb.InstallConfig.ControlPlane = cpBuilder.build()
+	return icb
+}
+
+func (icb *installConfigBuilder) build() *types.InstallConfig {
+	return &icb.InstallConfig
 }

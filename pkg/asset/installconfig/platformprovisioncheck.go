@@ -27,7 +27,6 @@ import (
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/none"
-	nonevalidation "github.com/openshift/installer/pkg/types/none/validation"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
@@ -174,12 +173,7 @@ func (a *PlatformProvisionCheck) Generate(ctx context.Context, dependencies asse
 		if err != nil {
 			return err
 		}
-	case none.Name:
-		err := nonevalidation.ValidateFencingCredentials(ic.Config).ToAggregate()
-		if err != nil {
-			return err
-		}
-	case external.Name:
+	case external.Name, none.Name:
 		// no special provisioning requirements to check
 	case nutanix.Name:
 		err := nutanixconfig.ValidateForProvisioning(ic.Config)
