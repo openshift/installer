@@ -16,7 +16,7 @@ func determineTopologies(installConfig *types.InstallConfig) (controlPlaneTopolo
 	if controlPlaneReplicas == 2 {
 		controlPlaneTopology = configv1.DualReplicaTopologyMode
 
-		if ptr.Deref(installConfig.Arbiter.Replicas, 0) != 0 {
+		if installConfig.Arbiter != nil && ptr.Deref(installConfig.Arbiter.Replicas, 0) != 0 {
 			controlPlaneTopology = configv1.HighlyAvailableArbiterMode
 		}
 	} else if controlPlaneReplicas < 3 {
