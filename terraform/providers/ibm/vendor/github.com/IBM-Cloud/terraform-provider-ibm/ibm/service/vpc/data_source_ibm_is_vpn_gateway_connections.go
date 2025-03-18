@@ -67,6 +67,11 @@ func DataSourceIBMISVPNGatewayConnections() *schema.Resource {
 							Computed:    true,
 							Description: "Interval for dead peer detection interval",
 						},
+						"distribute_traffic": &schema.Schema{
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Indicates whether the traffic is distributed between the `up` tunnels of the VPN gateway connection when the VPC route's next hop is a VPN connection. If `false`, the traffic is only routed through the `up` tunnel with the lower `public_ip` address.",
+						},
 						isVPNGatewayConnectionDeadPeerDetectionTimeout: {
 							Type:        schema.TypeInt,
 							Computed:    true,
@@ -345,6 +350,7 @@ func getvpnGatewayConnectionIntfData(vpnGatewayConnectionIntf vpcv1.VPNGatewayCo
 			}
 			gatewayconnection["mode"] = vpnGatewayConnection.Mode
 			gatewayconnection["name"] = vpnGatewayConnection.Name
+			gatewayconnection["distribute_traffic"] = vpnGatewayConnection.DistributeTraffic
 
 			// breaking changes
 			gatewayconnection["establish_mode"] = vpnGatewayConnection.EstablishMode
@@ -399,6 +405,7 @@ func getvpnGatewayConnectionIntfData(vpnGatewayConnectionIntf vpcv1.VPNGatewayCo
 			if vpnGatewayConnection.IkePolicy != nil {
 				gatewayconnection["ike_policy"] = vpnGatewayConnection.IkePolicy.ID
 			}
+			gatewayconnection["distribute_traffic"] = vpnGatewayConnection.DistributeTraffic
 
 			if vpnGatewayConnection.IpsecPolicy != nil {
 				gatewayconnection["ipsec_policy"] = vpnGatewayConnection.IpsecPolicy.ID
@@ -455,6 +462,7 @@ func getvpnGatewayConnectionIntfData(vpnGatewayConnectionIntf vpcv1.VPNGatewayCo
 				gatewayconnection[isVPNGatewayConnectionDeadPeerDetectionInterval] = vpnGatewayConnection.DeadPeerDetection.Interval
 				gatewayconnection[isVPNGatewayConnectionDeadPeerDetectionTimeout] = vpnGatewayConnection.DeadPeerDetection.Timeout
 			}
+			gatewayconnection["distribute_traffic"] = vpnGatewayConnection.DistributeTraffic
 			gatewayconnection["href"] = vpnGatewayConnection.Href
 			if vpnGatewayConnection.IkePolicy != nil {
 				gatewayconnection["ike_policy"] = vpnGatewayConnection.IkePolicy.ID

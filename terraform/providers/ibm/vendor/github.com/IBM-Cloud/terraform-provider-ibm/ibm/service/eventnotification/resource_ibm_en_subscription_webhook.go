@@ -65,6 +65,11 @@ func ResourceIBMEnWebhookSubscription() *schema.Resource {
 							Default:     false,
 							Description: "Signing webhook attributes.",
 						},
+						"template_id_notification": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The templete id for notification",
+						},
 					},
 				},
 			},
@@ -282,6 +287,11 @@ func webhookattributesMapToAttributes(attributeMap map[string]interface{}) (en.S
 	if attributeMap["signing_enabled"] != nil {
 		attributesCreate.SigningEnabled = core.BoolPtr(attributeMap["signing_enabled"].(bool))
 		attributesUpdate.SigningEnabled = core.BoolPtr(attributeMap["signing_enabled"].(bool))
+	}
+
+	if attributeMap["template_id_notification"] != nil {
+		attributesCreate.TemplateIDNotification = core.StringPtr(attributeMap["template_id_notification"].(string))
+		attributesUpdate.TemplateIDNotification = core.StringPtr(attributeMap["template_id_notification"].(string))
 	}
 
 	return attributesCreate, attributesUpdate

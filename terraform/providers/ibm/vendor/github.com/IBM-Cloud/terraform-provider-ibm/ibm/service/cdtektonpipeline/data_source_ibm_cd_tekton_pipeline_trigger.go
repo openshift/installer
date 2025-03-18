@@ -1,6 +1,10 @@
 // Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.95.2-120e65bc-20240924-152329
+ */
+
 package cdtektonpipeline
 
 import (
@@ -13,7 +17,8 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
-	"github.com/IBM/continuous-delivery-go-sdk/cdtektonpipelinev2"
+	"github.com/IBM/continuous-delivery-go-sdk/v2/cdtektonpipelinev2"
+	"github.com/IBM/go-sdk-core/v5/core"
 )
 
 func DataSourceIBMCdTektonPipelineTrigger() *schema.Resource {
@@ -281,7 +286,9 @@ func DataSourceIBMCdTektonPipelineTrigger() *schema.Resource {
 func dataSourceIBMCdTektonPipelineTriggerRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdTektonPipelineClient, err := meta.(conns.ClientSession).CdTektonPipelineV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_cd_tekton_pipeline_trigger", "read", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getTektonPipelineTriggerOptions := &cdtektonpipelinev2.GetTektonPipelineTriggerOptions{}
@@ -289,166 +296,199 @@ func dataSourceIBMCdTektonPipelineTriggerRead(context context.Context, d *schema
 	getTektonPipelineTriggerOptions.SetPipelineID(d.Get("pipeline_id").(string))
 	getTektonPipelineTriggerOptions.SetTriggerID(d.Get("trigger_id").(string))
 
-	TriggerIntf, response, err := cdTektonPipelineClient.GetTektonPipelineTriggerWithContext(context, getTektonPipelineTriggerOptions)
+	triggerIntf, _, err := cdTektonPipelineClient.GetTektonPipelineTriggerWithContext(context, getTektonPipelineTriggerOptions)
 	if err != nil {
-		log.Printf("[DEBUG] GetTektonPipelineTriggerWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetTektonPipelineTriggerWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetTektonPipelineTriggerWithContext failed: %s", err.Error()), "(Data) ibm_cd_tekton_pipeline_trigger", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
-	trigger := TriggerIntf.(*cdtektonpipelinev2.Trigger)
+	trigger := triggerIntf.(*cdtektonpipelinev2.Trigger)
 
 	d.SetId(fmt.Sprintf("%s/%s", *getTektonPipelineTriggerOptions.PipelineID, *getTektonPipelineTriggerOptions.TriggerID))
 
-	if err = d.Set("type", trigger.Type); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting type: %s", err))
-	}
-
-	if err = d.Set("name", trigger.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
-	}
-
-	if err = d.Set("href", trigger.Href); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
-	}
-
-	if err = d.Set("event_listener", trigger.EventListener); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting event_listener: %s", err))
-	}
-
-	if trigger.Tags != nil {
-		if err = d.Set("tags", trigger.Tags); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting tags: %s", err))
+	if !core.IsNil(trigger.Type) {
+		if err = d.Set("type", trigger.Type); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting type: %s", err), "(Data) ibm_cd_tekton_pipeline_trigger", "read", "set-type").GetDiag()
 		}
 	}
 
-	properties := []map[string]interface{}{}
-	if trigger.Properties != nil {
-		for _, modelItem := range trigger.Properties {
-			modelMap, err := dataSourceIBMCdTektonPipelineTriggerTriggerPropertyToMap(&modelItem)
+	if !core.IsNil(trigger.Name) {
+		if err = d.Set("name", trigger.Name); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "(Data) ibm_cd_tekton_pipeline_trigger", "read", "set-name").GetDiag()
+		}
+	}
+
+	if !core.IsNil(trigger.Href) {
+		if err = d.Set("href", trigger.Href); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting href: %s", err), "(Data) ibm_cd_tekton_pipeline_trigger", "read", "set-href").GetDiag()
+		}
+	}
+
+	if !core.IsNil(trigger.EventListener) {
+		if err = d.Set("event_listener", trigger.EventListener); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting event_listener: %s", err), "(Data) ibm_cd_tekton_pipeline_trigger", "read", "set-event_listener").GetDiag()
+		}
+	}
+
+	if !core.IsNil(trigger.Properties) {
+		properties := []map[string]interface{}{}
+		for _, propertiesItem := range trigger.Properties {
+			propertiesItemMap, err := DataSourceIBMCdTektonPipelineTriggerTriggerPropertyToMap(&propertiesItem) // #nosec G601
 			if err != nil {
-				return diag.FromErr(err)
+				return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_cd_tekton_pipeline_trigger", "read", "properties-to-map").GetDiag()
 			}
-			properties = append(properties, modelMap)
+			properties = append(properties, propertiesItemMap)
 		}
-	}
-	if err = d.Set("properties", properties); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting properties %s", err))
-	}
-
-	if trigger.Events != nil {
-		if err = d.Set("events", trigger.Events); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting events: %s", err))
+		if err = d.Set("properties", properties); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting properties: %s", err), "(Data) ibm_cd_tekton_pipeline_trigger", "read", "set-properties").GetDiag()
 		}
 	}
 
-	worker := []map[string]interface{}{}
-	if trigger.Worker != nil {
-		modelMap, err := dataSourceIBMCdTektonPipelineTriggerWorkerToMap(trigger.Worker)
+	if !core.IsNil(trigger.Tags) {
+		tags := []interface{}{}
+		for _, tagsItem := range trigger.Tags {
+			tags = append(tags, tagsItem)
+		}
+		if err = d.Set("tags", tags); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting tags: %s", err), "(Data) ibm_cd_tekton_pipeline_trigger", "read", "set-tags").GetDiag()
+		}
+	}
+
+	if !core.IsNil(trigger.Worker) {
+		worker := []map[string]interface{}{}
+		workerMap, err := DataSourceIBMCdTektonPipelineTriggerWorkerToMap(trigger.Worker)
 		if err != nil {
-			return diag.FromErr(err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_cd_tekton_pipeline_trigger", "read", "worker-to-map").GetDiag()
 		}
-		worker = append(worker, modelMap)
-	}
-	if err = d.Set("worker", worker); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting worker %s", err))
-	}
-
-	if err = d.Set("max_concurrent_runs", flex.IntValue(trigger.MaxConcurrentRuns)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting max_concurrent_runs: %s", err))
+		worker = append(worker, workerMap)
+		if err = d.Set("worker", worker); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting worker: %s", err), "(Data) ibm_cd_tekton_pipeline_trigger", "read", "set-worker").GetDiag()
+		}
 	}
 
-	if err = d.Set("enabled", trigger.Enabled); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting enabled: %s", err))
+	if !core.IsNil(trigger.MaxConcurrentRuns) {
+		if err = d.Set("max_concurrent_runs", flex.IntValue(trigger.MaxConcurrentRuns)); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting max_concurrent_runs: %s", err), "(Data) ibm_cd_tekton_pipeline_trigger", "read", "set-max_concurrent_runs").GetDiag()
+		}
 	}
 
-	if err = d.Set("favorite", trigger.Favorite); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting favorite: %s", err))
+	if !core.IsNil(trigger.Enabled) {
+		if err = d.Set("enabled", trigger.Enabled); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting enabled: %s", err), "(Data) ibm_cd_tekton_pipeline_trigger", "read", "set-enabled").GetDiag()
+		}
 	}
 
-	if err = d.Set("enable_events_from_forks", trigger.EnableEventsFromForks); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting enable_events_from_forks: %s", err))
+	if !core.IsNil(trigger.Favorite) {
+		if err = d.Set("favorite", trigger.Favorite); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting favorite: %s", err), "(Data) ibm_cd_tekton_pipeline_trigger", "read", "set-favorite").GetDiag()
+		}
 	}
 
-	source := []map[string]interface{}{}
-	if trigger.Source != nil {
-		modelMap, err := dataSourceIBMCdTektonPipelineTriggerTriggerSourceToMap(trigger.Source)
+	if !core.IsNil(trigger.EnableEventsFromForks) {
+		if err = d.Set("enable_events_from_forks", trigger.EnableEventsFromForks); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting enable_events_from_forks: %s", err), "(Data) ibm_cd_tekton_pipeline_trigger", "read", "set-enable_events_from_forks").GetDiag()
+		}
+	}
+
+	if !core.IsNil(trigger.Source) {
+		source := []map[string]interface{}{}
+		sourceMap, err := DataSourceIBMCdTektonPipelineTriggerTriggerSourceToMap(trigger.Source)
 		if err != nil {
-			return diag.FromErr(err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_cd_tekton_pipeline_trigger", "read", "source-to-map").GetDiag()
 		}
-		source = append(source, modelMap)
-	}
-	if err = d.Set("source", source); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting source %s", err))
-	}
-
-	if err = d.Set("filter", trigger.Filter); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting filter: %s", err))
+		source = append(source, sourceMap)
+		if err = d.Set("source", source); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting source: %s", err), "(Data) ibm_cd_tekton_pipeline_trigger", "read", "set-source").GetDiag()
+		}
 	}
 
-	if err = d.Set("cron", trigger.Cron); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting cron: %s", err))
+	if !core.IsNil(trigger.Events) {
+		events := []interface{}{}
+		for _, eventsItem := range trigger.Events {
+			events = append(events, eventsItem)
+		}
+		if err = d.Set("events", events); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting events: %s", err), "(Data) ibm_cd_tekton_pipeline_trigger", "read", "set-events").GetDiag()
+		}
 	}
 
-	if err = d.Set("timezone", trigger.Timezone); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting timezone: %s", err))
+	if !core.IsNil(trigger.Filter) {
+		if err = d.Set("filter", trigger.Filter); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting filter: %s", err), "(Data) ibm_cd_tekton_pipeline_trigger", "read", "set-filter").GetDiag()
+		}
 	}
 
-	secret := []map[string]interface{}{}
-	if trigger.Secret != nil {
-		modelMap, err := dataSourceIBMCdTektonPipelineTriggerGenericSecretToMap(trigger.Secret)
+	if !core.IsNil(trigger.Cron) {
+		if err = d.Set("cron", trigger.Cron); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting cron: %s", err), "(Data) ibm_cd_tekton_pipeline_trigger", "read", "set-cron").GetDiag()
+		}
+	}
+
+	if !core.IsNil(trigger.Timezone) {
+		if err = d.Set("timezone", trigger.Timezone); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting timezone: %s", err), "(Data) ibm_cd_tekton_pipeline_trigger", "read", "set-timezone").GetDiag()
+		}
+	}
+
+	if !core.IsNil(trigger.Secret) {
+		secret := []map[string]interface{}{}
+		secretMap, err := DataSourceIBMCdTektonPipelineTriggerGenericSecretToMap(trigger.Secret)
 		if err != nil {
-			return diag.FromErr(err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_cd_tekton_pipeline_trigger", "read", "secret-to-map").GetDiag()
 		}
-		secret = append(secret, modelMap)
-	}
-	if err = d.Set("secret", secret); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting secret %s", err))
+		secret = append(secret, secretMap)
+		if err = d.Set("secret", secret); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting secret: %s", err), "(Data) ibm_cd_tekton_pipeline_trigger", "read", "set-secret").GetDiag()
+		}
 	}
 
-	if err = d.Set("webhook_url", trigger.WebhookURL); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting webhook_url: %s", err))
+	if !core.IsNil(trigger.WebhookURL) {
+		if err = d.Set("webhook_url", trigger.WebhookURL); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting webhook_url: %s", err), "(Data) ibm_cd_tekton_pipeline_trigger", "read", "set-webhook_url").GetDiag()
+		}
 	}
 
 	return nil
 }
 
-func dataSourceIBMCdTektonPipelineTriggerTriggerPropertyToMap(model *cdtektonpipelinev2.TriggerProperty) (map[string]interface{}, error) {
+func DataSourceIBMCdTektonPipelineTriggerTriggerPropertyToMap(model *cdtektonpipelinev2.TriggerProperty) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	modelMap["name"] = model.Name
+	modelMap["name"] = *model.Name
 	if model.Value != nil {
-		modelMap["value"] = model.Value
+		modelMap["value"] = *model.Value
 	}
 	if model.Href != nil {
-		modelMap["href"] = model.Href
+		modelMap["href"] = *model.Href
 	}
 	if model.Enum != nil {
 		modelMap["enum"] = model.Enum
 	}
-	modelMap["type"] = model.Type
+	modelMap["type"] = *model.Type
 	if model.Path != nil {
-		modelMap["path"] = model.Path
+		modelMap["path"] = *model.Path
 	}
 	if model.Locked != nil {
-		modelMap["locked"] = model.Locked
+		modelMap["locked"] = *model.Locked
 	}
 	return modelMap, nil
 }
 
-func dataSourceIBMCdTektonPipelineTriggerWorkerToMap(model *cdtektonpipelinev2.Worker) (map[string]interface{}, error) {
+func DataSourceIBMCdTektonPipelineTriggerWorkerToMap(model *cdtektonpipelinev2.Worker) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Name != nil {
-		modelMap["name"] = model.Name
+		modelMap["name"] = *model.Name
 	}
 	if model.Type != nil {
-		modelMap["type"] = model.Type
+		modelMap["type"] = *model.Type
 	}
-	modelMap["id"] = model.ID
+	modelMap["id"] = *model.ID
 	return modelMap, nil
 }
 
-func dataSourceIBMCdTektonPipelineTriggerTriggerSourceToMap(model *cdtektonpipelinev2.TriggerSource) (map[string]interface{}, error) {
+func DataSourceIBMCdTektonPipelineTriggerTriggerSourceToMap(model *cdtektonpipelinev2.TriggerSource) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	modelMap["type"] = model.Type
-	propertiesMap, err := dataSourceIBMCdTektonPipelineTriggerTriggerSourcePropertiesToMap(model.Properties)
+	modelMap["type"] = *model.Type
+	propertiesMap, err := DataSourceIBMCdTektonPipelineTriggerTriggerSourcePropertiesToMap(model.Properties)
 	if err != nil {
 		return modelMap, err
 	}
@@ -456,20 +496,20 @@ func dataSourceIBMCdTektonPipelineTriggerTriggerSourceToMap(model *cdtektonpipel
 	return modelMap, nil
 }
 
-func dataSourceIBMCdTektonPipelineTriggerTriggerSourcePropertiesToMap(model *cdtektonpipelinev2.TriggerSourceProperties) (map[string]interface{}, error) {
+func DataSourceIBMCdTektonPipelineTriggerTriggerSourcePropertiesToMap(model *cdtektonpipelinev2.TriggerSourceProperties) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	modelMap["url"] = model.URL
+	modelMap["url"] = *model.URL
 	if model.Branch != nil {
-		modelMap["branch"] = model.Branch
+		modelMap["branch"] = *model.Branch
 	}
 	if model.Pattern != nil {
-		modelMap["pattern"] = model.Pattern
+		modelMap["pattern"] = *model.Pattern
 	}
-	modelMap["blind_connection"] = model.BlindConnection
+	modelMap["blind_connection"] = *model.BlindConnection
 	if model.HookID != nil {
-		modelMap["hook_id"] = model.HookID
+		modelMap["hook_id"] = *model.HookID
 	}
-	toolMap, err := dataSourceIBMCdTektonPipelineTriggerToolToMap(model.Tool)
+	toolMap, err := DataSourceIBMCdTektonPipelineTriggerToolToMap(model.Tool)
 	if err != nil {
 		return modelMap, err
 	}
@@ -477,28 +517,28 @@ func dataSourceIBMCdTektonPipelineTriggerTriggerSourcePropertiesToMap(model *cdt
 	return modelMap, nil
 }
 
-func dataSourceIBMCdTektonPipelineTriggerToolToMap(model *cdtektonpipelinev2.Tool) (map[string]interface{}, error) {
+func DataSourceIBMCdTektonPipelineTriggerToolToMap(model *cdtektonpipelinev2.Tool) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	modelMap["id"] = model.ID
+	modelMap["id"] = *model.ID
 	return modelMap, nil
 }
 
-func dataSourceIBMCdTektonPipelineTriggerGenericSecretToMap(model *cdtektonpipelinev2.GenericSecret) (map[string]interface{}, error) {
+func DataSourceIBMCdTektonPipelineTriggerGenericSecretToMap(model *cdtektonpipelinev2.GenericSecret) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Type != nil {
-		modelMap["type"] = model.Type
+		modelMap["type"] = *model.Type
 	}
 	if model.Value != nil {
-		modelMap["value"] = model.Value
+		modelMap["value"] = *model.Value
 	}
 	if model.Source != nil {
-		modelMap["source"] = model.Source
+		modelMap["source"] = *model.Source
 	}
 	if model.KeyName != nil {
-		modelMap["key_name"] = model.KeyName
+		modelMap["key_name"] = *model.KeyName
 	}
 	if model.Algorithm != nil {
-		modelMap["algorithm"] = model.Algorithm
+		modelMap["algorithm"] = *model.Algorithm
 	}
 	return modelMap, nil
 }

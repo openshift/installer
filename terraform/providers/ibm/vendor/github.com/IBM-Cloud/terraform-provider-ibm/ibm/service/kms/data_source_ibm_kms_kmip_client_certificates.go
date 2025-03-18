@@ -5,8 +5,8 @@ package kms
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	kp "github.com/IBM/keyprotect-go-client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -111,18 +111,18 @@ func dataSourceIBMKmsKMIPClientCertList(d *schema.ResourceData, meta interface{}
 	ctx := context.Background()
 	adapter, err := api.GetKMIPAdapter(ctx, adapterNameOrID)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error while retriving KMIP adapter to list certificates: %s", err)
+		return flex.FmtErrorf("[ERROR] Error while retriving KMIP adapter to list certificates: %s", err)
 	}
 	if err = d.Set("adapter_id", adapter.ID); err != nil {
-		return fmt.Errorf("[ERROR] Error setting adapter_id: %s", err)
+		return flex.FmtErrorf("[ERROR] Error setting adapter_id: %s", err)
 	}
 	if err = d.Set("adapter_name", adapter.Name); err != nil {
-		return fmt.Errorf("[ERROR] Error setting adapter_name: %s", err)
+		return flex.FmtErrorf("[ERROR] Error setting adapter_name: %s", err)
 	}
 
 	certs, err := api.GetKMIPClientCertificates(ctx, adapter.ID, opts)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error while listing KMIP certs for adapter %s: %s", adapter.ID, err)
+		return flex.FmtErrorf("[ERROR] Error while listing KMIP certs for adapter %s: %s", adapter.ID, err)
 	}
 
 	certsList := certs.Certificates

@@ -83,6 +83,11 @@ func DataSourceIBMAppConfigFeature() *schema.Resource {
 				Computed:    true,
 				Description: "Rollout percentage of the feature.",
 			},
+			"format": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Format of the feature (TEXT, JSON, YAML) and it is a required attribute when `type` is `STRING`. It is not required for `BOOLEAN` and `NUMERIC` types. This property is populated in the response body of `POST, PUT and GET` calls if the type `STRING` is used and not populated for `BOOLEAN` and `NUMERIC` types.",
+			},
 			"segment_rules": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -214,6 +219,11 @@ func dataSourceIbmAppConfigFeatureRead(d *schema.ResourceData, meta interface{})
 	if result.RolloutPercentage != nil {
 		if err = d.Set("rollout_percentage", result.RolloutPercentage); err != nil {
 			return fmt.Errorf("[ERROR] Error setting rollout_percentage: %s", err)
+		}
+	}
+	if result.Format != nil {
+		if err = d.Set("format", result.Format); err != nil {
+			return fmt.Errorf("[ERROR] Error setting format: %s", err)
 		}
 	}
 	if result.SegmentExists != nil {

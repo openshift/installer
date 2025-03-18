@@ -77,24 +77,6 @@ func DataSourceIBMEnEmailSubscription() *schema.Resource {
 							Computed:    true,
 							Description: "The email address username of source email address.",
 						},
-						// "invited": {
-						// 	Type:        schema.TypeList,
-						// 	Optional:    true,
-						// 	Computed:    true,
-						// 	Description: "The email id to be invited",
-						// },
-						// "subscribed": {
-						// 	Type:        schema.TypeList,
-						// 	Optional:    true,
-						// 	Computed:    true,
-						// 	Description: "The Email address which should be subscribed from smtp_ibm.",
-						// },
-						// "unsubscribed": {
-						// 	Type:        schema.TypeList,
-						// 	Optional:    true,
-						// 	Computed:    true,
-						// 	Description: "The Email address which should be unsubscribed from smtp_ibm.",
-						// },
 						"invited": {
 							Type:        schema.TypeList,
 							Computed:    true,
@@ -230,22 +212,6 @@ func enEmailSubscriptionFlattenAttributes(result en.SubscriptionAttributesIntf) 
 	attributes := result.(*en.SubscriptionAttributes)
 
 	finalMap := enEmailSubscriptionToMap(attributes)
-	// finalList = append(finalList, finalMap)
-	// invitedmap := make(map[string]interface{})
-	// if attributes.Invited != nil {
-	// 	invitedmap["invited"] = attributes.Invited
-	// }
-	// finalList = append(finalList, invitedmap)
-	// subscribedmap := make(map[string]interface{})
-	// if attributes.Subscribed != nil {
-	// 	subscribedmap["subscribed"] = attributes.Subscribed
-	// }
-	// finalList = append(finalList, subscribedmap)
-	// unsubscribedmap := make(map[string]interface{})
-	// if attributes.Unsubscribed != nil {
-	// 	unsubscribedmap["unsubscribed"] = attributes.Unsubscribed
-	// }
-	// finalList = append(finalList, unsubscribedmap)
 	finalList = append(finalList, finalMap)
 
 	return finalList

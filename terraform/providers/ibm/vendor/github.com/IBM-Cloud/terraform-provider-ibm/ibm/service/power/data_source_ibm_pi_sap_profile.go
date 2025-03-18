@@ -43,15 +43,41 @@ func DataSourceIBMPISAPProfile() *schema.Resource {
 				Description: "Amount of cores.",
 				Type:        schema.TypeInt,
 			},
+			Attr_FullSystemProfile: {
+				Computed:    true,
+				Description: "Requires full system for deployment.",
+				Type:        schema.TypeBool,
+			},
 			Attr_Memory: {
 				Computed:    true,
 				Description: "Amount of memory (in GB).",
 				Type:        schema.TypeInt,
 			},
+			Attr_SAPS: {
+				Computed:    true,
+				Description: "SAP Application Performance Standard",
+				Type:        schema.TypeInt,
+			},
+			Attr_SupportedSystems: {
+				Computed:    true,
+				Description: "List of supported systems.",
+				Type:        schema.TypeList,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			Attr_Type: {
 				Computed:    true,
 				Description: "Type of profile.",
 				Type:        schema.TypeString,
+			},
+			Attr_WorkloadType: {
+				Computed:    true,
+				Description: "Workload Type.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Type: schema.TypeList,
 			},
 		},
 	}
@@ -76,8 +102,12 @@ func dataSourceIBMPISAPProfileRead(ctx context.Context, d *schema.ResourceData, 
 	d.SetId(*sapProfile.ProfileID)
 	d.Set(Attr_Certified, *sapProfile.Certified)
 	d.Set(Attr_Cores, *sapProfile.Cores)
+	d.Set(Attr_FullSystemProfile, sapProfile.FullSystemProfile)
 	d.Set(Attr_Memory, *sapProfile.Memory)
+	d.Set(Attr_SAPS, sapProfile.Saps)
+	d.Set(Attr_SupportedSystems, sapProfile.SupportedSystems)
 	d.Set(Attr_Type, *sapProfile.Type)
+	d.Set(Attr_WorkloadType, *&sapProfile.WorkloadTypes)
 
 	return nil
 }

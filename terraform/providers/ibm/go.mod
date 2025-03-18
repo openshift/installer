@@ -4,12 +4,12 @@ go 1.22.4
 
 toolchain go1.22.5
 
-require github.com/IBM-Cloud/terraform-provider-ibm v1.70.1
+require github.com/IBM-Cloud/terraform-provider-ibm v1.71.1
 
 require (
 	github.com/IBM-Cloud/bluemix-go v0.0.0-20240926024252-81b3928fd062 // indirect
 	github.com/IBM-Cloud/container-services-go-sdk v0.0.0-20240725064144-454a2ae23113 // indirect
-	github.com/IBM-Cloud/power-go-client v1.8.1 // indirect
+	github.com/IBM-Cloud/power-go-client v1.8.3 // indirect
 	github.com/IBM/apigateway-go-sdk v0.0.0-20210714141226-a5d5d49caaca // indirect
 	github.com/IBM/appconfiguration-go-admin-sdk v0.3.0 // indirect
 	github.com/IBM/appid-management-go-sdk v0.0.0-20210908164609-dd0e0eaf732f // indirect
@@ -17,21 +17,20 @@ require (
 	github.com/IBM/cloudant-go-sdk v0.8.0 // indirect
 	github.com/IBM/code-engine-go-sdk v0.0.0-20240808131715-b9d168602dac // indirect
 	github.com/IBM/container-registry-go-sdk v1.1.0 // indirect
-	github.com/IBM/continuous-delivery-go-sdk v1.8.1 // indirect
-	github.com/IBM/event-notifications-go-admin-sdk v0.9.0 // indirect
+	github.com/IBM/event-notifications-go-admin-sdk v0.11.0 // indirect
 	github.com/IBM/eventstreams-go-sdk v1.4.0 // indirect
-	github.com/IBM/go-sdk-core/v5 v5.17.5 // indirect
+	github.com/IBM/go-sdk-core/v5 v5.18.0 // indirect
 	github.com/IBM/ibm-cos-sdk-go v1.10.3 // indirect
 	github.com/IBM/ibm-hpcs-tke-sdk v0.0.0-20211109141421-a4b61b05f7d1 // indirect
 	github.com/IBM/ibm-hpcs-uko-sdk v0.0.20-beta // indirect
 	github.com/IBM/keyprotect-go-client v0.15.1 // indirect
 	github.com/IBM/networking-go-sdk v0.49.0 // indirect
-	github.com/IBM/platform-services-go-sdk v0.69.1 // indirect
+	github.com/IBM/platform-services-go-sdk v0.70.0 // indirect
 	github.com/IBM/push-notifications-go-sdk v0.0.0-20210310100607-5790b96c47f5 // indirect
 	github.com/IBM/schematics-go-sdk v0.3.0 // indirect
 	github.com/IBM/secrets-manager-go-sdk/v2 v2.0.7 // indirect
 	github.com/IBM/vpc-beta-go-sdk v0.8.0 // indirect
-	github.com/IBM/vpc-go-sdk v0.58.0 // indirect
+	github.com/IBM/vpc-go-sdk v0.61.0 // indirect
 	github.com/ScaleFT/sshkeys v0.0.0-20200327173127-6142f742bca5 // indirect
 	github.com/apache/openwhisk-client-go v0.0.0-20200201143223-a804fb82d105 // indirect
 	github.com/apparentlymart/go-cidr v1.1.0 // indirect
@@ -50,8 +49,8 @@ require (
 	github.com/openshift/api v0.0.0-20230329202819-04d4fb776982 // indirect
 	github.com/openshift/client-go v0.0.0-20230324103026-3f1513df25e0 // indirect
 	github.com/softlayer/softlayer-go v1.0.3 // indirect
-	go.mongodb.org/mongo-driver v1.16.0 // indirect
-	golang.org/x/crypto v0.25.0 // indirect
+	go.mongodb.org/mongo-driver v1.16.1 // indirect
+	golang.org/x/crypto v0.27.0 // indirect
 	k8s.io/api v0.26.3 // indirect
 	k8s.io/apimachinery v0.26.3 // indirect
 	k8s.io/client-go v0.26.1 // indirect
@@ -89,6 +88,7 @@ require (
 
 require (
 	github.com/IBM/configuration-aggregator-go-sdk v0.0.1 // indirect
+	github.com/IBM/continuous-delivery-go-sdk/v2 v2.0.2 // indirect
 	github.com/IBM/go-sdk-core v1.1.0 // indirect
 	github.com/IBM/go-sdk-core/v3 v3.2.4 // indirect
 	github.com/IBM/ibm-cos-sdk-go-config/v2 v2.1.0 // indirect
@@ -119,7 +119,7 @@ require (
 	github.com/emicklei/go-restful/v3 v3.10.0 // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/fatih/color v1.16.0 // indirect
-	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.5 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.3 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -134,7 +134,7 @@ require (
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.22.0 // indirect
+	github.com/go-playground/validator/v10 v10.22.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
@@ -207,17 +207,17 @@ require (
 	go.opentelemetry.io/otel v1.14.0 // indirect
 	go.opentelemetry.io/otel/trace v1.14.0 // indirect
 	go.uber.org/ratelimit v0.2.0 // indirect
-	golang.org/x/mod v0.17.0 // indirect
-	golang.org/x/net v0.27.0 // indirect
+	golang.org/x/mod v0.19.0 // indirect
+	golang.org/x/net v0.29.0 // indirect
 	golang.org/x/oauth2 v0.10.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
-	golang.org/x/term v0.22.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/sys v0.25.0 // indirect
+	golang.org/x/term v0.24.0 // indirect
+	golang.org/x/text v0.18.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230711160842-782d3b101e98 // indirect
 	google.golang.org/grpc v1.58.3 // indirect
-	google.golang.org/protobuf v1.33.0 // indirect
+	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
@@ -243,3 +243,5 @@ exclude (
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
 	k8s.io/client-go v12.0.0+incompatible
 )
+
+replace github.com/IBM-Cloud/terraform-provider-ibm => github.com/cjschaef/terraform-provider-ibm v1.71.1-fix

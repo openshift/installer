@@ -245,7 +245,7 @@ func ResourceIBMISInstanceVolumeAttachmentValidator() *validate.ResourceValidato
 			ValidateFunctionIdentifier: validate.IntBetween,
 			Type:                       validate.TypeInt,
 			MinValue:                   "10",
-			MaxValue:                   "16000"})
+			MaxValue:                   "64000"})
 
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
@@ -263,7 +263,7 @@ func ResourceIBMISInstanceVolumeAttachmentValidator() *validate.ResourceValidato
 			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
 			Type:                       validate.TypeString,
 			Optional:                   true,
-			AllowedValues:              "general-purpose, 5iops-tier, 10iops-tier, custom",
+			AllowedValues:              "general-purpose, 5iops-tier, 10iops-tier, custom, sdp",
 		})
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
@@ -367,7 +367,10 @@ func instanceVolAttachmentCreate(d *schema.ResourceData, meta interface{}, insta
 			if iops != 0 {
 				volProtoVol.Iops = &iops
 			}
-			volProfileStr := "custom"
+			volProfileStr := d.Get(isInstanceVolProfile).(string)
+			if volProfileStr == "" {
+				volProfileStr = "custom"
+			}
 			volProtoVol.Profile = &vpcv1.VolumeProfileIdentity{
 				Name: &volProfileStr,
 			}
@@ -595,8 +598,39 @@ func instanceVolAttUpdate(d *schema.ResourceData, meta interface{}) error {
 	if volIdOk, ok := d.GetOk(isInstanceVolAttVol); ok {
 		volId = volIdOk.(string)
 	}
-
-	if volId != "" && (d.HasChange(isInstanceVolIops) || d.HasChange(isInstanceVolProfile)) { // || d.HasChange(isInstanceVolAttTags)
+	volProfile := ""
+	if volProfileOk, ok := d.GetOk(isInstanceVolProfile); ok {
+		volProfile = volProfileOk.(string)
+	}
+	if volId != "" && d.HasChange(isInstanceVolIops) && !d.HasChange(isInstanceVolProfile) && volProfile == "sdp" { // || d.HasChange(isInstanceVolAttTags)
+		updateVolumeProfileOptions := &vpcv1.UpdateVolumeOptions{
+			ID: &volId,
+		}
+		volumeProfilePatchModel := &vpcv1.VolumePatch{}
+		if d.HasChange(isVolumeIops) {
+			iops := int64(d.Get(isVolumeIops).(int))
+			volumeProfilePatchModel.Iops = &iops
+		}
+		volumeProfilePatch, err := volumeProfilePatchModel.AsPatch()
+		if err != nil {
+			return fmt.Errorf("[ERROR] Error calling asPatch for volumeProfilePatch: %s", err)
+		}
+		optionsget := &vpcv1.GetVolumeOptions{
+			ID: &volId,
+		}
+		_, response, err := instanceC.GetVolume(optionsget)
+		if err != nil {
+			return fmt.Errorf("[ERROR] Error getting Boot Volume (%s): %s\n%s", id, err, response)
+		}
+		eTag := response.Headers.Get("ETag")
+		updateVolumeProfileOptions.IfMatch = &eTag
+		updateVolumeProfileOptions.VolumePatch = volumeProfilePatch
+		_, response, err = instanceC.UpdateVolume(updateVolumeProfileOptions)
+		if err != nil {
+			return fmt.Errorf("[ERROR] Error updating volume profile/iops/userTags: %s\n%s", err, response)
+		}
+		isWaitForVolumeAvailable(instanceC, volId, d.Timeout(schema.TimeoutCreate))
+	} else if volId != "" && (d.HasChange(isInstanceVolIops) || d.HasChange(isInstanceVolProfile)) { // || d.HasChange(isInstanceVolAttTags)
 		insId := d.Get(isInstanceId).(string)
 		getinsOptions := &vpcv1.GetInstanceOptions{
 			ID: &insId,
@@ -691,30 +725,31 @@ func instanceVolAttUpdate(d *schema.ResourceData, meta interface{}) error {
 		if err != nil {
 			return fmt.Errorf("[ERROR] Error Getting Volume (%s): %s\n%s", id, err, response)
 		}
-
-		if vol.VolumeAttachments == nil || len(vol.VolumeAttachments) == 0 || *vol.VolumeAttachments[0].Name == "" {
-			return fmt.Errorf("[ERROR] Error volume capacity can't be updated since volume %s is not attached to any instance for VolumePatch", id)
-		}
-
-		getinsOptions := &vpcv1.GetInstanceOptions{
-			ID: &instanceId,
-		}
-		instance, response, err := instanceC.GetInstance(getinsOptions)
-		if err != nil || instance == nil {
-			return fmt.Errorf("[ERROR] Error retrieving Instance (%s) : %s\n%s", instanceId, err, response)
-		}
-		if instance != nil && *instance.Status != "running" {
-			actiontype := "start"
-			createinsactoptions := &vpcv1.CreateInstanceActionOptions{
-				InstanceID: &instanceId,
-				Type:       &actiontype,
+		if *vol.Profile.Name != "sdp" {
+			if vol.VolumeAttachments == nil || len(vol.VolumeAttachments) == 0 || *vol.VolumeAttachments[0].Name == "" {
+				return fmt.Errorf("[ERROR] Error volume capacity can't be updated since volume %s is not attached to any instance for VolumePatch", id)
 			}
-			_, response, err = instanceC.CreateInstanceAction(createinsactoptions)
-			if err != nil {
+
+			getinsOptions := &vpcv1.GetInstanceOptions{
+				ID: &instanceId,
+			}
+			instance, response, err := instanceC.GetInstance(getinsOptions)
+			if err != nil || instance == nil {
+				return fmt.Errorf("[ERROR] Error retrieving Instance (%s) : %s\n%s", instanceId, err, response)
+			}
+			if instance != nil && *instance.Status != "running" {
+				actiontype := "start"
+				createinsactoptions := &vpcv1.CreateInstanceActionOptions{
+					InstanceID: &instanceId,
+					Type:       &actiontype,
+				}
+				_, response, err = instanceC.CreateInstanceAction(createinsactoptions)
+				if err != nil {
+					return fmt.Errorf("[ERROR] Error starting Instance (%s) : %s\n%s", instanceId, err, response)
+				}
+				_, err = isWaitForInstanceAvailable(instanceC, instanceId, d.Timeout(schema.TimeoutCreate), d)
 				return fmt.Errorf("[ERROR] Error starting Instance (%s) : %s\n%s", instanceId, err, response)
 			}
-			_, err = isWaitForInstanceAvailable(instanceC, instanceId, d.Timeout(schema.TimeoutCreate), d)
-			return fmt.Errorf("[ERROR] Error starting Instance (%s) : %s\n%s", instanceId, err, response)
 		}
 		capacity := int64(d.Get(isVolumeCapacity).(int))
 		updateVolumeOptions := &vpcv1.UpdateVolumeOptions{

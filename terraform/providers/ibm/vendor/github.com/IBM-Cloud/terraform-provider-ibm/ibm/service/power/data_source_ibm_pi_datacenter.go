@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"github.com/IBM-Cloud/power-go-client/clients/instance"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/hashicorp/go-uuid"
@@ -28,6 +29,115 @@ func DataSourceIBMPIDatacenter() *schema.Resource {
 			},
 
 			// Attributes
+			Attr_CapabilityDetails: {
+				Computed:    true,
+				Description: "Additional Datacenter Capability Details.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						Attr_DisasterRecovery: {
+							Computed:    true,
+							Description: "Disaster Recovery Information.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									Attr_AsynchronousReplication: {
+										Computed:    true,
+										Description: "Asynchronous Replication Target Information.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												Attr_Enabled: {
+													Computed:    true,
+													Description: "Service Enabled.",
+													Type:        schema.TypeBool,
+												},
+												Attr_TargetLocations: {
+													Computed:    true,
+													Description: "List of all replication targets.",
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															Attr_Region: {
+																Computed:    true,
+																Description: "regionZone of replication site.",
+																Type:        schema.TypeString,
+															},
+															Attr_Status: {
+																Computed:    true,
+																Description: "the replication site is active / down.",
+																Type:        schema.TypeString,
+															},
+														},
+													},
+													Type: schema.TypeList,
+												},
+											},
+										},
+										Type: schema.TypeList,
+									},
+									Attr_SynchronousReplication: {
+										Computed:    true,
+										Description: "Synchronous Replication Target Information.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												Attr_Enabled: {
+													Type:        schema.TypeBool,
+													Computed:    true,
+													Description: "Service Enabled.",
+												},
+												Attr_TargetLocations: {
+													Computed:    true,
+													Description: "List of all replication targets.",
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															Attr_Region: {
+																Computed:    true,
+																Description: "regionZone of replication site.",
+																Type:        schema.TypeString,
+															},
+															Attr_Status: {
+																Computed:    true,
+																Description: "the replication site is active / down.",
+																Type:        schema.TypeString,
+															},
+														},
+													},
+													Type: schema.TypeList,
+												},
+											},
+										},
+										Type: schema.TypeList,
+									},
+								},
+							},
+							Type: schema.TypeList,
+						},
+						Attr_SupportedSystems: {
+							Computed:    true,
+							Description: "Datacenter System Types Information.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									Attr_Dedicated: {
+										Computed:    true,
+										Description: "List of all available dedicated host types.",
+										Elem: &schema.Schema{
+											Type: schema.TypeString,
+										},
+										Type: schema.TypeList,
+									},
+									Attr_General: {
+										Computed:    true,
+										Description: "List of all available host types.",
+										Elem: &schema.Schema{
+											Type: schema.TypeString,
+										},
+										Type: schema.TypeList,
+									},
+								},
+							},
+							Type: schema.TypeList,
+						},
+					},
+				},
+				Type: schema.TypeList,
+			},
 			Attr_DatacenterCapabilities: {
 				Computed:    true,
 				Description: "Datacenter Capabilities.",
@@ -87,6 +197,58 @@ func dataSourceIBMPIDatacenterRead(ctx context.Context, d *schema.ResourceData, 
 	d.Set(Attr_DatacenterLocation, flex.Flatten(dclocation))
 	d.Set(Attr_DatacenterStatus, dcData.Status)
 	d.Set(Attr_DatacenterType, dcData.Type)
+	capabilityDetails := make([]map[string]interface{}, 0, 10)
+	if dcData.CapabilitiesDetails != nil {
+		capabilityDetailsMap, err := capabilityDetailsToMap(dcData.CapabilitiesDetails)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		capabilityDetails = append(capabilityDetails, capabilityDetailsMap)
+	}
+	d.Set(Attr_CapabilityDetails, capabilityDetails)
 
 	return nil
+}
+
+func capabilityDetailsToMap(cd *models.CapabilitiesDetails) (map[string]interface{}, error) {
+	capabilityDetailsMap := make(map[string]interface{})
+	disasterRecoveryMap := disasterRecoveryToMap(cd.DisasterRecovery)
+	capabilityDetailsMap[Attr_DisasterRecovery] = []map[string]interface{}{disasterRecoveryMap}
+
+	supportedSystemsMap := make(map[string]interface{})
+	supportedSystemsMap[Attr_Dedicated] = cd.SupportedSystems.Dedicated
+	supportedSystemsMap[Attr_General] = cd.SupportedSystems.General
+	capabilityDetailsMap[Attr_SupportedSystems] = []map[string]interface{}{supportedSystemsMap}
+	return capabilityDetailsMap, nil
+}
+
+func disasterRecoveryToMap(dr *models.DisasterRecovery) map[string]interface{} {
+	disasterRecoveryMap := make(map[string]interface{})
+	asynchronousReplicationMap := replicationServiceToMap(dr.AsynchronousReplication)
+	disasterRecoveryMap[Attr_AsynchronousReplication] = []map[string]interface{}{asynchronousReplicationMap}
+	if dr.SynchronousReplication != nil {
+		synchronousReplicationMap := replicationServiceToMap(dr.SynchronousReplication)
+		disasterRecoveryMap[Attr_SynchronousReplication] = []map[string]interface{}{synchronousReplicationMap}
+	}
+
+	return disasterRecoveryMap
+}
+
+func replicationServiceToMap(rs *models.ReplicationService) map[string]interface{} {
+	replicationMap := make(map[string]interface{})
+	replicationMap[Attr_Enabled] = rs.Enabled
+	targetLocations := []map[string]interface{}{}
+	for _, targetLocationsItem := range rs.TargetLocations {
+
+		targetLocationsItemMap := make(map[string]interface{})
+		if targetLocationsItem.Region != "" {
+			targetLocationsItemMap[Attr_Region] = targetLocationsItem.Region
+		}
+		if targetLocationsItem.Status != "" {
+			targetLocationsItemMap[Attr_Status] = targetLocationsItem.Status
+		}
+		targetLocations = append(targetLocations, targetLocationsItemMap)
+	}
+	replicationMap[Attr_TargetLocations] = targetLocations
+	return replicationMap
 }

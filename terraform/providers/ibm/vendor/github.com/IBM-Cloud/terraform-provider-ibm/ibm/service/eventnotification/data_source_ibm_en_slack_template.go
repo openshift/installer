@@ -42,7 +42,7 @@ func DataSourceIBMEnSlackTemplate() *schema.Resource {
 			"type": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Template type smtp_custom.notification/smtp_custom.invitation.",
+				Description: "Template type slack.notification.",
 			},
 			"updated_at": {
 				Type:        schema.TypeString,

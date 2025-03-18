@@ -5,7 +5,6 @@ package kms
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/url"
 	"strconv"
@@ -305,18 +304,18 @@ func resourceUpdatePolicies(context context.Context, d *schema.ResourceData, kpA
 			if rotationEnable {
 				_, err := kpAPI.EnableRotationPolicy(context, key_id)
 				if err != nil {
-					return fmt.Errorf("[ERROR] Error while enabling key rotation policies: %s", err)
+					return flex.FmtErrorf("[ERROR] Error while enabling key rotation policies: %s", err)
 				}
 			} else if !rotationEnable {
 				_, err := kpAPI.DisableRotationPolicy(context, key_id)
 				if err != nil {
-					return fmt.Errorf("[ERROR] Error while disabling key rotation policies: %s", err)
+					return flex.FmtErrorf("[ERROR] Error while disabling key rotation policies: %s", err)
 				}
 			}
 		} else {
 			_, err := kpAPI.SetRotationPolicy(context, key_id, rotationInterval, rotationEnable)
 			if err != nil {
-				return fmt.Errorf("[ERROR] Error while disabling key rotation policies: %s", err)
+				return flex.FmtErrorf("[ERROR] Error while disabling key rotation policies: %s", err)
 			}
 		}
 	}
@@ -324,7 +323,7 @@ func resourceUpdatePolicies(context context.Context, d *schema.ResourceData, kpA
 		dualAuthEnable = *policy.DualAuth.Enabled
 		_, err := kpAPI.SetDualAuthDeletePolicy(context, key_id, dualAuthEnable)
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error while setting dual_auth_delete policies: %s", err)
+			return flex.FmtErrorf("[ERROR] Error while setting dual_auth_delete policies: %s", err)
 		}
 	}
 	return nil
@@ -347,7 +346,7 @@ func resourceHandlePolicies(context context.Context, d *schema.ResourceData, kpA
 	}
 	_, err := kpAPI.SetPolicies(context, key_id, setRotation, rotationInterval, setDualAuthDelete, dualAuthEnable, rotationEnable)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error while creating policies: %s", err)
+		return flex.FmtErrorf("[ERROR] Error while creating policies: %s", err)
 	}
 	return nil
 }

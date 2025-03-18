@@ -2,7 +2,7 @@
 // Licensed under the Mozilla Public License v2.0
 
 /*
- * IBM OpenAPI Terraform Generator Version: 3.94.1-71478489-20240820-161623
+ * IBM OpenAPI Terraform Generator Version: 3.96.0-d6dec9d7-20241008-212902
  */
 
 package partnercentersell
@@ -141,6 +141,11 @@ func ResourceIbmOnboardingProduct() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The ID of the approval workflow of your product.",
+			},
+			"iam_registration_id": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "IAM registration identifier.",
 			},
 		},
 	}
@@ -313,6 +318,12 @@ func resourceIbmOnboardingProductRead(context context.Context, d *schema.Resourc
 		if err = d.Set("approver_resource_id", onboardingProduct.ApproverResourceID); err != nil {
 			err = fmt.Errorf("Error setting approver_resource_id: %s", err)
 			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_onboarding_product", "read", "set-approver_resource_id").GetDiag()
+		}
+	}
+	if !core.IsNil(onboardingProduct.IamRegistrationID) {
+		if err = d.Set("iam_registration_id", onboardingProduct.IamRegistrationID); err != nil {
+			err = fmt.Errorf("Error setting iam_registration_id: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_onboarding_product", "read", "set-iam_registration_id").GetDiag()
 		}
 	}
 

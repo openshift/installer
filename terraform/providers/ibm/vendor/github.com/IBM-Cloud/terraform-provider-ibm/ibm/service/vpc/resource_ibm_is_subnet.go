@@ -42,6 +42,7 @@ const (
 	isSubnetDeleting         = "deleting"
 	isSubnetDeleted          = "done"
 	isSubnetRoutingTableID   = "routing_table"
+	isSubnetRoutingTableCrn  = "routing_table_crn"
 	isSubnetInUse            = "resources_attached"
 	isSubnetAccessTags       = "access_tags"
 	isUserTagType            = "user"
@@ -183,13 +184,21 @@ func ResourceIBMISSubnet() *schema.Resource {
 				Description: "The resource group for this subnet",
 			},
 			isSubnetRoutingTableID: {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    false,
-				Computed:    true,
-				Description: "routing table id that is associated with the subnet",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      true,
+				ConflictsWith: []string{isSubnetRoutingTableCrn},
+				Computed:      true,
+				Description:   "routing table id that is associated with the subnet",
 			},
-
+			isSubnetRoutingTableCrn: {
+				Type:          schema.TypeString,
+				Computed:      true,
+				ForceNew:      true,
+				Optional:      true,
+				ConflictsWith: []string{isSubnetRoutingTableID},
+				Description:   "routing table crn that is associated with the subnet.",
+			},
 			flex.ResourceControllerURL: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -309,7 +318,12 @@ func resourceIBMISSubnetCreate(d *schema.ResourceData, meta interface{}) error {
 		rtID = rt.(string)
 	}
 
-	err := subnetCreate(d, meta, name, vpc, zone, ipv4cidr, acl, gw, rtID, ipv4addrcount64)
+	rtCrn := ""
+	if rtcrn, ok := d.GetOk(isSubnetRoutingTableCrn); ok {
+		rtCrn = rtcrn.(string)
+	}
+
+	err := subnetCreate(d, meta, name, vpc, zone, ipv4cidr, acl, gw, rtID, rtCrn, ipv4addrcount64)
 	if err != nil {
 		return err
 	}
@@ -317,7 +331,7 @@ func resourceIBMISSubnetCreate(d *schema.ResourceData, meta interface{}) error {
 	return resourceIBMISSubnetRead(d, meta)
 }
 
-func subnetCreate(d *schema.ResourceData, meta interface{}, name, vpc, zone, ipv4cidr, acl, gw, rtID string, ipv4addrcount64 int64) error {
+func subnetCreate(d *schema.ResourceData, meta interface{}, name, vpc, zone, ipv4cidr, acl, gw, rtID, rtCrn string, ipv4addrcount64 int64) error {
 
 	sess, err := vpcClient(meta)
 	if err != nil {
@@ -355,6 +369,12 @@ func subnetCreate(d *schema.ResourceData, meta interface{}, name, vpc, zone, ipv
 			ID: &rt,
 		}
 	}
+	if rtCrn != "" {
+		subnetTemplate.RoutingTable = &vpcv1.RoutingTableIdentity{
+			CRN: &rtCrn,
+		}
+	}
+
 	rg := ""
 	if grp, ok := d.GetOk(isSubnetResourceGroup); ok {
 		rg = grp.(string)
@@ -474,8 +494,10 @@ func subnetGet(d *schema.ResourceData, meta interface{}, id string) error {
 	}
 	if subnet.RoutingTable != nil {
 		d.Set(isSubnetRoutingTableID, *subnet.RoutingTable.ID)
+		d.Set(isSubnetRoutingTableCrn, *subnet.RoutingTable.CRN)
 	} else {
 		d.Set(isSubnetRoutingTableID, nil)
+		d.Set(isSubnetRoutingTableCrn, nil)
 	}
 	d.Set(isSubnetStatus, *subnet.Status)
 	d.Set(isSubnetZone, *subnet.Zone.Name)
@@ -612,6 +634,14 @@ func subnetUpdate(d *schema.ResourceData, meta interface{}, id string) error {
 			log.Printf("SetSubnetRoutingTableBinding eroor: %s", err)
 			return err
 		}*/
+	}
+	if d.HasChange(isSubnetRoutingTableCrn) {
+		hasChanged = true
+		rtCrn := d.Get(isSubnetRoutingTableCrn).(string)
+		// Construct an instance of the RoutingTableIdentityByCRN model
+		routingTableIdentityModel := new(vpcv1.RoutingTableIdentityByCRN)
+		routingTableIdentityModel.CRN = &rtCrn
+		subnetPatchModel.RoutingTable = routingTableIdentityModel
 	}
 	if hasChanged {
 		subnetPatch, err := subnetPatchModel.AsPatch()

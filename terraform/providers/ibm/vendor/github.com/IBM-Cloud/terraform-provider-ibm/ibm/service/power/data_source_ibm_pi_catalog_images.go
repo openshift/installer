@@ -59,6 +59,11 @@ func DataSourceIBMPICatalogImages() *schema.Resource {
 							Description: "Date of image creation",
 							Type:        schema.TypeString,
 						},
+						Attr_CRN: {
+							Computed:    true,
+							Description: "CRN of this resource.",
+							Type:        schema.TypeString,
+						},
 						Attr_Description: {
 							Computed:    true,
 							Description: "The description of an image.",
@@ -158,6 +163,9 @@ func dataSourceIBMPICatalogImagesRead(ctx context.Context, d *schema.ResourceDat
 		}
 		if i.CreationDate != nil {
 			image[Attr_CreationDate] = i.CreationDate.String()
+		}
+		if i.Crn != "" {
+			image[Attr_CRN] = i.Crn
 		}
 		if i.Href != nil {
 			image[Attr_Href] = *i.Href

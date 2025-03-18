@@ -1202,17 +1202,19 @@ func ResourceIBMISInstance() *schema.Resource {
 							Computed:         true,
 						},
 						isInstanceBootSize: {
-							Type:         schema.TypeInt,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validate.InvokeValidator("ibm_is_instance", isInstanceBootSize),
+							Type:     schema.TypeInt,
+							Optional: true,
+							Computed: true,
+							// ValidateFunc: validate.InvokeValidator("ibm_is_instance", isInstanceBootSize),
 						},
 						isInstanceBootIOPS: {
 							Type:     schema.TypeInt,
 							Computed: true,
+							Optional: true,
 						},
 						isInstanceBootProfile: {
 							Type:     schema.TypeString,
+							Optional: true,
 							Computed: true,
 						},
 						isInstanceBootVolumeTags: {
@@ -1765,7 +1767,7 @@ func ResourceIBMISInstanceValidator() *validate.ResourceValidator {
 	return &ibmISInstanceValidator
 }
 
-func instanceCreateByImage(d *schema.ResourceData, meta interface{}, profile, name, vpcID, zone, image string) error {
+func instanceCreateByImage(d *schema.ResourceData, meta interface{}, profile, name, vpcID, zone, image, bootProfile string) error {
 	sess, err := vpcClient(meta)
 	if err != nil {
 		return err
@@ -1854,6 +1856,12 @@ func instanceCreateByImage(d *schema.ResourceData, meta interface{}, profile, na
 			sizeInt64 := int64(size)
 			volTemplate.Capacity = &sizeInt64
 		}
+		iopsOk, ok := bootvol[isInstanceBootIOPS]
+		iops := iopsOk.(int)
+		if iops != 0 && ok {
+			iopsInt64 := int64(iops)
+			volTemplate.Iops = &iopsInt64
+		}
 		enc, ok := bootvol[isInstanceBootEncryption]
 		encstr := enc.(string)
 		if ok && encstr != "" {
@@ -1861,10 +1869,11 @@ func instanceCreateByImage(d *schema.ResourceData, meta interface{}, profile, na
 				CRN: &encstr,
 			}
 		}
-
-		volprof := "general-purpose"
+		if bootProfile == "" {
+			bootProfile = "general-purpose"
+		}
 		volTemplate.Profile = &vpcv1.VolumeProfileIdentity{
-			Name: &volprof,
+			Name: &bootProfile,
 		}
 		var userTags *schema.Set
 		if v, ok := bootvol[isInstanceBootVolumeTags]; ok {
@@ -2315,6 +2324,12 @@ func instanceCreateByCatalogOffering(d *schema.ResourceData, meta interface{}, p
 			sizeInt64 := int64(size)
 			volTemplate.Capacity = &sizeInt64
 		}
+		iopsOk, ok := bootvol[isInstanceBootIOPS]
+		iops := iopsOk.(int)
+		if iops != 0 && ok {
+			iopsInt64 := int64(iops)
+			volTemplate.Iops = &iopsInt64
+		}
 		enc, ok := bootvol[isInstanceBootEncryption]
 		encstr := enc.(string)
 		if ok && encstr != "" {
@@ -2734,6 +2749,12 @@ func instanceCreateByTemplate(d *schema.ResourceData, meta interface{}, profile,
 			sizeInt64 := int64(size)
 			volTemplate.Capacity = &sizeInt64
 		}
+		iopsOk, ok := bootvol[isInstanceBootIOPS]
+		iops := iopsOk.(int)
+		if iops != 0 && ok {
+			iopsInt64 := int64(iops)
+			volTemplate.Iops = &iopsInt64
+		}
 		enc, ok := bootvol[isInstanceBootEncryption]
 		encstr := enc.(string)
 		if ok && encstr != "" {
@@ -3151,6 +3172,12 @@ func instanceCreateBySnapshot(d *schema.ResourceData, meta interface{}, profile,
 		if size != 0 && ok {
 			sizeInt64 := int64(size)
 			volTemplate.Capacity = &sizeInt64
+		}
+		iopsOk, ok := bootvol[isInstanceBootIOPS]
+		iops := iopsOk.(int)
+		if iops != 0 && ok {
+			iopsInt64 := int64(iops)
+			volTemplate.Iops = &iopsInt64
 		}
 		enc, ok := bootvol[isInstanceBootEncryption]
 		encstr := enc.(string)
@@ -3923,6 +3950,7 @@ func resourceIBMisInstanceCreate(d *schema.ResourceData, meta interface{}) error
 	zone := d.Get(isInstanceZone).(string)
 	image := d.Get(isInstanceImage).(string)
 	snapshot := d.Get("boot_volume.0.snapshot").(string)
+	bootProfile := d.Get("boot_volume.0.profile").(string)
 	snapshotcrn := d.Get("boot_volume.0.snapshot_crn").(string)
 	volume := d.Get("boot_volume.0.volume_id").(string)
 	template := d.Get(isInstanceSourceTemplate).(string)
@@ -3952,7 +3980,7 @@ func resourceIBMisInstanceCreate(d *schema.ResourceData, meta interface{}) error
 			return err
 		}
 	} else {
-		err := instanceCreateByImage(d, meta, profile, name, vpcID, zone, image)
+		err := instanceCreateByImage(d, meta, profile, name, vpcID, zone, image, bootProfile)
 		if err != nil {
 			return err
 		}
@@ -5116,6 +5144,7 @@ func instanceUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	bootVolSize := "boot_volume.0.size"
+	bootIopsSize := "boot_volume.0.iops"
 
 	if d.HasChange(bootVolSize) && !d.IsNewResource() {
 		old, new := d.GetChange(bootVolSize)
@@ -5142,6 +5171,36 @@ func instanceUpdate(d *schema.ResourceData, meta interface{}) error {
 
 		if vol == nil || err != nil {
 			return (fmt.Errorf("[ERROR] Error encountered while expanding boot volume of instance %s/n%s", err, res))
+		}
+
+		_, err = isWaitForVolumeAvailable(instanceC, volId, d.Timeout(schema.TimeoutUpdate))
+		if err != nil {
+			return err
+		}
+	}
+	if d.HasChange(bootIopsSize) && !d.IsNewResource() {
+		_, new := d.GetChange(bootIopsSize)
+
+		bootVolIops := int64(new.(int))
+		volId := d.Get("boot_volume.0.volume_id").(string)
+		updateVolumeOptions := &vpcv1.UpdateVolumeOptions{
+			ID: &volId,
+		}
+		volPatchModel := &vpcv1.VolumePatch{
+			Iops: &bootVolIops,
+		}
+		volPatchModelAsPatch, err := volPatchModel.AsPatch()
+
+		if err != nil {
+			return (fmt.Errorf("[ERROR] Error encountered while apply as patch for boot iops of instance %s", err))
+		}
+
+		updateVolumeOptions.VolumePatch = volPatchModelAsPatch
+
+		vol, res, err := instanceC.UpdateVolume(updateVolumeOptions)
+
+		if vol == nil || err != nil {
+			return (fmt.Errorf("[ERROR] Error encountered while expanding boot iops of instance %s/n%s", err, res))
 		}
 
 		_, err = isWaitForVolumeAvailable(instanceC, volId, d.Timeout(schema.TimeoutUpdate))

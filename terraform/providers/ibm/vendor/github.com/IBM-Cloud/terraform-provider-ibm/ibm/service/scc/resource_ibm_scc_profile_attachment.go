@@ -267,6 +267,7 @@ func attachmentParametersSchemaSetFunc(keys ...string) schema.SchemaSetFunc {
 				}
 			}
 		}
+		log.Printf("[DEBUG] attachmentParameterSchemaSet value %s\n", str.String())
 
 		return stringHashcode(str.String())
 	}
@@ -274,6 +275,7 @@ func attachmentParametersSchemaSetFunc(keys ...string) schema.SchemaSetFunc {
 
 func stringHashcode(s string) int {
 	v := int(crc32.ChecksumIEEE([]byte(s)))
+	log.Printf("[DEBUG] attachmentParameterSchemaSet value %d\n", v)
 	if v >= 0 {
 		return v
 	}
@@ -606,6 +608,18 @@ func resourceIbmSccProfileAttachmentUpdate(context context.Context, d *schema.Re
 				return diag.FromErr(err)
 			}
 			replaceProfileAttachmentOptions.SetNotifications(updateNotifications)
+		}
+		if replaceProfileAttachmentOptions.AttachmentParameters == nil || d.Get("attachment_parameters") != nil {
+			attachmentItems := d.Get("attachment_parameters")
+			attachmentParameters := []securityandcompliancecenterapiv3.AttachmentParameterPrototype{}
+			for _, attachmentParametersItem := range attachmentItems.(*schema.Set).List() {
+				attachmentParametersItemModel, err := resourceIbmSccProfileAttachmentMapToAttachmentParameterPrototype(attachmentParametersItem.(map[string]interface{}))
+				if err != nil {
+					return diag.FromErr(err)
+				}
+				attachmentParameters = append(attachmentParameters, *attachmentParametersItemModel)
+			}
+			replaceProfileAttachmentOptions.SetAttachmentParameters(attachmentParameters)
 		}
 		if replaceProfileAttachmentOptions.Status == nil {
 			replaceProfileAttachmentOptions.SetSchedule(d.Get("status").(string))

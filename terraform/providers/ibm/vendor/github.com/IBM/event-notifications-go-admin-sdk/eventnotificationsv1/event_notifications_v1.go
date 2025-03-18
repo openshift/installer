@@ -3659,7 +3659,6 @@ type CreateDestinationOptions struct {
 // The type of Destination Webhook.
 const (
 	CreateDestinationOptionsTypeIbmceConst       = "ibmce"
-	CreateDestinationOptionsTypeIbmcfConst       = "ibmcf"
 	CreateDestinationOptionsTypeIbmcosConst      = "ibmcos"
 	CreateDestinationOptionsTypeMsteamsConst     = "msteams"
 	CreateDestinationOptionsTypePagerdutyConst   = "pagerduty"
@@ -4656,7 +4655,7 @@ type Destination struct {
 	Description *string `json:"description" validate:"required"`
 
 	// Destination type
-	// Email/SMS/Webhook/FCM/Slack/MSTeams/PagerDuty/IBMCloudFunctions/IBMCodeEngine/ServiceNow/IBMCloudObjectStorage/Huawei.
+	// Email/SMS/Webhook/FCM/Slack/MSTeams/PagerDuty/IBMCodeEngine/ServiceNow/IBMCloudObjectStorage/Huawei.
 	Type *string `json:"type" validate:"required"`
 
 	// Whether to collect the failed event in Cloud Object Storage bucket.
@@ -4676,11 +4675,9 @@ type Destination struct {
 }
 
 // Constants associated with the Destination.Type property.
-// Destination type
-// Email/SMS/Webhook/FCM/Slack/MSTeams/PagerDuty/IBMCloudFunctions/IBMCodeEngine/ServiceNow/IBMCloudObjectStorage/Huawei.
+// Destination type Email/SMS/Webhook/FCM/Slack/MSTeams/PagerDuty/IBMCodeEngine/ServiceNow/IBMCloudObjectStorage/Huawei.
 const (
 	DestinationTypeIbmceConst       = "ibmce"
-	DestinationTypeIbmcfConst       = "ibmcf"
 	DestinationTypeIbmcosConst      = "ibmcos"
 	DestinationTypeMsteamsConst     = "msteams"
 	DestinationTypePagerdutyConst   = "pagerduty"
@@ -4778,7 +4775,6 @@ func UnmarshalDestinationConfig(m map[string]json.RawMessage, result interface{}
 // - DestinationConfigOneOfSlackDirectMessageDestinationConfig
 // - DestinationConfigOneOfSafariDestinationConfig
 // - DestinationConfigOneOfMsTeamsDestinationConfig
-// - DestinationConfigOneOfIBMCloudFunctionsDestinationConfig
 // - DestinationConfigOneOfPagerDutyDestinationConfig
 // - DestinationConfigOneOfServiceNowDestinationConfig
 // - DestinationConfigOneOfIBMCloudObjectStorageDestinationConfig
@@ -5182,7 +5178,6 @@ type DestinationListItem struct {
 // Destination type.
 const (
 	DestinationListItemTypeIbmceConst       = "ibmce"
-	DestinationListItemTypeIbmcfConst       = "ibmcf"
 	DestinationListItemTypeIbmcosConst      = "ibmcos"
 	DestinationListItemTypeMsteamsConst     = "msteams"
 	DestinationListItemTypePagerdutyConst   = "pagerduty"
@@ -5266,7 +5261,6 @@ type DestinationResponse struct {
 // Destination type.
 const (
 	DestinationResponseTypeIbmceConst       = "ibmce"
-	DestinationResponseTypeIbmcfConst       = "ibmcf"
 	DestinationResponseTypeIbmcosConst      = "ibmcos"
 	DestinationResponseTypeMsteamsConst     = "msteams"
 	DestinationResponseTypePagerdutyConst   = "pagerduty"
@@ -8589,7 +8583,6 @@ type Subscription struct {
 // The type of destination.
 const (
 	SubscriptionDestinationTypeIbmceConst       = "ibmce"
-	SubscriptionDestinationTypeIbmcfConst       = "ibmcf"
 	SubscriptionDestinationTypeIbmcosConst      = "ibmcos"
 	SubscriptionDestinationTypeMsteamsConst     = "msteams"
 	SubscriptionDestinationTypePagerdutyConst   = "pagerduty"
@@ -9225,7 +9218,6 @@ type SubscriptionListItem struct {
 // The type of destination.
 const (
 	SubscriptionListItemDestinationTypeIbmceConst       = "ibmce"
-	SubscriptionListItemDestinationTypeIbmcfConst       = "ibmcf"
 	SubscriptionListItemDestinationTypeIbmcosConst      = "ibmcos"
 	SubscriptionListItemDestinationTypeMsteamsConst     = "msteams"
 	SubscriptionListItemDestinationTypePagerdutyConst   = "pagerduty"
@@ -9603,8 +9595,9 @@ func UnmarshalTemplate(m map[string]json.RawMessage, result interface{}) (err er
 // Models which "extend" this model:
 // - TemplateConfigOneOfEmailTemplateConfig
 // - TemplateConfigOneOfSlackTemplateConfig
+// - TemplateConfigOneOfWebhookTemplateConfig
 type TemplateConfigOneOf struct {
-	// Template body.
+	// Template body(Base64 encoded).
 	Body *string `json:"body,omitempty"`
 
 	// The template subject.
@@ -10996,44 +10989,6 @@ func UnmarshalDestinationConfigOneOfHuaweiDestinationConfig(m map[string]json.Ra
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pre_prod", &obj.PreProd)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// DestinationConfigOneOfIBMCloudFunctionsDestinationConfig : Payload describing an IBM Cloud Functions destination configuration.
-// This model "extends" DestinationConfigOneOf
-type DestinationConfigOneOfIBMCloudFunctionsDestinationConfig struct {
-	// URL of IBM Cloud Functions Trigger EndPoint.
-	URL *string `json:"url" validate:"required"`
-
-	// API Key with access of IBM Cloud Functions IAM Namespace.
-	APIKey *string `json:"api_key,omitempty"`
-}
-
-// NewDestinationConfigOneOfIBMCloudFunctionsDestinationConfig : Instantiate DestinationConfigOneOfIBMCloudFunctionsDestinationConfig (Generic Model Constructor)
-func (*EventNotificationsV1) NewDestinationConfigOneOfIBMCloudFunctionsDestinationConfig(url string) (_model *DestinationConfigOneOfIBMCloudFunctionsDestinationConfig, err error) {
-	_model = &DestinationConfigOneOfIBMCloudFunctionsDestinationConfig{
-		URL: core.StringPtr(url),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
-}
-
-func (*DestinationConfigOneOfIBMCloudFunctionsDestinationConfig) isaDestinationConfigOneOf() bool {
-	return true
-}
-
-// UnmarshalDestinationConfigOneOfIBMCloudFunctionsDestinationConfig unmarshals an instance of DestinationConfigOneOfIBMCloudFunctionsDestinationConfig from the specified map of raw messages.
-func UnmarshalDestinationConfigOneOfIBMCloudFunctionsDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(DestinationConfigOneOfIBMCloudFunctionsDestinationConfig)
-	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "api_key", &obj.APIKey)
 	if err != nil {
 		return
 	}
@@ -12701,16 +12656,10 @@ func UnmarshalSubscriptionCreateAttributesSlackDirectMessageAttributes(m map[str
 // This model "extends" SubscriptionCreateAttributes
 type SubscriptionCreateAttributesWebhookAttributes struct {
 	// Signing webhook attributes.
-	SigningEnabled *bool `json:"signing_enabled" validate:"required"`
-}
+	SigningEnabled *bool `json:"signing_enabled,omitempty"`
 
-// NewSubscriptionCreateAttributesWebhookAttributes : Instantiate SubscriptionCreateAttributesWebhookAttributes (Generic Model Constructor)
-func (*EventNotificationsV1) NewSubscriptionCreateAttributesWebhookAttributes(signingEnabled bool) (_model *SubscriptionCreateAttributesWebhookAttributes, err error) {
-	_model = &SubscriptionCreateAttributesWebhookAttributes{
-		SigningEnabled: core.BoolPtr(signingEnabled),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
+	// ID of Base64 converted JSON webhook Blocks w/o Handlebars.
+	TemplateIDNotification *string `json:"template_id_notification,omitempty"`
 }
 
 func (*SubscriptionCreateAttributesWebhookAttributes) isaSubscriptionCreateAttributes() bool {
@@ -12721,6 +12670,10 @@ func (*SubscriptionCreateAttributesWebhookAttributes) isaSubscriptionCreateAttri
 func UnmarshalSubscriptionCreateAttributesWebhookAttributes(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(SubscriptionCreateAttributesWebhookAttributes)
 	err = core.UnmarshalPrimitive(m, "signing_enabled", &obj.SigningEnabled)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "template_id_notification", &obj.TemplateIDNotification)
 	if err != nil {
 		return
 	}
@@ -13065,16 +13018,10 @@ func UnmarshalSubscriptionUpdateAttributesSlackDirectMessageUpdateAttributes(m m
 // This model "extends" SubscriptionUpdateAttributes
 type SubscriptionUpdateAttributesWebhookAttributes struct {
 	// Signing webhook attributes.
-	SigningEnabled *bool `json:"signing_enabled" validate:"required"`
-}
+	SigningEnabled *bool `json:"signing_enabled,omitempty"`
 
-// NewSubscriptionUpdateAttributesWebhookAttributes : Instantiate SubscriptionUpdateAttributesWebhookAttributes (Generic Model Constructor)
-func (*EventNotificationsV1) NewSubscriptionUpdateAttributesWebhookAttributes(signingEnabled bool) (_model *SubscriptionUpdateAttributesWebhookAttributes, err error) {
-	_model = &SubscriptionUpdateAttributesWebhookAttributes{
-		SigningEnabled: core.BoolPtr(signingEnabled),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
+	// ID of Base64 converted JSON webhook Blocks w/o Handlebars.
+	TemplateIDNotification *string `json:"template_id_notification,omitempty"`
 }
 
 func (*SubscriptionUpdateAttributesWebhookAttributes) isaSubscriptionUpdateAttributes() bool {
@@ -13088,6 +13035,10 @@ func UnmarshalSubscriptionUpdateAttributesWebhookAttributes(m map[string]json.Ra
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "template_id_notification", &obj.TemplateIDNotification)
+	if err != nil {
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
@@ -13095,7 +13046,7 @@ func UnmarshalSubscriptionUpdateAttributesWebhookAttributes(m map[string]json.Ra
 // TemplateConfigOneOfEmailTemplateConfig : Payload describing an email template configuration.
 // This model "extends" TemplateConfigOneOf
 type TemplateConfigOneOfEmailTemplateConfig struct {
-	// Template body.
+	// Template body(Base64 encoded).
 	Body *string `json:"body" validate:"required"`
 
 	// The template subject.
@@ -13133,7 +13084,7 @@ func UnmarshalTemplateConfigOneOfEmailTemplateConfig(m map[string]json.RawMessag
 // TemplateConfigOneOfSlackTemplateConfig : Payload describing a slack template configuration.
 // This model "extends" TemplateConfigOneOf
 type TemplateConfigOneOfSlackTemplateConfig struct {
-	// Template body.
+	// Template body(Base64 encoded).
 	Body *string `json:"body" validate:"required"`
 }
 
@@ -13153,6 +13104,37 @@ func (*TemplateConfigOneOfSlackTemplateConfig) isaTemplateConfigOneOf() bool {
 // UnmarshalTemplateConfigOneOfSlackTemplateConfig unmarshals an instance of TemplateConfigOneOfSlackTemplateConfig from the specified map of raw messages.
 func UnmarshalTemplateConfigOneOfSlackTemplateConfig(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(TemplateConfigOneOfSlackTemplateConfig)
+	err = core.UnmarshalPrimitive(m, "body", &obj.Body)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// TemplateConfigOneOfWebhookTemplateConfig : Payload describing a webhook template configuration.
+// This model "extends" TemplateConfigOneOf
+type TemplateConfigOneOfWebhookTemplateConfig struct {
+	// Template body(Base64 encoded).
+	Body *string `json:"body" validate:"required"`
+}
+
+// NewTemplateConfigOneOfWebhookTemplateConfig : Instantiate TemplateConfigOneOfWebhookTemplateConfig (Generic Model Constructor)
+func (*EventNotificationsV1) NewTemplateConfigOneOfWebhookTemplateConfig(body string) (_model *TemplateConfigOneOfWebhookTemplateConfig, err error) {
+	_model = &TemplateConfigOneOfWebhookTemplateConfig{
+		Body: core.StringPtr(body),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+func (*TemplateConfigOneOfWebhookTemplateConfig) isaTemplateConfigOneOf() bool {
+	return true
+}
+
+// UnmarshalTemplateConfigOneOfWebhookTemplateConfig unmarshals an instance of TemplateConfigOneOfWebhookTemplateConfig from the specified map of raw messages.
+func UnmarshalTemplateConfigOneOfWebhookTemplateConfig(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TemplateConfigOneOfWebhookTemplateConfig)
 	err = core.UnmarshalPrimitive(m, "body", &obj.Body)
 	if err != nil {
 		return

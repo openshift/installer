@@ -82,10 +82,6 @@ func dataSourceIBMIsVirtualNetworkInterfaceFloatingIPRead(context context.Contex
 
 	floatingIP, response, err := sess.GetNetworkInterfaceFloatingIPWithContext(context, getNetworkInterfaceFloatingIPOptions)
 	if err != nil {
-		if response != nil && response.StatusCode == 404 {
-			d.SetId("")
-			return nil
-		}
 		log.Printf("[DEBUG] GetVirtualNetworkInterfaceFloatingIPWithContext failed %s\n%s", err, response)
 		return diag.FromErr(fmt.Errorf("GetVirtualNetworkInterfaceFloatingIPWithContext failed %s\n%s", err, response))
 	}

@@ -5,8 +5,8 @@ package kms
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -114,13 +114,13 @@ func dataSourceIBMKmsKMIPClientCertRead(d *schema.ResourceData, meta interface{}
 	ctx := context.Background()
 	adapter, err := kpAPI.GetKMIPAdapter(ctx, adapterNameOrID)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error while retriving KMIP adapter to get certificate: %s", err)
+		return flex.FmtErrorf("[ERROR] Error while retriving KMIP adapter to get certificate: %s", err)
 	}
 	if err = d.Set("adapter_id", adapter.ID); err != nil {
-		return fmt.Errorf("[ERROR] Error setting adapter_id: %s", err)
+		return flex.FmtErrorf("[ERROR] Error setting adapter_id: %s", err)
 	}
 	if err = d.Set("adapter_name", adapter.Name); err != nil {
-		return fmt.Errorf("[ERROR] Error setting adapter_name: %s", err)
+		return flex.FmtErrorf("[ERROR] Error setting adapter_name: %s", err)
 	}
 
 	cert, err := kpAPI.GetKMIPClientCertificate(ctx, adapterNameOrID, certNameOrID)

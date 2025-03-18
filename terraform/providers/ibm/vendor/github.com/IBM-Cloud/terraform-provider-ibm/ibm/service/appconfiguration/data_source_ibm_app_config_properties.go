@@ -107,6 +107,11 @@ func DataSourceIBMAppConfigProperties() *schema.Resource {
 							Computed:    true,
 							Description: "Tags associated with the property.",
 						},
+						"format": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Format of the feature (TEXT, JSON, YAML) and it is a required attribute when `type` is `STRING`. It is not required for `BOOLEAN` and `NUMERIC` types. This property is populated in the response body of `POST, PUT and GET` calls if the type `STRING` is used and not populated for `BOOLEAN` and `NUMERIC` types.",
+						},
 						"segment_rules": {
 							Type:        schema.TypeList,
 							Computed:    true,
@@ -371,6 +376,9 @@ func dataSourcePropertiesListPropertiesToMap(property appconfigurationv1.Propert
 	}
 	if property.Href != nil {
 		propertyMap["href"] = property.Href
+	}
+	if property.Format != nil {
+		propertyMap["format"] = property.Format
 	}
 	if property.Collections != nil {
 		collectionsList := []map[string]interface{}{}

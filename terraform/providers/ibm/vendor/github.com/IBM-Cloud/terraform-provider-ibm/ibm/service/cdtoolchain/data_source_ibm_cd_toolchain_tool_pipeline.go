@@ -1,5 +1,9 @@
-// Copyright IBM Corp. 2023 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
+
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.96.0-d6dec9d7-20241008-212902
+ */
 
 package cdtoolchain
 
@@ -13,7 +17,8 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
-	"github.com/IBM/continuous-delivery-go-sdk/cdtoolchainv2"
+	"github.com/IBM/continuous-delivery-go-sdk/v2/cdtoolchainv2"
+	"github.com/IBM/go-sdk-core/v5/core"
 )
 
 func DataSourceIBMCdToolchainToolPipeline() *schema.Resource {
@@ -106,7 +111,9 @@ func DataSourceIBMCdToolchainToolPipeline() *schema.Resource {
 func dataSourceIBMCdToolchainToolPipelineRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_cd_toolchain_tool_pipeline", "read", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getToolByIDOptions := &cdtoolchainv2.GetToolByIDOptions{}
@@ -114,77 +121,76 @@ func dataSourceIBMCdToolchainToolPipelineRead(context context.Context, d *schema
 	getToolByIDOptions.SetToolchainID(d.Get("toolchain_id").(string))
 	getToolByIDOptions.SetToolID(d.Get("tool_id").(string))
 
-	toolchainTool, response, err := cdToolchainClient.GetToolByIDWithContext(context, getToolByIDOptions)
+	toolchainTool, _, err := cdToolchainClient.GetToolByIDWithContext(context, getToolByIDOptions)
 	if err != nil {
-		log.Printf("[DEBUG] GetToolByIDWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetToolByIDWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetToolByIDWithContext failed: %s", err.Error()), "(Data) ibm_cd_toolchain_tool_pipeline", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if *toolchainTool.ToolTypeID != "pipeline" {
-		return diag.FromErr(fmt.Errorf("Retrieved tool is not the correct type: %s", *toolchainTool.ToolTypeID))
+		return flex.TerraformErrorf(err, fmt.Sprintf("Retrieved tool is not the correct type: %s", err), "(Data) ibm_cd_toolchain_tool", "read").GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *getToolByIDOptions.ToolchainID, *getToolByIDOptions.ToolID))
 
 	if err = d.Set("resource_group_id", toolchainTool.ResourceGroupID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting resource_group_id: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting resource_group_id: %s", err), "(Data) ibm_cd_toolchain_tool_pipeline", "read", "set-resource_group_id").GetDiag()
 	}
 
 	if err = d.Set("crn", toolchainTool.CRN); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting crn: %s", err), "(Data) ibm_cd_toolchain_tool_pipeline", "read", "set-crn").GetDiag()
 	}
 
 	if err = d.Set("toolchain_crn", toolchainTool.ToolchainCRN); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting toolchain_crn: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting toolchain_crn: %s", err), "(Data) ibm_cd_toolchain_tool_pipeline", "read", "set-toolchain_crn").GetDiag()
 	}
 
 	if err = d.Set("href", toolchainTool.Href); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting href: %s", err), "(Data) ibm_cd_toolchain_tool_pipeline", "read", "set-href").GetDiag()
 	}
 
 	referent := []map[string]interface{}{}
-	if toolchainTool.Referent != nil {
-		modelMap, err := dataSourceIBMCdToolchainToolPipelineToolModelReferentToMap(toolchainTool.Referent)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		referent = append(referent, modelMap)
+	referentMap, err := DataSourceIBMCdToolchainToolPipelineToolModelReferentToMap(toolchainTool.Referent)
+	if err != nil {
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_cd_toolchain_tool_pipeline", "read", "referent-to-map").GetDiag()
 	}
+	referent = append(referent, referentMap)
 	if err = d.Set("referent", referent); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting referent %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting referent: %s", err), "(Data) ibm_cd_toolchain_tool_pipeline", "read", "set-referent").GetDiag()
 	}
 
-	if err = d.Set("name", toolchainTool.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+	if !core.IsNil(toolchainTool.Name) {
+		if err = d.Set("name", toolchainTool.Name); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "(Data) ibm_cd_toolchain_tool_pipeline", "read", "set-name").GetDiag()
+		}
 	}
 
 	if err = d.Set("updated_at", flex.DateTimeToString(toolchainTool.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting updated_at: %s", err), "(Data) ibm_cd_toolchain_tool_pipeline", "read", "set-updated_at").GetDiag()
 	}
 
 	parameters := []map[string]interface{}{}
-	if toolchainTool.Parameters != nil {
-		modelMap := GetParametersFromRead(toolchainTool.Parameters, DataSourceIBMCdToolchainToolPipeline(), nil)
-		parameters = append(parameters, modelMap)
-	}
+	parametersMap := GetParametersFromRead(toolchainTool.Parameters, DataSourceIBMCdToolchainToolPipeline(), nil)
+	parameters = append(parameters, parametersMap)
 	if err = d.Set("parameters", parameters); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting parameters %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting parameters: %s", err), "(Data) ibm_cd_toolchain_tool_pipeline", "read", "set-parameters").GetDiag()
 	}
 
 	if err = d.Set("state", toolchainTool.State); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting state: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting state: %s", err), "(Data) ibm_cd_toolchain_tool_pipeline", "read", "set-state").GetDiag()
 	}
 
 	return nil
 }
 
-func dataSourceIBMCdToolchainToolPipelineToolModelReferentToMap(model *cdtoolchainv2.ToolModelReferent) (map[string]interface{}, error) {
+func DataSourceIBMCdToolchainToolPipelineToolModelReferentToMap(model *cdtoolchainv2.ToolModelReferent) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.UIHref != nil {
-		modelMap["ui_href"] = model.UIHref
+		modelMap["ui_href"] = *model.UIHref
 	}
 	if model.APIHref != nil {
-		modelMap["api_href"] = model.APIHref
+		modelMap["api_href"] = *model.APIHref
 	}
 	return modelMap, nil
 }
