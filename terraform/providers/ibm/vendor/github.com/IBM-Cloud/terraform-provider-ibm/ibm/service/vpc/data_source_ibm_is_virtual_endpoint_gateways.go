@@ -91,6 +91,32 @@ func DataSourceIBMISEndpointGateways() *schema.Resource {
 							Computed:    true,
 							Description: "Endpoint gateway lifecycle state",
 						},
+						isVirtualEndpointGatewayLifecycleReasons: {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The reasons for the current lifecycle_state (if any).",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"code": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "A snake case string succinctly identifying the reason for this lifecycle state.",
+									},
+
+									"message": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "An explanation of the reason for this lifecycle state.",
+									},
+
+									"more_info": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about the reason for this lifecycle state.",
+									},
+								},
+							},
+						},
 						isVirtualEndpointGatewaySecurityGroups: {
 							Type:        schema.TypeSet,
 							Computed:    true,
@@ -213,6 +239,7 @@ func dataSourceIBMISEndpointGatewaysRead(d *schema.ResourceData, meta interface{
 		endpointGatewayOutput[isVirtualEndpointGatewayResourceType] = (*endpointGateway.ResourceType)
 		endpointGatewayOutput[isVirtualEndpointGatewayHealthState] = *endpointGateway.HealthState
 		endpointGatewayOutput[isVirtualEndpointGatewayLifecycleState] = *endpointGateway.LifecycleState
+		endpointGatewayOutput[isVirtualEndpointGatewayLifecycleReasons] = resourceEGWFlattenLifecycleReasons(endpointGateway.LifecycleReasons)
 		endpointGatewayOutput[isVirtualEndpointGatewayResourceGroupID] = *endpointGateway.ResourceGroup.ID
 		endpointGatewayOutput[isVirtualEndpointGatewayCRN] = *endpointGateway.CRN
 		endpointGatewayOutput[isVirtualEndpointGatewayVpcID] = *endpointGateway.VPC.ID

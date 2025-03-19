@@ -2,7 +2,7 @@
 // Licensed under the Mozilla Public License v2.0
 
 /*
- * IBM OpenAPI Terraform Generator Version: 3.94.1-71478489-20240820-161623
+ * IBM OpenAPI Terraform Generator Version: 3.96.0-d6dec9d7-20241008-212902
  */
 
 package partnercentersell
@@ -50,6 +50,11 @@ func ResourceIbmOnboardingCatalogPlan() *schema.Resource {
 				Optional:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_onboarding_catalog_plan", "env"),
 				Description:  "The environment to fetch this object from.",
+			},
+			"object_id": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The desired ID of the global catalog object.",
 			},
 			"name": &schema.Schema{
 				Type:         schema.TypeString,
@@ -234,6 +239,11 @@ func ResourceIbmOnboardingCatalogPlan() *schema.Resource {
 																	},
 																},
 															},
+															"embeddable_dashboard": &schema.Schema{
+																Type:        schema.TypeString,
+																Optional:    true,
+																Description: "On a service kind record this controls if your service has a custom dashboard or Resource Detail page.",
+															},
 														},
 													},
 												},
@@ -244,18 +254,43 @@ func ResourceIbmOnboardingCatalogPlan() *schema.Resource {
 										Type:        schema.TypeList,
 										MaxItems:    1,
 										Optional:    true,
-										Description: "The UI based URLs.",
+										Description: "Metadata with URLs related to a service.",
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"doc_url": &schema.Schema{
 													Type:        schema.TypeString,
 													Optional:    true,
-													Description: "The URL for your product documentation.",
+													Description: "The URL for your product's documentation.",
+												},
+												"apidocs_url": &schema.Schema{
+													Type:        schema.TypeString,
+													Optional:    true,
+													Description: "The URL for your product's API documentation.",
 												},
 												"terms_url": &schema.Schema{
 													Type:        schema.TypeString,
 													Optional:    true,
 													Description: "The URL for your product's end user license agreement.",
+												},
+												"instructions_url": &schema.Schema{
+													Type:        schema.TypeString,
+													Optional:    true,
+													Description: "Controls the Getting Started tab on the Resource Details page. Setting it the content is loaded from the specified URL.",
+												},
+												"catalog_details_url": &schema.Schema{
+													Type:        schema.TypeString,
+													Optional:    true,
+													Description: "Controls the Provisioning page URL, if set the assumption is that this URL is the provisioning URL for your service.",
+												},
+												"custom_create_page_url": &schema.Schema{
+													Type:        schema.TypeString,
+													Optional:    true,
+													Description: "Controls the Provisioning page URL, if set the assumption is that this URL is the provisioning URL for your service.",
+												},
+												"dashboard": &schema.Schema{
+													Type:        schema.TypeString,
+													Optional:    true,
+													Description: "Controls if your service has a custom dashboard or Resource Detail page.",
 												},
 											},
 										},
@@ -269,6 +304,41 @@ func ResourceIbmOnboardingCatalogPlan() *schema.Resource {
 										Type:        schema.TypeFloat,
 										Optional:    true,
 										Description: "When the objects are listed side-by-side, this value controls the ordering.",
+									},
+								},
+							},
+						},
+						"service": &schema.Schema{
+							Type:        schema.TypeList,
+							MaxItems:    1,
+							Optional:    true,
+							Description: "The global catalog metadata of the service.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"rc_provisionable": &schema.Schema{
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: "Whether the service is provisionable by the resource controller service.",
+									},
+									"iam_compatible": &schema.Schema{
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: "Whether the service is compatible with the IAM service.",
+									},
+									"bindable": &schema.Schema{
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: "Deprecated. Controls the Connections tab on the Resource Details page.",
+									},
+									"plan_updateable": &schema.Schema{
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: "Indicates plan update support and controls the Plan tab on the Resource Details page.",
+									},
+									"service_key_supported": &schema.Schema{
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: "Indicates service credentials support and controls the Service Credential tab on Resource Details page.",
 									},
 								},
 							},
@@ -289,6 +359,26 @@ func ResourceIbmOnboardingCatalogPlan() *schema.Resource {
 										Type:        schema.TypeString,
 										Optional:    true,
 										Description: "The source of the pricing information: global_catalog or pricing_catalog.",
+									},
+								},
+							},
+						},
+						"plan": &schema.Schema{
+							Type:        schema.TypeList,
+							MaxItems:    1,
+							Optional:    true,
+							Description: "Metadata controlling Plan related settings.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"allow_internal_users": &schema.Schema{
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: "Controls if IBMers are allowed to provision this plan.",
+									},
+									"bindable": &schema.Schema{
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: "Deprecated. Controls the Connections tab on the Resource Details page.",
 									},
 								},
 							},
@@ -387,6 +477,9 @@ func resourceIbmOnboardingCatalogPlanCreate(context context.Context, d *schema.R
 		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_onboarding_catalog_plan", "create", "parse-object_provider").GetDiag()
 	}
 	createCatalogPlanOptions.SetObjectProvider(objectProviderModel)
+	if _, ok := d.GetOk("object_id"); ok {
+		createCatalogPlanOptions.SetObjectID(d.Get("object_id").(string))
+	}
 	if _, ok := d.GetOk("overview_ui"); ok {
 		overviewUiModel, err := ResourceIbmOnboardingCatalogPlanMapToGlobalCatalogOverviewUI(d.Get("overview_ui.0").(map[string]interface{}))
 		if err != nil {
@@ -450,6 +543,12 @@ func resourceIbmOnboardingCatalogPlanRead(context context.Context, d *schema.Res
 		return tfErr.GetDiag()
 	}
 
+	if !core.IsNil(globalCatalogPlan.ObjectID) {
+		if err = d.Set("object_id", globalCatalogPlan.ObjectID); err != nil {
+			err = fmt.Errorf("Error setting object_id: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_onboarding_catalog_plan", "read", "set-object_id").GetDiag()
+		}
+	}
 	if err = d.Set("name", globalCatalogPlan.Name); err != nil {
 		err = fmt.Errorf("Error setting name: %s", err)
 		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_onboarding_catalog_plan", "read", "set-name").GetDiag()
@@ -502,6 +601,18 @@ func resourceIbmOnboardingCatalogPlanRead(context context.Context, d *schema.Res
 		if err = d.Set("url", globalCatalogPlan.URL); err != nil {
 			err = fmt.Errorf("Error setting url: %s", err)
 			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_onboarding_catalog_plan", "read", "set-url").GetDiag()
+		}
+	}
+	if parts[0] != "" {
+		if err = d.Set("product_id", parts[0]); err != nil {
+			err = fmt.Errorf("Error setting product_id: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_onboarding_catalog_plan", "read", "set-product_id").GetDiag()
+		}
+	}
+	if parts[1] != "" {
+		if err = d.Set("catalog_product_id", parts[1]); err != nil {
+			err = fmt.Errorf("Error setting catalog_product_id: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_onboarding_catalog_plan", "read", "set-catalog_product_id").GetDiag()
 		}
 	}
 	if !core.IsNil(globalCatalogPlan.ID) {
@@ -693,12 +804,26 @@ func ResourceIbmOnboardingCatalogPlanMapToGlobalCatalogPlanMetadata(modelMap map
 		}
 		model.Ui = UiModel
 	}
+	if modelMap["service"] != nil && len(modelMap["service"].([]interface{})) > 0 && modelMap["service"].([]interface{})[0] != nil {
+		ServiceModel, err := ResourceIbmOnboardingCatalogPlanMapToGlobalCatalogMetadataService(modelMap["service"].([]interface{})[0].(map[string]interface{}))
+		if err != nil {
+			return model, err
+		}
+		model.Service = ServiceModel
+	}
 	if modelMap["pricing"] != nil && len(modelMap["pricing"].([]interface{})) > 0 && modelMap["pricing"].([]interface{})[0] != nil {
 		PricingModel, err := ResourceIbmOnboardingCatalogPlanMapToGlobalCatalogMetadataPricing(modelMap["pricing"].([]interface{})[0].(map[string]interface{}))
 		if err != nil {
 			return model, err
 		}
 		model.Pricing = PricingModel
+	}
+	if modelMap["plan"] != nil && len(modelMap["plan"].([]interface{})) > 0 {
+		PlanModel, err := ResourceIbmOnboardingCatalogPlanMapToGlobalCatalogPlanMetadataPlan(modelMap["plan"].([]interface{})[0].(map[string]interface{}))
+		if err != nil {
+			return model, err
+		}
+		model.Plan = PlanModel
 	}
 	return model, nil
 }
@@ -764,6 +889,9 @@ func ResourceIbmOnboardingCatalogPlanMapToGlobalCatalogMetadataUIStringsContent(
 		}
 		model.Media = media
 	}
+	if modelMap["embeddable_dashboard"] != nil && modelMap["embeddable_dashboard"].(string) != "" {
+		model.EmbeddableDashboard = core.StringPtr(modelMap["embeddable_dashboard"].(string))
+	}
 	return model, nil
 }
 
@@ -818,8 +946,43 @@ func ResourceIbmOnboardingCatalogPlanMapToGlobalCatalogMetadataUIUrls(modelMap m
 	if modelMap["doc_url"] != nil && modelMap["doc_url"].(string) != "" {
 		model.DocURL = core.StringPtr(modelMap["doc_url"].(string))
 	}
+	if modelMap["apidocs_url"] != nil && modelMap["apidocs_url"].(string) != "" {
+		model.ApidocsURL = core.StringPtr(modelMap["apidocs_url"].(string))
+	}
 	if modelMap["terms_url"] != nil && modelMap["terms_url"].(string) != "" {
 		model.TermsURL = core.StringPtr(modelMap["terms_url"].(string))
+	}
+	if modelMap["instructions_url"] != nil && modelMap["instructions_url"].(string) != "" {
+		model.InstructionsURL = core.StringPtr(modelMap["instructions_url"].(string))
+	}
+	if modelMap["catalog_details_url"] != nil && modelMap["catalog_details_url"].(string) != "" {
+		model.CatalogDetailsURL = core.StringPtr(modelMap["catalog_details_url"].(string))
+	}
+	if modelMap["custom_create_page_url"] != nil && modelMap["custom_create_page_url"].(string) != "" {
+		model.CustomCreatePageURL = core.StringPtr(modelMap["custom_create_page_url"].(string))
+	}
+	if modelMap["dashboard"] != nil && modelMap["dashboard"].(string) != "" {
+		model.Dashboard = core.StringPtr(modelMap["dashboard"].(string))
+	}
+	return model, nil
+}
+
+func ResourceIbmOnboardingCatalogPlanMapToGlobalCatalogMetadataService(modelMap map[string]interface{}) (*partnercentersellv1.GlobalCatalogMetadataService, error) {
+	model := &partnercentersellv1.GlobalCatalogMetadataService{}
+	if modelMap["rc_provisionable"] != nil {
+		model.RcProvisionable = core.BoolPtr(modelMap["rc_provisionable"].(bool))
+	}
+	if modelMap["iam_compatible"] != nil {
+		model.IamCompatible = core.BoolPtr(modelMap["iam_compatible"].(bool))
+	}
+	if modelMap["bindable"] != nil {
+		model.Bindable = core.BoolPtr(modelMap["bindable"].(bool))
+	}
+	if modelMap["plan_updateable"] != nil {
+		model.PlanUpdateable = core.BoolPtr(modelMap["plan_updateable"].(bool))
+	}
+	if modelMap["service_key_supported"] != nil {
+		model.ServiceKeySupported = core.BoolPtr(modelMap["service_key_supported"].(bool))
 	}
 	return model, nil
 }
@@ -831,6 +994,17 @@ func ResourceIbmOnboardingCatalogPlanMapToGlobalCatalogMetadataPricing(modelMap 
 	}
 	if modelMap["origin"] != nil && modelMap["origin"].(string) != "" {
 		model.Origin = core.StringPtr(modelMap["origin"].(string))
+	}
+	return model, nil
+}
+
+func ResourceIbmOnboardingCatalogPlanMapToGlobalCatalogPlanMetadataPlan(modelMap map[string]interface{}) (*partnercentersellv1.GlobalCatalogPlanMetadataPlan, error) {
+	model := &partnercentersellv1.GlobalCatalogPlanMetadataPlan{}
+	if modelMap["allow_internal_users"] != nil {
+		model.AllowInternalUsers = core.BoolPtr(modelMap["allow_internal_users"].(bool))
+	}
+	if modelMap["bindable"] != nil {
+		model.Bindable = core.BoolPtr(modelMap["bindable"].(bool))
 	}
 	return model, nil
 }
@@ -884,12 +1058,26 @@ func ResourceIbmOnboardingCatalogPlanGlobalCatalogPlanMetadataToMap(model *partn
 		}
 		modelMap["ui"] = []map[string]interface{}{uiMap}
 	}
+	if model.Service != nil {
+		serviceMap, err := ResourceIbmOnboardingCatalogPlanGlobalCatalogMetadataServiceToMap(model.Service)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["service"] = []map[string]interface{}{serviceMap}
+	}
 	if model.Pricing != nil {
 		pricingMap, err := ResourceIbmOnboardingCatalogPlanGlobalCatalogMetadataPricingToMap(model.Pricing)
 		if err != nil {
 			return modelMap, err
 		}
 		modelMap["pricing"] = []map[string]interface{}{pricingMap}
+	}
+	if model.Plan != nil {
+		planMap, err := ResourceIbmOnboardingCatalogPlanGlobalCatalogPlanMetadataPlanToMap(model.Plan)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["plan"] = []map[string]interface{}{planMap}
 	}
 	return modelMap, nil
 }
@@ -955,6 +1143,9 @@ func ResourceIbmOnboardingCatalogPlanGlobalCatalogMetadataUIStringsContentToMap(
 		}
 		modelMap["media"] = media
 	}
+	if model.EmbeddableDashboard != nil {
+		modelMap["embeddable_dashboard"] = *model.EmbeddableDashboard
+	}
 	return modelMap, nil
 }
 
@@ -1006,8 +1197,43 @@ func ResourceIbmOnboardingCatalogPlanGlobalCatalogMetadataUIUrlsToMap(model *par
 	if model.DocURL != nil {
 		modelMap["doc_url"] = *model.DocURL
 	}
+	if model.ApidocsURL != nil {
+		modelMap["apidocs_url"] = *model.ApidocsURL
+	}
 	if model.TermsURL != nil {
 		modelMap["terms_url"] = *model.TermsURL
+	}
+	if model.InstructionsURL != nil {
+		modelMap["instructions_url"] = *model.InstructionsURL
+	}
+	if model.CatalogDetailsURL != nil {
+		modelMap["catalog_details_url"] = *model.CatalogDetailsURL
+	}
+	if model.CustomCreatePageURL != nil {
+		modelMap["custom_create_page_url"] = *model.CustomCreatePageURL
+	}
+	if model.Dashboard != nil {
+		modelMap["dashboard"] = *model.Dashboard
+	}
+	return modelMap, nil
+}
+
+func ResourceIbmOnboardingCatalogPlanGlobalCatalogMetadataServiceToMap(model *partnercentersellv1.GlobalCatalogMetadataService) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.RcProvisionable != nil {
+		modelMap["rc_provisionable"] = *model.RcProvisionable
+	}
+	if model.IamCompatible != nil {
+		modelMap["iam_compatible"] = *model.IamCompatible
+	}
+	if model.Bindable != nil {
+		modelMap["bindable"] = *model.Bindable
+	}
+	if model.PlanUpdateable != nil {
+		modelMap["plan_updateable"] = *model.PlanUpdateable
+	}
+	if model.ServiceKeySupported != nil {
+		modelMap["service_key_supported"] = *model.ServiceKeySupported
 	}
 	return modelMap, nil
 }
@@ -1019,6 +1245,17 @@ func ResourceIbmOnboardingCatalogPlanGlobalCatalogMetadataPricingToMap(model *pa
 	}
 	if model.Origin != nil {
 		modelMap["origin"] = *model.Origin
+	}
+	return modelMap, nil
+}
+
+func ResourceIbmOnboardingCatalogPlanGlobalCatalogPlanMetadataPlanToMap(model *partnercentersellv1.GlobalCatalogPlanMetadataPlan) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.AllowInternalUsers != nil {
+		modelMap["allow_internal_users"] = *model.AllowInternalUsers
+	}
+	if model.Bindable != nil {
+		modelMap["bindable"] = *model.Bindable
 	}
 	return modelMap, nil
 }
@@ -1074,11 +1311,36 @@ func ResourceIbmOnboardingCatalogPlanGlobalCatalogPlanMetadataAsPatch(patch map[
 	} else if exists && patch["ui"] != nil {
 		ResourceIbmOnboardingCatalogPlanGlobalCatalogMetadataUIAsPatch(patch["ui"].(map[string]interface{}), d)
 	}
+	path = "metadata.0.service"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["service"] = nil
+	} else if exists && patch["service"] != nil {
+		ResourceIbmOnboardingCatalogPlanGlobalCatalogMetadataServiceAsPatch(patch["service"].(map[string]interface{}), d)
+	}
 	path = "metadata.0.pricing"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["pricing"] = nil
 	} else if exists && patch["pricing"] != nil {
 		ResourceIbmOnboardingCatalogPlanGlobalCatalogMetadataPricingAsPatch(patch["pricing"].(map[string]interface{}), d)
+	}
+	path = "metadata.0.plan"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["plan"] = nil
+	} else if exists && patch["plan"] != nil {
+		ResourceIbmOnboardingCatalogPlanGlobalCatalogPlanMetadataPlanAsPatch(patch["plan"].(map[string]interface{}), d)
+	}
+}
+
+func ResourceIbmOnboardingCatalogPlanGlobalCatalogPlanMetadataPlanAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+	var path string
+
+	path = "metadata.0.plan.0.allow_internal_users"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["allow_internal_users"] = nil
+	}
+	path = "metadata.0.plan.0.bindable"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["bindable"] = nil
 	}
 }
 
@@ -1092,6 +1354,31 @@ func ResourceIbmOnboardingCatalogPlanGlobalCatalogMetadataPricingAsPatch(patch m
 	path = "metadata.0.pricing.0.origin"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["origin"] = nil
+	}
+}
+
+func ResourceIbmOnboardingCatalogPlanGlobalCatalogMetadataServiceAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+	var path string
+
+	path = "metadata.0.service.0.rc_provisionable"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["rc_provisionable"] = nil
+	}
+	path = "metadata.0.service.0.iam_compatible"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["iam_compatible"] = nil
+	}
+	path = "metadata.0.service.0.bindable"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["bindable"] = nil
+	}
+	path = "metadata.0.service.0.plan_updateable"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["plan_updateable"] = nil
+	}
+	path = "metadata.0.service.0.service_key_supported"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["service_key_supported"] = nil
 	}
 }
 
@@ -1127,9 +1414,29 @@ func ResourceIbmOnboardingCatalogPlanGlobalCatalogMetadataUIUrlsAsPatch(patch ma
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["doc_url"] = nil
 	}
+	path = "metadata.0.ui.0.urls.0.apidocs_url"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["apidocs_url"] = nil
+	}
 	path = "metadata.0.ui.0.urls.0.terms_url"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["terms_url"] = nil
+	}
+	path = "metadata.0.ui.0.urls.0.instructions_url"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["instructions_url"] = nil
+	}
+	path = "metadata.0.ui.0.urls.0.catalog_details_url"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["catalog_details_url"] = nil
+	}
+	path = "metadata.0.ui.0.urls.0.custom_create_page_url"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["custom_create_page_url"] = nil
+	}
+	path = "metadata.0.ui.0.urls.0.dashboard"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["dashboard"] = nil
 	}
 }
 
@@ -1158,6 +1465,10 @@ func ResourceIbmOnboardingCatalogPlanGlobalCatalogMetadataUIStringsContentAsPatc
 		patch["media"] = nil
 	} else if exists && patch["media"] != nil {
 		ResourceIbmOnboardingCatalogPlanCatalogProductMediaItemAsPatch(patch["media"].([]interface{})[0].(map[string]interface{}), d)
+	}
+	path = "metadata.0.ui.0.strings.0.en.0.embeddable_dashboard"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["embeddable_dashboard"] = nil
 	}
 }
 

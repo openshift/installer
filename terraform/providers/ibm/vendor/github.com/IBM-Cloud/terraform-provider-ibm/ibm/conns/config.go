@@ -119,9 +119,10 @@ import (
 	bxsession "github.com/IBM-Cloud/bluemix-go/session"
 	ibmpisession "github.com/IBM-Cloud/power-go-client/ibmpisession"
 	codeengine "github.com/IBM/code-engine-go-sdk/codeenginev2"
-	"github.com/IBM/continuous-delivery-go-sdk/cdtektonpipelinev2"
-	"github.com/IBM/continuous-delivery-go-sdk/cdtoolchainv2"
+	"github.com/IBM/continuous-delivery-go-sdk/v2/cdtektonpipelinev2"
+	"github.com/IBM/continuous-delivery-go-sdk/v2/cdtoolchainv2"
 	"github.com/IBM/event-notifications-go-admin-sdk/eventnotificationsv1"
+	"github.com/IBM/eventstreams-go-sdk/pkg/adminrestv1"
 	"github.com/IBM/eventstreams-go-sdk/pkg/schemaregistryv1"
 	"github.com/IBM/ibm-hpcs-uko-sdk/ukov4"
 	"github.com/IBM/logs-go-sdk/logsv0"
@@ -302,6 +303,7 @@ type ClientSession interface {
 	AtrackerV2() (*atrackerv2.AtrackerV2, error)
 	MetricsRouterV3() (*metricsrouterv3.MetricsRouterV3, error)
 	ESschemaRegistrySession() (*schemaregistryv1.SchemaregistryV1, error)
+	ESadminRestSession() (*adminrestv1.AdminrestV1, error)
 	ContextBasedRestrictionsV1() (*contextbasedrestrictionsv1.ContextBasedRestrictionsV1, error)
 	SecurityAndComplianceCenterV3() (*scc.SecurityAndComplianceCenterApiV3, error)
 	CdToolchainV2() (*cdtoolchainv2.CdToolchainV2, error)
@@ -619,6 +621,9 @@ type clientSession struct {
 
 	esSchemaRegistryClient *schemaregistryv1.SchemaregistryV1
 	esSchemaRegistryErr    error
+
+	esAdminRestClient *adminrestv1.AdminrestV1
+	esAdminRestErr    error
 
 	// Security and Compliance Center (SCC)
 	securityAndComplianceCenterClient    *scc.SecurityAndComplianceCenterApiV3
@@ -1221,6 +1226,10 @@ func (session clientSession) MetricsRouterV3() (*metricsrouterv3.MetricsRouterV3
 
 func (session clientSession) ESschemaRegistrySession() (*schemaregistryv1.SchemaregistryV1, error) {
 	return session.esSchemaRegistryClient, session.esSchemaRegistryErr
+}
+
+func (session clientSession) ESadminRestSession() (*adminrestv1.AdminrestV1, error) {
+	return session.esAdminRestClient, session.esAdminRestErr
 }
 
 // Security and Compliance center Admin API
@@ -3354,6 +3363,20 @@ func (c *Config) ClientSession() (interface{}, error) {
 	if session.esSchemaRegistryClient != nil && session.esSchemaRegistryClient.Service != nil {
 		session.esSchemaRegistryClient.Service.EnableRetries(c.RetryCount, c.RetryDelay)
 		session.esSchemaRegistryClient.SetDefaultHeaders(gohttp.Header{
+			"X-Original-User-Agent": {fmt.Sprintf("terraform-provider-ibm/%s", version.Version)},
+		})
+	}
+
+	esAdminRestV1Options := &adminrestv1.AdminrestV1Options{
+		Authenticator: authenticator,
+	}
+	session.esAdminRestClient, err = adminrestv1.NewAdminrestV1(esAdminRestV1Options)
+	if err != nil {
+		session.esAdminRestErr = fmt.Errorf("[ERROR] Error occured while configuring Event Streams admin rest: %q", err)
+	}
+	if session.esAdminRestClient != nil && session.esAdminRestClient.Service != nil {
+		session.esAdminRestClient.Service.EnableRetries(c.RetryCount, c.RetryDelay)
+		session.esAdminRestClient.SetDefaultHeaders(gohttp.Header{
 			"X-Original-User-Agent": {fmt.Sprintf("terraform-provider-ibm/%s", version.Version)},
 		})
 	}

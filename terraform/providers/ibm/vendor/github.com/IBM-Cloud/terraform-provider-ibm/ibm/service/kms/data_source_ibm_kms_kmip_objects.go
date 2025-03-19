@@ -5,8 +5,8 @@ package kms
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	kp "github.com/IBM/keyprotect-go-client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -119,7 +119,7 @@ func dataSourceIBMKmsKMIPObjectList(d *schema.ResourceData, meta interface{}) er
 	if stateFilter, ok := d.GetOk("object_state_filter"); ok {
 		arrayVal, ok2 := stateFilter.([]any)
 		if !ok2 {
-			return fmt.Errorf("[ERROR] Error converting object_state_filter into []any")
+			return flex.FmtErrorf("[ERROR] Error converting object_state_filter into []any")
 		}
 		int32Arr := make([]int32, 0, len(arrayVal))
 		for _, myint := range arrayVal {
@@ -131,17 +131,17 @@ func dataSourceIBMKmsKMIPObjectList(d *schema.ResourceData, meta interface{}) er
 	ctx := context.Background()
 	adapter, err := kpAPI.GetKMIPAdapter(ctx, adapterNameOrID)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error while retriving KMIP adapter to list KMIP objects: %s", err)
+		return flex.FmtErrorf("[ERROR] Error while retriving KMIP adapter to list KMIP objects: %s", err)
 	}
 	if err = d.Set("adapter_id", adapter.ID); err != nil {
-		return fmt.Errorf("[ERROR] Error setting adapter_id: %s", err)
+		return flex.FmtErrorf("[ERROR] Error setting adapter_id: %s", err)
 	}
 	if err = d.Set("adapter_name", adapter.Name); err != nil {
-		return fmt.Errorf("[ERROR] Error setting adapter_name: %s", err)
+		return flex.FmtErrorf("[ERROR] Error setting adapter_name: %s", err)
 	}
 	objs, err := kpAPI.GetKMIPObjects(ctx, adapterNameOrID, opts)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error while retriving KMIP objects associated with adapter ID '%s': %v", adapter.ID, err)
+		return flex.FmtErrorf("[ERROR] Error while retriving KMIP objects associated with adapter ID '%s': %v", adapter.ID, err)
 	}
 	objsList := objs.Objects
 	// set computed values

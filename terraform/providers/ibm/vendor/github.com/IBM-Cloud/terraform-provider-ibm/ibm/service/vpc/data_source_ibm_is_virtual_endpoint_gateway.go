@@ -61,6 +61,32 @@ func DataSourceIBMISEndpointGateway() *schema.Resource {
 				Computed:    true,
 				Description: "Endpoint gateway lifecycle state",
 			},
+			isVirtualEndpointGatewayLifecycleReasons: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The reasons for the current lifecycle_state (if any).",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"code": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A snake case string succinctly identifying the reason for this lifecycle state.",
+						},
+
+						"message": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "An explanation of the reason for this lifecycle state.",
+						},
+
+						"more_info": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Link to documentation about the reason for this lifecycle state.",
+						},
+					},
+				},
+			},
 			isVirtualEndpointGatewaySecurityGroups: {
 				Type:        schema.TypeSet,
 				Computed:    true,
@@ -112,6 +138,11 @@ func DataSourceIBMISEndpointGateway() *schema.Resource {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The target name",
+						},
+						isVirtualEndpointGatewayTargetCRN: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The target crn",
 						},
 						isVirtualEndpointGatewayTargetResourceType: {
 							Type:        schema.TypeString,
@@ -173,6 +204,9 @@ func dataSourceIBMISEndpointGatewayRead(
 	d.Set(isVirtualEndpointGatewayHealthState, result.HealthState)
 	d.Set(isVirtualEndpointGatewayCreatedAt, result.CreatedAt.String())
 	d.Set(isVirtualEndpointGatewayLifecycleState, result.LifecycleState)
+	if err := d.Set(isVirtualEndpointGatewayLifecycleReasons, resourceEGWFlattenLifecycleReasons(result.LifecycleReasons)); err != nil {
+		return fmt.Errorf("[ERROR] Error setting lifecycle_reasons: %s", err)
+	}
 	d.Set(isVirtualEndpointGatewayResourceType, result.ResourceType)
 	d.Set(isVirtualEndpointGatewayIPs, flattenIPs(result.Ips))
 	d.Set(isVirtualEndpointGatewayResourceGroupID, result.ResourceGroup.ID)

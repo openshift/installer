@@ -26,8 +26,9 @@ func DataSourceIBMISVPC() *schema.Resource {
 			},
 
 			isVPCClassicAccess: {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Type:       schema.TypeBool,
+				Computed:   true,
+				Deprecated: "Classic access is deprecated",
 			},
 
 			isVPCDefaultRoutingTable: {

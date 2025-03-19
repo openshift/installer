@@ -1,6 +1,10 @@
 // Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.95.2-120e65bc-20240924-152329
+ */
+
 package cdtektonpipeline
 
 import (
@@ -14,7 +18,7 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
-	"github.com/IBM/continuous-delivery-go-sdk/cdtektonpipelinev2"
+	"github.com/IBM/continuous-delivery-go-sdk/v2/cdtektonpipelinev2"
 	"github.com/IBM/go-sdk-core/v5/core"
 )
 
@@ -41,13 +45,6 @@ func ResourceIBMCdTektonPipelineProperty() *schema.Resource {
 				ValidateFunc: validate.InvokeValidator("ibm_cd_tekton_pipeline_property", "name"),
 				Description:  "Property name.",
 			},
-			"type": &schema.Schema{
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: validate.InvokeValidator("ibm_cd_tekton_pipeline_property", "type"),
-				Description:  "Property type.",
-			},
 			"value": &schema.Schema{
 				Type:             schema.TypeString,
 				Optional:         true,
@@ -61,6 +58,13 @@ func ResourceIBMCdTektonPipelineProperty() *schema.Resource {
 				Description: "Options for `single_select` property type. Only needed when using `single_select` property type.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
+			"type": &schema.Schema{
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validate.InvokeValidator("ibm_cd_tekton_pipeline_property", "type"),
+				Description:  "Property type.",
+			},
 			"locked": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -71,7 +75,7 @@ func ResourceIBMCdTektonPipelineProperty() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_cd_tekton_pipeline_property", "path"),
-				Description:  "A dot notation path for `integration` type properties only, to select a value from the tool integration. If left blank the full tool integration data will be used.",
+				Description:  "A dot notation path for `integration` type properties only, that selects a value from the tool integration. If left blank the full tool integration data will be used.",
 			},
 			"href": &schema.Schema{
 				Type:        schema.TypeString,
@@ -104,13 +108,6 @@ func ResourceIBMCdTektonPipelinePropertyValidator() *validate.ResourceValidator 
 			MaxValueLength:             253,
 		},
 		validate.ValidateSchema{
-			Identifier:                 "type",
-			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
-			Type:                       validate.TypeString,
-			Required:                   true,
-			AllowedValues:              "appconfig, integration, secure, single_select, text",
-		},
-		validate.ValidateSchema{
 			Identifier:                 "value",
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
@@ -118,6 +115,13 @@ func ResourceIBMCdTektonPipelinePropertyValidator() *validate.ResourceValidator 
 			Regexp:                     `^.*$`,
 			MinValueLength:             0,
 			MaxValueLength:             4096,
+		},
+		validate.ValidateSchema{
+			Identifier:                 "type",
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "appconfig, integration, secure, single_select, text",
 		},
 		validate.ValidateSchema{
 			Identifier:                 "path",
@@ -137,7 +141,9 @@ func ResourceIBMCdTektonPipelinePropertyValidator() *validate.ResourceValidator 
 func resourceIBMCdTektonPipelinePropertyCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdTektonPipelineClient, err := meta.(conns.ClientSession).CdTektonPipelineV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_property", "create", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	createTektonPipelinePropertiesOptions := &cdtektonpipelinev2.CreateTektonPipelinePropertiesOptions{}
@@ -163,10 +169,11 @@ func resourceIBMCdTektonPipelinePropertyCreate(context context.Context, d *schem
 		createTektonPipelinePropertiesOptions.SetPath(d.Get("path").(string))
 	}
 
-	property, response, err := cdTektonPipelineClient.CreateTektonPipelinePropertiesWithContext(context, createTektonPipelinePropertiesOptions)
+	property, _, err := cdTektonPipelineClient.CreateTektonPipelinePropertiesWithContext(context, createTektonPipelinePropertiesOptions)
 	if err != nil {
-		log.Printf("[DEBUG] CreateTektonPipelinePropertiesWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateTektonPipelinePropertiesWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateTektonPipelinePropertiesWithContext failed: %s", err.Error()), "ibm_cd_tekton_pipeline_property", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *createTektonPipelinePropertiesOptions.PipelineID, *property.Name))
@@ -177,14 +184,16 @@ func resourceIBMCdTektonPipelinePropertyCreate(context context.Context, d *schem
 func resourceIBMCdTektonPipelinePropertyRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdTektonPipelineClient, err := meta.(conns.ClientSession).CdTektonPipelineV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_property", "read", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getTektonPipelinePropertyOptions := &cdtektonpipelinev2.GetTektonPipelinePropertyOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_property", "read", "sep-id-parts").GetDiag()
 	}
 
 	getTektonPipelinePropertyOptions.SetPipelineID(parts[0])
@@ -196,42 +205,47 @@ func resourceIBMCdTektonPipelinePropertyRead(context context.Context, d *schema.
 			d.SetId("")
 			return nil
 		}
-		log.Printf("[DEBUG] GetTektonPipelinePropertyWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetTektonPipelinePropertyWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetTektonPipelinePropertyWithContext failed: %s", err.Error()), "ibm_cd_tekton_pipeline_property", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
-	if err = d.Set("pipeline_id", getTektonPipelinePropertyOptions.PipelineID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting pipeline_id: %s", err))
-	}
 	if err = d.Set("name", property.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
-	}
-	if err = d.Set("type", property.Type); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting type: %s", err))
+		err = fmt.Errorf("Error setting name: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_property", "read", "set-name").GetDiag()
 	}
 	if !core.IsNil(property.Value) {
 		if err = d.Set("value", property.Value); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting value: %s", err))
+			err = fmt.Errorf("Error setting value: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_property", "read", "set-value").GetDiag()
 		}
 	}
 	if !core.IsNil(property.Enum) {
 		if err = d.Set("enum", property.Enum); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting enum: %s", err))
+			err = fmt.Errorf("Error setting enum: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_property", "read", "set-enum").GetDiag()
 		}
+	}
+	if err = d.Set("type", property.Type); err != nil {
+		err = fmt.Errorf("Error setting type: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_property", "read", "set-type").GetDiag()
 	}
 	if !core.IsNil(property.Locked) {
 		if err = d.Set("locked", property.Locked); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting locked: %s", err))
+			err = fmt.Errorf("Error setting locked: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_property", "read", "set-locked").GetDiag()
 		}
 	}
 	if !core.IsNil(property.Path) {
 		if err = d.Set("path", property.Path); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting path: %s", err))
+			err = fmt.Errorf("Error setting path: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_property", "read", "set-path").GetDiag()
 		}
 	}
 	if !core.IsNil(property.Href) {
 		if err = d.Set("href", property.Href); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
+			err = fmt.Errorf("Error setting href: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_property", "read", "set-href").GetDiag()
 		}
 	}
 
@@ -241,14 +255,16 @@ func resourceIBMCdTektonPipelinePropertyRead(context context.Context, d *schema.
 func resourceIBMCdTektonPipelinePropertyUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdTektonPipelineClient, err := meta.(conns.ClientSession).CdTektonPipelineV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_property", "update", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	replaceTektonPipelinePropertyOptions := &cdtektonpipelinev2.ReplaceTektonPipelinePropertyOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_property", "update", "sep-id-parts").GetDiag()
 	}
 
 	replaceTektonPipelinePropertyOptions.SetPipelineID(parts[0])
@@ -259,16 +275,19 @@ func resourceIBMCdTektonPipelinePropertyUpdate(context context.Context, d *schem
 	hasChange := false
 
 	if d.HasChange("pipeline_id") {
-		return diag.FromErr(fmt.Errorf("Cannot update resource property \"%s\" with the ForceNew annotation."+
-			" The resource must be re-created to update this property.", "pipeline_id"))
+		errMsg := fmt.Sprintf("Cannot update resource property \"%s\" with the ForceNew annotation."+
+			" The resource must be re-created to update this property.", "pipeline_id")
+		return flex.DiscriminatedTerraformErrorf(nil, errMsg, "ibm_cd_tekton_pipeline_property", "update", "pipeline_id-forces-new").GetDiag()
 	}
 	if d.HasChange("name") {
-		return diag.FromErr(fmt.Errorf("Cannot update resource property \"%s\" with the ForceNew annotation."+
-			" The resource must be re-created to update this property.", "name"))
+		errMsg := fmt.Sprintf("Cannot update resource property \"%s\" with the ForceNew annotation."+
+			" The resource must be re-created to update this property.", "name")
+		return flex.DiscriminatedTerraformErrorf(nil, errMsg, "ibm_cd_tekton_pipeline_property", "update", "name-forces-new").GetDiag()
 	}
 	if d.HasChange("type") {
-		return diag.FromErr(fmt.Errorf("Cannot update resource property \"%s\" with the ForceNew annotation."+
-			" The resource must be re-created to update this property.", "type"))
+		errMsg := fmt.Sprintf("Cannot update resource property \"%s\" with the ForceNew annotation."+
+			" The resource must be re-created to update this property.", "type")
+		return flex.DiscriminatedTerraformErrorf(nil, errMsg, "ibm_cd_tekton_pipeline_property", "update", "type-forces-new").GetDiag()
 	}
 	if d.HasChange("locked") {
 		replaceTektonPipelinePropertyOptions.SetLocked(d.Get("locked").(bool))
@@ -299,10 +318,11 @@ func resourceIBMCdTektonPipelinePropertyUpdate(context context.Context, d *schem
 	}
 
 	if hasChange {
-		_, response, err := cdTektonPipelineClient.ReplaceTektonPipelinePropertyWithContext(context, replaceTektonPipelinePropertyOptions)
+		_, _, err = cdTektonPipelineClient.ReplaceTektonPipelinePropertyWithContext(context, replaceTektonPipelinePropertyOptions)
 		if err != nil {
-			log.Printf("[DEBUG] ReplaceTektonPipelinePropertyWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("ReplaceTektonPipelinePropertyWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ReplaceTektonPipelinePropertyWithContext failed: %s", err.Error()), "ibm_cd_tekton_pipeline_property", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -312,23 +332,26 @@ func resourceIBMCdTektonPipelinePropertyUpdate(context context.Context, d *schem
 func resourceIBMCdTektonPipelinePropertyDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdTektonPipelineClient, err := meta.(conns.ClientSession).CdTektonPipelineV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_property", "delete", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	deleteTektonPipelinePropertyOptions := &cdtektonpipelinev2.DeleteTektonPipelinePropertyOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_property", "delete", "sep-id-parts").GetDiag()
 	}
 
 	deleteTektonPipelinePropertyOptions.SetPipelineID(parts[0])
 	deleteTektonPipelinePropertyOptions.SetPropertyName(parts[1])
 
-	response, err := cdTektonPipelineClient.DeleteTektonPipelinePropertyWithContext(context, deleteTektonPipelinePropertyOptions)
+	_, err = cdTektonPipelineClient.DeleteTektonPipelinePropertyWithContext(context, deleteTektonPipelinePropertyOptions)
 	if err != nil {
-		log.Printf("[DEBUG] DeleteTektonPipelinePropertyWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteTektonPipelinePropertyWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteTektonPipelinePropertyWithContext failed: %s", err.Error()), "ibm_cd_tekton_pipeline_property", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")

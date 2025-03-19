@@ -2,9 +2,10 @@ package appconfiguration
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/IBM/appconfiguration-go-admin-sdk/appconfigurationv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"log"
 )
 
 func DataSourceIBMAppConfigSegment() *schema.Resource {

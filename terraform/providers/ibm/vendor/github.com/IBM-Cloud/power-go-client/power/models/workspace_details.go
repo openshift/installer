@@ -31,6 +31,9 @@ type WorkspaceDetails struct {
 	// Link to Workspace Resource
 	Href string `json:"href,omitempty"`
 
+	// The Workspace Network Security Groups information
+	NetworkSecurityGroups *WorkspaceNetworkSecurityGroupsDetails `json:"networkSecurityGroups,omitempty"`
+
 	// The Workspace Power Edge Router information
 	PowerEdgeRouter *WorkspacePowerEdgeRouterDetails `json:"powerEdgeRouter,omitempty"`
 }
@@ -44,6 +47,10 @@ func (m *WorkspaceDetails) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateCrn(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateNetworkSecurityGroups(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -79,6 +86,25 @@ func (m *WorkspaceDetails) validateCrn(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *WorkspaceDetails) validateNetworkSecurityGroups(formats strfmt.Registry) error {
+	if swag.IsZero(m.NetworkSecurityGroups) { // not required
+		return nil
+	}
+
+	if m.NetworkSecurityGroups != nil {
+		if err := m.NetworkSecurityGroups.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("networkSecurityGroups")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("networkSecurityGroups")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (m *WorkspaceDetails) validatePowerEdgeRouter(formats strfmt.Registry) error {
 	if swag.IsZero(m.PowerEdgeRouter) { // not required
 		return nil
@@ -102,6 +128,10 @@ func (m *WorkspaceDetails) validatePowerEdgeRouter(formats strfmt.Registry) erro
 func (m *WorkspaceDetails) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.contextValidateNetworkSecurityGroups(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.contextValidatePowerEdgeRouter(ctx, formats); err != nil {
 		res = append(res, err)
 	}
@@ -109,6 +139,27 @@ func (m *WorkspaceDetails) ContextValidate(ctx context.Context, formats strfmt.R
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *WorkspaceDetails) contextValidateNetworkSecurityGroups(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.NetworkSecurityGroups != nil {
+
+		if swag.IsZero(m.NetworkSecurityGroups) { // not required
+			return nil
+		}
+
+		if err := m.NetworkSecurityGroups.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("networkSecurityGroups")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("networkSecurityGroups")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 

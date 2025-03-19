@@ -87,6 +87,21 @@ func ResourceIBMPIVolume() *schema.Resource {
 				Optional:    true,
 				Type:        schema.TypeBool,
 			},
+			Arg_ReplicationSites: {
+				Description: "List of replication sites for volume replication.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				ForceNew:    true,
+				Optional:    true,
+				Set:         schema.HashString,
+				Type:        schema.TypeSet,
+			},
+			Arg_UserTags: {
+				Description: "The user tags attached to this resource.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Optional:    true,
+				Set:         schema.HashString,
+				Type:        schema.TypeSet,
+			},
 			Arg_VolumeName: {
 				Description:  "The name of the volume.",
 				Required:     true,
@@ -136,6 +151,11 @@ func ResourceIBMPIVolume() *schema.Resource {
 				Description: "The consistency group name if volume is a part of volume group.",
 				Type:        schema.TypeString,
 			},
+			Attr_CRN: {
+				Computed:    true,
+				Description: "The CRN of this resource.",
+				Type:        schema.TypeString,
+			},
 			Attr_DeleteOnTermination: {
 				Computed:    true,
 				Description: "Indicates if the volume should be deleted when the server terminates.",
@@ -170,6 +190,12 @@ func ResourceIBMPIVolume() *schema.Resource {
 				Computed:    true,
 				Description: "The replication status of the volume.",
 				Type:        schema.TypeString,
+			},
+			Attr_ReplicationSites: {
+				Computed:    true,
+				Description: "List of replication sites for volume replication.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
 			},
 			Attr_ReplicationType: {
 				Computed:    true,
@@ -240,6 +266,13 @@ func resourceIBMPIVolumeCreate(ctx context.Context, d *schema.ResourceData, meta
 		replicationEnabled := v.(bool)
 		body.ReplicationEnabled = &replicationEnabled
 	}
+	if v, ok := d.GetOk(Arg_ReplicationSites); ok {
+		if d.Get(Arg_ReplicationEnabled).(bool) {
+			body.ReplicationSites = flex.FlattenSet(v.(*schema.Set))
+		} else {
+			return diag.Errorf("Replication (%s) must be enabled if replication sites are specified.", Arg_ReplicationEnabled)
+		}
+	}
 	if ap, ok := d.GetOk(Arg_AffinityPolicy); ok {
 		policy := ap.(string)
 		body.AffinityPolicy = &policy
@@ -265,6 +298,9 @@ func resourceIBMPIVolumeCreate(ctx context.Context, d *schema.ResourceData, meta
 		}
 
 	}
+	if v, ok := d.GetOk(Arg_UserTags); ok {
+		body.UserTags = flex.FlattenSet(v.(*schema.Set))
+	}
 
 	client := instance.NewIBMPIVolumeClient(ctx, sess, cloudInstanceID)
 	vol, err := client.CreateVolume(body)
@@ -278,6 +314,14 @@ func resourceIBMPIVolumeCreate(ctx context.Context, d *schema.ResourceData, meta
 	_, err = isWaitForIBMPIVolumeAvailable(ctx, client, volumeid, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	if _, ok := d.GetOk(Arg_UserTags); ok {
+		oldList, newList := d.GetChange(Arg_UserTags)
+		err := flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, string(vol.Crn), "", UserTagType)
+		if err != nil {
+			log.Printf("Error on update of volume (%s) pi_user_tags during creation: %s", volumeid, err)
+		}
 	}
 
 	return resourceIBMPIVolumeRead(ctx, d, meta)
@@ -304,6 +348,14 @@ func resourceIBMPIVolumeRead(ctx context.Context, d *schema.ResourceData, meta i
 	if vol.VolumeID != nil {
 		d.Set(Attr_VolumeID, vol.VolumeID)
 	}
+	if vol.Crn != "" {
+		d.Set(Attr_CRN, vol.Crn)
+		tags, err := flex.GetGlobalTagsUsingCRN(meta, string(vol.Crn), "", UserTagType)
+		if err != nil {
+			log.Printf("Error on get of volume (%s) pi_user_tags: %s", *vol.VolumeID, err)
+		}
+		d.Set(Arg_UserTags, tags)
+	}
 	d.Set(Arg_VolumeName, vol.Name)
 	d.Set(Arg_VolumePool, vol.VolumePool)
 	if vol.Shareable != nil {
@@ -324,6 +376,7 @@ func resourceIBMPIVolumeRead(ctx context.Context, d *schema.ResourceData, meta i
 	d.Set(Attr_MirroringState, vol.MirroringState)
 	d.Set(Attr_PrimaryRole, vol.PrimaryRole)
 	d.Set(Arg_ReplicationEnabled, vol.ReplicationEnabled)
+	d.Set(Attr_ReplicationSites, vol.ReplicationSites)
 	d.Set(Attr_ReplicationStatus, vol.ReplicationStatus)
 	d.Set(Attr_ReplicationType, vol.ReplicationType)
 	d.Set(Attr_VolumeStatus, vol.State)
@@ -383,6 +436,16 @@ func resourceIBMPIVolumeUpdate(ctx context.Context, d *schema.ResourceData, meta
 		}
 	}
 
+	if d.HasChange(Arg_UserTags) {
+		crn := d.Get(Attr_CRN)
+		if crn != nil && crn != "" {
+			oldList, newList := d.GetChange(Arg_UserTags)
+			err := flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, crn.(string), "", UserTagType)
+			if err != nil {
+				log.Printf("Error on update of pi volume (%s) pi_user_tags: %s", volumeID, err)
+			}
+		}
+	}
 	return resourceIBMPIVolumeRead(ctx, d, meta)
 }
 

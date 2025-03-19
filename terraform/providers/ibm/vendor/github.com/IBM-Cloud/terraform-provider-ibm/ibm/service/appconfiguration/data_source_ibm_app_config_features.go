@@ -94,6 +94,11 @@ func DataSourceIBMAppConfigFeatures() *schema.Resource {
 							Computed:    true,
 							Description: "Feature description.",
 						},
+						"format": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Format of the feature (TEXT, JSON, YAML) and it is a required attribute when `type` is `STRING`. It is not required for `BOOLEAN` and `NUMERIC` types. This property is populated in the response body of `POST, PUT and GET` calls if the type `STRING` is used and not populated for `BOOLEAN` and `NUMERIC` types.",
+						},
 						"type": {
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -429,6 +434,9 @@ func dataSourceFeaturesListFeaturesToMap(featuresItem appconfigurationv1.Feature
 	}
 	if featuresItem.RolloutPercentage != nil {
 		featuresMap["rollout_percentage"] = featuresItem.RolloutPercentage
+	}
+	if featuresItem.Format != nil {
+		featuresMap["format"] = featuresItem.Format
 	}
 	if featuresItem.SegmentRules != nil {
 		segmentRulesList := []map[string]interface{}{}

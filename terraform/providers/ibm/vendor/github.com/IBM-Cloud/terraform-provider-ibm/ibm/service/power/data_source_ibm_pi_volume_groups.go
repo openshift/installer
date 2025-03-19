@@ -35,6 +35,11 @@ func DataSourceIBMPIVolumeGroups() *schema.Resource {
 				Description: "List of all volume groups.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						Attr_Auxiliary: {
+							Computed:    true,
+							Description: "Indicates if the volume is auxiliary or not.",
+							Type:        schema.TypeBool,
+						},
 						Attr_ConsistencyGroupName: {
 							Computed:    true,
 							Description: "The name of consistency group at storage controller level.",
@@ -49,6 +54,12 @@ func DataSourceIBMPIVolumeGroups() *schema.Resource {
 							Computed:    true,
 							Description: "The replication status of volume group.",
 							Type:        schema.TypeString,
+						},
+						Attr_ReplicationSites: {
+							Computed:    true,
+							Description: "Indicates the replication sites of the volume group.",
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Type:        schema.TypeList,
 						},
 						Attr_Status: {
 							Computed:    true,
@@ -79,6 +90,11 @@ func DataSourceIBMPIVolumeGroups() *schema.Resource {
 								},
 							},
 							Type: schema.TypeSet,
+						},
+						Attr_StoragePool: {
+							Computed:    true,
+							Description: "Indicates the storage pool of the volume group",
+							Type:        schema.TypeString,
 						},
 						Attr_VolumeGroupName: {
 							Computed:    true,
@@ -118,13 +134,19 @@ func flattenVolumeGroups(list []*models.VolumeGroup) []map[string]interface{} {
 	result := make([]map[string]interface{}, 0, len(list))
 	for _, i := range list {
 		l := map[string]interface{}{
+			Attr_Auxiliary:               i.Auxiliary,
 			Attr_ConsistencyGroupName:    i.ConsistencyGroupName,
 			Attr_ID:                      *i.ID,
 			Attr_ReplicationStatus:       i.ReplicationStatus,
 			Attr_Status:                  i.Status,
 			Attr_StatusDescriptionErrors: flattenVolumeGroupStatusDescription(i.StatusDescription.Errors),
+			Attr_StoragePool:             i.StoragePool,
 			Attr_VolumeGroupName:         i.Name,
 		}
+		if len(i.ReplicationSites) > 0 {
+			l[Attr_ReplicationSites] = i.ReplicationSites
+		}
+
 		result = append(result, l)
 	}
 	return result

@@ -17,6 +17,7 @@ import (
 const (
 	isRoutingTableAcceptRoutesFrom      = "accept_routes_from"
 	isRoutingTableID                    = "routing_table"
+	isRoutingTableCrn                   = "routing_table_crn"
 	isRoutingTableHref                  = "href"
 	isRoutingTableName                  = "name"
 	isRoutingTableResourceType          = "resource_type"
@@ -71,6 +72,11 @@ func DataSourceIBMISVPCRoutingTables() *schema.Resource {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Routing Table ID",
+						},
+						isRoutingTableCrn: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The crn of routing table",
 						},
 						"advertise_routes_to": &schema.Schema{
 							Type:        schema.TypeList,
@@ -168,6 +174,45 @@ func DataSourceIBMISVPCRoutingTables() *schema.Resource {
 								},
 							},
 						},
+						rtResourceGroup: {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The resource group for this volume.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									rtResourceGroupHref: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The URL for this resource group.",
+									},
+									rtResourceGroupId: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The unique identifier for this resource group.",
+									},
+									rtResourceGroupName: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The user-defined name for this resource group.",
+									},
+								},
+							},
+						},
+
+						rtTags: {
+							Type:     schema.TypeSet,
+							Computed: true,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+							Set:      flex.ResourceIBMVPCHash,
+						},
+
+						rtAccessTags: {
+							Type:        schema.TypeSet,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         flex.ResourceIBMVPCHash,
+							Description: "List of access tags",
+						},
 					},
 				},
 			},
@@ -221,6 +266,9 @@ func dataSourceIBMISVPCRoutingTablesList(d *schema.ResourceData, meta interface{
 		rtable[isRoutingTableAcceptRoutesFrom] = acceptRoutesFromInfo
 		if routingTable.ID != nil {
 			rtable[isRoutingTableID] = *routingTable.ID
+		}
+		if routingTable.CRN != nil {
+			rtable[isRoutingTableCrn] = *routingTable.CRN
 		}
 		if routingTable.Href != nil {
 			rtable[isRoutingTableHref] = *routingTable.Href
@@ -278,6 +326,28 @@ func dataSourceIBMISVPCRoutingTablesList(d *schema.ResourceData, meta interface{
 			}
 		}
 		rtable[isRoutingTableRoutesList] = routesInfo
+
+		resourceGroupList := []map[string]interface{}{}
+		if routingTable.ResourceGroup != nil {
+			resourceGroupMap := routingTableResourceGroupToMap(*routingTable.ResourceGroup)
+			resourceGroupList = append(resourceGroupList, resourceGroupMap)
+		}
+		rtable[rtResourceGroup] = resourceGroupList
+
+		tags, err := flex.GetGlobalTagsUsingCRN(meta, *routingTable.CRN, "", rtUserTagType)
+		if err != nil {
+			log.Printf(
+				"An error occured during reading of routing table (%s) tags : %s", d.Id(), err)
+		}
+		rtable[rtTags] = tags
+
+		accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *routingTable.CRN, "", rtAccessTagType)
+		if err != nil {
+			log.Printf(
+				"An error occured during reading of routing table (%s) access tags: %s", d.Id(), err)
+		}
+		rtable[rtAccessTags] = accesstags
+
 		vpcRoutingTables = append(vpcRoutingTables, rtable)
 	}
 

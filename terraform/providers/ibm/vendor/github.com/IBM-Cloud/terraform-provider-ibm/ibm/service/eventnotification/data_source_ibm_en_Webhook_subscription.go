@@ -59,6 +59,11 @@ func DataSourceIBMEnWebhookSubscription() *schema.Resource {
 							Computed:    true,
 							Description: "Signing webhook attributes.",
 						},
+						"template_id_notification": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The templete id for notification",
+						},
 						"additional_properties": {
 							Type:        schema.TypeMap,
 							Computed:    true,
@@ -143,6 +148,10 @@ func enWebhookSubscriptionToMap(attributeItem *en.SubscriptionAttributes) (attri
 
 	if attributeItem.SigningEnabled != nil {
 		attributeMap["signing_enabled"] = attributeItem.SigningEnabled
+	}
+
+	if attributeItem.TemplateIDNotification != nil {
+		attributeMap["template_id_notification"] = attributeItem.TemplateIDNotification
 	}
 
 	attributeMap["additional_properties"] = attributeItem.GetProperties()

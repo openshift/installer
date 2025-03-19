@@ -9,6 +9,7 @@ package configurationaggregator
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -77,75 +78,17 @@ func DataSourceIbmConfigAggregatorConfigurations() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"about": &schema.Schema{
-							Type:        schema.TypeList,
+							Type:        schema.TypeMap,
 							Computed:    true,
 							Description: "The basic metadata fetched from the query API.",
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"account_id": &schema.Schema{
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "The account ID in which the resource exists.",
-									},
-									"config_type": &schema.Schema{
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "The type of configuration of the retrieved resource.",
-									},
-									"resource_crn": &schema.Schema{
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "The unique CRN of the IBM Cloud resource.",
-									},
-									"resource_group_id": &schema.Schema{
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "The account ID.",
-									},
-									"service_name": &schema.Schema{
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "The name of the service to which the resources belongs.",
-									},
-									"resource_name": &schema.Schema{
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "User defined name of the resource.",
-									},
-									"last_config_refresh_time": &schema.Schema{
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "Date/time stamp identifying when the information was last collected. Must be in the RFC 3339 format.",
-									},
-									"location": &schema.Schema{
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "Location of the resource specified.",
-									},
-									"tags": &schema.Schema{
-										Type:        schema.TypeList,
-										Computed:    true,
-										Description: "Tags associated with the resource.",
-										Elem: &schema.Resource{
-											Schema: map[string]*schema.Schema{
-												"tag": &schema.Schema{
-													Type:        schema.TypeString,
-													Computed:    true,
-													Description: "The name of the tag.",
-												},
-											},
-										},
-									},
-								},
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 						"config": &schema.Schema{
-							Type:        schema.TypeList,
+							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The configuration of the resource.",
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{},
-							},
 						},
 					},
 				},
@@ -166,8 +109,6 @@ func dataSourceIbmConfigAggregatorConfigurationsRead(context context.Context, d 
 	instanceId := d.Get("instance_id").(string)
 	log.Printf("Fetching config for instance_id: %s", instanceId)
 	configurationAggregatorClient = getClientWithConfigurationInstanceEndpoint(configurationAggregatorClient, instanceId, region)
-	fmt.Println("Logging endpoint from datasource")
-	fmt.Println(configurationAggregatorClient.GetServiceURL())
 
 	listConfigsOptions := &configurationaggregatorv1.ListConfigsOptions{}
 
@@ -244,12 +185,12 @@ func DataSourceIbmConfigAggregatorConfigurationsConfigToMap(model *configuration
 	if err != nil {
 		return modelMap, err
 	}
-	modelMap["about"] = []map[string]interface{}{aboutMap}
+	modelMap["about"] = aboutMap
 	configMap, err := DataSourceIbmConfigAggregatorConfigurationsConfigurationToMap(model.Config)
 	if err != nil {
 		return modelMap, err
 	}
-	modelMap["config"] = []map[string]interface{}{configMap}
+	modelMap["config"] = configMap
 	return modelMap, nil
 }
 
@@ -263,13 +204,7 @@ func DataSourceIbmConfigAggregatorConfigurationsAboutToMap(model *configurationa
 	modelMap["resource_name"] = *model.ResourceName
 	modelMap["last_config_refresh_time"] = model.LastConfigRefreshTime.String()
 	modelMap["location"] = *model.Location
-	if model.Tags != nil {
-		tagsMap, err := DataSourceIbmConfigAggregatorConfigurationsTagsToMap(model.Tags)
-		if err != nil {
-			return modelMap, err
-		}
-		modelMap["tags"] = []map[string]interface{}{tagsMap}
-	}
+	// modelMap["tags"] = make(map[string]interface{})
 	return modelMap, nil
 }
 
@@ -281,7 +216,15 @@ func DataSourceIbmConfigAggregatorConfigurationsTagsToMap(model *configurationag
 	return modelMap, nil
 }
 
-func DataSourceIbmConfigAggregatorConfigurationsConfigurationToMap(model *configurationaggregatorv1.Configuration) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	return modelMap, nil
+func DataSourceIbmConfigAggregatorConfigurationsConfigurationToMap(model *configurationaggregatorv1.Configuration) (string, error) {
+	checkMap := model.GetProperties()
+	tryMap := make(map[string]interface{})
+	for i, v := range checkMap {
+		tryMap[i] = v
+	}
+	jsonData, err := json.Marshal(tryMap)
+	if err != nil {
+		return "", err
+	}
+	return string(jsonData), nil
 }

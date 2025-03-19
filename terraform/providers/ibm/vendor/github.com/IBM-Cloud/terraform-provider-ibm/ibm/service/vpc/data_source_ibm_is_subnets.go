@@ -155,6 +155,11 @@ func DataSourceIBMISSubnets() *schema.Resource {
 										Computed:    true,
 										Description: "The user-defined name for this routing table.",
 									},
+									"crn": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The crn for this routing table.",
+									},
 									"resource_type": {
 										Type:        schema.TypeString,
 										Computed:    true,

@@ -5,6 +5,7 @@ package kubernetes
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -196,7 +197,13 @@ func ResourceIBMContainerWorkerPool() *schema.Resource {
 				Type:             schema.TypeBool,
 				Optional:         true,
 				DiffSuppressFunc: flex.ApplyOnce,
-				Description:      "Import a workerpool from a cluster",
+				Description:      "Import an existing workerpool from the cluster instead of creating a new",
+			},
+
+			"orphan_on_delete": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Orphan the workerpool resource instead of deleting it",
 			},
 
 			"autoscale_enabled": {
@@ -475,13 +482,22 @@ func resourceIBMContainerWorkerPoolDelete(d *schema.ResourceData, meta interface
 		return err
 	}
 
-	err = workerPoolsAPI.DeleteWorkerPool(clusterNameorID, workerPoolNameorID, targetEnv)
-	if err != nil {
-		return err
+	var orphan_on_delete bool = false
+	if orod, ok := d.GetOk("orphan_on_delete"); ok {
+		orphan_on_delete = orod.(bool)
 	}
-	_, err = WaitForWorkerDelete(clusterNameorID, workerPoolNameorID, meta, d.Timeout(schema.TimeoutUpdate), targetEnv)
-	if err != nil {
-		return fmt.Errorf("[ERROR] Error waiting for removing workers of worker pool (%s) of cluster (%s): %s", workerPoolNameorID, clusterNameorID, err)
+
+	if orphan_on_delete {
+		log.Printf("[WARN] orphaning %s workerpool", workerPoolNameorID)
+	} else {
+		err = workerPoolsAPI.DeleteWorkerPool(clusterNameorID, workerPoolNameorID, targetEnv)
+		if err != nil {
+			return err
+		}
+		_, err = WaitForWorkerDelete(clusterNameorID, workerPoolNameorID, meta, d.Timeout(schema.TimeoutUpdate), targetEnv)
+		if err != nil {
+			return fmt.Errorf("[ERROR] Error waiting for removing workers of worker pool (%s) of cluster (%s): %s", workerPoolNameorID, clusterNameorID, err)
+		}
 	}
 	return nil
 }

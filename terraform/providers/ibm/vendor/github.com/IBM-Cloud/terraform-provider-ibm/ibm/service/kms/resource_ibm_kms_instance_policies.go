@@ -5,15 +5,15 @@ package kms
 
 import (
 	"context"
-	"fmt"
+	"log"
+	"strings"
+	"time"
+
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	kp "github.com/IBM/keyprotect-go-client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"log"
-	"strings"
-	"time"
 )
 
 func ResourceIBMKmsInstancePolicy() *schema.Resource {
@@ -366,7 +366,7 @@ func policyCreateOrUpdate(context context.Context, d *schema.ResourceData, kpAPI
 	}
 	err := kpAPI.SetInstancePolicies(context, mulPolicy)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error while setting instance policies: %s", err)
+		return flex.FmtErrorf("[ERROR] Error while setting instance policies: %s", err)
 	}
 	return nil
 

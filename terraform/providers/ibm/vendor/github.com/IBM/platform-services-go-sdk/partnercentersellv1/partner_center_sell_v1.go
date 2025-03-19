@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.94.1-71478489-20240820-161623
+ * IBM OpenAPI SDK Code Generator Version: 3.96.0-d6dec9d7-20241008-212902
  */
 
 // Package partnercentersellv1 : Operations and models for the PartnerCenterSellV1 service
@@ -42,7 +42,7 @@ type PartnerCenterSellV1 struct {
 }
 
 // DefaultServiceURL is the default URL to make service requests to.
-const DefaultServiceURL = "https://product-lifecycle.api.test.cloud.ibm.com/v1/gateway"
+const DefaultServiceURL = "https://product-lifecycle.cloud.ibm.com/openapi/v1"
 
 // DefaultServiceName is the default key used to find external configuration information.
 const DefaultServiceName = "partner_center_sell"
@@ -833,6 +833,9 @@ func (partnerCenterSell *PartnerCenterSellV1) CreateCatalogProductWithContext(ct
 	if createCatalogProductOptions.ID != nil {
 		body["id"] = createCatalogProductOptions.ID
 	}
+	if createCatalogProductOptions.ObjectID != nil {
+		body["object_id"] = createCatalogProductOptions.ObjectID
+	}
 	if createCatalogProductOptions.OverviewUi != nil {
 		body["overview_ui"] = createCatalogProductOptions.OverviewUi
 	}
@@ -1163,6 +1166,9 @@ func (partnerCenterSell *PartnerCenterSellV1) CreateCatalogPlanWithContext(ctx c
 	}
 	if createCatalogPlanOptions.ID != nil {
 		body["id"] = createCatalogPlanOptions.ID
+	}
+	if createCatalogPlanOptions.ObjectID != nil {
+		body["object_id"] = createCatalogPlanOptions.ObjectID
 	}
 	if createCatalogPlanOptions.OverviewUi != nil {
 		body["overview_ui"] = createCatalogPlanOptions.OverviewUi
@@ -1496,6 +1502,9 @@ func (partnerCenterSell *PartnerCenterSellV1) CreateCatalogDeploymentWithContext
 	}
 	if createCatalogDeploymentOptions.ID != nil {
 		body["id"] = createCatalogDeploymentOptions.ID
+	}
+	if createCatalogDeploymentOptions.ObjectID != nil {
+		body["object_id"] = createCatalogDeploymentOptions.ObjectID
 	}
 	if createCatalogDeploymentOptions.OverviewUi != nil {
 		body["overview_ui"] = createCatalogDeploymentOptions.OverviewUi
@@ -2144,12 +2153,6 @@ func (partnerCenterSell *PartnerCenterSellV1) CreateResourceBrokerWithContext(ct
 	}
 
 	body := make(map[string]interface{})
-	if createResourceBrokerOptions.AuthUsername != nil {
-		body["auth_username"] = createResourceBrokerOptions.AuthUsername
-	}
-	if createResourceBrokerOptions.AuthPassword != nil {
-		body["auth_password"] = createResourceBrokerOptions.AuthPassword
-	}
 	if createResourceBrokerOptions.AuthScheme != nil {
 		body["auth_scheme"] = createResourceBrokerOptions.AuthScheme
 	}
@@ -2161,6 +2164,12 @@ func (partnerCenterSell *PartnerCenterSellV1) CreateResourceBrokerWithContext(ct
 	}
 	if createResourceBrokerOptions.Type != nil {
 		body["type"] = createResourceBrokerOptions.Type
+	}
+	if createResourceBrokerOptions.AuthUsername != nil {
+		body["auth_username"] = createResourceBrokerOptions.AuthUsername
+	}
+	if createResourceBrokerOptions.AuthPassword != nil {
+		body["auth_password"] = createResourceBrokerOptions.AuthPassword
 	}
 	if createResourceBrokerOptions.ResourceGroupCrn != nil {
 		body["resource_group_crn"] = createResourceBrokerOptions.ResourceGroupCrn
@@ -2562,142 +2571,6 @@ func (partnerCenterSell *PartnerCenterSellV1) GetProductBadgeWithContext(ctx con
 
 	return
 }
-
-// ListBadges : List badges
-// List all available badges that a product can be validated against.
-func (partnerCenterSell *PartnerCenterSellV1) ListBadges(listBadgesOptions *ListBadgesOptions) (result *CloudBadges, response *core.DetailedResponse, err error) {
-	result, response, err = partnerCenterSell.ListBadgesWithContext(context.Background(), listBadgesOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// ListBadgesWithContext is an alternate form of the ListBadges method which supports a Context parameter
-func (partnerCenterSell *PartnerCenterSellV1) ListBadgesWithContext(ctx context.Context, listBadgesOptions *ListBadgesOptions) (result *CloudBadges, response *core.DetailedResponse, err error) {
-	err = core.ValidateStruct(listBadgesOptions, "listBadgesOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	builder := core.NewRequestBuilder(core.GET)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = partnerCenterSell.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(partnerCenterSell.Service.Options.URL, `/products/badges`, nil)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range listBadgesOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("partner_center_sell", "V1", "ListBadges")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-
-	if listBadgesOptions.Limit != nil {
-		builder.AddQuery("limit", fmt.Sprint(*listBadgesOptions.Limit))
-	}
-	if listBadgesOptions.Start != nil {
-		builder.AddQuery("start", fmt.Sprint(*listBadgesOptions.Start))
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = partnerCenterSell.Service.Request(request, &rawResponse)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "list_badges", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCloudBadges)
-		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// GetBadge : Get badge
-// Retrieve the details of a badge.
-func (partnerCenterSell *PartnerCenterSellV1) GetBadge(getBadgeOptions *GetBadgeOptions) (result *CloudBadge, response *core.DetailedResponse, err error) {
-	result, response, err = partnerCenterSell.GetBadgeWithContext(context.Background(), getBadgeOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// GetBadgeWithContext is an alternate form of the GetBadge method which supports a Context parameter
-func (partnerCenterSell *PartnerCenterSellV1) GetBadgeWithContext(ctx context.Context, getBadgeOptions *GetBadgeOptions) (result *CloudBadge, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(getBadgeOptions, "getBadgeOptions cannot be nil")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
-		return
-	}
-	err = core.ValidateStruct(getBadgeOptions, "getBadgeOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"badge_id": fmt.Sprint(*getBadgeOptions.BadgeID),
-	}
-
-	builder := core.NewRequestBuilder(core.GET)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = partnerCenterSell.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(partnerCenterSell.Service.Options.URL, `/products/badges/{badge_id}`, pathParamsMap)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range getBadgeOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("partner_center_sell", "V1", "GetBadge")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = partnerCenterSell.Service.Request(request, &rawResponse)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "get_badge", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCloudBadge)
-		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
 func getServiceComponentInfo() *core.ProblemComponent {
 	return core.NewProblemComponent(DefaultServiceName, "1.5.0")
 }
@@ -2797,6 +2670,19 @@ type Broker struct {
 	// The URL associated with the broker.
 	URL *string `json:"url,omitempty"`
 }
+
+// Constants associated with the Broker.AuthUsername property.
+// The authentication username to reach the broker.
+const (
+	Broker_AuthUsername_Apikey = "apikey"
+)
+
+// Constants associated with the Broker.AuthScheme property.
+// The supported authentication scheme for the broker.
+const (
+	Broker_AuthScheme_Bearer    = "bearer"
+	Broker_AuthScheme_BearerCrn = "bearer-crn"
+)
 
 // Constants associated with the Broker.State property.
 // The state of the broker.
@@ -3040,6 +2926,19 @@ type BrokerPatch struct {
 	// The region where the pricing plan is available.
 	Region *string `json:"region,omitempty"`
 }
+
+// Constants associated with the BrokerPatch.AuthUsername property.
+// The authentication username to reach the broker.
+const (
+	BrokerPatch_AuthUsername_Apikey = "apikey"
+)
+
+// Constants associated with the BrokerPatch.AuthScheme property.
+// The supported authentication scheme for the broker.
+const (
+	BrokerPatch_AuthScheme_Bearer    = "bearer"
+	BrokerPatch_AuthScheme_BearerCrn = "bearer-crn"
+)
 
 // Constants associated with the BrokerPatch.State property.
 // The state of the broker.
@@ -3344,146 +3243,6 @@ func (catalogProductProvider *CatalogProductProvider) asPatch() (_patch map[stri
 	return
 }
 
-// CloudBadge : The details of the cloud badge.
-type CloudBadge struct {
-	// The ID of the badge.
-	ID *string `json:"id" validate:"required"`
-
-	// The name of the badge.
-	Label *string `json:"label,omitempty"`
-
-	// The description of the badge.
-	Description *string `json:"description,omitempty"`
-
-	// The internal description of the badge.
-	InternalDescription *string `json:"internal_description,omitempty"`
-
-	// The collection of URLs where vendors can learn more about the badge.
-	LearnMoreLinks *LearnMoreLinks `json:"learn_more_links,omitempty"`
-
-	// The URL to get started with the validation against this certification.
-	GetStartedLink *string `json:"get_started_link,omitempty"`
-
-	// Deprecated, will be removed.
-	Tag *string `json:"tag,omitempty"`
-}
-
-// UnmarshalCloudBadge unmarshals an instance of CloudBadge from the specified map of raw messages.
-func UnmarshalCloudBadge(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(CloudBadge)
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "label", &obj.Label)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "label-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "internal_description", &obj.InternalDescription)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "internal_description-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "learn_more_links", &obj.LearnMoreLinks, UnmarshalLearnMoreLinks)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "learn_more_links-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "get_started_link", &obj.GetStartedLink)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "get_started_link-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "tag", &obj.Tag)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "tag-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// CloudBadges : The list of all the available cloud badges.
-type CloudBadges struct {
-	// The maximum number of results returned in this response.
-	Limit *int64 `json:"limit" validate:"required"`
-
-	// The maximum number of results returned in this response.
-	Offset *int64 `json:"offset" validate:"required"`
-
-	// The total number of results.
-	TotalCount *int64 `json:"total_count" validate:"required"`
-
-	// The page reference information.
-	First *Bookmark `json:"first,omitempty"`
-
-	// The page reference information.
-	Next *Bookmark `json:"next,omitempty"`
-
-	// The page reference information.
-	Previous *Bookmark `json:"previous,omitempty"`
-
-	// The page reference information.
-	Last *Bookmark `json:"last,omitempty"`
-
-	// The list of all the available cloud badges.
-	Badges []CloudBadge `json:"badges,omitempty"`
-}
-
-// UnmarshalCloudBadges unmarshals an instance of CloudBadges from the specified map of raw messages.
-func UnmarshalCloudBadges(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(CloudBadges)
-	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalBookmark)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalBookmark)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalBookmark)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalBookmark)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "badges", &obj.Badges, UnmarshalCloudBadge)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "badges-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // CreateCatalogDeploymentOptions : The CreateCatalogDeployment options.
 type CreateCatalogDeploymentOptions struct {
 	// The unique ID of the product.
@@ -3517,6 +3276,9 @@ type CreateCatalogDeploymentOptions struct {
 
 	// The ID of a global catalog object.
 	ID *string `json:"id,omitempty"`
+
+	// The desired ID of the global catalog object.
+	ObjectID *string `json:"object_id,omitempty"`
 
 	// The object that contains the service details from the Overview page in global catalog.
 	OverviewUi *GlobalCatalogOverviewUI `json:"overview_ui,omitempty"`
@@ -3612,6 +3374,12 @@ func (_options *CreateCatalogDeploymentOptions) SetID(id string) *CreateCatalogD
 	return _options
 }
 
+// SetObjectID : Allow user to set ObjectID
+func (_options *CreateCatalogDeploymentOptions) SetObjectID(objectID string) *CreateCatalogDeploymentOptions {
+	_options.ObjectID = core.StringPtr(objectID)
+	return _options
+}
+
 // SetOverviewUi : Allow user to set OverviewUi
 func (_options *CreateCatalogDeploymentOptions) SetOverviewUi(overviewUi *GlobalCatalogOverviewUI) *CreateCatalogDeploymentOptions {
 	_options.OverviewUi = overviewUi
@@ -3666,6 +3434,9 @@ type CreateCatalogPlanOptions struct {
 
 	// The ID of a global catalog object.
 	ID *string `json:"id,omitempty"`
+
+	// The desired ID of the global catalog object.
+	ObjectID *string `json:"object_id,omitempty"`
 
 	// The object that contains the service details from the Overview page in global catalog.
 	OverviewUi *GlobalCatalogOverviewUI `json:"overview_ui,omitempty"`
@@ -3754,6 +3525,12 @@ func (_options *CreateCatalogPlanOptions) SetID(id string) *CreateCatalogPlanOpt
 	return _options
 }
 
+// SetObjectID : Allow user to set ObjectID
+func (_options *CreateCatalogPlanOptions) SetObjectID(objectID string) *CreateCatalogPlanOptions {
+	_options.ObjectID = core.StringPtr(objectID)
+	return _options
+}
+
 // SetOverviewUi : Allow user to set OverviewUi
 func (_options *CreateCatalogPlanOptions) SetOverviewUi(overviewUi *GlobalCatalogOverviewUI) *CreateCatalogPlanOptions {
 	_options.OverviewUi = overviewUi
@@ -3806,6 +3583,9 @@ type CreateCatalogProductOptions struct {
 	// The ID of a global catalog object.
 	ID *string `json:"id,omitempty"`
 
+	// The desired ID of the global catalog object.
+	ObjectID *string `json:"object_id,omitempty"`
+
 	// The object that contains the service details from the Overview page in global catalog.
 	OverviewUi *GlobalCatalogOverviewUI `json:"overview_ui,omitempty"`
 
@@ -3825,6 +3605,7 @@ type CreateCatalogProductOptions struct {
 // Constants associated with the CreateCatalogProductOptions.Kind property.
 // The kind of the global catalog object.
 const (
+	CreateCatalogProductOptions_Kind_Composite       = "composite"
 	CreateCatalogProductOptions_Kind_PlatformService = "platform_service"
 	CreateCatalogProductOptions_Kind_Service         = "service"
 )
@@ -3890,6 +3671,12 @@ func (_options *CreateCatalogProductOptions) SetID(id string) *CreateCatalogProd
 	return _options
 }
 
+// SetObjectID : Allow user to set ObjectID
+func (_options *CreateCatalogProductOptions) SetObjectID(objectID string) *CreateCatalogProductOptions {
+	_options.ObjectID = core.StringPtr(objectID)
+	return _options
+}
+
 // SetOverviewUi : Allow user to set OverviewUi
 func (_options *CreateCatalogProductOptions) SetOverviewUi(overviewUi *GlobalCatalogOverviewUI) *CreateCatalogProductOptions {
 	_options.OverviewUi = overviewUi
@@ -3926,7 +3713,7 @@ type CreateIamRegistrationOptions struct {
 	ProductID *string `json:"product_id" validate:"required,ne="`
 
 	// The IAM registration name, which must be the programmatic name of the product.
-	Name *string `json:"name,omitempty"`
+	Name *string `json:"name" validate:"required"`
 
 	// Whether the service is enabled or disabled for IAM.
 	Enabled *bool `json:"enabled,omitempty"`
@@ -3981,9 +3768,10 @@ const (
 )
 
 // NewCreateIamRegistrationOptions : Instantiate CreateIamRegistrationOptions
-func (*PartnerCenterSellV1) NewCreateIamRegistrationOptions(productID string) *CreateIamRegistrationOptions {
+func (*PartnerCenterSellV1) NewCreateIamRegistrationOptions(productID string, name string) *CreateIamRegistrationOptions {
 	return &CreateIamRegistrationOptions{
 		ProductID: core.StringPtr(productID),
+		Name:      core.StringPtr(name),
 	}
 }
 
@@ -4242,12 +4030,6 @@ func (options *CreateRegistrationOptions) SetHeaders(param map[string]string) *C
 
 // CreateResourceBrokerOptions : The CreateResourceBroker options.
 type CreateResourceBrokerOptions struct {
-	// The authentication username to reach the broker.
-	AuthUsername *string `json:"auth_username" validate:"required"`
-
-	// The authentication password to reach the broker.
-	AuthPassword *string `json:"auth_password" validate:"required"`
-
 	// The supported authentication scheme for the broker.
 	AuthScheme *string `json:"auth_scheme" validate:"required"`
 
@@ -4259,6 +4041,12 @@ type CreateResourceBrokerOptions struct {
 
 	// The type of the provisioning model.
 	Type *string `json:"type" validate:"required"`
+
+	// The authentication username to reach the broker.
+	AuthUsername *string `json:"auth_username,omitempty"`
+
+	// The authentication password to reach the broker.
+	AuthPassword *string `json:"auth_password,omitempty"`
 
 	// The cloud resource name of the resource group.
 	ResourceGroupCrn *string `json:"resource_group_crn,omitempty"`
@@ -4283,11 +4071,24 @@ type CreateResourceBrokerOptions struct {
 	Headers map[string]string
 }
 
+// Constants associated with the CreateResourceBrokerOptions.AuthScheme property.
+// The supported authentication scheme for the broker.
+const (
+	CreateResourceBrokerOptions_AuthScheme_Bearer    = "bearer"
+	CreateResourceBrokerOptions_AuthScheme_BearerCrn = "bearer-crn"
+)
+
 // Constants associated with the CreateResourceBrokerOptions.Type property.
 // The type of the provisioning model.
 const (
 	CreateResourceBrokerOptions_Type_ProvisionBehind  = "provision_behind"
 	CreateResourceBrokerOptions_Type_ProvisionThrough = "provision_through"
+)
+
+// Constants associated with the CreateResourceBrokerOptions.AuthUsername property.
+// The authentication username to reach the broker.
+const (
+	CreateResourceBrokerOptions_AuthUsername_Apikey = "apikey"
 )
 
 // Constants associated with the CreateResourceBrokerOptions.State property.
@@ -4298,27 +4099,13 @@ const (
 )
 
 // NewCreateResourceBrokerOptions : Instantiate CreateResourceBrokerOptions
-func (*PartnerCenterSellV1) NewCreateResourceBrokerOptions(authUsername string, authPassword string, authScheme string, name string, brokerURL string, typeVar string) *CreateResourceBrokerOptions {
+func (*PartnerCenterSellV1) NewCreateResourceBrokerOptions(authScheme string, name string, brokerURL string, typeVar string) *CreateResourceBrokerOptions {
 	return &CreateResourceBrokerOptions{
-		AuthUsername: core.StringPtr(authUsername),
-		AuthPassword: core.StringPtr(authPassword),
-		AuthScheme:   core.StringPtr(authScheme),
-		Name:         core.StringPtr(name),
-		BrokerURL:    core.StringPtr(brokerURL),
-		Type:         core.StringPtr(typeVar),
+		AuthScheme: core.StringPtr(authScheme),
+		Name:       core.StringPtr(name),
+		BrokerURL:  core.StringPtr(brokerURL),
+		Type:       core.StringPtr(typeVar),
 	}
-}
-
-// SetAuthUsername : Allow user to set AuthUsername
-func (_options *CreateResourceBrokerOptions) SetAuthUsername(authUsername string) *CreateResourceBrokerOptions {
-	_options.AuthUsername = core.StringPtr(authUsername)
-	return _options
-}
-
-// SetAuthPassword : Allow user to set AuthPassword
-func (_options *CreateResourceBrokerOptions) SetAuthPassword(authPassword string) *CreateResourceBrokerOptions {
-	_options.AuthPassword = core.StringPtr(authPassword)
-	return _options
 }
 
 // SetAuthScheme : Allow user to set AuthScheme
@@ -4342,6 +4129,18 @@ func (_options *CreateResourceBrokerOptions) SetBrokerURL(brokerURL string) *Cre
 // SetType : Allow user to set Type
 func (_options *CreateResourceBrokerOptions) SetType(typeVar string) *CreateResourceBrokerOptions {
 	_options.Type = core.StringPtr(typeVar)
+	return _options
+}
+
+// SetAuthUsername : Allow user to set AuthUsername
+func (_options *CreateResourceBrokerOptions) SetAuthUsername(authUsername string) *CreateResourceBrokerOptions {
+	_options.AuthUsername = core.StringPtr(authUsername)
+	return _options
+}
+
+// SetAuthPassword : Allow user to set AuthPassword
+func (_options *CreateResourceBrokerOptions) SetAuthPassword(authPassword string) *CreateResourceBrokerOptions {
+	_options.AuthPassword = core.StringPtr(authPassword)
 	return _options
 }
 
@@ -4785,34 +4584,6 @@ func (environmentAttributeOptions *EnvironmentAttributeOptions) asPatch() (_patc
 	return
 }
 
-// GetBadgeOptions : The GetBadge options.
-type GetBadgeOptions struct {
-	// The unique ID of the badge. This ID can be obtained by calling the list badges method.
-	BadgeID *strfmt.UUID `json:"badge_id" validate:"required"`
-
-	// Allows users to set headers on API requests.
-	Headers map[string]string
-}
-
-// NewGetBadgeOptions : Instantiate GetBadgeOptions
-func (*PartnerCenterSellV1) NewGetBadgeOptions(badgeID *strfmt.UUID) *GetBadgeOptions {
-	return &GetBadgeOptions{
-		BadgeID: badgeID,
-	}
-}
-
-// SetBadgeID : Allow user to set BadgeID
-func (_options *GetBadgeOptions) SetBadgeID(badgeID *strfmt.UUID) *GetBadgeOptions {
-	_options.BadgeID = badgeID
-	return _options
-}
-
-// SetHeaders : Allow user to set Headers
-func (options *GetBadgeOptions) SetHeaders(param map[string]string) *GetBadgeOptions {
-	options.Headers = param
-	return options
-}
-
 // GetCatalogDeploymentOptions : The GetCatalogDeployment options.
 type GetCatalogDeploymentOptions struct {
 	// The unique ID of the product.
@@ -5157,6 +4928,9 @@ type GlobalCatalogDeployment struct {
 	// The ID of a global catalog object.
 	ID *string `json:"id,omitempty"`
 
+	// The desired ID of the global catalog object.
+	ObjectID *string `json:"object_id,omitempty"`
+
 	// The programmatic name of this deployment.
 	Name *string `json:"name,omitempty"`
 
@@ -5199,6 +4973,11 @@ func UnmarshalGlobalCatalogDeployment(m map[string]json.RawMessage, result inter
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "object_id", &obj.ObjectID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "object_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
@@ -5260,6 +5039,9 @@ type GlobalCatalogDeploymentMetadata struct {
 
 	// The global catalog metadata of the service.
 	Service *GlobalCatalogMetadataService `json:"service,omitempty"`
+
+	// The global catalog metadata of the deployment.
+	Deployment *GlobalCatalogMetadataDeployment `json:"deployment,omitempty"`
 }
 
 // UnmarshalGlobalCatalogDeploymentMetadata unmarshals an instance of GlobalCatalogDeploymentMetadata from the specified map of raw messages.
@@ -5280,6 +5062,11 @@ func UnmarshalGlobalCatalogDeploymentMetadata(m map[string]json.RawMessage, resu
 		err = core.SDKErrorf(err, "", "service-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalModel(m, "deployment", &obj.Deployment, UnmarshalGlobalCatalogMetadataDeployment)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "deployment-error", common.GetComponentInfo())
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
@@ -5295,6 +5082,9 @@ func (globalCatalogDeploymentMetadata *GlobalCatalogDeploymentMetadata) asPatch(
 	}
 	if !core.IsNil(globalCatalogDeploymentMetadata.Service) {
 		_patch["service"] = globalCatalogDeploymentMetadata.Service.asPatch()
+	}
+	if !core.IsNil(globalCatalogDeploymentMetadata.Deployment) {
+		_patch["deployment"] = globalCatalogDeploymentMetadata.Deployment.asPatch()
 	}
 
 	return
@@ -5385,6 +5175,106 @@ func (globalCatalogDeploymentPatch *GlobalCatalogDeploymentPatch) AsPatch() (_pa
 	return
 }
 
+// GlobalCatalogMetadataDeployment : The global catalog metadata of the deployment.
+type GlobalCatalogMetadataDeployment struct {
+	// The global catalog metadata of the deployment.
+	Broker *GlobalCatalogMetadataDeploymentBroker `json:"broker,omitempty"`
+
+	// The global catalog deployment location.
+	Location *string `json:"location,omitempty"`
+
+	// The global catalog deployment URL of location.
+	LocationURL *string `json:"location_url,omitempty"`
+
+	// Region crn.
+	TargetCrn *string `json:"target_crn,omitempty"`
+}
+
+// UnmarshalGlobalCatalogMetadataDeployment unmarshals an instance of GlobalCatalogMetadataDeployment from the specified map of raw messages.
+func UnmarshalGlobalCatalogMetadataDeployment(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(GlobalCatalogMetadataDeployment)
+	err = core.UnmarshalModel(m, "broker", &obj.Broker, UnmarshalGlobalCatalogMetadataDeploymentBroker)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "broker-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "location", &obj.Location)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "location-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "location_url", &obj.LocationURL)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "location_url-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "target_crn", &obj.TargetCrn)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "target_crn-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// asPatch returns a generic map representation of the GlobalCatalogMetadataDeployment
+func (globalCatalogMetadataDeployment *GlobalCatalogMetadataDeployment) asPatch() (_patch map[string]interface{}) {
+	_patch = map[string]interface{}{}
+	if !core.IsNil(globalCatalogMetadataDeployment.Broker) {
+		_patch["broker"] = globalCatalogMetadataDeployment.Broker.asPatch()
+	}
+	if !core.IsNil(globalCatalogMetadataDeployment.Location) {
+		_patch["location"] = globalCatalogMetadataDeployment.Location
+	}
+	if !core.IsNil(globalCatalogMetadataDeployment.LocationURL) {
+		_patch["location_url"] = globalCatalogMetadataDeployment.LocationURL
+	}
+	if !core.IsNil(globalCatalogMetadataDeployment.TargetCrn) {
+		_patch["target_crn"] = globalCatalogMetadataDeployment.TargetCrn
+	}
+
+	return
+}
+
+// GlobalCatalogMetadataDeploymentBroker : The global catalog metadata of the deployment.
+type GlobalCatalogMetadataDeploymentBroker struct {
+	// The name of the resource broker.
+	Name *string `json:"name,omitempty"`
+
+	// Crn or guid of the resource broker.
+	Guid *string `json:"guid,omitempty"`
+}
+
+// UnmarshalGlobalCatalogMetadataDeploymentBroker unmarshals an instance of GlobalCatalogMetadataDeploymentBroker from the specified map of raw messages.
+func UnmarshalGlobalCatalogMetadataDeploymentBroker(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(GlobalCatalogMetadataDeploymentBroker)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "guid", &obj.Guid)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "guid-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// asPatch returns a generic map representation of the GlobalCatalogMetadataDeploymentBroker
+func (globalCatalogMetadataDeploymentBroker *GlobalCatalogMetadataDeploymentBroker) asPatch() (_patch map[string]interface{}) {
+	_patch = map[string]interface{}{}
+	if !core.IsNil(globalCatalogMetadataDeploymentBroker.Name) {
+		_patch["name"] = globalCatalogMetadataDeploymentBroker.Name
+	}
+	if !core.IsNil(globalCatalogMetadataDeploymentBroker.Guid) {
+		_patch["guid"] = globalCatalogMetadataDeploymentBroker.Guid
+	}
+
+	return
+}
+
 // GlobalCatalogMetadataPricing : The pricing metadata of this object.
 type GlobalCatalogMetadataPricing struct {
 	// The type of the pricing plan.
@@ -5393,6 +5283,14 @@ type GlobalCatalogMetadataPricing struct {
 	// The source of the pricing information: global_catalog or pricing_catalog.
 	Origin *string `json:"origin,omitempty"`
 }
+
+// Constants associated with the GlobalCatalogMetadataPricing.Type property.
+// The type of the pricing plan.
+const (
+	GlobalCatalogMetadataPricing_Type_Free         = "free"
+	GlobalCatalogMetadataPricing_Type_Paid         = "paid"
+	GlobalCatalogMetadataPricing_Type_Subscription = "subscription"
+)
 
 // Constants associated with the GlobalCatalogMetadataPricing.Origin property.
 // The source of the pricing information: global_catalog or pricing_catalog.
@@ -5438,6 +5336,15 @@ type GlobalCatalogMetadataService struct {
 
 	// Whether the service is compatible with the IAM service.
 	IamCompatible *bool `json:"iam_compatible,omitempty"`
+
+	// Deprecated. Controls the Connections tab on the Resource Details page.
+	Bindable *bool `json:"bindable,omitempty"`
+
+	// Indicates plan update support and controls the Plan tab on the Resource Details page.
+	PlanUpdateable *bool `json:"plan_updateable,omitempty"`
+
+	// Indicates service credentials support and controls the Service Credential tab on Resource Details page.
+	ServiceKeySupported *bool `json:"service_key_supported,omitempty"`
 }
 
 // UnmarshalGlobalCatalogMetadataService unmarshals an instance of GlobalCatalogMetadataService from the specified map of raw messages.
@@ -5453,6 +5360,21 @@ func UnmarshalGlobalCatalogMetadataService(m map[string]json.RawMessage, result 
 		err = core.SDKErrorf(err, "", "iam_compatible-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "bindable", &obj.Bindable)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "bindable-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "plan_updateable", &obj.PlanUpdateable)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "plan_updateable-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "service_key_supported", &obj.ServiceKeySupported)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "service_key_supported-error", common.GetComponentInfo())
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
@@ -5466,6 +5388,15 @@ func (globalCatalogMetadataService *GlobalCatalogMetadataService) asPatch() (_pa
 	if !core.IsNil(globalCatalogMetadataService.IamCompatible) {
 		_patch["iam_compatible"] = globalCatalogMetadataService.IamCompatible
 	}
+	if !core.IsNil(globalCatalogMetadataService.Bindable) {
+		_patch["bindable"] = globalCatalogMetadataService.Bindable
+	}
+	if !core.IsNil(globalCatalogMetadataService.PlanUpdateable) {
+		_patch["plan_updateable"] = globalCatalogMetadataService.PlanUpdateable
+	}
+	if !core.IsNil(globalCatalogMetadataService.ServiceKeySupported) {
+		_patch["service_key_supported"] = globalCatalogMetadataService.ServiceKeySupported
+	}
 
 	return
 }
@@ -5475,7 +5406,7 @@ type GlobalCatalogMetadataUI struct {
 	// The data strings.
 	Strings *GlobalCatalogMetadataUIStrings `json:"strings,omitempty"`
 
-	// The UI based URLs.
+	// Metadata with URLs related to a service.
 	Urls *GlobalCatalogMetadataUIUrls `json:"urls,omitempty"`
 
 	// Whether the object is hidden from the consumption catalog.
@@ -5566,6 +5497,9 @@ type GlobalCatalogMetadataUIStringsContent struct {
 
 	// The list of supporting media for this product.
 	Media []CatalogProductMediaItem `json:"media,omitempty"`
+
+	// On a service kind record this controls if your service has a custom dashboard or Resource Detail page.
+	EmbeddableDashboard *string `json:"embeddable_dashboard,omitempty"`
 }
 
 // UnmarshalGlobalCatalogMetadataUIStringsContent unmarshals an instance of GlobalCatalogMetadataUIStringsContent from the specified map of raw messages.
@@ -5579,6 +5513,11 @@ func UnmarshalGlobalCatalogMetadataUIStringsContent(m map[string]json.RawMessage
 	err = core.UnmarshalModel(m, "media", &obj.Media, UnmarshalCatalogProductMediaItem)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "media-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "embeddable_dashboard", &obj.EmbeddableDashboard)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "embeddable_dashboard-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5602,17 +5541,36 @@ func (globalCatalogMetadataUIStringsContent *GlobalCatalogMetadataUIStringsConte
 		}
 		_patch["media"] = mediaPatches
 	}
+	if !core.IsNil(globalCatalogMetadataUIStringsContent.EmbeddableDashboard) {
+		_patch["embeddable_dashboard"] = globalCatalogMetadataUIStringsContent.EmbeddableDashboard
+	}
 
 	return
 }
 
-// GlobalCatalogMetadataUIUrls : The UI based URLs.
+// GlobalCatalogMetadataUIUrls : Metadata with URLs related to a service.
 type GlobalCatalogMetadataUIUrls struct {
-	// The URL for your product documentation.
+	// The URL for your product's documentation.
 	DocURL *string `json:"doc_url,omitempty"`
+
+	// The URL for your product's API documentation.
+	ApidocsURL *string `json:"apidocs_url,omitempty"`
 
 	// The URL for your product's end user license agreement.
 	TermsURL *string `json:"terms_url,omitempty"`
+
+	// Controls the Getting Started tab on the Resource Details page. Setting it the content is loaded from the specified
+	// URL.
+	InstructionsURL *string `json:"instructions_url,omitempty"`
+
+	// Controls the Provisioning page URL, if set the assumption is that this URL is the provisioning URL for your service.
+	CatalogDetailsURL *string `json:"catalog_details_url,omitempty"`
+
+	// Controls the Provisioning page URL, if set the assumption is that this URL is the provisioning URL for your service.
+	CustomCreatePageURL *string `json:"custom_create_page_url,omitempty"`
+
+	// Controls if your service has a custom dashboard or Resource Detail page.
+	Dashboard *string `json:"dashboard,omitempty"`
 }
 
 // UnmarshalGlobalCatalogMetadataUIUrls unmarshals an instance of GlobalCatalogMetadataUIUrls from the specified map of raw messages.
@@ -5623,9 +5581,34 @@ func UnmarshalGlobalCatalogMetadataUIUrls(m map[string]json.RawMessage, result i
 		err = core.SDKErrorf(err, "", "doc_url-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "apidocs_url", &obj.ApidocsURL)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "apidocs_url-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "terms_url", &obj.TermsURL)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "terms_url-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "instructions_url", &obj.InstructionsURL)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "instructions_url-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "catalog_details_url", &obj.CatalogDetailsURL)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_details_url-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "custom_create_page_url", &obj.CustomCreatePageURL)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "custom_create_page_url-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "dashboard", &obj.Dashboard)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "dashboard-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5638,8 +5621,23 @@ func (globalCatalogMetadataUIUrls *GlobalCatalogMetadataUIUrls) asPatch() (_patc
 	if !core.IsNil(globalCatalogMetadataUIUrls.DocURL) {
 		_patch["doc_url"] = globalCatalogMetadataUIUrls.DocURL
 	}
+	if !core.IsNil(globalCatalogMetadataUIUrls.ApidocsURL) {
+		_patch["apidocs_url"] = globalCatalogMetadataUIUrls.ApidocsURL
+	}
 	if !core.IsNil(globalCatalogMetadataUIUrls.TermsURL) {
 		_patch["terms_url"] = globalCatalogMetadataUIUrls.TermsURL
+	}
+	if !core.IsNil(globalCatalogMetadataUIUrls.InstructionsURL) {
+		_patch["instructions_url"] = globalCatalogMetadataUIUrls.InstructionsURL
+	}
+	if !core.IsNil(globalCatalogMetadataUIUrls.CatalogDetailsURL) {
+		_patch["catalog_details_url"] = globalCatalogMetadataUIUrls.CatalogDetailsURL
+	}
+	if !core.IsNil(globalCatalogMetadataUIUrls.CustomCreatePageURL) {
+		_patch["custom_create_page_url"] = globalCatalogMetadataUIUrls.CustomCreatePageURL
+	}
+	if !core.IsNil(globalCatalogMetadataUIUrls.Dashboard) {
+		_patch["dashboard"] = globalCatalogMetadataUIUrls.Dashboard
 	}
 
 	return
@@ -5729,6 +5727,9 @@ type GlobalCatalogPlan struct {
 	// The ID of a global catalog object.
 	ID *string `json:"id,omitempty"`
 
+	// The desired ID of the global catalog object.
+	ObjectID *string `json:"object_id,omitempty"`
+
 	// The programmatic name of this plan.
 	Name *string `json:"name,omitempty"`
 
@@ -5771,6 +5772,11 @@ func UnmarshalGlobalCatalogPlan(m map[string]json.RawMessage, result interface{}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "object_id", &obj.ObjectID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "object_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
@@ -5830,8 +5836,14 @@ type GlobalCatalogPlanMetadata struct {
 	// The UI metadata of this service.
 	Ui *GlobalCatalogMetadataUI `json:"ui,omitempty"`
 
+	// The global catalog metadata of the service.
+	Service *GlobalCatalogMetadataService `json:"service,omitempty"`
+
 	// The pricing metadata of this object.
 	Pricing *GlobalCatalogMetadataPricing `json:"pricing,omitempty"`
+
+	// Metadata controlling Plan related settings.
+	Plan *GlobalCatalogPlanMetadataPlan `json:"plan,omitempty"`
 }
 
 // UnmarshalGlobalCatalogPlanMetadata unmarshals an instance of GlobalCatalogPlanMetadata from the specified map of raw messages.
@@ -5847,9 +5859,19 @@ func UnmarshalGlobalCatalogPlanMetadata(m map[string]json.RawMessage, result int
 		err = core.SDKErrorf(err, "", "ui-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalModel(m, "service", &obj.Service, UnmarshalGlobalCatalogMetadataService)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "service-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "pricing", &obj.Pricing, UnmarshalGlobalCatalogMetadataPricing)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "pricing-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "plan", &obj.Plan, UnmarshalGlobalCatalogPlanMetadataPlan)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "plan-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5865,8 +5887,53 @@ func (globalCatalogPlanMetadata *GlobalCatalogPlanMetadata) asPatch() (_patch ma
 	if !core.IsNil(globalCatalogPlanMetadata.Ui) {
 		_patch["ui"] = globalCatalogPlanMetadata.Ui.asPatch()
 	}
+	if !core.IsNil(globalCatalogPlanMetadata.Service) {
+		_patch["service"] = globalCatalogPlanMetadata.Service.asPatch()
+	}
 	if !core.IsNil(globalCatalogPlanMetadata.Pricing) {
 		_patch["pricing"] = globalCatalogPlanMetadata.Pricing.asPatch()
+	}
+	if !core.IsNil(globalCatalogPlanMetadata.Plan) {
+		_patch["plan"] = globalCatalogPlanMetadata.Plan.asPatch()
+	}
+
+	return
+}
+
+// GlobalCatalogPlanMetadataPlan : Metadata controlling Plan related settings.
+type GlobalCatalogPlanMetadataPlan struct {
+	// Controls if IBMers are allowed to provision this plan.
+	AllowInternalUsers *bool `json:"allow_internal_users,omitempty"`
+
+	// Deprecated. Controls the Connections tab on the Resource Details page.
+	Bindable *bool `json:"bindable,omitempty"`
+}
+
+// UnmarshalGlobalCatalogPlanMetadataPlan unmarshals an instance of GlobalCatalogPlanMetadataPlan from the specified map of raw messages.
+func UnmarshalGlobalCatalogPlanMetadataPlan(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(GlobalCatalogPlanMetadataPlan)
+	err = core.UnmarshalPrimitive(m, "allow_internal_users", &obj.AllowInternalUsers)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "allow_internal_users-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bindable", &obj.Bindable)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "bindable-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// asPatch returns a generic map representation of the GlobalCatalogPlanMetadataPlan
+func (globalCatalogPlanMetadataPlan *GlobalCatalogPlanMetadataPlan) asPatch() (_patch map[string]interface{}) {
+	_patch = map[string]interface{}{}
+	if !core.IsNil(globalCatalogPlanMetadataPlan.AllowInternalUsers) {
+		_patch["allow_internal_users"] = globalCatalogPlanMetadataPlan.AllowInternalUsers
+	}
+	if !core.IsNil(globalCatalogPlanMetadataPlan.Bindable) {
+		_patch["bindable"] = globalCatalogPlanMetadataPlan.Bindable
 	}
 
 	return
@@ -5962,6 +6029,9 @@ type GlobalCatalogProduct struct {
 	// The ID of a global catalog object.
 	ID *string `json:"id,omitempty"`
 
+	// The desired ID of the global catalog object.
+	ObjectID *string `json:"object_id,omitempty"`
+
 	// The programmatic name of this product.
 	Name *string `json:"name,omitempty"`
 
@@ -5998,6 +6068,7 @@ type GlobalCatalogProduct struct {
 // Constants associated with the GlobalCatalogProduct.Kind property.
 // The kind of the global catalog object.
 const (
+	GlobalCatalogProduct_Kind_Composite       = "composite"
 	GlobalCatalogProduct_Kind_PlatformService = "platform_service"
 	GlobalCatalogProduct_Kind_Service         = "service"
 )
@@ -6008,6 +6079,11 @@ func UnmarshalGlobalCatalogProduct(m map[string]json.RawMessage, result interfac
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "object_id", &obj.ObjectID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "object_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
@@ -6157,6 +6233,9 @@ func (globalCatalogProductMetadata *GlobalCatalogProductMetadata) asPatch() (_pa
 type GlobalCatalogProductMetadataOther struct {
 	// The metadata of the service owned and managed by Partner Center - Sell.
 	PC *GlobalCatalogProductMetadataOtherPC `json:"PC,omitempty"`
+
+	// Optional metadata of the service defining it as a composite.
+	Composite *GlobalCatalogProductMetadataOtherComposite `json:"composite,omitempty"`
 }
 
 // UnmarshalGlobalCatalogProductMetadataOther unmarshals an instance of GlobalCatalogProductMetadataOther from the specified map of raw messages.
@@ -6165,6 +6244,11 @@ func UnmarshalGlobalCatalogProductMetadataOther(m map[string]json.RawMessage, re
 	err = core.UnmarshalModel(m, "PC", &obj.PC, UnmarshalGlobalCatalogProductMetadataOtherPC)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "PC-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "composite", &obj.Composite, UnmarshalGlobalCatalogProductMetadataOtherComposite)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "composite-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6176,6 +6260,115 @@ func (globalCatalogProductMetadataOther *GlobalCatalogProductMetadataOther) asPa
 	_patch = map[string]interface{}{}
 	if !core.IsNil(globalCatalogProductMetadataOther.PC) {
 		_patch["PC"] = globalCatalogProductMetadataOther.PC.asPatch()
+	}
+	if !core.IsNil(globalCatalogProductMetadataOther.Composite) {
+		_patch["composite"] = globalCatalogProductMetadataOther.Composite.asPatch()
+	}
+
+	return
+}
+
+// GlobalCatalogProductMetadataOtherComposite : Optional metadata of the service defining it as a composite.
+type GlobalCatalogProductMetadataOtherComposite struct {
+	// The type of the composite service.
+	CompositeKind *string `json:"composite_kind,omitempty"`
+
+	// The tag used for the composite parent and its children.
+	CompositeTag *string `json:"composite_tag,omitempty"`
+
+	Children []GlobalCatalogProductMetadataOtherCompositeChild `json:"children,omitempty"`
+}
+
+// Constants associated with the GlobalCatalogProductMetadataOtherComposite.CompositeKind property.
+// The type of the composite service.
+const (
+	GlobalCatalogProductMetadataOtherComposite_CompositeKind_PlatformService = "platform_service"
+	GlobalCatalogProductMetadataOtherComposite_CompositeKind_Service         = "service"
+)
+
+// UnmarshalGlobalCatalogProductMetadataOtherComposite unmarshals an instance of GlobalCatalogProductMetadataOtherComposite from the specified map of raw messages.
+func UnmarshalGlobalCatalogProductMetadataOtherComposite(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(GlobalCatalogProductMetadataOtherComposite)
+	err = core.UnmarshalPrimitive(m, "composite_kind", &obj.CompositeKind)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "composite_kind-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "composite_tag", &obj.CompositeTag)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "composite_tag-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "children", &obj.Children, UnmarshalGlobalCatalogProductMetadataOtherCompositeChild)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "children-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// asPatch returns a generic map representation of the GlobalCatalogProductMetadataOtherComposite
+func (globalCatalogProductMetadataOtherComposite *GlobalCatalogProductMetadataOtherComposite) asPatch() (_patch map[string]interface{}) {
+	_patch = map[string]interface{}{}
+	if !core.IsNil(globalCatalogProductMetadataOtherComposite.CompositeKind) {
+		_patch["composite_kind"] = globalCatalogProductMetadataOtherComposite.CompositeKind
+	}
+	if !core.IsNil(globalCatalogProductMetadataOtherComposite.CompositeTag) {
+		_patch["composite_tag"] = globalCatalogProductMetadataOtherComposite.CompositeTag
+	}
+	if !core.IsNil(globalCatalogProductMetadataOtherComposite.Children) {
+		var childrenPatches []map[string]interface{}
+		for _, children := range globalCatalogProductMetadataOtherComposite.Children {
+			childrenPatches = append(childrenPatches, children.asPatch())
+		}
+		_patch["children"] = childrenPatches
+	}
+
+	return
+}
+
+// GlobalCatalogProductMetadataOtherCompositeChild : Object defining a composite child of a composite parent.
+type GlobalCatalogProductMetadataOtherCompositeChild struct {
+	// The type of the composite child.
+	Kind *string `json:"kind,omitempty"`
+
+	// The name of the composite child.
+	Name *string `json:"name,omitempty"`
+}
+
+// Constants associated with the GlobalCatalogProductMetadataOtherCompositeChild.Kind property.
+// The type of the composite child.
+const (
+	GlobalCatalogProductMetadataOtherCompositeChild_Kind_PlatformService = "platform_service"
+	GlobalCatalogProductMetadataOtherCompositeChild_Kind_Service         = "service"
+)
+
+// UnmarshalGlobalCatalogProductMetadataOtherCompositeChild unmarshals an instance of GlobalCatalogProductMetadataOtherCompositeChild from the specified map of raw messages.
+func UnmarshalGlobalCatalogProductMetadataOtherCompositeChild(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(GlobalCatalogProductMetadataOtherCompositeChild)
+	err = core.UnmarshalPrimitive(m, "kind", &obj.Kind)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "kind-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// asPatch returns a generic map representation of the GlobalCatalogProductMetadataOtherCompositeChild
+func (globalCatalogProductMetadataOtherCompositeChild *GlobalCatalogProductMetadataOtherCompositeChild) asPatch() (_patch map[string]interface{}) {
+	_patch = map[string]interface{}{}
+	if !core.IsNil(globalCatalogProductMetadataOtherCompositeChild.Kind) {
+		_patch["kind"] = globalCatalogProductMetadataOtherCompositeChild.Kind
+	}
+	if !core.IsNil(globalCatalogProductMetadataOtherCompositeChild.Name) {
+		_patch["name"] = globalCatalogProductMetadataOtherCompositeChild.Name
 	}
 
 	return
@@ -6437,7 +6630,7 @@ func (globalCatalogProductPatch *GlobalCatalogProductPatch) AsPatch() (_patch ma
 // IamServiceRegistration : The IAM service registration.
 type IamServiceRegistration struct {
 	// The IAM registration name, which must be the programmatic name of the product.
-	Name *string `json:"name,omitempty"`
+	Name *string `json:"name" validate:"required"`
 
 	// Whether the service is enabled or disabled for IAM.
 	Enabled *bool `json:"enabled,omitempty"`
@@ -7194,13 +7387,30 @@ func (iamServiceRegistrationSupportedAnonymousAccess *IamServiceRegistrationSupp
 // This type supports additional properties of type *string.
 type IamServiceRegistrationSupportedAnonymousAccessAttributes struct {
 	// An account id.
-	AccountID *string `json:"account_id,omitempty"`
+	AccountID *string `json:"account_id" validate:"required"`
 
 	// The name of the service.
-	ServiceName *string `json:"service_name,omitempty"`
+	ServiceName *string `json:"service_name" validate:"required"`
+
+	// Additional properties the key must come from supported attributes.
+	AdditionalProperties map[string]string `json:"additional_properties" validate:"required"`
 
 	// Allows users to set arbitrary properties of type *string.
 	additionalProperties map[string]*string
+}
+
+// NewIamServiceRegistrationSupportedAnonymousAccessAttributes : Instantiate IamServiceRegistrationSupportedAnonymousAccessAttributes (Generic Model Constructor)
+func (*PartnerCenterSellV1) NewIamServiceRegistrationSupportedAnonymousAccessAttributes(accountID string, serviceName string, additionalProperties map[string]string) (_model *IamServiceRegistrationSupportedAnonymousAccessAttributes, err error) {
+	_model = &IamServiceRegistrationSupportedAnonymousAccessAttributes{
+		AccountID:            core.StringPtr(accountID),
+		ServiceName:          core.StringPtr(serviceName),
+		AdditionalProperties: additionalProperties,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
 }
 
 // SetProperty allows the user to set an arbitrary property on an instance of IamServiceRegistrationSupportedAnonymousAccessAttributes.
@@ -7243,6 +7453,9 @@ func (o *IamServiceRegistrationSupportedAnonymousAccessAttributes) MarshalJSON()
 	if o.ServiceName != nil {
 		m["service_name"] = o.ServiceName
 	}
+	if o.AdditionalProperties != nil {
+		m["additional_properties"] = o.AdditionalProperties
+	}
 	buffer, err = json.Marshal(m)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "model-marshal", common.GetComponentInfo())
@@ -7265,6 +7478,12 @@ func UnmarshalIamServiceRegistrationSupportedAnonymousAccessAttributes(m map[str
 		return
 	}
 	delete(m, "service_name")
+	err = core.UnmarshalPrimitive(m, "additional_properties", &obj.AdditionalProperties)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "additional_properties-error", common.GetComponentInfo())
+		return
+	}
+	delete(m, "additional_properties")
 	for k := range m {
 		var v *string
 		e := core.UnmarshalPrimitive(m, k, &v)
@@ -7291,6 +7510,9 @@ func (iamServiceRegistrationSupportedAnonymousAccessAttributes *IamServiceRegist
 	}
 	if !core.IsNil(iamServiceRegistrationSupportedAnonymousAccessAttributes.ServiceName) {
 		_patch["service_name"] = iamServiceRegistrationSupportedAnonymousAccessAttributes.ServiceName
+	}
+	if !core.IsNil(iamServiceRegistrationSupportedAnonymousAccessAttributes.AdditionalProperties) {
+		_patch["additional_properties"] = iamServiceRegistrationSupportedAnonymousAccessAttributes.AdditionalProperties
 	}
 
 	return
@@ -7528,41 +7750,6 @@ func UnmarshalLearnMoreLinks(m map[string]json.RawMessage, result interface{}) (
 	return
 }
 
-// ListBadgesOptions : The ListBadges options.
-type ListBadgesOptions struct {
-	// The maximum number of results returned in the response.
-	Limit *int64 `json:"limit,omitempty"`
-
-	// The reference ID of the first item on the page.
-	Start *strfmt.UUID `json:"start,omitempty"`
-
-	// Allows users to set headers on API requests.
-	Headers map[string]string
-}
-
-// NewListBadgesOptions : Instantiate ListBadgesOptions
-func (*PartnerCenterSellV1) NewListBadgesOptions() *ListBadgesOptions {
-	return &ListBadgesOptions{}
-}
-
-// SetLimit : Allow user to set Limit
-func (_options *ListBadgesOptions) SetLimit(limit int64) *ListBadgesOptions {
-	_options.Limit = core.Int64Ptr(limit)
-	return _options
-}
-
-// SetStart : Allow user to set Start
-func (_options *ListBadgesOptions) SetStart(start *strfmt.UUID) *ListBadgesOptions {
-	_options.Start = start
-	return _options
-}
-
-// SetHeaders : Allow user to set Headers
-func (options *ListBadgesOptions) SetHeaders(param map[string]string) *ListBadgesOptions {
-	options.Headers = param
-	return options
-}
-
 // ListProductBadgesOptions : The ListProductBadges options.
 type ListProductBadgesOptions struct {
 	// The maximum number of results returned in the response.
@@ -7626,6 +7813,9 @@ type OnboardingProduct struct {
 
 	// The ID of the approval workflow of your product.
 	ApproverResourceID *string `json:"approver_resource_id,omitempty"`
+
+	// IAM registration identifier.
+	IamRegistrationID *string `json:"iam_registration_id,omitempty"`
 
 	// The Export Control Classification Number of your product.
 	EccnNumber *string `json:"eccn_number,omitempty"`
@@ -7697,6 +7887,11 @@ func UnmarshalOnboardingProduct(m map[string]json.RawMessage, result interface{}
 	err = core.UnmarshalPrimitive(m, "approver_resource_id", &obj.ApproverResourceID)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "approver_resource_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "iam_registration_id", &obj.IamRegistrationID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_registration_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "eccn_number", &obj.EccnNumber)
@@ -8105,12 +8300,6 @@ type Registration struct {
 	// The onboarding access group for your team.
 	ProviderAccessGroup *string `json:"provider_access_group,omitempty"`
 
-	// The ID of the IBM Digital Platform Reseller Agreement.
-	AccountDraID *string `json:"account_dra_id,omitempty"`
-
-	// The ID of the IBM Digital Provider Agreement.
-	AccountDpaID *string `json:"account_dpa_id,omitempty"`
-
 	// The time when the registration was created.
 	CreatedAt *string `json:"created_at,omitempty"`
 
@@ -8149,16 +8338,6 @@ func UnmarshalRegistration(m map[string]json.RawMessage, result interface{}) (er
 	err = core.UnmarshalPrimitive(m, "provider_access_group", &obj.ProviderAccessGroup)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "provider_access_group-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "account_dra_id", &obj.AccountDraID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "account_dra_id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "account_dpa_id", &obj.AccountDpaID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "account_dpa_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
@@ -9012,7 +9191,10 @@ func (supportedAttributesOptionsResourceHierarchyValue *SupportedAttributesOptio
 // SupportedRoleOptions : The supported role options.
 type SupportedRoleOptions struct {
 	// Optional opt-in to require access control on the role.
-	AccessPolicy map[string]string `json:"access_policy,omitempty"`
+	AccessPolicy *bool `json:"access_policy" validate:"required"`
+
+	// Additional properties for access policy.
+	AdditionalPropertiesForAccessPolicy map[string]string `json:"additional_properties_for_access_policy,omitempty"`
 
 	// Optional opt-in to require checking policy type when applying the role.
 	PolicyType []string `json:"policy_type,omitempty"`
@@ -9035,12 +9217,29 @@ const (
 	SupportedRoleOptions_AccountType_Enterprise = "enterprise"
 )
 
+// NewSupportedRoleOptions : Instantiate SupportedRoleOptions (Generic Model Constructor)
+func (*PartnerCenterSellV1) NewSupportedRoleOptions(accessPolicy bool) (_model *SupportedRoleOptions, err error) {
+	_model = &SupportedRoleOptions{
+		AccessPolicy: core.BoolPtr(accessPolicy),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
 // UnmarshalSupportedRoleOptions unmarshals an instance of SupportedRoleOptions from the specified map of raw messages.
 func UnmarshalSupportedRoleOptions(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(SupportedRoleOptions)
 	err = core.UnmarshalPrimitive(m, "access_policy", &obj.AccessPolicy)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "access_policy-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "additional_properties_for_access_policy", &obj.AdditionalPropertiesForAccessPolicy)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "additional_properties_for_access_policy-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "policy_type", &obj.PolicyType)
@@ -9062,6 +9261,9 @@ func (supportedRoleOptions *SupportedRoleOptions) asPatch() (_patch map[string]i
 	_patch = map[string]interface{}{}
 	if !core.IsNil(supportedRoleOptions.AccessPolicy) {
 		_patch["access_policy"] = supportedRoleOptions.AccessPolicy
+	}
+	if !core.IsNil(supportedRoleOptions.AdditionalPropertiesForAccessPolicy) {
+		_patch["additional_properties_for_access_policy"] = supportedRoleOptions.AdditionalPropertiesForAccessPolicy
 	}
 	if !core.IsNil(supportedRoleOptions.PolicyType) {
 		_patch["policy_type"] = supportedRoleOptions.PolicyType

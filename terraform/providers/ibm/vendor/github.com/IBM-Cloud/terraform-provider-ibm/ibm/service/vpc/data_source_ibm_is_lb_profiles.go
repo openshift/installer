@@ -34,6 +34,52 @@ func DataSourceIBMISLbProfiles() *schema.Resource {
 				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						isLBAccessModes: {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The access mode for a load balancer with this profile",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"type": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The type for access mode",
+									},
+									"value": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Access modes for this profile",
+									},
+									"values": {
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "Access modes for this profile",
+										Elem: &schema.Schema{
+											Type: schema.TypeString,
+										},
+									},
+								},
+							},
+						},
+						"availability": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The availability mode for a load balancer with this profile",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"type": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The type of availability, one of [fixed, dependent]",
+									},
+									"value": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The availability of this load balancer, one of [subnet, region]. Applicable only if type is fixed",
+									},
+								},
+							},
+						},
 						"name": {
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -48,6 +94,44 @@ func DataSourceIBMISLbProfiles() *schema.Resource {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The product family this load balancer profile belongs to",
+						},
+						"instance_groups_supported": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The instance groups support for the load balancer with this profile",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"type": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The type of support for instance groups, one of [fixed, dependent]",
+									},
+									"value": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "Indicates whether Instance groups are supported for this profile. Applicable only if type is fixed",
+									},
+								},
+							},
+						},
+						"source_ip_session_persistence_supported": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The source IP session ip persistence support for a load balancer with this profile",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"type": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The type of support for session ip persistence, one of [fixed, dependent on configuration]",
+									},
+									"value": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "Indicates whether session ip persistence are supported for this profile. Applicable only if type is fixed",
+									},
+								},
+							},
 						},
 						"route_mode_supported": {
 							Type:        schema.TypeBool,
@@ -174,6 +258,59 @@ func dataSourceIBMISLbProfilesRead(d *schema.ResourceData, meta interface{}) err
 					}
 				}
 			}
+		}
+
+		if profileCollector.AccessModes != nil {
+			accessModes := profileCollector.AccessModes
+			AccessModesMap := map[string]interface{}{}
+			AccessModesList := []map[string]interface{}{}
+			if accessModes.Type != nil {
+				AccessModesMap["type"] = *accessModes.Type
+			}
+			if len(accessModes.Values) > 0 {
+				AccessModesMap["values"] = accessModes.Values
+			}
+			AccessModesList = append(AccessModesList, AccessModesMap)
+			l[isLBAccessModes] = AccessModesList
+		}
+		if profileCollector.Availability != nil {
+			availabilitySupport := profileCollector.Availability.(*vpcv1.LoadBalancerProfileAvailability)
+			availabilitySupportMap := map[string]interface{}{}
+			availabilitySupportList := []map[string]interface{}{}
+			if availabilitySupport.Type != nil {
+				availabilitySupportMap["type"] = *availabilitySupport.Type
+			}
+			if availabilitySupport.Value != nil {
+				availabilitySupportMap["value"] = *availabilitySupport.Value
+			}
+			availabilitySupportList = append(availabilitySupportList, availabilitySupportMap)
+			l["availability"] = availabilitySupportList
+		}
+		if profileCollector.InstanceGroupsSupported != nil {
+			instanceGroupSupport := profileCollector.InstanceGroupsSupported.(*vpcv1.LoadBalancerProfileInstanceGroupsSupported)
+			instanceGroupSupportMap := map[string]interface{}{}
+			instanceGroupSupportList := []map[string]interface{}{}
+			if instanceGroupSupport.Type != nil {
+				instanceGroupSupportMap["type"] = *instanceGroupSupport.Type
+			}
+			if instanceGroupSupport.Value != nil {
+				instanceGroupSupportMap["value"] = *instanceGroupSupport.Value
+			}
+			instanceGroupSupportList = append(instanceGroupSupportList, instanceGroupSupportMap)
+			l["source_ip_session_persistence_supported"] = instanceGroupSupportList
+		}
+		if profileCollector.SourceIPSessionPersistenceSupported != nil {
+			sourceIpPersistenceSupport := profileCollector.SourceIPSessionPersistenceSupported.(*vpcv1.LoadBalancerProfileSourceIPSessionPersistenceSupported)
+			sourceIpPersistenceSupportMap := map[string]interface{}{}
+			sourceIpPersistenceSupportList := []map[string]interface{}{}
+			if sourceIpPersistenceSupport.Type != nil {
+				sourceIpPersistenceSupportMap["type"] = *sourceIpPersistenceSupport.Type
+			}
+			if sourceIpPersistenceSupport.Value != nil {
+				sourceIpPersistenceSupportMap["value"] = *sourceIpPersistenceSupport.Value
+			}
+			sourceIpPersistenceSupportList = append(sourceIpPersistenceSupportList, sourceIpPersistenceSupportMap)
+			l["instance_groups_supported"] = sourceIpPersistenceSupportList
 		}
 		lbprofilesInfo = append(lbprofilesInfo, l)
 	}

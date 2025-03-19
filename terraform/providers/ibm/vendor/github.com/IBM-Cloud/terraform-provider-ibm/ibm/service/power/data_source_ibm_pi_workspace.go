@@ -49,6 +49,20 @@ func DatasourceIBMPIWorkspace() *schema.Resource {
 							Description: "The Workspace crn.",
 							Type:        schema.TypeString,
 						},
+						Attr_NetworkSecurityGroups: {
+							Computed:    true,
+							Description: "Network security groups configuration.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									Attr_State: {
+										Computed:    true,
+										Description: "The state of a Network Security Groups configuration.",
+										Type:        schema.TypeString,
+									},
+								},
+							},
+							Type: schema.TypeList,
+						},
 						Attr_PowerEdgeRouter: {
 							Computed: true,
 							Elem: &schema.Resource{
@@ -130,6 +144,13 @@ func dataSourceIBMPIWorkspaceRead(ctx context.Context, d *schema.ResourceData, m
 			Attr_Type:            *wsData.Details.PowerEdgeRouter.Type,
 		}
 		detailsData[Attr_PowerEdgeRouter] = []map[string]interface{}{wsPowerEdge}
+		wsDetails = append(wsDetails, detailsData)
+	}
+	if wsData.Details.NetworkSecurityGroups != nil {
+		wsNSG := map[string]interface{}{
+			Attr_State: *wsData.Details.NetworkSecurityGroups.State,
+		}
+		detailsData[Attr_NetworkSecurityGroups] = []map[string]interface{}{wsNSG}
 		wsDetails = append(wsDetails, detailsData)
 	}
 

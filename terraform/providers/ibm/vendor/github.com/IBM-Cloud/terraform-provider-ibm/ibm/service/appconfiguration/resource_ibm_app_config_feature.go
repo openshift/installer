@@ -76,6 +76,11 @@ func ResourceIBMIbmAppConfigFeature() *schema.Resource {
 				Optional:    true,
 				Description: "Rollout percentage of the feature.",
 			},
+			"format": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Format of the feature (TEXT, JSON, YAML).",
+			},
 			"segment_rules": {
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -173,6 +178,9 @@ func resourceIbmIbmAppConfigFeatureCreate(d *schema.ResourceData, meta interface
 	options.SetDisabledValue(d.Get("disabled_value").(string))
 	if _, ok := d.GetOk("rollout_percentage"); ok {
 		options.SetRolloutPercentage(int64(d.Get("rollout_percentage").(int)))
+	}
+	if _, ok := d.GetOk("format"); ok {
+		options.SetFormat(d.Get("format").(string))
 	}
 	if _, ok := d.GetOk("description"); ok {
 		options.SetDescription(d.Get("description").(string))
@@ -318,6 +326,11 @@ func resourceIbmIbmAppConfigFeatureRead(d *schema.ResourceData, meta interface{}
 	if result.RolloutPercentage != nil {
 		if err = d.Set("rollout_percentage", result.RolloutPercentage); err != nil {
 			return fmt.Errorf("[ERROR] Error setting rollout_percentage: %s", err)
+		}
+	}
+	if result.Format != nil {
+		if err = d.Set("format", result.Format); err != nil {
+			return fmt.Errorf("[ERROR] Error setting format: %s", err)
 		}
 	}
 	if result.Tags != nil {

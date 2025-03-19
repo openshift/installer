@@ -5,11 +5,13 @@ package power
 
 import (
 	"context"
+	"log"
 	"strconv"
 
 	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -34,6 +36,11 @@ func DataSourceIBMPIInstances() *schema.Resource {
 				Description: "List of power virtual server instances for the respective cloud instance.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						Attr_CRN: {
+							Computed:    true,
+							Description: "The CRN of this resource.",
+							Type:        schema.TypeString,
+						},
 						Attr_Fault: {
 							Computed:    true,
 							Description: "Fault information.",
@@ -174,6 +181,11 @@ func DataSourceIBMPIInstances() *schema.Resource {
 							Description: "The status of the instance.",
 							Type:        schema.TypeString,
 						},
+						Attr_StorageConnection: {
+							Computed:    true,
+							Description: "The storage connection type.",
+							Type:        schema.TypeString,
+						},
 						Attr_StoragePool: {
 							Computed:    true,
 							Description: "The storage Pool where server is deployed.",
@@ -188,6 +200,13 @@ func DataSourceIBMPIInstances() *schema.Resource {
 							Computed:    true,
 							Description: "The storage type where server is deployed.",
 							Type:        schema.TypeString,
+						},
+						Attr_UserTags: {
+							Computed:    true,
+							Description: "List of user tags attached to the resource.",
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         schema.HashString,
+							Type:        schema.TypeSet,
 						},
 						Attr_VirtualCoresAssigned: {
 							Computed:    true,
@@ -220,12 +239,12 @@ func dataSourceIBMPIInstancesAllRead(ctx context.Context, d *schema.ResourceData
 
 	var clientgenU, _ = uuid.GenerateUUID()
 	d.SetId(clientgenU)
-	d.Set(Attr_PVMInstances, flattenPvmInstances(powervmdata.PvmInstances))
+	d.Set(Attr_PVMInstances, flattenPvmInstances(powervmdata.PvmInstances, meta))
 
 	return nil
 }
 
-func flattenPvmInstances(list []*models.PVMInstanceReference) []map[string]interface{} {
+func flattenPvmInstances(list []*models.PVMInstanceReference, meta interface{}) []map[string]interface{} {
 	result := make([]map[string]interface{}, 0, len(list))
 	for _, i := range list {
 		l := map[string]interface{}{
@@ -247,10 +266,20 @@ func flattenPvmInstances(list []*models.PVMInstanceReference) []map[string]inter
 			Attr_SharedProcessorPool:       i.SharedProcessorPool,
 			Attr_SharedProcessorPoolID:     i.SharedProcessorPoolID,
 			Attr_Status:                    *i.Status,
+			Attr_StorageConnection:         i.StorageConnection,
 			Attr_StoragePool:               i.StoragePool,
 			Attr_StoragePoolAffinity:       i.StoragePoolAffinity,
 			Attr_StorageType:               i.StorageType,
 			Attr_VirtualCoresAssigned:      i.VirtualCores.Assigned,
+		}
+
+		if i.Crn != "" {
+			l[Attr_CRN] = i.Crn
+			tags, err := flex.GetGlobalTagsUsingCRN(meta, string(i.Crn), "", UserTagType)
+			if err != nil {
+				log.Printf("Error on get of pi instance (%s) user_tags: %s", *i.PvmInstanceID, err)
+			}
+			l[Attr_UserTags] = tags
 		}
 
 		if i.Health != nil {
@@ -273,6 +302,7 @@ func flattenPvmInstanceNetworks(list []*models.PVMInstanceNetwork) (networks []m
 			p := make(map[string]interface{})
 			p[Attr_ExternalIP] = pvmip.ExternalIP
 			p[Attr_IP] = pvmip.IPAddress
+			p[Attr_Macaddress] = pvmip.MacAddress
 			p[Attr_MacAddress] = pvmip.MacAddress
 			p[Attr_NetworkID] = pvmip.NetworkID
 			p[Attr_NetworkName] = pvmip.NetworkName

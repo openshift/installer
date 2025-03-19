@@ -2,11 +2,12 @@ package appconfiguration
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/appconfiguration-go-admin-sdk/appconfigurationv1"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"log"
 )
 
 func ResourceIBMIbmAppConfigSegment() *schema.Resource {

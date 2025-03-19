@@ -4,25 +4,35 @@
 package vpc
 
 import (
+	"context"
 	"fmt"
 	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func DataSourceIBMISVolume() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceIBMISVolumeRead,
+		ReadContext: dataSourceIBMISVolumeRead,
 
 		Schema: map[string]*schema.Schema{
 
 			isVolumeName: {
 				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validate.InvokeDataSourceValidator("ibm_is_subnet", isVolumeName),
+				Optional:     true,
+				ExactlyOneOf: []string{isVolumeName, "identifier"},
+				ValidateFunc: validate.InvokeDataSourceValidator("ibm_is_volume", isVolumeName),
+				Description:  "Volume name",
+			},
+			"identifier": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{isVolumeName, "identifier"},
+				ValidateFunc: validate.InvokeDataSourceValidator("ibm_is_volume", "identifier"),
 				Description:  "Volume name",
 			},
 
@@ -36,6 +46,23 @@ func DataSourceIBMISVolume() *schema.Resource {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Indicates whether a running virtual server instance has an attachment to this volume.",
+			},
+			// defined_performance changes
+			"adjustable_capacity_states": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The attachment states that support adjustable capacity for this volume.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"adjustable_iops_states": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The attachment states that support adjustable IOPS for this volume.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 			isVolumeAttachmentState: {
 				Type:        schema.TypeString,
@@ -302,6 +329,11 @@ func DataSourceIBMISVolumeValidator() *validate.ResourceValidator {
 	validateSchema := make([]validate.ValidateSchema, 0)
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
+			Identifier:                 "identifier",
+			ValidateFunctionIdentifier: validate.ValidateNoZeroValues,
+			Type:                       validate.TypeString})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
 			Identifier:                 isVolumeName,
 			ValidateFunctionIdentifier: validate.ValidateNoZeroValues,
 			Type:                       validate.TypeString})
@@ -310,44 +342,58 @@ func DataSourceIBMISVolumeValidator() *validate.ResourceValidator {
 	return &ibmISVoulmeDataSourceValidator
 }
 
-func dataSourceIBMISVolumeRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceIBMISVolumeRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
-	name := d.Get(isVolumeName).(string)
-
-	err := volumeGet(d, meta, name)
+	err := volumeGet(d, meta)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	return nil
 }
 
-func volumeGet(d *schema.ResourceData, meta interface{}, name string) error {
+func volumeGet(d *schema.ResourceData, meta interface{}) error {
 	sess, err := vpcClient(meta)
 	if err != nil {
 		return err
 	}
-	zone := ""
-	if zname, ok := d.GetOk(isVolumeZone); ok {
-		zone = zname.(string)
-	}
-	listVolumesOptions := &vpcv1.ListVolumesOptions{
-		Name: &name,
-	}
 
-	if zone != "" {
-		listVolumesOptions.ZoneName = &zone
-	}
-	listVolumesOptions.Name = &name
-	vols, response, err := sess.ListVolumes(listVolumesOptions)
-	if err != nil {
-		return fmt.Errorf("[ERROR] Error Fetching volumes %s\n%s", err, response)
-	}
-	allrecs := vols.Volumes
+	var vol vpcv1.Volume
+	if volName, ok := d.GetOk(isVolumeName); ok {
+		name := volName.(string)
+		zone := ""
+		if zname, ok := d.GetOk(isVolumeZone); ok {
+			zone = zname.(string)
+		}
+		listVolumesOptions := &vpcv1.ListVolumesOptions{
+			Name: &name,
+		}
 
-	if len(allrecs) == 0 {
-		return fmt.Errorf("[ERROR] No Volume found with name %s", name)
+		if zone != "" {
+			listVolumesOptions.ZoneName = &zone
+		}
+		listVolumesOptions.Name = &name
+		vols, response, err := sess.ListVolumes(listVolumesOptions)
+		if err != nil {
+			return fmt.Errorf("[ERROR] Error Fetching volumes %s\n%s", err, response)
+		}
+		allrecs := vols.Volumes
+
+		if len(allrecs) == 0 {
+			return fmt.Errorf("[ERROR] No Volume found with name %s", name)
+		}
+		vol = allrecs[0]
+	} else {
+		identifier := d.Get("identifier").(string)
+		getVolumeOptions := &vpcv1.GetVolumeOptions{
+			ID: &identifier,
+		}
+
+		volPtr, response, err := sess.GetVolume(getVolumeOptions)
+		if err != nil {
+			return fmt.Errorf("[ERROR] Error on get volume %s\n%s", err, response)
+		}
+		vol = *volPtr
 	}
-	vol := allrecs[0]
 	d.SetId(*vol.ID)
 	if vol.Active != nil {
 		d.Set(isVolumesActive, vol.Active)
@@ -366,6 +412,7 @@ func volumeGet(d *schema.ResourceData, meta interface{}, name string) error {
 		d.Set(isVolumesCreatedAt, flex.DateTimeToString(vol.CreatedAt))
 	}
 	d.Set(isVolumeName, *vol.Name)
+	d.Set("identifier", *vol.ID)
 	if vol.OperatingSystem != nil {
 		operatingSystemList := []map[string]interface{}{}
 		operatingSystemMap := dataSourceVolumeCollectionVolumesOperatingSystemToMap(*vol.OperatingSystem)
@@ -467,6 +514,15 @@ func volumeGet(d *schema.ResourceData, meta interface{}, name string) error {
 	if vol.HealthState != nil {
 		d.Set(isVolumeHealthState, *vol.HealthState)
 	}
+
+	if err = d.Set("adjustable_capacity_states", vol.AdjustableCapacityStates); err != nil {
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting adjustable_capacity_states: %s", err), "(Data) ibm_is_volume", "read", "set-adjustable_capacity_states")
+	}
+
+	if err = d.Set("adjustable_iops_states", vol.AdjustableIopsStates); err != nil {
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting adjustable_iops_states: %s", err), "(Data) ibm_is_volume", "read", "set-adjustable_iops_states")
+	}
+
 	return nil
 }
 

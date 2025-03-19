@@ -468,19 +468,39 @@ func ResourceIBMCISDnsRecordRead(d *schema.ResourceData, meta interface{}) error
 	}
 
 	d.Set(cisID, crn)
-	d.Set(cisDomainID, *result.Result.ZoneID)
-	d.Set(cisDNSRecordID, *result.Result.ID)
-	d.Set(cisZoneName, *result.Result.ZoneName)
-	d.Set(cisDNSRecordCreatedOn, *result.Result.CreatedOn)
-	d.Set(cisDNSRecordModifiedOn, *result.Result.ModifiedOn)
-	d.Set(cisDNSRecordName, *result.Result.Name)
-	d.Set(cisDNSRecordType, *result.Result.Type)
+	if result.Result.ZoneID != nil {
+		d.Set(cisDomainID, *result.Result.ZoneID)
+	}
+	if result.Result.ID != nil {
+		d.Set(cisDNSRecordID, *result.Result.ID)
+	}
+	if result.Result.ZoneName != nil {
+		d.Set(cisZoneName, *result.Result.ZoneName)
+	}
+	if result.Result.CreatedOn != nil {
+		d.Set(cisDNSRecordCreatedOn, *result.Result.CreatedOn)
+	}
+	if result.Result.ModifiedOn != nil {
+		d.Set(cisDNSRecordModifiedOn, *result.Result.ModifiedOn)
+	}
+	if result.Result.Name != nil {
+		d.Set(cisDNSRecordName, *result.Result.Name)
+	}
+	if result.Result.Type != nil {
+		d.Set(cisDNSRecordType, *result.Result.Type)
+	}
 	if result.Result.Content != nil {
 		d.Set(cisDNSRecordContent, *result.Result.Content)
 	}
-	d.Set(cisDNSRecordProxiable, *result.Result.Proxiable)
-	d.Set(cisDNSRecordProxied, *result.Result.Proxied)
-	d.Set(cisDNSRecordTTL, *result.Result.TTL)
+	if result.Result.Proxiable != nil {
+		d.Set(cisDNSRecordProxiable, *result.Result.Proxiable)
+	}
+	if result.Result.Proxied != nil {
+		d.Set(cisDNSRecordProxied, *result.Result.Proxied)
+	}
+	if result.Result.TTL != nil {
+		d.Set(cisDNSRecordTTL, *result.Result.TTL)
+	}
 	if result.Result.Priority != nil {
 		d.Set(cisDNSRecordPriority, *result.Result.Priority)
 	}

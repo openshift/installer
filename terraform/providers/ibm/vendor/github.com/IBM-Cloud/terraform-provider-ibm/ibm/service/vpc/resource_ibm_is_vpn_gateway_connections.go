@@ -86,6 +86,14 @@ func ResourceIBMISVPNGatewayConnection() *schema.Resource {
 				Deprecated:  "peer_address is deprecated, use peer instead",
 			},
 
+			// distribute traffic
+			"distribute_traffic": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Indicates whether the traffic is distributed between the `up` tunnels of the VPN gateway connection when the VPC route's next hop is a VPN connection. If `false`, the traffic is only routed through the `up` tunnel with the lower `public_ip` address.",
+			},
+
 			// new breaking changes
 			"establish_mode": &schema.Schema{
 				Type:         schema.TypeString,
@@ -616,7 +624,9 @@ func vpngwconCreate(d *schema.ResourceData, meta interface{}, name, gatewayID, p
 		} else {
 			vpnGatewayConnectionPrototypeModel.IpsecPolicy = nil
 		}
-
+		if distributeTrafficOk, ok := d.GetOkExists("distribute_traffic"); ok {
+			vpnGatewayConnectionPrototypeModel.DistributeTraffic = core.BoolPtr(distributeTrafficOk.(bool))
+		}
 		options := &vpcv1.CreateVPNGatewayConnectionOptions{
 			VPNGatewayID:                  &gatewayID,
 			VPNGatewayConnectionPrototype: vpnGatewayConnectionPrototypeModel,
@@ -726,6 +736,12 @@ func vpngwconUpdate(d *schema.ResourceData, meta interface{}, gID, gConnID strin
 		ID:           &gConnID,
 	}
 	vpnGatewayConnectionPatchModel := &vpcv1.VPNGatewayConnectionPatch{}
+
+	if d.HasChange("distribute_traffic") {
+		vpnGatewayConnectionPatchModel.DistributeTraffic = core.BoolPtr(d.Get("distribute_traffic").(bool))
+		hasChanged = true
+	}
+
 	if d.HasChange(isVPNGatewayConnectionName) {
 		name := d.Get(isVPNGatewayConnectionName).(string)
 		vpnGatewayConnectionPatchModel.Name = &name
@@ -1206,6 +1222,11 @@ func setvpnGatewayConnectionIntfResource(d *schema.ResourceData, vpn_gateway_id 
 			if err = d.Set("mode", vpnGatewayConnection.Mode); err != nil {
 				return fmt.Errorf("[ERROR] Error setting mode: %s", err)
 			}
+			if !core.IsNil(vpnGatewayConnection.DistributeTraffic) {
+				if err = d.Set("distribute_traffic", vpnGatewayConnection.DistributeTraffic); err != nil {
+					return fmt.Errorf("Error setting distribute_traffic: %s", err)
+				}
+			}
 			if err = d.Set("name", vpnGatewayConnection.Name); err != nil {
 				return fmt.Errorf("[ERROR] Error setting name: %s", err)
 			}
@@ -1282,7 +1303,11 @@ func setvpnGatewayConnectionIntfResource(d *schema.ResourceData, vpn_gateway_id 
 			if err = d.Set("created_at", flex.DateTimeToString(vpnGatewayConnection.CreatedAt)); err != nil {
 				return fmt.Errorf("[ERROR] Error setting created_at: %s", err)
 			}
-
+			if !core.IsNil(vpnGatewayConnection.DistributeTraffic) {
+				if err = d.Set("distribute_traffic", vpnGatewayConnection.DistributeTraffic); err != nil {
+					return fmt.Errorf("Error setting distribute_traffic: %s", err)
+				}
+			}
 			if vpnGatewayConnection.DeadPeerDetection != nil {
 				d.Set(isVPNGatewayConnectionDeadPeerDetectionAction, vpnGatewayConnection.DeadPeerDetection.Action)
 				d.Set(isVPNGatewayConnectionDeadPeerDetectionInterval, vpnGatewayConnection.DeadPeerDetection.Interval)
@@ -1378,7 +1403,11 @@ func setvpnGatewayConnectionIntfResource(d *schema.ResourceData, vpn_gateway_id 
 			if err = d.Set("created_at", flex.DateTimeToString(vpnGatewayConnection.CreatedAt)); err != nil {
 				return fmt.Errorf("[ERROR] Error setting created_at: %s", err)
 			}
-
+			if !core.IsNil(vpnGatewayConnection.DistributeTraffic) {
+				if err = d.Set("distribute_traffic", vpnGatewayConnection.DistributeTraffic); err != nil {
+					return fmt.Errorf("Error setting distribute_traffic: %s", err)
+				}
+			}
 			if vpnGatewayConnection.DeadPeerDetection != nil {
 				d.Set(isVPNGatewayConnectionDeadPeerDetectionAction, vpnGatewayConnection.DeadPeerDetection.Action)
 				d.Set(isVPNGatewayConnectionDeadPeerDetectionInterval, vpnGatewayConnection.DeadPeerDetection.Interval)

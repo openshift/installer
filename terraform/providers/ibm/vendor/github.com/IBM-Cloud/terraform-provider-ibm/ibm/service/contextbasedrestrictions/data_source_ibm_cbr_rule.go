@@ -1,5 +1,9 @@
-// Copyright IBM Corp. 2022 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
+
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.95.2-120e65bc-20240924-152329
+ */
 
 package contextbasedrestrictions
 
@@ -13,6 +17,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/platform-services-go-sdk/contextbasedrestrictionsv1"
 )
 
@@ -180,102 +185,107 @@ func DataSourceIBMCbrRule() *schema.Resource {
 func dataSourceIBMCbrRuleRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	contextBasedRestrictionsClient, err := meta.(conns.ClientSession).ContextBasedRestrictionsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_cbr_rule", "read", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getRuleOptions := &contextbasedrestrictionsv1.GetRuleOptions{}
 
 	getRuleOptions.SetRuleID(d.Get("rule_id").(string))
 
-	rule, response, err := contextBasedRestrictionsClient.GetRuleWithContext(context, getRuleOptions)
+	rule, _, err := contextBasedRestrictionsClient.GetRuleWithContext(context, getRuleOptions)
 	if err != nil {
-		log.Printf("[DEBUG] GetRuleWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetRuleWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetRuleWithContext failed: %s", err.Error()), "(Data) ibm_cbr_rule", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s", *getRuleOptions.RuleID))
 
 	if err = d.Set("crn", rule.CRN); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting crn: %s", err), "(Data) ibm_cbr_rule", "read", "set-crn").GetDiag()
 	}
 
 	if err = d.Set("description", rule.Description); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting description: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting description: %s", err), "(Data) ibm_cbr_rule", "read", "set-description").GetDiag()
 	}
 
 	contexts := []map[string]interface{}{}
 	if rule.Contexts != nil {
 		for _, modelItem := range rule.Contexts {
-			modelMap, err := dataSourceIBMCbrRuleRuleContextToMap(&modelItem)
+			modelMap, err := DataSourceIBMCbrRuleRuleContextToMap(&modelItem)
 			if err != nil {
-				return diag.FromErr(err)
+				return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error mapping rule context: %s", err), "(Data) ibm_cbr_rule", "read", "DataSourceIBMCbrRuleRuleContextToMap").GetDiag()
 			}
 			contexts = append(contexts, modelMap)
 		}
 	}
 	if err = d.Set("contexts", contexts); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting contexts %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting contexts: %s", err), "(Data) ibm_cbr_rule", "read", "set-contexts").GetDiag()
 	}
 
 	resources := []map[string]interface{}{}
 	if rule.Resources != nil {
 		for _, modelItem := range rule.Resources {
-			modelMap, err := dataSourceIBMCbrRuleResourceToMap(&modelItem)
+			modelMap, err := DataSourceIBMCbrRuleResourceToMap(&modelItem)
 			if err != nil {
-				return diag.FromErr(err)
+				return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error mapping rule resource: %s", err), "(Data) ibm_cbr_rule", "read", "DataSourceIBMCbrRuleResourceToMap").GetDiag()
 			}
 			resources = append(resources, modelMap)
 		}
 	}
 	if err = d.Set("resources", resources); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting resources %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting resources: %s", err), "(Data) ibm_cbr_rule", "read", "set-resources").GetDiag()
 	}
 
 	operations := []map[string]interface{}{}
-	if rule.Operations != nil {
-		modelMap, err := dataSourceIBMCbrRuleNewRuleOperationsToMap(rule.Operations)
+	if !core.IsNil(rule.Operations) {
+		modelMap, err := DataSourceIBMCbrRuleNewRuleOperationsToMap(rule.Operations)
 		if err != nil {
-			return diag.FromErr(err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_cbr_rule", "read", "DataSourceIBMCbrRuleNewRuleOperationsToMap").GetDiag()
 		}
 		operations = append(operations, modelMap)
 	}
 	if err = d.Set("operations", operations); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting operations %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting operations: %s", err), "(Data) ibm_cbr_rule", "read", "set-operations").GetDiag()
 	}
 
-	if err = d.Set("enforcement_mode", rule.EnforcementMode); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting enforcement_mode: %s", err))
+	if !core.IsNil(rule.EnforcementMode) {
+		if err = d.Set("enforcement_mode", rule.EnforcementMode); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting enforcement_mode: %s", err), "(Data) ibm_cbr_rule", "read", "set-enforcement_mode").GetDiag()
+		}
 	}
 
 	if err = d.Set("href", rule.Href); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting href: %s", err), "(Data) ibm_cbr_rule", "read", "set-href").GetDiag()
 	}
 
 	if err = d.Set("created_at", flex.DateTimeToString(rule.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting created_at: %s", err), "(Data) ibm_cbr_rule", "read", "set-created_at").GetDiag()
 	}
 
 	if err = d.Set("created_by_id", rule.CreatedByID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_by_id: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting created_by_id: %s", err), "(Data) ibm_cbr_rule", "read", "set-created_by_id").GetDiag()
 	}
 
 	if err = d.Set("last_modified_at", flex.DateTimeToString(rule.LastModifiedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting last_modified_at: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting last_modified_at: %s", err), "(Data) ibm_cbr_rule", "read", "set-last_modified_at").GetDiag()
 	}
 
 	if err = d.Set("last_modified_by_id", rule.LastModifiedByID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting last_modified_by_id: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting last_modified_by_id: %s", err), "(Data) ibm_cbr_rule", "read", "set-last_modified_by_id").GetDiag()
 	}
 
 	return nil
 }
 
-func dataSourceIBMCbrRuleRuleContextToMap(model *contextbasedrestrictionsv1.RuleContext) (map[string]interface{}, error) {
+func DataSourceIBMCbrRuleRuleContextToMap(model *contextbasedrestrictionsv1.RuleContext) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Attributes != nil {
 		attributes := []map[string]interface{}{}
 		for _, attributesItem := range model.Attributes {
-			attributesItemMap, err := dataSourceIBMCbrRuleRuleContextAttributeToMap(&attributesItem)
+			attributesItemMap, err := DataSourceIBMCbrRuleRuleContextAttributeToMap(&attributesItem)
 			if err != nil {
 				return modelMap, err
 			}
@@ -286,7 +296,7 @@ func dataSourceIBMCbrRuleRuleContextToMap(model *contextbasedrestrictionsv1.Rule
 	return modelMap, nil
 }
 
-func dataSourceIBMCbrRuleRuleContextAttributeToMap(model *contextbasedrestrictionsv1.RuleContextAttribute) (map[string]interface{}, error) {
+func DataSourceIBMCbrRuleRuleContextAttributeToMap(model *contextbasedrestrictionsv1.RuleContextAttribute) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Name != nil {
 		modelMap["name"] = *model.Name
@@ -297,12 +307,12 @@ func dataSourceIBMCbrRuleRuleContextAttributeToMap(model *contextbasedrestrictio
 	return modelMap, nil
 }
 
-func dataSourceIBMCbrRuleResourceToMap(model *contextbasedrestrictionsv1.Resource) (map[string]interface{}, error) {
+func DataSourceIBMCbrRuleResourceToMap(model *contextbasedrestrictionsv1.Resource) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Attributes != nil {
 		attributes := []map[string]interface{}{}
 		for _, attributesItem := range model.Attributes {
-			attributesItemMap, err := dataSourceIBMCbrRuleResourceAttributeToMap(&attributesItem)
+			attributesItemMap, err := DataSourceIBMCbrRuleResourceAttributeToMap(&attributesItem)
 			if err != nil {
 				return modelMap, err
 			}
@@ -313,7 +323,7 @@ func dataSourceIBMCbrRuleResourceToMap(model *contextbasedrestrictionsv1.Resourc
 	if model.Tags != nil {
 		tags := []map[string]interface{}{}
 		for _, tagsItem := range model.Tags {
-			tagsItemMap, err := dataSourceIBMCbrRuleResourceTagAttributeToMap(&tagsItem)
+			tagsItemMap, err := DataSourceIBMCbrRuleResourceTagAttributeToMap(&tagsItem)
 			if err != nil {
 				return modelMap, err
 			}
@@ -324,7 +334,7 @@ func dataSourceIBMCbrRuleResourceToMap(model *contextbasedrestrictionsv1.Resourc
 	return modelMap, nil
 }
 
-func dataSourceIBMCbrRuleResourceAttributeToMap(model *contextbasedrestrictionsv1.ResourceAttribute) (map[string]interface{}, error) {
+func DataSourceIBMCbrRuleResourceAttributeToMap(model *contextbasedrestrictionsv1.ResourceAttribute) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Name != nil {
 		modelMap["name"] = *model.Name
@@ -338,7 +348,7 @@ func dataSourceIBMCbrRuleResourceAttributeToMap(model *contextbasedrestrictionsv
 	return modelMap, nil
 }
 
-func dataSourceIBMCbrRuleResourceTagAttributeToMap(model *contextbasedrestrictionsv1.ResourceTagAttribute) (map[string]interface{}, error) {
+func DataSourceIBMCbrRuleResourceTagAttributeToMap(model *contextbasedrestrictionsv1.ResourceTagAttribute) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Name != nil {
 		modelMap["name"] = *model.Name
@@ -352,12 +362,12 @@ func dataSourceIBMCbrRuleResourceTagAttributeToMap(model *contextbasedrestrictio
 	return modelMap, nil
 }
 
-func dataSourceIBMCbrRuleNewRuleOperationsToMap(model *contextbasedrestrictionsv1.NewRuleOperations) (map[string]interface{}, error) {
+func DataSourceIBMCbrRuleNewRuleOperationsToMap(model *contextbasedrestrictionsv1.NewRuleOperations) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.APITypes != nil {
 		apiTypes := []map[string]interface{}{}
 		for _, apiTypesItem := range model.APITypes {
-			apiTypesItemMap, err := dataSourceIBMCbrRuleNewRuleOperationsAPITypesItemToMap(&apiTypesItem)
+			apiTypesItemMap, err := DataSourceIBMCbrRuleNewRuleOperationsAPITypesItemToMap(&apiTypesItem)
 			if err != nil {
 				return modelMap, err
 			}
@@ -368,7 +378,7 @@ func dataSourceIBMCbrRuleNewRuleOperationsToMap(model *contextbasedrestrictionsv
 	return modelMap, nil
 }
 
-func dataSourceIBMCbrRuleNewRuleOperationsAPITypesItemToMap(model *contextbasedrestrictionsv1.NewRuleOperationsAPITypesItem) (map[string]interface{}, error) {
+func DataSourceIBMCbrRuleNewRuleOperationsAPITypesItemToMap(model *contextbasedrestrictionsv1.NewRuleOperationsAPITypesItem) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.APITypeID != nil {
 		modelMap["api_type_id"] = *model.APITypeID

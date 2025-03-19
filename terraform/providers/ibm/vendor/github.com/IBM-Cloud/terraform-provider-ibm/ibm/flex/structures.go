@@ -129,6 +129,22 @@ func FlattenIntList(list []int) []interface{} {
 	return vs
 }
 
+func ExpandInt64List(input []interface{}) []int64 {
+	vs := make([]int64, len(input))
+	for i, v := range input {
+		vs[i] = v.(int64)
+	}
+	return vs
+}
+
+func FlattenInt64List(list []int64) []interface{} {
+	vs := make([]interface{}, len(list))
+	for i, v := range list {
+		vs[i] = v
+	}
+	return vs
+}
+
 func NewStringSet(f schema.SchemaSetFunc, in []string) *schema.Set {
 	var out = make([]interface{}, len(in), len(in))
 	for i, v := range in {
@@ -3023,11 +3039,11 @@ func ResourceVolumeValidate(diff *schema.ResourceDiff) error {
 		}
 	}
 
-	if profile != "custom" {
+	if profile != "custom" && profile != "sdp" {
 		if iops != 0 && diff.NewValueKnown("iops") && diff.HasChange("iops") {
-			return fmt.Errorf("VolumeError : iops is applicable for only custom volume profiles")
+			return fmt.Errorf("VolumeError : iops is applicable for only custom/sdp volume profiles")
 		}
-	} else {
+	} else if profile != "sdp" {
 		if capacity == 0 {
 			capacity = int64(100)
 		}

@@ -5,9 +5,9 @@ package kms
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	kp "github.com/IBM/keyprotect-go-client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -64,12 +64,12 @@ func dataSourceIBMKeyRead(d *schema.ResourceData, meta interface{}) error {
 	api.Config.InstanceID = instanceID
 	keys, err := api.GetKeys(context.Background(), 100, 0)
 	if err != nil {
-		return fmt.Errorf(
+		return flex.FmtErrorf(
 			"Get Keys failed with error: %s", err)
 	}
 	retreivedKeys := keys.Keys
 	if len(retreivedKeys) == 0 {
-		return fmt.Errorf("No keys in instance  %s", instanceID)
+		return flex.FmtErrorf("No keys in instance  %s", instanceID)
 	}
 	var keyName string
 	var matchKeys []kp.Key
@@ -85,7 +85,7 @@ func dataSourceIBMKeyRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if len(matchKeys) == 0 {
-		return fmt.Errorf("No keys with name %s in instance  %s", keyName, instanceID)
+		return flex.FmtErrorf("No keys with name %s in instance  %s", keyName, instanceID)
 	}
 
 	keyMap := make([]map[string]interface{}, 0, len(matchKeys))

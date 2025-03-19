@@ -24,6 +24,115 @@ func DataSourceIBMPIDatacenters() *schema.Resource {
 				Description: "List of Datacenters",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						Attr_CapabilityDetails: {
+							Computed:    true,
+							Description: "Additional Datacenter Capability Details.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									Attr_DisasterRecovery: {
+										Computed:    true,
+										Description: "Disaster Recovery Information.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												Attr_AsynchronousReplication: {
+													Computed:    true,
+													Description: "Asynchronous Replication Target Information.",
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															Attr_Enabled: {
+																Computed:    true,
+																Description: "Service Enabled.",
+																Type:        schema.TypeBool,
+															},
+															Attr_TargetLocations: {
+																Computed:    true,
+																Description: "List of all replication targets.",
+																Elem: &schema.Resource{
+																	Schema: map[string]*schema.Schema{
+																		Attr_Region: {
+																			Computed:    true,
+																			Description: "regionZone of replication site.",
+																			Type:        schema.TypeString,
+																		},
+																		Attr_Status: {
+																			Computed:    true,
+																			Description: "the replication site is active / down.",
+																			Type:        schema.TypeString,
+																		},
+																	},
+																},
+																Type: schema.TypeList,
+															},
+														},
+													},
+													Type: schema.TypeList,
+												},
+												Attr_SynchronousReplication: {
+													Computed:    true,
+													Description: "Synchronous Replication Target Information.",
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															Attr_Enabled: {
+																Type:        schema.TypeBool,
+																Computed:    true,
+																Description: "Service Enabled.",
+															},
+															Attr_TargetLocations: {
+																Computed:    true,
+																Description: "List of all replication targets.",
+																Elem: &schema.Resource{
+																	Schema: map[string]*schema.Schema{
+																		Attr_Region: {
+																			Computed:    true,
+																			Description: "regionZone of replication site.",
+																			Type:        schema.TypeString,
+																		},
+																		Attr_Status: {
+																			Computed:    true,
+																			Description: "the replication site is active / down.",
+																			Type:        schema.TypeString,
+																		},
+																	},
+																},
+																Type: schema.TypeList,
+															},
+														},
+													},
+													Type: schema.TypeList,
+												},
+											},
+										},
+										Type: schema.TypeList,
+									},
+									Attr_SupportedSystems: {
+										Computed:    true,
+										Description: "Datacenter System Types Information.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												Attr_Dedicated: {
+													Computed:    true,
+													Description: "List of all available dedicated host types.",
+													Elem: &schema.Schema{
+														Type: schema.TypeString,
+													},
+													Type: schema.TypeList,
+												},
+												Attr_General: {
+													Computed:    true,
+													Description: "List of all available host types.",
+													Elem: &schema.Schema{
+														Type: schema.TypeString,
+													},
+													Type: schema.TypeList,
+												},
+											},
+										},
+										Type: schema.TypeList,
+									},
+								},
+							},
+							Type: schema.TypeList,
+						},
 						Attr_DatacenterCapabilities: {
 							Computed:    true,
 							Description: "Datacenter Capabilities",
@@ -73,6 +182,7 @@ func dataSourceIBMPIDatacentersRead(ctx context.Context, d *schema.ResourceData,
 	for _, datacenter := range datacentersData.Datacenters {
 		if datacenter != nil {
 			dc := map[string]interface{}{
+
 				Attr_DatacenterCapabilities: datacenter.Capabilities,
 				Attr_DatacenterHref:         datacenter.Href,
 				Attr_DatacenterLocation: map[string]interface{}{
@@ -82,6 +192,11 @@ func dataSourceIBMPIDatacentersRead(ctx context.Context, d *schema.ResourceData,
 				},
 				Attr_DatacenterStatus: datacenter.Status,
 				Attr_DatacenterType:   datacenter.Type,
+			}
+			if datacenter.CapabilitiesDetails != nil {
+				capabilityDetailsMap, _ := capabilityDetailsToMap(datacenter.CapabilitiesDetails)
+
+				dc[Attr_CapabilityDetails] = []map[string]interface{}{capabilityDetailsMap}
 			}
 			datacenters = append(datacenters, dc)
 		}

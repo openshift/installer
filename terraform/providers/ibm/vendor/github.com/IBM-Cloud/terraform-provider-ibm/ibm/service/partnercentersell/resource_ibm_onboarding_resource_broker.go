@@ -2,7 +2,7 @@
 // Licensed under the Mozilla Public License v2.0
 
 /*
- * IBM OpenAPI Terraform Generator Version: 3.94.1-71478489-20240820-161623
+ * IBM OpenAPI Terraform Generator Version: 3.96.0-d6dec9d7-20241008-212902
  */
 
 package partnercentersell
@@ -38,19 +38,21 @@ func ResourceIbmOnboardingResourceBroker() *schema.Resource {
 				Description:  "The environment to fetch this object from.",
 			},
 			"auth_username": &schema.Schema{
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "The authentication username to reach the broker.",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validate.InvokeValidator("ibm_onboarding_resource_broker", "auth_username"),
+				Description:  "The authentication username to reach the broker.",
 			},
 			"auth_password": &schema.Schema{
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "The authentication password to reach the broker.",
 			},
 			"auth_scheme": &schema.Schema{
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "The supported authentication scheme for the broker.",
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validate.InvokeValidator("ibm_onboarding_resource_broker", "auth_scheme"),
+				Description:  "The supported authentication scheme for the broker.",
 			},
 			"resource_group_crn": &schema.Schema{
 				Type:        schema.TypeString,
@@ -204,6 +206,20 @@ func ResourceIbmOnboardingResourceBrokerValidator() *validate.ResourceValidator 
 			MaxValueLength:             64,
 		},
 		validate.ValidateSchema{
+			Identifier:                 "auth_username",
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			AllowedValues:              "apikey",
+		},
+		validate.ValidateSchema{
+			Identifier:                 "auth_scheme",
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "bearer, bearer-crn",
+		},
+		validate.ValidateSchema{
 			Identifier:                 "state",
 			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
 			Type:                       validate.TypeString,
@@ -242,12 +258,16 @@ func resourceIbmOnboardingResourceBrokerCreate(context context.Context, d *schem
 
 	createResourceBrokerOptions := &partnercentersellv1.CreateResourceBrokerOptions{}
 
-	createResourceBrokerOptions.SetAuthUsername(d.Get("auth_username").(string))
-	createResourceBrokerOptions.SetAuthPassword(d.Get("auth_password").(string))
 	createResourceBrokerOptions.SetAuthScheme(d.Get("auth_scheme").(string))
 	createResourceBrokerOptions.SetName(d.Get("name").(string))
 	createResourceBrokerOptions.SetBrokerURL(d.Get("broker_url").(string))
 	createResourceBrokerOptions.SetType(d.Get("type").(string))
+	if _, ok := d.GetOk("auth_username"); ok {
+		createResourceBrokerOptions.SetAuthUsername(d.Get("auth_username").(string))
+	}
+	if _, ok := d.GetOk("auth_password"); ok {
+		createResourceBrokerOptions.SetAuthPassword(d.Get("auth_password").(string))
+	}
 	if _, ok := d.GetOk("resource_group_crn"); ok {
 		createResourceBrokerOptions.SetResourceGroupCrn(d.Get("resource_group_crn").(string))
 	}
@@ -305,13 +325,17 @@ func resourceIbmOnboardingResourceBrokerRead(context context.Context, d *schema.
 		return tfErr.GetDiag()
 	}
 
-	if err = d.Set("auth_username", broker.AuthUsername); err != nil {
-		err = fmt.Errorf("Error setting auth_username: %s", err)
-		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_onboarding_resource_broker", "read", "set-auth_username").GetDiag()
+	if !core.IsNil(broker.AuthUsername) {
+		if err = d.Set("auth_username", broker.AuthUsername); err != nil {
+			err = fmt.Errorf("Error setting auth_username: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_onboarding_resource_broker", "read", "set-auth_username").GetDiag()
+		}
 	}
-	if err = d.Set("auth_password", broker.AuthPassword); err != nil {
-		err = fmt.Errorf("Error setting auth_password: %s", err)
-		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_onboarding_resource_broker", "read", "set-auth_password").GetDiag()
+	if !core.IsNil(broker.AuthPassword) {
+		if err = d.Set("auth_password", broker.AuthPassword); err != nil {
+			err = fmt.Errorf("Error setting auth_password: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_onboarding_resource_broker", "read", "set-auth_password").GetDiag()
+		}
 	}
 	if err = d.Set("auth_scheme", broker.AuthScheme); err != nil {
 		err = fmt.Errorf("Error setting auth_scheme: %s", err)

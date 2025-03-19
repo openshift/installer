@@ -5,9 +5,11 @@ package power
 
 import (
 	"context"
+	"log"
 
 	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -32,6 +34,11 @@ func DataSourceIBMPIInstance() *schema.Resource {
 			},
 
 			// Attributes
+			Attr_CRN: {
+				Computed:    true,
+				Description: "The CRN of this resource.",
+				Type:        schema.TypeString,
+			},
 			Attr_DeploymentType: {
 				Computed:    true,
 				Description: "The custom deployment type.",
@@ -193,6 +200,11 @@ func DataSourceIBMPIInstance() *schema.Resource {
 				Description: "The status of the instance.",
 				Type:        schema.TypeString,
 			},
+			Attr_StorageConnection: {
+				Computed:    true,
+				Description: "The storage connection type.",
+				Type:        schema.TypeString,
+			},
 			Attr_StoragePool: {
 				Computed:    true,
 				Description: "The storage Pool where server is deployed.",
@@ -207,6 +219,13 @@ func DataSourceIBMPIInstance() *schema.Resource {
 				Computed:    true,
 				Description: "The storage type where server is deployed.",
 				Type:        schema.TypeString,
+			},
+			Attr_UserTags: {
+				Computed:    true,
+				Description: "List of user tags attached to the resource.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         schema.HashString,
+				Type:        schema.TypeSet,
 			},
 			Attr_VirtualCoresAssigned: {
 				Computed:    true,
@@ -239,6 +258,14 @@ func dataSourceIBMPIInstancesRead(ctx context.Context, d *schema.ResourceData, m
 
 	pvminstanceid := *powervmdata.PvmInstanceID
 	d.SetId(pvminstanceid)
+	if powervmdata.Crn != "" {
+		d.Set(Attr_CRN, powervmdata.Crn)
+		tags, err := flex.GetGlobalTagsUsingCRN(meta, string(powervmdata.Crn), "", UserTagType)
+		if err != nil {
+			log.Printf("Error on get of pi instance (%s) user_tags: %s", *powervmdata.PvmInstanceID, err)
+		}
+		d.Set(Attr_UserTags, tags)
+	}
 	d.Set(Attr_DeploymentType, powervmdata.DeploymentType)
 	d.Set(Attr_LicenseRepositoryCapacity, powervmdata.LicenseRepositoryCapacity)
 	d.Set(Attr_MaxMem, powervmdata.Maxmem)
@@ -256,6 +283,7 @@ func dataSourceIBMPIInstancesRead(ctx context.Context, d *schema.ResourceData, m
 	d.Set(Attr_SharedProcessorPool, powervmdata.SharedProcessorPool)
 	d.Set(Attr_SharedProcessorPoolID, powervmdata.SharedProcessorPoolID)
 	d.Set(Attr_Status, powervmdata.Status)
+	d.Set(Attr_StorageConnection, powervmdata.StorageConnection)
 	d.Set(Attr_StorageType, powervmdata.StorageType)
 	d.Set(Attr_StoragePool, powervmdata.StoragePool)
 	d.Set(Attr_StoragePoolAffinity, powervmdata.StoragePoolAffinity)

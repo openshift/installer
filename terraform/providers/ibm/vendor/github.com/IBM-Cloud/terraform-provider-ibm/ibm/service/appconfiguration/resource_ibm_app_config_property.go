@@ -5,9 +5,10 @@ package appconfiguration
 
 import (
 	"fmt"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"log"
 	"strconv"
+
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 
 	"github.com/IBM/appconfiguration-go-admin-sdk/appconfigurationv1"
 	"github.com/IBM/go-sdk-core/v5/core"

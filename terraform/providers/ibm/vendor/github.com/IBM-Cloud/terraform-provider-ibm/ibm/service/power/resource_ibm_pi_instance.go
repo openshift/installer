@@ -71,6 +71,12 @@ func ResourceIBMPIInstance() *schema.Resource {
 				Optional:      true,
 				Type:          schema.TypeList,
 			},
+			Arg_BootVolumeReplicationEnabled: {
+				Description: "Indicates if the boot volume should be replication enabled or not.",
+				ForceNew:    true,
+				Optional:    true,
+				Type:        schema.TypeBool,
+			},
 			Arg_CloudInstanceID: {
 				Description: "This is the Power Instance id that is assigned to the account",
 				ForceNew:    true,
@@ -244,6 +250,14 @@ func ResourceIBMPIInstance() *schema.Resource {
 				Type:         schema.TypeString,
 				ValidateFunc: validate.ValidateAllowedStringValues([]string{Prefix, Suffix}),
 			},
+			Arg_ReplicationSites: {
+				Description: "Indicates the replication sites of the boot volume.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				ForceNew:    true,
+				Optional:    true,
+				Set:         schema.HashString,
+				Type:        schema.TypeSet,
+			},
 			Arg_SAPProfileID: {
 				ConflictsWith: []string{Arg_Processors, Arg_Memory, Arg_ProcType},
 				Description:   "SAP Profile ID for the amount of cores and memory",
@@ -285,7 +299,7 @@ func ResourceIBMPIInstance() *schema.Resource {
 				Description:  "Storage Connectivity Group for server deployment",
 				Optional:     true,
 				Type:         schema.TypeString,
-				ValidateFunc: validate.ValidateAllowedStringValues([]string{vSCSI}),
+				ValidateFunc: validate.ValidateAllowedStringValues([]string{vSCSI, MaxVolumeSupport}),
 			},
 			Arg_SysType: {
 				Computed:    true,
@@ -299,6 +313,13 @@ func ResourceIBMPIInstance() *schema.Resource {
 				ForceNew:    true,
 				Optional:    true,
 				Type:        schema.TypeString,
+			},
+			Arg_UserTags: {
+				Description: "The user tags attached to this resource.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Optional:    true,
+				Set:         schema.HashString,
+				Type:        schema.TypeSet,
 			},
 			Arg_VirtualCoresAssigned: {
 				Computed:    true,
@@ -322,6 +343,11 @@ func ResourceIBMPIInstance() *schema.Resource {
 			},
 
 			// Attributes
+			Attr_CRN: {
+				Computed:    true,
+				Description: "The CRN of this resource.",
+				Type:        schema.TypeString,
+			},
 			Attr_HealthStatus: {
 				Computed:    true,
 				Description: "PI Instance health status",
@@ -472,6 +498,20 @@ func resourceIBMPIInstanceCreate(ctx context.Context, d *schema.ResourceData, me
 			}
 		}
 	}
+
+	// If user tags are set, make sure tags are set correctly before moving on
+	if _, ok := d.GetOk(Arg_UserTags); ok {
+		oldList, newList := d.GetChange(Arg_UserTags)
+		for _, s := range *pvmList {
+			if s.Crn != "" {
+				err := flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, string(s.Crn), "", UserTagType)
+				if err != nil {
+					log.Printf("Error on update of pi instance (%s) pi_user_tags during creation: %s", *s.PvmInstanceID, err)
+				}
+			}
+		}
+	}
+
 	// If virtual optical device provided then update cloud initialization
 	if vod, ok := d.GetOk(Arg_VirtualOpticalDevice); ok {
 		for _, s := range *pvmList {
@@ -510,6 +550,14 @@ func resourceIBMPIInstanceRead(ctx context.Context, d *schema.ResourceData, meta
 		return diag.FromErr(err)
 	}
 
+	if powervmdata.Crn != "" {
+		d.Set(Attr_CRN, powervmdata.Crn)
+		tags, err := flex.GetTagsUsingCRN(meta, string(powervmdata.Crn))
+		if err != nil {
+			log.Printf("Error on get of ibm pi instance (%s) pi_user_tags: %s", *powervmdata.PvmInstanceID, err)
+		}
+		d.Set(Arg_UserTags, tags)
+	}
 	d.Set(Arg_Memory, powervmdata.Memory)
 	d.Set(Arg_Processors, powervmdata.Processors)
 	if powervmdata.Status != nil {
@@ -882,6 +930,16 @@ func resourceIBMPIInstanceUpdate(ctx context.Context, d *schema.ResourceData, me
 			return diag.FromErr(err)
 		}
 	}
+	if d.HasChange(Arg_UserTags) {
+		if crn, ok := d.GetOk(Attr_CRN); ok {
+			oldList, newList := d.GetChange(Arg_UserTags)
+			err := flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, crn.(string), "", UserTagType)
+			if err != nil {
+				log.Printf("Error on update of pi instance (%s) pi_user_tags: %s", instanceID, err)
+			}
+		}
+	}
+
 	return resourceIBMPIInstanceRead(ctx, d, meta)
 }
 
@@ -1378,6 +1436,20 @@ func createSAPInstance(d *schema.ResourceData, sapClient *instance.IBMPISAPInsta
 	if st, ok := d.GetOk(Arg_StorageType); ok {
 		body.StorageType = st.(string)
 	}
+	var bootVolumeReplicationEnabled bool
+	if bootVolumeReplicationBoolean, ok := d.GetOk(Arg_BootVolumeReplicationEnabled); ok {
+		bootVolumeReplicationEnabled = bootVolumeReplicationBoolean.(bool)
+		body.BootVolumeReplicationEnabled = &bootVolumeReplicationEnabled
+	}
+	var replicationSites []string
+	if sites, ok := d.GetOk(Arg_ReplicationSites); ok {
+		if !bootVolumeReplicationEnabled {
+			return nil, fmt.Errorf("must set %s to true in order to specify replication sites", Arg_BootVolumeReplicationEnabled)
+		} else {
+			replicationSites = flex.FlattenSet(sites.(*schema.Set))
+			body.ReplicationSites = replicationSites
+		}
+	}
 	if sp, ok := d.GetOk(Arg_StoragePool); ok {
 		body.StoragePool = sp.(string)
 	}
@@ -1415,6 +1487,9 @@ func createSAPInstance(d *schema.ResourceData, sapClient *instance.IBMPISAPInsta
 	}
 	if deploymentTarget, ok := d.GetOk(Arg_DeploymentTarget); ok {
 		body.DeploymentTarget = expandDeploymentTarget(deploymentTarget.(*schema.Set).List())
+	}
+	if tags, ok := d.GetOk(Arg_UserTags); ok {
+		body.UserTags = flex.FlattenSet(tags.(*schema.Set))
 	}
 	pvmList, err := sapClient.Create(body)
 	if err != nil {
@@ -1609,6 +1684,24 @@ func createPVMInstance(d *schema.ResourceData, client *instance.IBMPIInstanceCli
 	}
 	if deploymentTarget, ok := d.GetOk(Arg_DeploymentTarget); ok {
 		body.DeploymentTarget = expandDeploymentTarget(deploymentTarget.(*schema.Set).List())
+	}
+	var bootVolumeReplicationEnabled bool
+	if bootVolumeReplicationBoolean, ok := d.GetOk(Arg_BootVolumeReplicationEnabled); ok {
+		bootVolumeReplicationEnabled = bootVolumeReplicationBoolean.(bool)
+		body.BootVolumeReplicationEnabled = &bootVolumeReplicationEnabled
+	}
+	var replicationSites []string
+	if sites, ok := d.GetOk(Arg_ReplicationSites); ok {
+		if !bootVolumeReplicationEnabled {
+			return nil, fmt.Errorf("must set %s to true in order to specify replication sites", Arg_BootVolumeReplicationEnabled)
+		} else {
+			replicationSites = flex.FlattenSet(sites.(*schema.Set))
+			body.ReplicationSites = replicationSites
+		}
+	}
+
+	if tags, ok := d.GetOk(Arg_UserTags); ok {
+		body.UserTags = flex.FlattenSet(tags.(*schema.Set))
 	}
 	pvmList, err := client.Create(body)
 

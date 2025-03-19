@@ -5,7 +5,6 @@ package kms
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
@@ -133,7 +132,7 @@ func resourceIBMKeyCreate(d *schema.ResourceData, meta interface{}) error {
 			payload := v.(string)
 			stkey, err := api.CreateImportedStandardKey(context.Background(), name, nil, payload)
 			if err != nil {
-				return fmt.Errorf(
+				return flex.FmtErrorf(
 					"Error while creating standard key: %s", err)
 			}
 			keyCRN = stkey.CRN
@@ -141,7 +140,7 @@ func resourceIBMKeyCreate(d *schema.ResourceData, meta interface{}) error {
 			//create standard key
 			stkey, err := api.CreateStandardKey(context.Background(), name, nil)
 			if err != nil {
-				return fmt.Errorf(
+				return flex.FmtErrorf(
 					"Error while creating standard key: %s", err)
 			}
 			keyCRN = stkey.CRN
@@ -154,14 +153,14 @@ func resourceIBMKeyCreate(d *schema.ResourceData, meta interface{}) error {
 			iv := d.Get("iv_value").(string)
 			stkey, err := api.CreateImportedRootKey(context.Background(), name, nil, payload, encryptedNonce, iv)
 			if err != nil {
-				return fmt.Errorf(
+				return flex.FmtErrorf(
 					"Error while creating Root key: %s", err)
 			}
 			keyCRN = stkey.CRN
 		} else {
 			stkey, err := api.CreateRootKey(context.Background(), name, nil)
 			if err != nil {
-				return fmt.Errorf(
+				return flex.FmtErrorf(
 					"Error while creating Root key: %s", err)
 			}
 			keyCRN = stkey.CRN
@@ -189,7 +188,7 @@ func resourceIBMKeyRead(d *schema.ResourceData, meta interface{}) error {
 	// keyid := d.Id()
 	key, err := api.GetKey(context.Background(), keyid)
 	if err != nil {
-		return fmt.Errorf(
+		return flex.FmtErrorf(
 			"Get Key failed with error: %s", err)
 	}
 	d.Set("key_id", keyid)
@@ -245,7 +244,7 @@ func resourceIBMKeyDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 	_, err1 := api.DeleteKey(context.Background(), keyid, kp.ReturnRepresentation, f)
 	if err1 != nil {
-		return fmt.Errorf(
+		return flex.FmtErrorf(
 			"Error while deleting: %s", err1)
 	}
 	d.SetId("")

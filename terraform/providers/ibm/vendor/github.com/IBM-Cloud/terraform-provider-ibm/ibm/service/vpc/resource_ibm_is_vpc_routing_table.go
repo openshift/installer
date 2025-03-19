@@ -4,14 +4,18 @@
 package vpc
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"time"
 
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -34,6 +38,14 @@ const (
 	rtNextHop                    = "next_hop"
 	rtZone                       = "zone"
 	rtOrigin                     = "origin"
+	rtResourceGroup              = "resource_group"
+	rtResourceGroupHref          = "href"
+	rtResourceGroupId            = "id"
+	rtResourceGroupName          = "name"
+	rtAccessTags                 = "access_tags"
+	rtAccessTagType              = "access"
+	rtTags                       = "tags"
+	rtUserTagType                = "user"
 )
 
 func ResourceIBMISVPCRoutingTable() *schema.Resource {
@@ -50,6 +62,12 @@ func ResourceIBMISVPCRoutingTable() *schema.Resource {
 			Update: schema.DefaultTimeout(10 * time.Minute),
 			Delete: schema.DefaultTimeout(10 * time.Minute),
 		},
+		CustomizeDiff: customdiff.All(
+			customdiff.Sequence(
+				func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+					return flex.ResourceValidateAccessTags(diff, v)
+				}),
+		),
 		Schema: map[string]*schema.Schema{
 			rtVpcID: {
 				Type:        schema.TypeString,
@@ -114,6 +132,11 @@ func ResourceIBMISVPCRoutingTable() *schema.Resource {
 				Computed:    true,
 				Description: "The routing table identifier.",
 			},
+			rtCrn: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The routing table CRN.",
+			},
 			rtHref: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -157,6 +180,47 @@ func ResourceIBMISVPCRoutingTable() *schema.Resource {
 					},
 				},
 			},
+			rtResourceGroup: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The resource group for this volume.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						rtResourceGroupHref: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The URL for this resource group.",
+						},
+						rtResourceGroupId: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The unique identifier for this resource group.",
+						},
+						rtResourceGroupName: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The user-defined name for this resource group.",
+						},
+					},
+				},
+			},
+			rtTags: {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_vpc_routing_table", "tags")},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "List of tags",
+			},
+
+			rtAccessTags: {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_vpc_routing_table", "accesstag")},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "List of access management tags",
+			},
 		},
 	}
 }
@@ -175,6 +239,26 @@ func ResourceIBMISVPCRoutingTableValidator() *validate.ResourceValidator {
 			Regexp:                     `^([a-z]|[a-z][-a-z0-9]*[a-z0-9])$`,
 			MinValueLength:             1,
 			MaxValueLength:             63})
+
+	validateSchema = append(validateSchema, validate.ValidateSchema{
+		Identifier:                 "accesstag",
+		ValidateFunctionIdentifier: validate.ValidateRegexpLen,
+		Type:                       validate.TypeString,
+		Optional:                   true,
+		Regexp:                     `^([A-Za-z0-9_.-]|[A-Za-z0-9_.-][A-Za-z0-9_ .-]*[A-Za-z0-9_.-]):([A-Za-z0-9_.-]|[A-Za-z0-9_.-][A-Za-z0-9_ .-]*[A-Za-z0-9_.-])$`,
+		MinValueLength:             1,
+		MaxValueLength:             128,
+	})
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "tags",
+			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			Regexp:                     `^[A-Za-z0-9:_ .-]+$`,
+			MinValueLength:             1,
+			MaxValueLength:             128})
 
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
@@ -247,6 +331,25 @@ func resourceIBMISVPCRoutingTableCreate(d *schema.ResourceData, meta interface{}
 
 	d.SetId(fmt.Sprintf("%s/%s", vpcID, *routeTable.ID))
 
+	v := os.Getenv("IC_ENV_TAGS")
+	if _, ok := d.GetOk(rtTags); ok || v != "" {
+		oldList, newList := d.GetChange(rtTags)
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *routeTable.CRN, "", rtUserTagType)
+		if err != nil {
+			log.Printf(
+				"Error on create of resource routing table (%s) tags: %s", d.Id(), err)
+		}
+	}
+
+	if _, ok := d.GetOk(rtAccessTags); ok {
+		oldList, newList := d.GetChange(rtAccessTags)
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *routeTable.CRN, "", rtAccessTags)
+		if err != nil {
+			log.Printf(
+				"Error on create of resource routing table (%s) access tags: %s", d.Id(), err)
+		}
+	}
+
 	return resourceIBMISVPCRoutingTableRead(d, meta)
 }
 
@@ -269,6 +372,7 @@ func resourceIBMISVPCRoutingTableRead(d *schema.ResourceData, meta interface{}) 
 
 	d.Set(rtVpcID, idSet[0])
 	d.Set(rtID, routeTable.ID)
+	d.Set(rtCrn, routeTable.CRN)
 	d.Set(rtName, routeTable.Name)
 	d.Set(rtHref, routeTable.Href)
 	d.Set(rtLifecycleState, routeTable.LifecycleState)
@@ -307,7 +411,44 @@ func resourceIBMISVPCRoutingTableRead(d *schema.ResourceData, meta interface{}) 
 
 	d.Set(rtSubnets, subnets)
 
+	resourceGroupList := []map[string]interface{}{}
+	if routeTable.ResourceGroup != nil {
+		resourceGroupMap := routingTableResourceGroupToMap(*routeTable.ResourceGroup)
+		resourceGroupList = append(resourceGroupList, resourceGroupMap)
+	}
+	d.Set(rtResourceGroup, resourceGroupList)
+
+	tags, err := flex.GetGlobalTagsUsingCRN(meta, *routeTable.CRN, "", rtUserTagType)
+	if err != nil {
+		log.Printf(
+			"Error on get of resource routing table (%s) tags: %s", d.Id(), err)
+	}
+	d.Set(rtTags, tags)
+
+	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *routeTable.CRN, "", rtAccessTagType)
+	if err != nil {
+		log.Printf(
+			"Error on get of resource routing table (%s) access tags: %s", d.Id(), err)
+	}
+	d.Set(rtAccessTags, accesstags)
+
 	return nil
+}
+
+func routingTableResourceGroupToMap(resourceGroupItem vpcv1.ResourceGroupReference) (resourceGroupMap map[string]interface{}) {
+	resourceGroupMap = map[string]interface{}{}
+
+	if resourceGroupItem.Href != nil {
+		resourceGroupMap[isVolumesResourceGroupHref] = resourceGroupItem.Href
+	}
+	if resourceGroupItem.ID != nil {
+		resourceGroupMap[isVolumesResourceGroupId] = resourceGroupItem.ID
+	}
+	if resourceGroupItem.Name != nil {
+		resourceGroupMap[isVolumesResourceGroupName] = resourceGroupItem.Name
+	}
+
+	return resourceGroupMap
 }
 
 func resourceIBMISVPCRoutingTableUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -318,8 +459,29 @@ func resourceIBMISVPCRoutingTableUpdate(d *schema.ResourceData, meta interface{}
 	//Etag
 	idSett := strings.Split(d.Id(), "/")
 	getVpcRoutingTableOptions := sess.NewGetVPCRoutingTableOptions(idSett[0], idSett[1])
-	_, respGet, err := sess.GetVPCRoutingTable(getVpcRoutingTableOptions)
+	routingTableGet, respGet, err := sess.GetVPCRoutingTable(getVpcRoutingTableOptions)
+	if err != nil {
+		return fmt.Errorf("Error getting routing table : %s\n%s", err, respGet)
+	}
 	eTag := respGet.Headers.Get("ETag")
+
+	if d.HasChange(rtAccessTags) {
+		oldList, newList := d.GetChange(rtAccessTags)
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *routingTableGet.CRN, "", rtAccessTagType)
+		if err != nil {
+			log.Printf(
+				"Error on update of resource routing table (%s) access tags: %s", d.Id(), err)
+		}
+	}
+
+	if d.HasChange(rtTags) {
+		oldList, newList := d.GetChange(rtTags)
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *routingTableGet.CRN, "", rtUserTagType)
+		if err != nil {
+			log.Printf(
+				"Error on update of resource routing table (%s) tags: %s", d.Id(), err)
+		}
+	}
 
 	idSet := strings.Split(d.Id(), "/")
 	updateVpcRoutingTableOptions := new(vpcv1.UpdateVPCRoutingTableOptions)
