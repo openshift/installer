@@ -236,10 +236,14 @@ type VMIdentity struct {
 	Type capz.VMIdentity `json:"type"`
 
 	// UserAssignedIdentities is a list of identities to be attached to a node.
+	// Only one user-assigned identity may be supplied.
+	// Supplying more than one user-assigned identity is an experimental feature
+	// which may be enabled with the MachineAPIMigration feature gate.
 	UserAssignedIdentities []UserAssignedIdentity `json:"userAssignedIdentities"`
 
 	// SystemAssignedIdentityRole defines the role and scope to assign to the system-assigned identity.
-	// SystemAssignedIdentity may only be assigned on control-plane nodes.
+	// SystemAssignedIdentity is an experimental feature which may be enabled with the MachineAPIMigration
+	// feature gate and may only be assigned on control-plane nodes.
 	// +optional
 	SystemAssignedIdentityRole *capz.SystemAssignedIdentityRole `json:"systemAssignedIdentityRole,omitempty"`
 }
