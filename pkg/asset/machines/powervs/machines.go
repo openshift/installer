@@ -29,6 +29,9 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	// The other two, we should standardize a name including the cluster id.
 	image := fmt.Sprintf("rhcos-%s", clusterID)
 	var network string
+	if platform.ClusterOSImage != "" {
+		image = platform.ClusterOSImage
+	}
 
 	total := int64(1)
 	if pool.Replicas != nil {
