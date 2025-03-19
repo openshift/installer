@@ -16,7 +16,7 @@ func determineTopologies(installConfig *types.InstallConfig) (controlPlaneTopolo
 	if controlPlaneReplicas == 2 {
 		controlPlaneTopology = configv1.DualReplicaTopologyMode
 
-		if ptr.Deref(installConfig.Arbiter.Replicas, 0) != 0 {
+		if installConfig.Arbiter != nil && ptr.Deref(installConfig.Arbiter.Replicas, 0) != 0 {
 			controlPlaneTopology = configv1.HighlyAvailableArbiterMode
 		}
 	} else if controlPlaneReplicas < 3 {
@@ -30,7 +30,9 @@ func determineTopologies(installConfig *types.InstallConfig) (controlPlaneTopolo
 
 	switch numOfWorkers {
 	case 0:
-		// Two node deployments regardless of worker count require HA for InfraTopology
+		// Two node deployments with 0 workers mean that the control plane nodes are treated as workers
+		// in that situation we have decided that it is appropriate to set the infrastructureTopology to HA.
+		// All other configuration for different worker count are respected with the original intention.
 		if controlPlaneReplicas == 2 {
 			infrastructureTopology = configv1.HighlyAvailableTopologyMode
 		} else {
