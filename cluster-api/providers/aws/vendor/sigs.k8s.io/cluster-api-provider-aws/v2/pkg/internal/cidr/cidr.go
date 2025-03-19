@@ -45,7 +45,7 @@ func SplitIntoSubnetsIPv4(cidrBlock string, numSubnets int) ([]*net.IPNet, error
 		return nil, errors.Errorf("cidr %s cannot accommodate %d subnets", cidrBlock, numSubnets)
 	}
 
-	var subnets []*net.IPNet
+	subnets := make([]*net.IPNet, 0, numSubnets)
 	for i := 0; i < numSubnets; i++ {
 		ip4 := parent.IP.To4()
 		if ip4 == nil {
@@ -53,7 +53,7 @@ func SplitIntoSubnetsIPv4(cidrBlock string, numSubnets int) ([]*net.IPNet, error
 		}
 
 		n := binary.BigEndian.Uint32(ip4)
-		n += uint32(i) << uint(32-modifiedNetworkLen)
+		n += uint32(i) << uint(32-modifiedNetworkLen) //#nosec G115
 		subnetIP := make(net.IP, len(ip4))
 		binary.BigEndian.PutUint32(subnetIP, n)
 
@@ -89,9 +89,7 @@ func SplitIntoSubnetsIPv6(cidrBlock string, numSubnets int) ([]*net.IPNet, error
 	}
 	// update the prefix to 64.
 	ipv6CidrBlock.Mask = net.CIDRMask(64, 128)
-	var (
-		subnets []*net.IPNet
-	)
+	var subnets []*net.IPNet
 	for i := 0; i < numSubnets; i++ {
 		ipv6CidrBlock.IP[subnetIDLocation]++
 		newIP := net.ParseIP(ipv6CidrBlock.IP.String())

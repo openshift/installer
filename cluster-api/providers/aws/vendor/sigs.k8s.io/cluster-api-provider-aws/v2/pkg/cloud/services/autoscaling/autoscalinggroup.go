@@ -45,9 +45,9 @@ func (s *Service) SDKToAutoScalingGroup(v *autoscaling.Group) (*expinfrav1.AutoS
 		ID:   aws.StringValue(v.AutoScalingGroupARN),
 		Name: aws.StringValue(v.AutoScalingGroupName),
 		// TODO(rudoi): this is just terrible
-		DesiredCapacity:   aws.Int32(int32(aws.Int64Value(v.DesiredCapacity))),
-		MaxSize:           int32(aws.Int64Value(v.MaxSize)),
-		MinSize:           int32(aws.Int64Value(v.MinSize)),
+		DesiredCapacity:   aws.Int32(int32(aws.Int64Value(v.DesiredCapacity))), //#nosec G115
+		MaxSize:           int32(aws.Int64Value(v.MaxSize)),                    //#nosec G115
+		MinSize:           int32(aws.Int64Value(v.MinSize)),                    //#nosec G115
 		CapacityRebalance: aws.BoolValue(v.CapacityRebalance),
 		// TODO: determine what additional values go here and what else should be in the struct
 	}
@@ -517,7 +517,7 @@ func mapToTags(input map[string]string, resourceID *string) []*autoscaling.Tag {
 // SubnetIDs return subnet IDs of a AWSMachinePool based on given subnetIDs and filters.
 func (s *Service) SubnetIDs(scope *scope.MachinePoolScope) ([]string, error) {
 	subnetIDs := make([]string, 0)
-	var inputFilters = make([]*ec2.Filter, 0)
+	inputFilters := make([]*ec2.Filter, 0)
 
 	for _, subnet := range scope.AWSMachinePool.Spec.Subnets {
 		switch {
