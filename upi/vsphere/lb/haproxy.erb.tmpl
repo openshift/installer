@@ -1,10 +1,10 @@
 defaults
-  maxconn 20000
+  maxconn 40000
   mode    tcp
   log     /var/run/haproxy/haproxy-log.sock local0
   option  dontlognull
   retries 3
-  timeout http-request 10s
+  timeout http-request 30s
   timeout queue        1m
   timeout connect      10s
   timeout client       86400s
@@ -28,11 +28,12 @@ frontend router-https
     default_backend router-https
 
 backend api-server
+    timeout check 10s
     option  httpchk GET /readyz HTTP/1.0
     option  log-health-checks
     balance roundrobin
 <% foreach ($addr in $api) { -%>
-    server <%= $addr %> <%= $addr %>:6443 weight 1 verify none check check-ssl inter 1s fall 2 rise 3
+    server <%= $addr %> <%= $addr %>:6443 weight 1 verify none check check-ssl inter 5s fall 3 rise 1
 <% } -%>
 
 backend machine-config-server
