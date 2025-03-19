@@ -457,7 +457,7 @@ func TestValidate(t *testing.T) {
 		}(),
 		availZones:    validAvailZones(),
 		publicSubnets: validPublicSubnets(),
-		expectErr:     `^\[platform\.aws\.vpc\.subnets: Invalid value: \[\]aws\.Subnet\{aws\.Subnet\{ID:\"valid-public-subnet-a\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-public-subnet-b\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-public-subnet-c\", Roles:\[\]aws\.SubnetRole\(nil\)\}\}: No private subnets found, controlPlane\.platform\.aws\.zones: Invalid value: \[\]string\{\"a\", \"b\", \"c\"\}: No subnets provided for zones \[a b c\], compute\[0\]\.platform\.aws\.zones: Invalid value: \[\]string\{\"a\", \"b\", \"c\"\}: No subnets provided for zones \[a b c\]\]$`,
+		expectErr:     `^\[platform\.aws\.vpc\.subnets: Invalid value: \[\]aws\.Subnet\{aws\.Subnet\{ID:\"valid-public-subnet-a\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-public-subnet-b\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-public-subnet-c\", Roles:\[\]aws\.SubnetRole\(nil\)\}\}: no private subnets found, controlPlane\.platform\.aws\.zones: Invalid value: \[\]string\{\"a\", \"b\", \"c\"\}: No subnets provided for zones \[a b c\], compute\[0\]\.platform\.aws\.zones: Invalid value: \[\]string\{\"a\", \"b\", \"c\"\}: No subnets provided for zones \[a b c\]\]$`,
 		availRegions:  validAvailRegions(),
 	}, {
 		name: "invalid no public subnets",
@@ -681,7 +681,7 @@ func TestValidate(t *testing.T) {
 		privateSubnets: Subnets{},
 		publicSubnets:  Subnets{},
 		edgeSubnets:    validEdgeSubnets(),
-		expectErr:      `^\[platform\.aws\.vpc\.subnets: Invalid value: \[\]aws\.Subnet\{aws\.Subnet\{ID:\"valid-public-subnet-edge-a\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-public-subnet-edge-b\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-public-subnet-edge-c\", Roles:\[\]aws\.SubnetRole\(nil\)\}\}: No private subnets found, controlPlane\.platform\.aws\.zones: Invalid value: \[\]string\{\"a\", \"b\", \"c\"\}: No subnets provided for zones \[a b c\], compute\[0\]\.platform\.aws\.zones: Invalid value: \[\]string\{\"a\", \"b\", \"c\"\}: No subnets provided for zones \[a b c\]\]$`,
+		expectErr:      `^\[platform\.aws\.vpc\.subnets: Invalid value: \[\]aws\.Subnet\{aws\.Subnet\{ID:\"valid-public-subnet-edge-a\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-public-subnet-edge-b\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-public-subnet-edge-c\", Roles:\[\]aws\.SubnetRole\(nil\)\}\}: no private subnets found, controlPlane\.platform\.aws\.zones: Invalid value: \[\]string\{\"a\", \"b\", \"c\"\}: No subnets provided for zones \[a b c\], compute\[0\]\.platform\.aws\.zones: Invalid value: \[\]string\{\"a\", \"b\", \"c\"\}: No subnets provided for zones \[a b c\]\]$`,
 		availRegions:   validAvailRegions(),
 	}, {
 		name: "invalid no subnet for control plane zones",
@@ -953,11 +953,21 @@ func TestValidate(t *testing.T) {
 			meta := &Metadata{
 				availabilityZones: test.availZones,
 				availableRegions:  test.availRegions,
-				privateSubnets:    test.privateSubnets,
-				publicSubnets:     test.publicSubnets,
-				edgeSubnets:       test.edgeSubnets,
-				instanceTypes:     test.instanceTypes,
-				Subnets:           test.installConfig.Platform.AWS.VPC.Subnets,
+				subnets: SubnetGroups{
+					Private: test.privateSubnets,
+					Public:  test.publicSubnets,
+					Edge:    test.edgeSubnets,
+					VPC:     "valid-vpc",
+				},
+				vpcSubnets: SubnetGroups{
+					Private: test.privateSubnets,
+					Public:  test.publicSubnets,
+					Edge:    test.edgeSubnets,
+					VPC:     "valid-vpc",
+				},
+				vpc:             "valid-vpc",
+				instanceTypes:   test.instanceTypes,
+				ProvidedSubnets: test.installConfig.Platform.AWS.VPC.Subnets,
 			}
 			if test.proxy != "" {
 				os.Setenv("HTTP_PROXY", test.proxy)
@@ -1090,12 +1100,20 @@ func TestValidateForProvisioning(t *testing.T) {
 
 			meta := &Metadata{
 				availabilityZones: validAvailZones(),
-				privateSubnets:    validPrivateSubnets(),
-				publicSubnets:     validPublicSubnets(),
-				instanceTypes:     validInstanceTypes(),
-				Region:            editedInstallConfig.AWS.Region,
-				vpc:               "valid-private-subnet-a",
-				Subnets:           editedInstallConfig.Platform.AWS.VPC.Subnets,
+				subnets: SubnetGroups{
+					Private: validPrivateSubnets(),
+					Public:  validPublicSubnets(),
+					VPC:     "valid-vpc",
+				},
+				vpcSubnets: SubnetGroups{
+					Private: validPrivateSubnets(),
+					Public:  validPublicSubnets(),
+					VPC:     "valid-vpc",
+				},
+				instanceTypes:   validInstanceTypes(),
+				Region:          editedInstallConfig.AWS.Region,
+				vpc:             "valid-private-subnet-a",
+				ProvidedSubnets: editedInstallConfig.Platform.AWS.VPC.Subnets,
 			}
 
 			err := ValidateForProvisioning(route53Client, editedInstallConfig, meta)
