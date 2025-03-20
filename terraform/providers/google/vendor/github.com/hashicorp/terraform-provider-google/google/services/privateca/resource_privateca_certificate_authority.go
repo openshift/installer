@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -72,6 +73,8 @@ func ResourcePrivatecaCertificateAuthority() *schema.Resource {
 
 		CustomizeDiff: customdiff.All(
 			resourcePrivateCaCACustomDiff,
+			tpgresource.SetLabelsDiff,
+			tpgresource.DefaultProviderProject,
 		),
 
 		Schema: map[string]*schema.Schema{
@@ -588,6 +591,23 @@ leading period (like '.example.com')`,
 								},
 							},
 						},
+						"subject_key_id": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							ForceNew:    true,
+							Description: `When specified this provides a custom SKI to be used in the certificate. This should only be used to maintain a SKI of an existing CA originally created outside CA service, which was not generated using method (1) described in RFC 5280 section 4.2.1.2..`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"key_id": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										ForceNew:    true,
+										Description: `The value of the KeyId in lowercase hexidecimal.`,
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -657,7 +677,11 @@ Use with care. Defaults to 'false'.`,
 				Description: `Labels with user-defined metadata.
 
 An object containing a list of "key": value pairs. Example: { "name": "wrench", "mass":
-"1.3kg", "count": "3" }.`,
+"1.3kg", "count": "3" }.
+
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
 				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"lifetime": {
@@ -703,6 +727,7 @@ and usability purposes only. The resource name is in the format
 						},
 						"pem_issuer_chain": {
 							Type:     schema.TypeList,
+							Computed: true,
 							Optional: true,
 							Description: `Contains the PEM certificate chain for the issuers of this CertificateAuthority,
 but not pem certificate for this CA itself.`,
@@ -767,6 +792,12 @@ CAs that have been activated.`,
 A timestamp in RFC3339 UTC "Zulu" format, with nanosecond resolution and up to nine
 fractional digits. Examples: "2014-10-02T15:01:23Z" and "2014-10-02T15:01:23.045123456Z".`,
 			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 			"name": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -789,6 +820,13 @@ CertificateAuthority's certificate.`,
 				Computed:    true,
 				Description: `The State for this CertificateAuthority.`,
 			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
+			},
 			"update_time": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -801,8 +839,10 @@ fractional digits. Examples: "2014-10-02T15:01:23Z" and "2014-10-02T15:01:23.045
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  true,
-				Description: `Whether or not to allow Terraform to destroy the CertificateAuthority. Unless this field is set to false
-in Terraform state, a 'terraform destroy' or 'terraform apply' that would delete the instance will fail.`,
+				Description: `Whether Terraform will be prevented from destroying the CertificateAuthority.
+When the field is set to true or unset in Terraform state, a 'terraform apply'
+or 'terraform destroy' that would delete the CertificateAuthority will fail.
+When the field is set to false, deleting the CertificateAuthority is allowed.`,
 			},
 			"desired_state": {
 				Type:        schema.TypeString,
@@ -864,10 +904,10 @@ func resourcePrivatecaCertificateAuthorityCreate(d *schema.ResourceData, meta in
 	} else if v, ok := d.GetOkExists("gcs_bucket"); !tpgresource.IsEmptyValue(reflect.ValueOf(gcsBucketProp)) && (ok || !reflect.DeepEqual(v, gcsBucketProp)) {
 		obj["gcsBucket"] = gcsBucketProp
 	}
-	labelsProp, err := expandPrivatecaCertificateAuthorityLabels(d.Get("labels"), d, config)
+	labelsProp, err := expandPrivatecaCertificateAuthorityEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
 		obj["labels"] = labelsProp
 	}
 
@@ -890,6 +930,7 @@ func resourcePrivatecaCertificateAuthorityCreate(d *schema.ResourceData, meta in
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	// Drop `subordinateConfig` as it can not be set during CA creation.
 	// It can be used to activate CA during post_create or pre_update.
 	delete(obj, "subordinateConfig")
@@ -901,6 +942,7 @@ func resourcePrivatecaCertificateAuthorityCreate(d *schema.ResourceData, meta in
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating CertificateAuthority: %s", err)
@@ -999,12 +1041,14 @@ func resourcePrivatecaCertificateAuthorityRead(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("PrivatecaCertificateAuthority %q", d.Id()))
@@ -1071,6 +1115,12 @@ func resourcePrivatecaCertificateAuthorityRead(d *schema.ResourceData, meta inte
 	if err := d.Set("labels", flattenPrivatecaCertificateAuthorityLabels(res["labels"], d, config)); err != nil {
 		return fmt.Errorf("Error reading CertificateAuthority: %s", err)
 	}
+	if err := d.Set("terraform_labels", flattenPrivatecaCertificateAuthorityTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading CertificateAuthority: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenPrivatecaCertificateAuthorityEffectiveLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading CertificateAuthority: %s", err)
+	}
 
 	return nil
 }
@@ -1097,10 +1147,10 @@ func resourcePrivatecaCertificateAuthorityUpdate(d *schema.ResourceData, meta in
 	} else if v, ok := d.GetOkExists("subordinate_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, subordinateConfigProp)) {
 		obj["subordinateConfig"] = subordinateConfigProp
 	}
-	labelsProp, err := expandPrivatecaCertificateAuthorityLabels(d.Get("labels"), d, config)
+	labelsProp, err := expandPrivatecaCertificateAuthorityEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
 		obj["labels"] = labelsProp
 	}
 
@@ -1110,13 +1160,14 @@ func resourcePrivatecaCertificateAuthorityUpdate(d *schema.ResourceData, meta in
 	}
 
 	log.Printf("[DEBUG] Updating CertificateAuthority %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("subordinate_config") {
 		updateMask = append(updateMask, "subordinateConfig")
 	}
 
-	if d.HasChange("labels") {
+	if d.HasChange("effective_labels") {
 		updateMask = append(updateMask, "labels")
 	}
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
@@ -1174,28 +1225,32 @@ func resourcePrivatecaCertificateAuthorityUpdate(d *schema.ResourceData, meta in
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating CertificateAuthority %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating CertificateAuthority %q: %#v", d.Id(), res)
-	}
+		if err != nil {
+			return fmt.Errorf("Error updating CertificateAuthority %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating CertificateAuthority %q: %#v", d.Id(), res)
+		}
 
-	err = PrivatecaOperationWaitTime(
-		config, res, project, "Updating CertificateAuthority", userAgent,
-		d.Timeout(schema.TimeoutUpdate))
+		err = PrivatecaOperationWaitTime(
+			config, res, project, "Updating CertificateAuthority", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return resourcePrivatecaCertificateAuthorityRead(d, meta)
@@ -1222,6 +1277,13 @@ func resourcePrivatecaCertificateAuthorityDelete(d *schema.ResourceData, meta in
 	}
 
 	var obj map[string]interface{}
+
+	// err == nil indicates that the billing_project value was found
+	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+		billingProject = bp
+	}
+
+	headers := make(http.Header)
 	if d.Get("deletion_protection").(bool) {
 		return fmt.Errorf("cannot destroy CertificateAuthority without setting deletion_protection=false and running `terraform apply`")
 	}
@@ -1253,13 +1315,8 @@ func resourcePrivatecaCertificateAuthorityDelete(d *schema.ResourceData, meta in
 			return fmt.Errorf("Error waiting to disable CertificateAuthority: %s", err)
 		}
 	}
+
 	log.Printf("[DEBUG] Deleting CertificateAuthority %q", d.Id())
-
-	// err == nil indicates that the billing_project value was found
-	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
-		billingProject = bp
-	}
-
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -1268,6 +1325,7 @@ func resourcePrivatecaCertificateAuthorityDelete(d *schema.ResourceData, meta in
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "CertificateAuthority")
@@ -1288,9 +1346,9 @@ func resourcePrivatecaCertificateAuthorityDelete(d *schema.ResourceData, meta in
 func resourcePrivatecaCertificateAuthorityImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/caPools/(?P<pool>[^/]+)/certificateAuthorities/(?P<certificate_authority_id>[^/]+)",
-		"(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<pool>[^/]+)/(?P<certificate_authority_id>[^/]+)",
-		"(?P<location>[^/]+)/(?P<pool>[^/]+)/(?P<certificate_authority_id>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/caPools/(?P<pool>[^/]+)/certificateAuthorities/(?P<certificate_authority_id>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<pool>[^/]+)/(?P<certificate_authority_id>[^/]+)$",
+		"^(?P<location>[^/]+)/(?P<pool>[^/]+)/(?P<certificate_authority_id>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -1330,11 +1388,29 @@ func flattenPrivatecaCertificateAuthorityConfig(v interface{}, d *schema.Resourc
 		return nil
 	}
 	transformed := make(map[string]interface{})
+	transformed["subject_key_id"] =
+		flattenPrivatecaCertificateAuthorityConfigSubjectKeyId(original["subjectKeyId"], d, config)
 	transformed["x509_config"] =
 		flattenPrivatecaCertificateAuthorityConfigX509Config(original["x509Config"], d, config)
 	transformed["subject_config"] =
 		flattenPrivatecaCertificateAuthorityConfigSubjectConfig(original["subjectConfig"], d, config)
 	return []interface{}{transformed}
+}
+func flattenPrivatecaCertificateAuthorityConfigSubjectKeyId(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["key_id"] =
+		flattenPrivatecaCertificateAuthorityConfigSubjectKeyIdKeyId(original["keyId"], d, config)
+	return []interface{}{transformed}
+}
+func flattenPrivatecaCertificateAuthorityConfigSubjectKeyIdKeyId(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
 }
 
 func flattenPrivatecaCertificateAuthorityConfigX509Config(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1509,7 +1585,7 @@ func flattenPrivatecaCertificateAuthoritySubordinateConfig(v interface{}, d *sch
 	return []interface{}{transformed}
 }
 func flattenPrivatecaCertificateAuthoritySubordinateConfigCertificateAuthority(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	return d.Get("subordinate_config.0.certificate_authority")
 }
 
 func flattenPrivatecaCertificateAuthoritySubordinateConfigPemIssuerChain(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1573,6 +1649,36 @@ func flattenPrivatecaCertificateAuthorityUpdateTime(v interface{}, d *schema.Res
 }
 
 func flattenPrivatecaCertificateAuthorityLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
+}
+
+func flattenPrivatecaCertificateAuthorityTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
+}
+
+func flattenPrivatecaCertificateAuthorityEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1589,6 +1695,13 @@ func expandPrivatecaCertificateAuthorityConfig(v interface{}, d tpgresource.Terr
 	original := raw.(map[string]interface{})
 	transformed := make(map[string]interface{})
 
+	transformedSubjectKeyId, err := expandPrivatecaCertificateAuthorityConfigSubjectKeyId(original["subject_key_id"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSubjectKeyId); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["subjectKeyId"] = transformedSubjectKeyId
+	}
+
 	transformedX509Config, err := expandPrivatecaCertificateAuthorityConfigX509Config(original["x509_config"], d, config)
 	if err != nil {
 		return nil, err
@@ -1604,6 +1717,29 @@ func expandPrivatecaCertificateAuthorityConfig(v interface{}, d tpgresource.Terr
 	}
 
 	return transformed, nil
+}
+
+func expandPrivatecaCertificateAuthorityConfigSubjectKeyId(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedKeyId, err := expandPrivatecaCertificateAuthorityConfigSubjectKeyIdKeyId(original["key_id"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedKeyId); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["keyId"] = transformedKeyId
+	}
+
+	return transformed, nil
+}
+
+func expandPrivatecaCertificateAuthorityConfigSubjectKeyIdKeyId(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
 }
 
 func expandPrivatecaCertificateAuthorityConfigX509Config(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
@@ -1936,7 +2072,7 @@ func expandPrivatecaCertificateAuthorityGcsBucket(v interface{}, d tpgresource.T
 	return v, nil
 }
 
-func expandPrivatecaCertificateAuthorityLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+func expandPrivatecaCertificateAuthorityEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
 	if v == nil {
 		return map[string]string{}, nil
 	}

@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -31,6 +31,8 @@ type NetworkFirewallPolicyRule struct {
 	Location              *string                                     `json:"location"`
 	Match                 *NetworkFirewallPolicyRuleMatch             `json:"match"`
 	Action                *string                                     `json:"action"`
+	SecurityProfileGroup  *string                                     `json:"securityProfileGroup"`
+	TlsInspect            *bool                                       `json:"tlsInspect"`
 	Direction             *NetworkFirewallPolicyRuleDirectionEnum     `json:"direction"`
 	EnableLogging         *bool                                       `json:"enableLogging"`
 	RuleTupleCount        *int64                                      `json:"ruleTupleCount"`
@@ -202,7 +204,7 @@ func (r *NetworkFirewallPolicyRuleMatch) String() string {
 func (r *NetworkFirewallPolicyRuleMatch) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -251,7 +253,7 @@ func (r *NetworkFirewallPolicyRuleMatchLayer4Configs) String() string {
 func (r *NetworkFirewallPolicyRuleMatchLayer4Configs) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -300,7 +302,7 @@ func (r *NetworkFirewallPolicyRuleMatchSrcSecureTags) String() string {
 func (r *NetworkFirewallPolicyRuleMatchSrcSecureTags) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -349,7 +351,7 @@ func (r *NetworkFirewallPolicyRuleTargetSecureTags) String() string {
 func (r *NetworkFirewallPolicyRuleTargetSecureTags) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -375,6 +377,8 @@ func (r *NetworkFirewallPolicyRule) ID() (string, error) {
 		"location":                dcl.ValueOrEmptyString(nr.Location),
 		"match":                   dcl.ValueOrEmptyString(nr.Match),
 		"action":                  dcl.ValueOrEmptyString(nr.Action),
+		"security_profile_group":  dcl.ValueOrEmptyString(nr.SecurityProfileGroup),
+		"tls_inspect":             dcl.ValueOrEmptyString(nr.TlsInspect),
 		"direction":               dcl.ValueOrEmptyString(nr.Direction),
 		"enable_logging":          dcl.ValueOrEmptyString(nr.EnableLogging),
 		"rule_tuple_count":        dcl.ValueOrEmptyString(nr.RuleTupleCount),

@@ -20,6 +20,7 @@ package iamworkforcepool
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"regexp"
 	"strings"
@@ -90,6 +91,40 @@ func ResourceIAMWorkforcePoolWorkforcePool() *schema.Resource {
 				Description: `The name of the pool. The ID must be a globally unique string of 6 to 63 lowercase letters,
 digits, or hyphens. It must start with a letter, and cannot have a trailing hyphen.
 The prefix 'gcp-' is reserved for use by Google, and may not be specified.`,
+			},
+			"access_restrictions": {
+				Type:     schema.TypeList,
+				Optional: true,
+				ForceNew: true,
+				Description: `Configure access restrictions on the workforce pool users. This is an optional field. If specified web
+sign-in can be restricted to given set of services or programmatic sign-in can be disabled for pool users.`,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"allowed_services": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Description: `Services allowed for web sign-in with the workforce pool.
+If not set by default there are no restrictions.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"domain": {
+										Type:     schema.TypeString,
+										Optional: true,
+										Description: `Domain name of the service.
+Example: console.cloud.google`,
+									},
+								},
+							},
+						},
+						"disable_programmatic_signin": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Description: `Disable programmatic sign-in by disabling token issue via the Security Token API endpoint.
+See [Security Token Service API](https://cloud.google.com/iam/docs/reference/sts/rest).`,
+						},
+					},
+				},
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -180,6 +215,12 @@ func resourceIAMWorkforcePoolWorkforcePoolCreate(d *schema.ResourceData, meta in
 	} else if v, ok := d.GetOkExists("session_duration"); !tpgresource.IsEmptyValue(reflect.ValueOf(sessionDurationProp)) && (ok || !reflect.DeepEqual(v, sessionDurationProp)) {
 		obj["sessionDuration"] = sessionDurationProp
 	}
+	accessRestrictionsProp, err := expandIAMWorkforcePoolWorkforcePoolAccessRestrictions(d.Get("access_restrictions"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("access_restrictions"); !tpgresource.IsEmptyValue(reflect.ValueOf(accessRestrictionsProp)) && (ok || !reflect.DeepEqual(v, accessRestrictionsProp)) {
+		obj["accessRestrictions"] = accessRestrictionsProp
+	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{IAMWorkforcePoolBasePath}}locations/{{location}}/workforcePools?workforcePoolId={{workforce_pool_id}}")
 	if err != nil {
@@ -194,6 +235,7 @@ func resourceIAMWorkforcePoolWorkforcePoolCreate(d *schema.ResourceData, meta in
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -202,6 +244,7 @@ func resourceIAMWorkforcePoolWorkforcePoolCreate(d *schema.ResourceData, meta in
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating WorkforcePool: %s", err)
@@ -248,12 +291,14 @@ func resourceIAMWorkforcePoolWorkforcePoolRead(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("IAMWorkforcePoolWorkforcePool %q", d.Id()))
@@ -290,6 +335,9 @@ func resourceIAMWorkforcePoolWorkforcePoolRead(d *schema.ResourceData, meta inte
 		return fmt.Errorf("Error reading WorkforcePool: %s", err)
 	}
 	if err := d.Set("session_duration", flattenIAMWorkforcePoolWorkforcePoolSessionDuration(res["sessionDuration"], d, config)); err != nil {
+		return fmt.Errorf("Error reading WorkforcePool: %s", err)
+	}
+	if err := d.Set("access_restrictions", flattenIAMWorkforcePoolWorkforcePoolAccessRestrictions(res["accessRestrictions"], d, config)); err != nil {
 		return fmt.Errorf("Error reading WorkforcePool: %s", err)
 	}
 
@@ -337,6 +385,7 @@ func resourceIAMWorkforcePoolWorkforcePoolUpdate(d *schema.ResourceData, meta in
 	}
 
 	log.Printf("[DEBUG] Updating WorkforcePool %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("display_name") {
@@ -366,28 +415,32 @@ func resourceIAMWorkforcePoolWorkforcePoolUpdate(d *schema.ResourceData, meta in
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating WorkforcePool %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating WorkforcePool %q: %#v", d.Id(), res)
-	}
+		if err != nil {
+			return fmt.Errorf("Error updating WorkforcePool %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating WorkforcePool %q: %#v", d.Id(), res)
+		}
 
-	err = IAMWorkforcePoolOperationWaitTime(
-		config, res, "Updating WorkforcePool", userAgent,
-		d.Timeout(schema.TimeoutUpdate))
+		err = IAMWorkforcePoolOperationWaitTime(
+			config, res, "Updating WorkforcePool", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return resourceIAMWorkforcePoolWorkforcePoolRead(d, meta)
@@ -408,13 +461,15 @@ func resourceIAMWorkforcePoolWorkforcePoolDelete(d *schema.ResourceData, meta in
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting WorkforcePool %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting WorkforcePool %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -423,6 +478,7 @@ func resourceIAMWorkforcePoolWorkforcePoolDelete(d *schema.ResourceData, meta in
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "WorkforcePool")
@@ -443,8 +499,8 @@ func resourceIAMWorkforcePoolWorkforcePoolDelete(d *schema.ResourceData, meta in
 func resourceIAMWorkforcePoolWorkforcePoolImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"locations/(?P<location>[^/]+)/workforcePools/(?P<workforce_pool_id>[^/]+)",
-		"(?P<location>[^/]+)/(?P<workforce_pool_id>[^/]+)",
+		"^locations/(?P<location>[^/]+)/workforcePools/(?P<workforce_pool_id>[^/]+)$",
+		"^(?P<location>[^/]+)/(?P<workforce_pool_id>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -487,6 +543,47 @@ func flattenIAMWorkforcePoolWorkforcePoolSessionDuration(v interface{}, d *schem
 	return v
 }
 
+func flattenIAMWorkforcePoolWorkforcePoolAccessRestrictions(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["allowed_services"] =
+		flattenIAMWorkforcePoolWorkforcePoolAccessRestrictionsAllowedServices(original["allowedServices"], d, config)
+	transformed["disable_programmatic_signin"] =
+		flattenIAMWorkforcePoolWorkforcePoolAccessRestrictionsDisableProgrammaticSignin(original["disableProgrammaticSignin"], d, config)
+	return []interface{}{transformed}
+}
+func flattenIAMWorkforcePoolWorkforcePoolAccessRestrictionsAllowedServices(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"domain": flattenIAMWorkforcePoolWorkforcePoolAccessRestrictionsAllowedServicesDomain(original["domain"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenIAMWorkforcePoolWorkforcePoolAccessRestrictionsAllowedServicesDomain(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIAMWorkforcePoolWorkforcePoolAccessRestrictionsDisableProgrammaticSignin(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func expandIAMWorkforcePoolWorkforcePoolParent(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
@@ -504,6 +601,62 @@ func expandIAMWorkforcePoolWorkforcePoolDisabled(v interface{}, d tpgresource.Te
 }
 
 func expandIAMWorkforcePoolWorkforcePoolSessionDuration(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIAMWorkforcePoolWorkforcePoolAccessRestrictions(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedAllowedServices, err := expandIAMWorkforcePoolWorkforcePoolAccessRestrictionsAllowedServices(original["allowed_services"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAllowedServices); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["allowedServices"] = transformedAllowedServices
+	}
+
+	transformedDisableProgrammaticSignin, err := expandIAMWorkforcePoolWorkforcePoolAccessRestrictionsDisableProgrammaticSignin(original["disable_programmatic_signin"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedDisableProgrammaticSignin); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["disableProgrammaticSignin"] = transformedDisableProgrammaticSignin
+	}
+
+	return transformed, nil
+}
+
+func expandIAMWorkforcePoolWorkforcePoolAccessRestrictionsAllowedServices(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedDomain, err := expandIAMWorkforcePoolWorkforcePoolAccessRestrictionsAllowedServicesDomain(original["domain"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedDomain); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["domain"] = transformedDomain
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandIAMWorkforcePoolWorkforcePoolAccessRestrictionsAllowedServicesDomain(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIAMWorkforcePoolWorkforcePoolAccessRestrictionsDisableProgrammaticSignin(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

@@ -24,6 +24,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	dcl "github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl"
@@ -50,6 +51,11 @@ func ResourceClouddeployDeliveryPipeline() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+			tpgresource.SetLabelsDiff,
+			tpgresource.SetAnnotationsDiff,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"location": {
@@ -63,14 +69,7 @@ func ResourceClouddeployDeliveryPipeline() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Name of the `DeliveryPipeline`. Format is [a-z][a-z0-9\\-]{0,62}.",
-			},
-
-			"annotations": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "User annotations. These attributes can only be set and used by the user, and not by Google Cloud Deploy. See https://google.aip.dev/128#annotations for more details such as format and size limitations.",
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Name of the `DeliveryPipeline`. Format is `[a-z]([a-z0-9-]{0,61}[a-z0-9])?`.",
 			},
 
 			"description": {
@@ -79,11 +78,16 @@ func ResourceClouddeployDeliveryPipeline() *schema.Resource {
 				Description: "Description of the `DeliveryPipeline`. Max length is 255 characters.",
 			},
 
-			"labels": {
+			"effective_annotations": {
 				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "Labels are attributes that can be set and used by both the user and by Google Cloud Deploy. Labels must meet the following constraints: * Keys and values can contain only lowercase letters, numeric characters, underscores, and dashes. * All characters must use UTF-8 encoding, and international characters are allowed. * Keys must start with a lowercase letter or international character. * Each resource is limited to a maximum of 64 labels. Both keys and values are additionally constrained to be <= 128 bytes.",
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Computed:    true,
+				Description: "All of annotations (key/value pairs) present on the resource in GCP, including the annotations configured through Terraform, other clients and services.",
+			},
+
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.",
 			},
 
 			"project": {
@@ -109,6 +113,13 @@ func ResourceClouddeployDeliveryPipeline() *schema.Resource {
 				Description: "When suspended, no new releases or rollouts can be created, but in-progress ones will complete.",
 			},
 
+			"annotations": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "User annotations. These attributes can only be set and used by the user, and not by Google Cloud Deploy. See https://google.aip.dev/128#annotations for more details such as format and size limitations.\n\n**Note**: This field is non-authoritative, and will only manage the annotations present in your configuration.\nPlease refer to the field `effective_annotations` for all of the annotations present on the resource.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+
 			"condition": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -126,6 +137,19 @@ func ResourceClouddeployDeliveryPipeline() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "This checksum is computed by the server based on the value of other fields, and may be sent on update and delete requests to ensure the client has an up-to-date value before proceeding.",
+			},
+
+			"labels": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "Labels are attributes that can be set and used by both the user and by Google Cloud Deploy. Labels must meet the following constraints: * Keys and values can contain only lowercase letters, numeric characters, underscores, and dashes. * All characters must use UTF-8 encoding, and international characters are allowed. * Keys must start with a lowercase letter or international character. * Each resource is limited to a maximum of 64 labels. Both keys and values are additionally constrained to be <= 128 bytes.\n\n**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.\nPlease refer to the field `effective_labels` for all of the labels present on the resource.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+
+			"terraform_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "The combination of labels configured directly on the resource and default labels configured on the provider.",
 			},
 
 			"uid": {
@@ -272,10 +296,52 @@ func ClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployme
 				Elem:        &schema.Schema{Type: schema.TypeInt},
 			},
 
+			"postdeploy": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Optional. Configuration for the postdeploy job of the last phase. If this is not configured, postdeploy job will not be present.",
+				MaxItems:    1,
+				Elem:        ClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploySchema(),
+			},
+
+			"predeploy": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Optional. Configuration for the predeploy job of the first phase. If this is not configured, predeploy job will not be present.",
+				MaxItems:    1,
+				Elem:        ClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploySchema(),
+			},
+
 			"verify": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Description: "Whether to run verify tests after each percentage deployment.",
+			},
+		},
+	}
+}
+
+func ClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploySchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"actions": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Optional. A sequence of skaffold custom actions to invoke during execution of the postdeploy job.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+		},
+	}
+}
+
+func ClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploySchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"actions": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Optional. A sequence of skaffold custom actions to invoke during execution of the predeploy job.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 		},
 	}
@@ -309,6 +375,22 @@ func ClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDe
 				Description: "Required. The ID to assign to the `Rollout` phase. This value must consist of lower-case letters, numbers, and hyphens, start with a letter and end with a letter or a number, and have a max length of 63 characters. In other words, it must match the following regex: `^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$`.",
 			},
 
+			"postdeploy": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Optional. Configuration for the postdeploy job of this phase. If this is not configured, postdeploy job will not be present for this phase.",
+				MaxItems:    1,
+				Elem:        ClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploySchema(),
+			},
+
+			"predeploy": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Optional. Configuration for the predeploy job of this phase. If this is not configured, predeploy job will not be present for this phase.",
+				MaxItems:    1,
+				Elem:        ClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploySchema(),
+			},
+
 			"profiles": {
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -320,6 +402,32 @@ func ClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDe
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Description: "Whether to run verify tests after the deployment.",
+			},
+		},
+	}
+}
+
+func ClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploySchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"actions": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Optional. A sequence of skaffold custom actions to invoke during execution of the postdeploy job.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+		},
+	}
+}
+
+func ClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploySchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"actions": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Optional. A sequence of skaffold custom actions to invoke during execution of the predeploy job.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 		},
 	}
@@ -354,6 +462,27 @@ func ClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigC
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Description: "Whether Cloud Deploy should update the traffic stanza in a Cloud Run Service on the user's behalf to facilitate traffic splitting. This is required to be true for CanaryDeployments, but optional for CustomCanaryDeployments.",
+			},
+
+			"canary_revision_tags": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Optional. A list of tags that are added to the canary revision while the canary phase is in progress.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+
+			"prior_revision_tags": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Optional. A list of tags that are added to the prior revision while the canary phase is in progress.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+
+			"stable_revision_tags": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Optional. A list of tags that are added to the final stable revision when the stable phase is applied.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 		},
 	}
@@ -401,6 +530,18 @@ func ClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigK
 				Required:    true,
 				Description: "Required. Name of the Kubernetes Service.",
 			},
+
+			"route_update_wait_time": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Optional. The time to wait for route updates to propagate. The maximum configurable time is 3 hours, in seconds format. If unspecified, there is no wait time.",
+			},
+
+			"stable_cutback_duration": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Optional. The amount of time to migrate traffic back from the canary Service to the original Service during the stable phase deployment. If specified, must be between 15s and 3600s. If unspecified, there is no cutback time.",
+			},
 		},
 	}
 }
@@ -432,10 +573,52 @@ func ClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigK
 func ClouddeployDeliveryPipelineSerialPipelineStagesStrategyStandardSchema() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
+			"postdeploy": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Optional. Configuration for the postdeploy job. If this is not configured, postdeploy job will not be present.",
+				MaxItems:    1,
+				Elem:        ClouddeployDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploySchema(),
+			},
+
+			"predeploy": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Optional. Configuration for the predeploy job. If this is not configured, predeploy job will not be present.",
+				MaxItems:    1,
+				Elem:        ClouddeployDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploySchema(),
+			},
+
 			"verify": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Description: "Whether to verify a deployment.",
+			},
+		},
+	}
+}
+
+func ClouddeployDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploySchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"actions": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Optional. A sequence of skaffold custom actions to invoke during execution of the postdeploy job.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+		},
+	}
+}
+
+func ClouddeployDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploySchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"actions": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Optional. A sequence of skaffold custom actions to invoke during execution of the predeploy job.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 		},
 	}
@@ -539,9 +722,9 @@ func resourceClouddeployDeliveryPipelineCreate(d *schema.ResourceData, meta inte
 	obj := &clouddeploy.DeliveryPipeline{
 		Location:       dcl.String(d.Get("location").(string)),
 		Name:           dcl.String(d.Get("name").(string)),
-		Annotations:    tpgresource.CheckStringMap(d.Get("annotations")),
 		Description:    dcl.String(d.Get("description").(string)),
-		Labels:         tpgresource.CheckStringMap(d.Get("labels")),
+		Annotations:    tpgresource.CheckStringMap(d.Get("effective_annotations")),
+		Labels:         tpgresource.CheckStringMap(d.Get("effective_labels")),
 		Project:        dcl.String(project),
 		SerialPipeline: expandClouddeployDeliveryPipelineSerialPipeline(d.Get("serial_pipeline")),
 		Suspended:      dcl.Bool(d.Get("suspended").(bool)),
@@ -594,9 +777,9 @@ func resourceClouddeployDeliveryPipelineRead(d *schema.ResourceData, meta interf
 	obj := &clouddeploy.DeliveryPipeline{
 		Location:       dcl.String(d.Get("location").(string)),
 		Name:           dcl.String(d.Get("name").(string)),
-		Annotations:    tpgresource.CheckStringMap(d.Get("annotations")),
 		Description:    dcl.String(d.Get("description").(string)),
-		Labels:         tpgresource.CheckStringMap(d.Get("labels")),
+		Annotations:    tpgresource.CheckStringMap(d.Get("effective_annotations")),
+		Labels:         tpgresource.CheckStringMap(d.Get("effective_labels")),
 		Project:        dcl.String(project),
 		SerialPipeline: expandClouddeployDeliveryPipelineSerialPipeline(d.Get("serial_pipeline")),
 		Suspended:      dcl.Bool(d.Get("suspended").(bool)),
@@ -630,14 +813,14 @@ func resourceClouddeployDeliveryPipelineRead(d *schema.ResourceData, meta interf
 	if err = d.Set("name", res.Name); err != nil {
 		return fmt.Errorf("error setting name in state: %s", err)
 	}
-	if err = d.Set("annotations", res.Annotations); err != nil {
-		return fmt.Errorf("error setting annotations in state: %s", err)
-	}
 	if err = d.Set("description", res.Description); err != nil {
 		return fmt.Errorf("error setting description in state: %s", err)
 	}
-	if err = d.Set("labels", res.Labels); err != nil {
-		return fmt.Errorf("error setting labels in state: %s", err)
+	if err = d.Set("effective_annotations", res.Annotations); err != nil {
+		return fmt.Errorf("error setting effective_annotations in state: %s", err)
+	}
+	if err = d.Set("effective_labels", res.Labels); err != nil {
+		return fmt.Errorf("error setting effective_labels in state: %s", err)
 	}
 	if err = d.Set("project", res.Project); err != nil {
 		return fmt.Errorf("error setting project in state: %s", err)
@@ -648,6 +831,9 @@ func resourceClouddeployDeliveryPipelineRead(d *schema.ResourceData, meta interf
 	if err = d.Set("suspended", res.Suspended); err != nil {
 		return fmt.Errorf("error setting suspended in state: %s", err)
 	}
+	if err = d.Set("annotations", flattenClouddeployDeliveryPipelineAnnotations(res.Annotations, d)); err != nil {
+		return fmt.Errorf("error setting annotations in state: %s", err)
+	}
 	if err = d.Set("condition", flattenClouddeployDeliveryPipelineCondition(res.Condition)); err != nil {
 		return fmt.Errorf("error setting condition in state: %s", err)
 	}
@@ -656,6 +842,12 @@ func resourceClouddeployDeliveryPipelineRead(d *schema.ResourceData, meta interf
 	}
 	if err = d.Set("etag", res.Etag); err != nil {
 		return fmt.Errorf("error setting etag in state: %s", err)
+	}
+	if err = d.Set("labels", flattenClouddeployDeliveryPipelineLabels(res.Labels, d)); err != nil {
+		return fmt.Errorf("error setting labels in state: %s", err)
+	}
+	if err = d.Set("terraform_labels", flattenClouddeployDeliveryPipelineTerraformLabels(res.Labels, d)); err != nil {
+		return fmt.Errorf("error setting terraform_labels in state: %s", err)
 	}
 	if err = d.Set("uid", res.Uid); err != nil {
 		return fmt.Errorf("error setting uid in state: %s", err)
@@ -676,9 +868,9 @@ func resourceClouddeployDeliveryPipelineUpdate(d *schema.ResourceData, meta inte
 	obj := &clouddeploy.DeliveryPipeline{
 		Location:       dcl.String(d.Get("location").(string)),
 		Name:           dcl.String(d.Get("name").(string)),
-		Annotations:    tpgresource.CheckStringMap(d.Get("annotations")),
 		Description:    dcl.String(d.Get("description").(string)),
-		Labels:         tpgresource.CheckStringMap(d.Get("labels")),
+		Annotations:    tpgresource.CheckStringMap(d.Get("effective_annotations")),
+		Labels:         tpgresource.CheckStringMap(d.Get("effective_labels")),
 		Project:        dcl.String(project),
 		SerialPipeline: expandClouddeployDeliveryPipelineSerialPipeline(d.Get("serial_pipeline")),
 		Suspended:      dcl.Bool(d.Get("suspended").(bool)),
@@ -726,9 +918,9 @@ func resourceClouddeployDeliveryPipelineDelete(d *schema.ResourceData, meta inte
 	obj := &clouddeploy.DeliveryPipeline{
 		Location:       dcl.String(d.Get("location").(string)),
 		Name:           dcl.String(d.Get("name").(string)),
-		Annotations:    tpgresource.CheckStringMap(d.Get("annotations")),
 		Description:    dcl.String(d.Get("description").(string)),
-		Labels:         tpgresource.CheckStringMap(d.Get("labels")),
+		Annotations:    tpgresource.CheckStringMap(d.Get("effective_annotations")),
+		Labels:         tpgresource.CheckStringMap(d.Get("effective_labels")),
 		Project:        dcl.String(project),
 		SerialPipeline: expandClouddeployDeliveryPipelineSerialPipeline(d.Get("serial_pipeline")),
 		Suspended:      dcl.Bool(d.Get("suspended").(bool)),
@@ -993,6 +1185,8 @@ func expandClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDe
 	obj := objArr[0].(map[string]interface{})
 	return &clouddeploy.DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment{
 		Percentages: tpgdclresource.ExpandIntegerArray(obj["percentages"]),
+		Postdeploy:  expandClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy(obj["postdeploy"]),
+		Predeploy:   expandClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy(obj["predeploy"]),
 		Verify:      dcl.Bool(obj["verify"].(bool)),
 	}
 }
@@ -1003,7 +1197,61 @@ func flattenClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryD
 	}
 	transformed := map[string]interface{}{
 		"percentages": obj.Percentages,
+		"postdeploy":  flattenClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy(obj.Postdeploy),
+		"predeploy":   flattenClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy(obj.Predeploy),
 		"verify":      obj.Verify,
+	}
+
+	return []interface{}{transformed}
+
+}
+
+func expandClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy(o interface{}) *clouddeploy.DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy {
+	if o == nil {
+		return clouddeploy.EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy
+	}
+	objArr := o.([]interface{})
+	if len(objArr) == 0 || objArr[0] == nil {
+		return clouddeploy.EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy
+	}
+	obj := objArr[0].(map[string]interface{})
+	return &clouddeploy.DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy{
+		Actions: tpgdclresource.ExpandStringArray(obj["actions"]),
+	}
+}
+
+func flattenClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy(obj *clouddeploy.DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy) interface{} {
+	if obj == nil || obj.Empty() {
+		return nil
+	}
+	transformed := map[string]interface{}{
+		"actions": obj.Actions,
+	}
+
+	return []interface{}{transformed}
+
+}
+
+func expandClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy(o interface{}) *clouddeploy.DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy {
+	if o == nil {
+		return clouddeploy.EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy
+	}
+	objArr := o.([]interface{})
+	if len(objArr) == 0 || objArr[0] == nil {
+		return clouddeploy.EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy
+	}
+	obj := objArr[0].(map[string]interface{})
+	return &clouddeploy.DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy{
+		Actions: tpgdclresource.ExpandStringArray(obj["actions"]),
+	}
+}
+
+func flattenClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy(obj *clouddeploy.DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy) interface{} {
+	if obj == nil || obj.Empty() {
+		return nil
+	}
+	transformed := map[string]interface{}{
+		"actions": obj.Actions,
 	}
 
 	return []interface{}{transformed}
@@ -1063,6 +1311,8 @@ func expandClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCa
 	return &clouddeploy.DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigs{
 		Percentage: dcl.Int64(int64(obj["percentage"].(int))),
 		PhaseId:    dcl.String(obj["phase_id"].(string)),
+		Postdeploy: expandClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy(obj["postdeploy"]),
+		Predeploy:  expandClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy(obj["predeploy"]),
 		Profiles:   tpgdclresource.ExpandStringArray(obj["profiles"]),
 		Verify:     dcl.Bool(obj["verify"].(bool)),
 	}
@@ -1089,11 +1339,65 @@ func flattenClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomC
 	transformed := map[string]interface{}{
 		"percentage": obj.Percentage,
 		"phase_id":   obj.PhaseId,
+		"postdeploy": flattenClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy(obj.Postdeploy),
+		"predeploy":  flattenClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy(obj.Predeploy),
 		"profiles":   obj.Profiles,
 		"verify":     obj.Verify,
 	}
 
 	return transformed
+
+}
+
+func expandClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy(o interface{}) *clouddeploy.DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy {
+	if o == nil {
+		return clouddeploy.EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy
+	}
+	objArr := o.([]interface{})
+	if len(objArr) == 0 || objArr[0] == nil {
+		return clouddeploy.EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy
+	}
+	obj := objArr[0].(map[string]interface{})
+	return &clouddeploy.DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy{
+		Actions: tpgdclresource.ExpandStringArray(obj["actions"]),
+	}
+}
+
+func flattenClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy(obj *clouddeploy.DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy) interface{} {
+	if obj == nil || obj.Empty() {
+		return nil
+	}
+	transformed := map[string]interface{}{
+		"actions": obj.Actions,
+	}
+
+	return []interface{}{transformed}
+
+}
+
+func expandClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy(o interface{}) *clouddeploy.DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy {
+	if o == nil {
+		return clouddeploy.EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy
+	}
+	objArr := o.([]interface{})
+	if len(objArr) == 0 || objArr[0] == nil {
+		return clouddeploy.EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy
+	}
+	obj := objArr[0].(map[string]interface{})
+	return &clouddeploy.DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy{
+		Actions: tpgdclresource.ExpandStringArray(obj["actions"]),
+	}
+}
+
+func flattenClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy(obj *clouddeploy.DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy) interface{} {
+	if obj == nil || obj.Empty() {
+		return nil
+	}
+	transformed := map[string]interface{}{
+		"actions": obj.Actions,
+	}
+
+	return []interface{}{transformed}
 
 }
 
@@ -1136,6 +1440,9 @@ func expandClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeC
 	obj := objArr[0].(map[string]interface{})
 	return &clouddeploy.DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloudRun{
 		AutomaticTrafficControl: dcl.Bool(obj["automatic_traffic_control"].(bool)),
+		CanaryRevisionTags:      tpgdclresource.ExpandStringArray(obj["canary_revision_tags"]),
+		PriorRevisionTags:       tpgdclresource.ExpandStringArray(obj["prior_revision_tags"]),
+		StableRevisionTags:      tpgdclresource.ExpandStringArray(obj["stable_revision_tags"]),
 	}
 }
 
@@ -1145,6 +1452,9 @@ func flattenClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntime
 	}
 	transformed := map[string]interface{}{
 		"automatic_traffic_control": obj.AutomaticTrafficControl,
+		"canary_revision_tags":      obj.CanaryRevisionTags,
+		"prior_revision_tags":       obj.PriorRevisionTags,
+		"stable_revision_tags":      obj.StableRevisionTags,
 	}
 
 	return []interface{}{transformed}
@@ -1189,9 +1499,11 @@ func expandClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeC
 	}
 	obj := objArr[0].(map[string]interface{})
 	return &clouddeploy.DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesGatewayServiceMesh{
-		Deployment: dcl.String(obj["deployment"].(string)),
-		HttpRoute:  dcl.String(obj["http_route"].(string)),
-		Service:    dcl.String(obj["service"].(string)),
+		Deployment:            dcl.String(obj["deployment"].(string)),
+		HttpRoute:             dcl.String(obj["http_route"].(string)),
+		Service:               dcl.String(obj["service"].(string)),
+		RouteUpdateWaitTime:   dcl.String(obj["route_update_wait_time"].(string)),
+		StableCutbackDuration: dcl.String(obj["stable_cutback_duration"].(string)),
 	}
 }
 
@@ -1200,9 +1512,11 @@ func flattenClouddeployDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntime
 		return nil
 	}
 	transformed := map[string]interface{}{
-		"deployment": obj.Deployment,
-		"http_route": obj.HttpRoute,
-		"service":    obj.Service,
+		"deployment":              obj.Deployment,
+		"http_route":              obj.HttpRoute,
+		"service":                 obj.Service,
+		"route_update_wait_time":  obj.RouteUpdateWaitTime,
+		"stable_cutback_duration": obj.StableCutbackDuration,
 	}
 
 	return []interface{}{transformed}
@@ -1249,7 +1563,9 @@ func expandClouddeployDeliveryPipelineSerialPipelineStagesStrategyStandard(o int
 	}
 	obj := objArr[0].(map[string]interface{})
 	return &clouddeploy.DeliveryPipelineSerialPipelineStagesStrategyStandard{
-		Verify: dcl.Bool(obj["verify"].(bool)),
+		Postdeploy: expandClouddeployDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy(obj["postdeploy"]),
+		Predeploy:  expandClouddeployDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy(obj["predeploy"]),
+		Verify:     dcl.Bool(obj["verify"].(bool)),
 	}
 }
 
@@ -1258,7 +1574,61 @@ func flattenClouddeployDeliveryPipelineSerialPipelineStagesStrategyStandard(obj 
 		return nil
 	}
 	transformed := map[string]interface{}{
-		"verify": obj.Verify,
+		"postdeploy": flattenClouddeployDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy(obj.Postdeploy),
+		"predeploy":  flattenClouddeployDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy(obj.Predeploy),
+		"verify":     obj.Verify,
+	}
+
+	return []interface{}{transformed}
+
+}
+
+func expandClouddeployDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy(o interface{}) *clouddeploy.DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy {
+	if o == nil {
+		return clouddeploy.EmptyDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy
+	}
+	objArr := o.([]interface{})
+	if len(objArr) == 0 || objArr[0] == nil {
+		return clouddeploy.EmptyDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy
+	}
+	obj := objArr[0].(map[string]interface{})
+	return &clouddeploy.DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy{
+		Actions: tpgdclresource.ExpandStringArray(obj["actions"]),
+	}
+}
+
+func flattenClouddeployDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy(obj *clouddeploy.DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy) interface{} {
+	if obj == nil || obj.Empty() {
+		return nil
+	}
+	transformed := map[string]interface{}{
+		"actions": obj.Actions,
+	}
+
+	return []interface{}{transformed}
+
+}
+
+func expandClouddeployDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy(o interface{}) *clouddeploy.DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy {
+	if o == nil {
+		return clouddeploy.EmptyDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy
+	}
+	objArr := o.([]interface{})
+	if len(objArr) == 0 || objArr[0] == nil {
+		return clouddeploy.EmptyDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy
+	}
+	obj := objArr[0].(map[string]interface{})
+	return &clouddeploy.DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy{
+		Actions: tpgdclresource.ExpandStringArray(obj["actions"]),
+	}
+}
+
+func flattenClouddeployDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy(obj *clouddeploy.DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy) interface{} {
+	if obj == nil || obj.Empty() {
+		return nil
+	}
+	transformed := map[string]interface{}{
+		"actions": obj.Actions,
 	}
 
 	return []interface{}{transformed}
@@ -1317,4 +1687,49 @@ func flattenClouddeployDeliveryPipelineConditionTargetsTypeCondition(obj *cloudd
 
 	return []interface{}{transformed}
 
+}
+
+func flattenClouddeployDeliveryPipelineLabels(v map[string]string, d *schema.ResourceData) interface{} {
+	if v == nil {
+		return nil
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.Get("labels").(map[string]interface{}); ok {
+		for k, _ := range l {
+			transformed[k] = v[k]
+		}
+	}
+
+	return transformed
+}
+
+func flattenClouddeployDeliveryPipelineTerraformLabels(v map[string]string, d *schema.ResourceData) interface{} {
+	if v == nil {
+		return nil
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.Get("terraform_labels").(map[string]interface{}); ok {
+		for k, _ := range l {
+			transformed[k] = v[k]
+		}
+	}
+
+	return transformed
+}
+
+func flattenClouddeployDeliveryPipelineAnnotations(v map[string]string, d *schema.ResourceData) interface{} {
+	if v == nil {
+		return nil
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.Get("annotations").(map[string]interface{}); ok {
+		for k, _ := range l {
+			transformed[k] = v[k]
+		}
+	}
+
+	return transformed
 }

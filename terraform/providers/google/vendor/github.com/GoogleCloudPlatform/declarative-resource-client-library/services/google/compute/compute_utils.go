@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -259,6 +259,20 @@ func performNetworkUpdate(ctx context.Context, r *Network, c *Client, u string, 
 		return err
 	}
 	return nil
+}
+
+func expandFirewallPolicyRuleTLSInspect(_ *Client, tlsInspect *bool, res *FirewallPolicyRule) (*bool, error) {
+	if *res.Action == "apply_security_profile_group" || dcl.ValueOrEmptyBool(tlsInspect) {
+		return tlsInspect, nil
+	}
+	return nil, nil
+}
+
+func expandNetworkFirewallPolicyRuleTLSInspect(_ *Client, tlsInspect *bool, res *NetworkFirewallPolicyRule) (*bool, error) {
+	if *res.Action == "apply_security_profile_group" || dcl.ValueOrEmptyBool(tlsInspect) {
+		return tlsInspect, nil
+	}
+	return nil, nil
 }
 
 // Because the server will return both versions and instance template and expects only one to

@@ -21,10 +21,12 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"regexp"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -63,6 +65,10 @@ func ResourceBinaryAuthorizationPolicy() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"default_admission_rule": {
@@ -283,6 +289,7 @@ func resourceBinaryAuthorizationPolicyCreate(d *schema.ResourceData, meta interf
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "PUT",
@@ -291,6 +298,7 @@ func resourceBinaryAuthorizationPolicyCreate(d *schema.ResourceData, meta interf
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Policy: %s", err)
@@ -333,12 +341,14 @@ func resourceBinaryAuthorizationPolicyRead(d *schema.ResourceData, meta interfac
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("BinaryAuthorizationPolicy %q", d.Id()))
@@ -420,6 +430,7 @@ func resourceBinaryAuthorizationPolicyUpdate(d *schema.ResourceData, meta interf
 	}
 
 	log.Printf("[DEBUG] Updating Policy %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -434,6 +445,7 @@ func resourceBinaryAuthorizationPolicyUpdate(d *schema.ResourceData, meta interf
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
+		Headers:   headers,
 	})
 
 	if err != nil {
@@ -466,14 +478,16 @@ func resourceBinaryAuthorizationPolicyDelete(d *schema.ResourceData, meta interf
 	}
 
 	var obj map[string]interface{}
-	obj = DefaultBinaryAuthorizationPolicy(d.Get("project").(string))
-	log.Printf("[DEBUG] Deleting Policy %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+	obj = DefaultBinaryAuthorizationPolicy(d.Get("project").(string))
+
+	log.Printf("[DEBUG] Deleting Policy %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "PUT",
@@ -482,6 +496,7 @@ func resourceBinaryAuthorizationPolicyDelete(d *schema.ResourceData, meta interf
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Policy")
@@ -494,8 +509,8 @@ func resourceBinaryAuthorizationPolicyDelete(d *schema.ResourceData, meta interf
 func resourceBinaryAuthorizationPolicyImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)",
-		"(?P<project>[^/]+)",
+		"^projects/(?P<project>[^/]+)$",
+		"^(?P<project>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

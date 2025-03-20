@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
@@ -76,6 +77,7 @@ func ResourceDeploymentManagerDeployment() *schema.Resource {
 
 		CustomizeDiff: customdiff.All(
 			customDiffDeploymentManagerDeployment,
+			tpgresource.DefaultProviderProject,
 		),
 
 		Schema: map[string]*schema.Schema{
@@ -279,6 +281,7 @@ func resourceDeploymentManagerDeploymentCreate(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -287,6 +290,7 @@ func resourceDeploymentManagerDeploymentCreate(d *schema.ResourceData, meta inte
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Deployment: %s", err)
@@ -340,12 +344,14 @@ func resourceDeploymentManagerDeploymentRead(d *schema.ResourceData, meta interf
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DeploymentManagerDeployment %q", d.Id()))
@@ -425,6 +431,8 @@ func resourceDeploymentManagerDeploymentUpdate(d *schema.ResourceData, meta inte
 			return err
 		}
 
+		headers := make(http.Header)
+
 		// err == nil indicates that the billing_project value was found
 		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 			billingProject = bp
@@ -438,6 +446,7 @@ func resourceDeploymentManagerDeploymentUpdate(d *schema.ResourceData, meta inte
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
 		})
 		if err != nil {
 			return fmt.Errorf("Error updating Deployment %q: %s", d.Id(), err)
@@ -502,6 +511,8 @@ func resourceDeploymentManagerDeploymentUpdate(d *schema.ResourceData, meta inte
 			return err
 		}
 
+		headers := make(http.Header)
+
 		// err == nil indicates that the billing_project value was found
 		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 			billingProject = bp
@@ -515,6 +526,7 @@ func resourceDeploymentManagerDeploymentUpdate(d *schema.ResourceData, meta inte
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
 		})
 		if err != nil {
 			return fmt.Errorf("Error updating Deployment %q: %s", d.Id(), err)
@@ -556,13 +568,15 @@ func resourceDeploymentManagerDeploymentDelete(d *schema.ResourceData, meta inte
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Deployment %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Deployment %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -571,6 +585,7 @@ func resourceDeploymentManagerDeploymentDelete(d *schema.ResourceData, meta inte
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Deployment")
@@ -591,9 +606,9 @@ func resourceDeploymentManagerDeploymentDelete(d *schema.ResourceData, meta inte
 func resourceDeploymentManagerDeploymentImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/deployments/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/deployments/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

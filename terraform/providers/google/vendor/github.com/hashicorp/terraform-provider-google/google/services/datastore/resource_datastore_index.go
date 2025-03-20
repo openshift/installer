@@ -20,9 +20,11 @@ package datastore
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -44,6 +46,10 @@ func ResourceDatastoreIndex() *schema.Resource {
 			Create: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"kind": {
@@ -146,6 +152,7 @@ func resourceDatastoreIndexCreate(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "POST",
@@ -154,6 +161,7 @@ func resourceDatastoreIndexCreate(d *schema.ResourceData, meta interface{}) erro
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutCreate),
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.DatastoreIndex409Contention},
 	})
 	if err != nil {
@@ -221,12 +229,14 @@ func resourceDatastoreIndexRead(d *schema.ResourceData, meta interface{}) error 
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "GET",
 		Project:              billingProject,
 		RawURL:               url,
 		UserAgent:            userAgent,
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.DatastoreIndex409Contention},
 	})
 	if err != nil {
@@ -274,13 +284,15 @@ func resourceDatastoreIndexDelete(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Index %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Index %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "DELETE",
@@ -289,6 +301,7 @@ func resourceDatastoreIndexDelete(d *schema.ResourceData, meta interface{}) erro
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutDelete),
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.DatastoreIndex409Contention},
 	})
 	if err != nil {
@@ -310,9 +323,9 @@ func resourceDatastoreIndexDelete(d *schema.ResourceData, meta interface{}) erro
 func resourceDatastoreIndexImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/indexes/(?P<index_id>[^/]+)",
-		"(?P<project>[^/]+)/(?P<index_id>[^/]+)",
-		"(?P<index_id>[^/]+)",
+		"^projects/(?P<project>[^/]+)/indexes/(?P<index_id>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<index_id>[^/]+)$",
+		"^(?P<index_id>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

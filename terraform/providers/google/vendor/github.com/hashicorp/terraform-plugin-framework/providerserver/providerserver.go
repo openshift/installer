@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package providerserver
 
 import (
@@ -30,7 +33,7 @@ func NewProtocol5(p provider.Provider) func() tfprotov5.ProviderServer {
 
 // NewProtocol5WithError returns a protocol version 5 ProviderServer
 // implementation based on the given Provider and suitable for usage with
-// github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource.TestCase.ProtoV5ProviderFactories.
+// github.com/hashicorp/terraform-plugin-testing/helper/resource.TestCase.ProtoV5ProviderFactories.
 //
 // The error return is not currently used, but it may be in the future.
 func NewProtocol5WithError(p provider.Provider) func() (tfprotov5.ProviderServer, error) {
@@ -59,7 +62,7 @@ func NewProtocol6(p provider.Provider) func() tfprotov6.ProviderServer {
 
 // NewProtocol6WithError returns a protocol version 6 ProviderServer
 // implementation based on the given Provider and suitable for usage with
-// github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource.TestCase.ProtoV6ProviderFactories.
+// github.com/hashicorp/terraform-plugin-testing/helper/resource.TestCase.ProtoV6ProviderFactories.
 //
 // The error return is not currently used, but it may be in the future.
 func NewProtocol6WithError(p provider.Provider) func() (tfprotov6.ProviderServer, error) {

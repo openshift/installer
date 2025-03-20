@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"reflect"
 	"strings"
 	"time"
 
@@ -39,7 +40,7 @@ func resourceBigtableGCPolicyCustomizeDiffFunc(diff tpgresource.TerraformResourc
 	if oldDuration == "" && newDuration != "" {
 		// flatten the old days and the new duration to duration... if they are
 		// equal then do nothing.
-		do, err := time.ParseDuration(newDuration.(string))
+		do, err := ParseDuration(newDuration.(string))
 		if err != nil {
 			return err
 		}
@@ -57,6 +58,36 @@ func resourceBigtableGCPolicyCustomizeDiffFunc(diff tpgresource.TerraformResourc
 	}
 
 	return nil
+}
+func gcRulesDiffSuppress(oldRules, newRules interface{}) bool {
+	var oldPolicyRaw map[string]interface{}
+	if err := json.Unmarshal([]byte(oldRules.(string)), &oldPolicyRaw); err != nil {
+		return false
+	}
+	oldPolicy, err := getGCPolicyFromJSON(oldPolicyRaw /*isTopLevel=*/, true)
+	if err != nil {
+		return false
+	}
+	var newPolicyRaw map[string]interface{}
+	if err := json.Unmarshal([]byte(newRules.(string)), &newPolicyRaw); err != nil {
+		return false
+	}
+	newPolicy, err := getGCPolicyFromJSON(newPolicyRaw /*isTopLevel=*/, true)
+	if err != nil {
+		return false
+	}
+	oldPolicyString, err := GcPolicyToGCRuleString(oldPolicy /*isTopLevel=*/, true)
+	if err != nil {
+		return false
+	}
+	newPolicyString, err := GcPolicyToGCRuleString(newPolicy /*isTopLevel=*/, true)
+	if err != nil {
+		return false
+	}
+	if reflect.DeepEqual(oldPolicyString, newPolicyString) {
+		return true
+	}
+	return false
 }
 
 func resourceBigtableGCPolicyCustomizeDiff(_ context.Context, d *schema.ResourceDiff, meta interface{}) error {
@@ -108,6 +139,9 @@ func ResourceBigtableGCPolicy() *schema.Resource {
 				StateFunc: func(v interface{}) string {
 					json, _ := structure.NormalizeJsonString(v)
 					return json
+				},
+				DiffSuppressFunc: func(k, old, new string, _ *schema.ResourceData) bool {
+					return gcRulesDiffSuppress(old, new)
 				},
 			},
 			"mode": {
@@ -184,6 +218,16 @@ func ResourceBigtableGCPolicy() *schema.Resource {
 				in a replicated instance. Possible values are: "ABANDON".`,
 				ValidateFunc: validation.StringInSlice([]string{"ABANDON", ""}, false),
 			},
+
+			"ignore_warnings": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Description: `Allows ignoring warnings when updating the GC policy. This can be used
+				to increase the gc policy on replicated clusters. Doing this may make clusters be
+				inconsistent for a longer period of time, before using this make sure you understand
+				the risks listed at https://cloud.google.com/bigtable/docs/garbage-collection#increasing`,
+				Default: false,
+			},
 		},
 		UseJSONNumber: true,
 	}
@@ -221,9 +265,14 @@ func resourceBigtableGCPolicyUpsert(d *schema.ResourceData, meta interface{}) er
 
 	tableName := d.Get("table").(string)
 	columnFamily := d.Get("column_family").(string)
+	ignoreWarnings := d.Get("ignore_warnings").(bool)
+	updateOpts := []bigtable.GCPolicyOption{}
+	if ignoreWarnings {
+		updateOpts = append(updateOpts, bigtable.IgnoreWarnings())
+	}
 
 	retryFunc := func() error {
-		reqErr := c.SetGCPolicy(ctx, tableName, columnFamily, gcPolicy)
+		reqErr := c.SetGCPolicyWithOptions(ctx, tableName, columnFamily, gcPolicy, updateOpts...)
 		return reqErr
 	}
 	// The default create timeout is 20 minutes.
@@ -304,7 +353,7 @@ func resourceBigtableGCPolicyRead(d *schema.ResourceData, meta interface{}) erro
 		// Only set `gc_rules`` when the legacy fields are not set. We are not planning to support legacy fields.
 		maxAge := d.Get("max_age")
 		maxVersion := d.Get("max_version")
-		if d.Get("mode") == "" && len(maxAge.([]interface{})) == 0 && len(maxVersion.([]interface{})) == 0 {
+		if len(maxAge.([]interface{})) == 0 && len(maxVersion.([]interface{})) == 0 {
 			gcRuleString, err := GcPolicyToGCRuleString(fi.FullGCPolicy, true)
 			if err != nil {
 				return err
@@ -506,7 +555,7 @@ func getGCPolicyFromJSON(inputPolicy map[string]interface{}, isTopLevel bool) (b
 
 		if childPolicy["max_age"] != nil {
 			maxAge := childPolicy["max_age"].(string)
-			duration, err := time.ParseDuration(maxAge)
+			duration, err := ParseDuration(maxAge)
 			if err != nil {
 				return nil, fmt.Errorf("invalid duration string: %v", maxAge)
 			}
@@ -588,7 +637,7 @@ func validateNestedPolicy(p map[string]interface{}, isTopLevel bool) error {
 func getMaxAgeDuration(values map[string]interface{}) (time.Duration, error) {
 	d := values["duration"].(string)
 	if d != "" {
-		return time.ParseDuration(d)
+		return ParseDuration(d)
 	}
 
 	days := values["days"].(int)

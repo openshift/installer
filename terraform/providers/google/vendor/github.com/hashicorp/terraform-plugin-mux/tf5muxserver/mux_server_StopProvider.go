@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package tf5muxserver
 
 import (
@@ -13,7 +16,7 @@ import (
 // with the muxServer, one at a time. All Error fields will be joined
 // together and returned, but will not prevent the rest of the providers'
 // StopProvider methods from being called.
-func (s muxServer) StopProvider(ctx context.Context, req *tfprotov5.StopProviderRequest) (*tfprotov5.StopProviderResponse, error) {
+func (s *muxServer) StopProvider(ctx context.Context, req *tfprotov5.StopProviderRequest) (*tfprotov5.StopProviderResponse, error) {
 	rpc := "StopProvider"
 	ctx = logging.InitContext(ctx)
 	ctx = logging.RpcContext(ctx, rpc)

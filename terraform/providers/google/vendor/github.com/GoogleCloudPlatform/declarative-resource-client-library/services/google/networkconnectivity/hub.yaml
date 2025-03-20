@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC. All Rights Reserved.
+# Copyright 2024 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -92,6 +92,7 @@ components:
           description: 'Immutable. The name of the hub. Hub names must be unique.
             They use the following form: `projects/{project_number}/locations/global/hubs/{hub_id}`'
           x-kubernetes-immutable: true
+          x-dcl-has-long-form: true
         project:
           type: string
           x-dcl-go-name: Project
@@ -101,6 +102,7 @@ components:
           - resource: Cloudresourcemanager/Project
             field: name
             parent: true
+          x-dcl-parameter: true
         routingVpcs:
           type: array
           x-dcl-go-name: RoutingVpcs

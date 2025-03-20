@@ -20,9 +20,11 @@ package compute
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -44,6 +46,11 @@ func ResourceComputeGlobalAddress() *schema.Resource {
 			Create: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -106,13 +113,14 @@ This should only be set when using an Internal address.`,
 			},
 			"prefix_length": {
 				Type:     schema.TypeInt,
+				Computed: true,
 				Optional: true,
 				ForceNew: true,
 				Description: `The prefix length of the IP range. If not present, it means the
 address field is a single IP address.
 
-This field is not applicable to addresses with addressType=EXTERNAL,
-or addressType=INTERNAL when purpose=PRIVATE_SERVICE_CONNECT`,
+This field is not applicable to addresses with addressType=INTERNAL
+when purpose=PRIVATE_SERVICE_CONNECT`,
 			},
 			"purpose": {
 				Type:     schema.TypeString,
@@ -220,6 +228,12 @@ func resourceComputeGlobalAddressCreate(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+	// Note: Global external IP addresses and internal IP addresses are always Premium Tier.
+	// An address with type INTERNAL cannot have a network tier
+	if addressTypeProp != "INTERNAL" {
+		obj["networkTier"] = "PREMIUM"
+	}
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -228,6 +242,7 @@ func resourceComputeGlobalAddressCreate(d *schema.ResourceData, meta interface{}
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating GlobalAddress: %s", err)
@@ -280,12 +295,14 @@ func resourceComputeGlobalAddressRead(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeGlobalAddress %q", d.Id()))
@@ -350,13 +367,15 @@ func resourceComputeGlobalAddressDelete(d *schema.ResourceData, meta interface{}
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting GlobalAddress %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting GlobalAddress %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -365,6 +384,7 @@ func resourceComputeGlobalAddressDelete(d *schema.ResourceData, meta interface{}
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "GlobalAddress")
@@ -385,9 +405,9 @@ func resourceComputeGlobalAddressDelete(d *schema.ResourceData, meta interface{}
 func resourceComputeGlobalAddressImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/global/addresses/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/global/addresses/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

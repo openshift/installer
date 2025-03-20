@@ -20,10 +20,12 @@ package dataplex
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -47,6 +49,11 @@ func ResourceDataplexDatascan() *schema.Resource {
 			Update: schema.DefaultTimeout(5 * time.Minute),
 			Delete: schema.DefaultTimeout(5 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"data": {
@@ -146,15 +153,85 @@ func ResourceDataplexDatascan() *schema.Resource {
 				MaxItems:    1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"exclude_fields": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Description: `The fields to exclude from data profile.
+If specified, the fields will be excluded from data profile, regardless of 'include_fields' value.`,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"field_names": {
+										Type:     schema.TypeList,
+										Optional: true,
+										Description: `Expected input is a list of fully qualified names of fields as in the schema.
+Only top-level field names for nested fields are supported.
+For instance, if 'x' is of nested field type, listing 'x' is supported but 'x.y.z' is not supported. Here 'y' and 'y.z' are nested fields of 'x'.`,
+										Elem: &schema.Schema{
+											Type: schema.TypeString,
+										},
+									},
+								},
+							},
+						},
+						"include_fields": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Description: `The fields to include in data profile.
+If not specified, all fields at the time of profile scan job execution are included, except for ones listed in 'exclude_fields'.`,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"field_names": {
+										Type:     schema.TypeList,
+										Optional: true,
+										Description: `Expected input is a list of fully qualified names of fields as in the schema.
+Only top-level field names for nested fields are supported.
+For instance, if 'x' is of nested field type, listing 'x' is supported but 'x.y.z' is not supported. Here 'y' and 'y.z' are nested fields of 'x'.`,
+										Elem: &schema.Schema{
+											Type: schema.TypeString,
+										},
+									},
+								},
+							},
+						},
+						"post_scan_actions": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `Actions to take upon job completion.`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"bigquery_export": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										Description: `If set, results will be exported to the provided BigQuery table.`,
+										MaxItems:    1,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"results_table": {
+													Type:     schema.TypeString,
+													Optional: true,
+													Description: `The BigQuery table to export DataProfileScan results to.
+Format://bigquery.googleapis.com/projects/PROJECT_ID/datasets/DATASET_ID/tables/TABLE_ID`,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
 						"row_filter": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: `A filter applied to all rows in a single DataScan job. The filter needs to be a valid SQL expression for a WHERE clause in BigQuery standard SQL syntax. Example: col1 >= 0 AND col2 < 10`,
 						},
 						"sampling_percent": {
-							Type:        schema.TypeFloat,
-							Optional:    true,
-							Description: `The percentage of the records to be selected from the dataset for DataScan.`,
+							Type:     schema.TypeFloat,
+							Optional: true,
+							Description: `The percentage of the records to be selected from the dataset for DataScan.
+Value can range between 0.0 and 100.0 with up to 3 significant decimal digits.
+Sampling is not applied if 'sampling_percent' is not specified, 0 or 100.`,
 						},
 					},
 				},
@@ -167,6 +244,32 @@ func ResourceDataplexDatascan() *schema.Resource {
 				MaxItems:    1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"post_scan_actions": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `Actions to take upon job completion.`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"bigquery_export": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										Description: `If set, results will be exported to the provided BigQuery table.`,
+										MaxItems:    1,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"results_table": {
+													Type:     schema.TypeString,
+													Optional: true,
+													Description: `The BigQuery table to export DataQualityScan results to.
+Format://bigquery.googleapis.com/projects/PROJECT_ID/datasets/DATASET_ID/tables/TABLE_ID`,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
 						"row_filter": {
 							Type:        schema.TypeString,
 							Optional:    true,
@@ -189,10 +292,25 @@ func ResourceDataplexDatascan() *schema.Resource {
 										Optional:    true,
 										Description: `The unnested column which this rule is evaluated against.`,
 									},
+									"description": {
+										Type:     schema.TypeString,
+										Optional: true,
+										Description: `Description of the rule.
+The maximum length is 1,024 characters.`,
+									},
 									"ignore_null": {
 										Type:        schema.TypeBool,
 										Optional:    true,
 										Description: `Rows with null values will automatically fail a rule, unless ignoreNull is true. In that case, such null rows are trivially considered passing. Only applicable to ColumnMap rules.`,
+									},
+									"name": {
+										Type:     schema.TypeString,
+										Optional: true,
+										Description: `A mutable name for the rule.
+The name must contain only letters (a-z, A-Z), numbers (0-9), or hyphens (-).
+The maximum length is 63 characters.
+Must start with a letter.
+Must end with a number or a letter.`,
 									},
 									"non_null_expectation": {
 										Type:        schema.TypeList,
@@ -285,6 +403,21 @@ Only relevant if a minValue has been defined. Default = false.`,
 											},
 										},
 									},
+									"sql_assertion": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										Description: `Table rule which evaluates whether any row matches invalid state.`,
+										MaxItems:    1,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"sql_statement": {
+													Type:        schema.TypeString,
+													Required:    true,
+													Description: `The SQL statement.`,
+												},
+											},
+										},
+									},
 									"statistic_range_expectation": {
 										Type:        schema.TypeList,
 										Optional:    true,
@@ -350,7 +483,7 @@ Only relevant if a minValue has been defined. Default = false.`,
 									"uniqueness_expectation": {
 										Type:        schema.TypeList,
 										Optional:    true,
-										Description: `ColumnAggregate rule which evaluates whether the column has duplicates.`,
+										Description: `Row-level rule which evaluates whether each column value is unique.`,
 										MaxItems:    1,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{},
@@ -360,9 +493,11 @@ Only relevant if a minValue has been defined. Default = false.`,
 							},
 						},
 						"sampling_percent": {
-							Type:        schema.TypeFloat,
-							Optional:    true,
-							Description: `The percentage of the records to be selected from the dataset for DataScan.`,
+							Type:     schema.TypeFloat,
+							Optional: true,
+							Description: `The percentage of the records to be selected from the dataset for DataScan.
+Value can range between 0.0 and 100.0 with up to 3 significant decimal digits.
+Sampling is not applied if 'sampling_percent' is not specified, 0 or 100.`,
 						},
 					},
 				},
@@ -379,516 +514,25 @@ Only relevant if a minValue has been defined. Default = false.`,
 				Description: `User friendly display name.`,
 			},
 			"labels": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: `User-defined labels for the scan. A list of key->value pairs.`,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `User-defined labels for the scan. A list of key->value pairs.
+
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"create_time": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `The time when the scan was created.`,
 			},
-			"data_profile_result": {
-				Type:        schema.TypeList,
+			"effective_labels": {
+				Type:        schema.TypeMap,
 				Computed:    true,
-				Description: `The result of the data profile scan.`,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"row_count": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: `The count of rows scanned.`,
-						},
-						"profile": {
-							Type:        schema.TypeList,
-							Computed:    true,
-							Description: `The profile information per field.`,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"fields": {
-										Type:        schema.TypeList,
-										Optional:    true,
-										Description: `List of fields with structural and profile information for each field.`,
-										Elem: &schema.Resource{
-											Schema: map[string]*schema.Schema{
-												"mode": {
-													Type:     schema.TypeString,
-													Optional: true,
-													Description: `The mode of the field. Possible values include:
-1. REQUIRED, if it is a required field.
-2. NULLABLE, if it is an optional field.
-3. REPEATED, if it is a repeated field.`,
-												},
-												"name": {
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: `The name of the field.`,
-												},
-												"profile": {
-													Type:        schema.TypeList,
-													Optional:    true,
-													Description: `Profile information for the corresponding field.`,
-													MaxItems:    1,
-													Elem: &schema.Resource{
-														Schema: map[string]*schema.Schema{
-															"distinct_ratio": {
-																Type:        schema.TypeInt,
-																Optional:    true,
-																Description: `Ratio of rows with distinct values against total scanned rows. Not available for complex non-groupable field type RECORD and fields with REPEATABLE mode.`,
-															},
-															"top_n_values": {
-																Type:        schema.TypeList,
-																Optional:    true,
-																Description: `The list of top N non-null values and number of times they occur in the scanned data. N is 10 or equal to the number of distinct values in the field, whichever is smaller. Not available for complex non-groupable field type RECORD and fields with REPEATABLE mode.`,
-																MaxItems:    1,
-																Elem: &schema.Resource{
-																	Schema: map[string]*schema.Schema{
-																		"count": {
-																			Type:        schema.TypeString,
-																			Optional:    true,
-																			Description: `Count of the corresponding value in the scanned data.`,
-																		},
-																		"value": {
-																			Type:        schema.TypeString,
-																			Optional:    true,
-																			Description: `String value of a top N non-null value.`,
-																		},
-																	},
-																},
-															},
-															"double_profile": {
-																Type:        schema.TypeList,
-																Computed:    true,
-																Description: `Double type field information.`,
-																Elem: &schema.Resource{
-																	Schema: map[string]*schema.Schema{
-																		"average": {
-																			Type:        schema.TypeInt,
-																			Optional:    true,
-																			Description: `Average of non-null values in the scanned data. NaN, if the field has a NaN.`,
-																		},
-																		"max": {
-																			Type:        schema.TypeString,
-																			Optional:    true,
-																			Description: `Maximum of non-null values in the scanned data. NaN, if the field has a NaN.`,
-																		},
-																		"min": {
-																			Type:        schema.TypeString,
-																			Optional:    true,
-																			Description: `Minimum of non-null values in the scanned data. NaN, if the field has a NaN.`,
-																		},
-																		"quartiles": {
-																			Type:        schema.TypeString,
-																			Optional:    true,
-																			Description: `A quartile divides the number of data points into four parts, or quarters, of more-or-less equal size. Three main quartiles used are: The first quartile (Q1) splits off the lowest 25% of data from the highest 75%. It is also known as the lower or 25th empirical quartile, as 25% of the data is below this point. The second quartile (Q2) is the median of a data set. So, 50% of the data lies below this point. The third quartile (Q3) splits off the highest 25% of data from the lowest 75%. It is known as the upper or 75th empirical quartile, as 75% of the data lies below this point. Here, the quartiles is provided as an ordered list of quartile values for the scanned data, occurring in order Q1, median, Q3.`,
-																		},
-																		"standard_deviation": {
-																			Type:        schema.TypeInt,
-																			Optional:    true,
-																			Description: `Standard deviation of non-null values in the scanned data. NaN, if the field has a NaN.`,
-																		},
-																	},
-																},
-															},
-															"integer_profile": {
-																Type:        schema.TypeList,
-																Computed:    true,
-																Description: `Integer type field information.`,
-																Elem: &schema.Resource{
-																	Schema: map[string]*schema.Schema{
-																		"average": {
-																			Type:        schema.TypeInt,
-																			Optional:    true,
-																			Description: `Average of non-null values in the scanned data. NaN, if the field has a NaN.`,
-																		},
-																		"max": {
-																			Type:        schema.TypeString,
-																			Optional:    true,
-																			Description: `Maximum of non-null values in the scanned data. NaN, if the field has a NaN.`,
-																		},
-																		"min": {
-																			Type:        schema.TypeString,
-																			Optional:    true,
-																			Description: `Minimum of non-null values in the scanned data. NaN, if the field has a NaN.`,
-																		},
-																		"quartiles": {
-																			Type:        schema.TypeString,
-																			Optional:    true,
-																			Description: `A quartile divides the number of data points into four parts, or quarters, of more-or-less equal size. Three main quartiles used are: The first quartile (Q1) splits off the lowest 25% of data from the highest 75%. It is also known as the lower or 25th empirical quartile, as 25% of the data is below this point. The second quartile (Q2) is the median of a data set. So, 50% of the data lies below this point. The third quartile (Q3) splits off the highest 25% of data from the lowest 75%. It is known as the upper or 75th empirical quartile, as 75% of the data lies below this point. Here, the quartiles is provided as an ordered list of quartile values for the scanned data, occurring in order Q1, median, Q3.`,
-																		},
-																		"standard_deviation": {
-																			Type:        schema.TypeInt,
-																			Optional:    true,
-																			Description: `Standard deviation of non-null values in the scanned data. NaN, if the field has a NaN.`,
-																		},
-																	},
-																},
-															},
-															"null_ratio": {
-																Type:        schema.TypeInt,
-																Computed:    true,
-																Description: `Ratio of rows with null value against total scanned rows.`,
-															},
-															"string_profile": {
-																Type:        schema.TypeList,
-																Computed:    true,
-																Description: `String type field information.`,
-																Elem: &schema.Resource{
-																	Schema: map[string]*schema.Schema{
-																		"average_length": {
-																			Type:        schema.TypeInt,
-																			Optional:    true,
-																			Description: `Average length of non-null values in the scanned data.`,
-																		},
-																		"max_length": {
-																			Type:        schema.TypeString,
-																			Optional:    true,
-																			Description: `Maximum length of non-null values in the scanned data.`,
-																		},
-																		"min_length": {
-																			Type:        schema.TypeString,
-																			Optional:    true,
-																			Description: `Minimum length of non-null values in the scanned data.`,
-																		},
-																	},
-																},
-															},
-														},
-													},
-												},
-												"type": {
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: `The field data type.`,
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-						"scanned_data": {
-							Type:        schema.TypeList,
-							Computed:    true,
-							Description: `The data scanned for this result.`,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"incremental_field": {
-										Type:        schema.TypeList,
-										Optional:    true,
-										Description: `The range denoted by values of an incremental field`,
-										MaxItems:    1,
-										Elem: &schema.Resource{
-											Schema: map[string]*schema.Schema{
-												"end": {
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: `Value that marks the end of the range.`,
-												},
-												"field": {
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: `The field that contains values which monotonically increases over time (e.g. a timestamp column).`,
-												},
-												"start": {
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: `Value that marks the start of the range.`,
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			"data_quality_result": {
-				Type:        schema.TypeList,
-				Computed:    true,
-				Description: `The result of the data quality scan.`,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"dimensions": {
-							Type:        schema.TypeList,
-							Optional:    true,
-							Description: `A list of results at the dimension level.`,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"passed": {
-										Type:        schema.TypeBool,
-										Optional:    true,
-										Description: `Whether the dimension passed or failed.`,
-									},
-								},
-							},
-						},
-						"passed": {
-							Type:        schema.TypeBool,
-							Computed:    true,
-							Description: `Overall data quality result -- true if all rules passed.`,
-						},
-						"row_count": {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: `The count of rows processed.`,
-						},
-						"rules": {
-							Type:        schema.TypeList,
-							Computed:    true,
-							Description: `A list of all the rules in a job, and their results.`,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"evaluated_count": {
-										Type:     schema.TypeString,
-										Computed: true,
-										Description: `The number of rows a rule was evaluated against. This field is only valid for ColumnMap type rules.
-Evaluated count can be configured to either
-1. include all rows (default) - with null rows automatically failing rule evaluation, or
-2. exclude null rows from the evaluatedCount, by setting ignore_nulls = true.`,
-									},
-									"failing_rows_query": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: `The query to find rows that did not pass this rule. Only applies to ColumnMap and RowCondition rules.`,
-									},
-									"null_count": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: `The number of rows with null values in the specified column.`,
-									},
-									"pass_ratio": {
-										Type:        schema.TypeInt,
-										Computed:    true,
-										Description: `The ratio of passedCount / evaluatedCount. This field is only valid for ColumnMap type rules.`,
-									},
-									"passed": {
-										Type:        schema.TypeBool,
-										Computed:    true,
-										Description: `Whether the rule passed or failed.`,
-									},
-									"passed_count": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: `The number of rows which passed a rule evaluation. This field is only valid for ColumnMap type rules.`,
-									},
-									"rule": {
-										Type:        schema.TypeList,
-										Computed:    true,
-										Description: `The rule specified in the DataQualitySpec, as is.`,
-										Elem: &schema.Resource{
-											Schema: map[string]*schema.Schema{
-												"column": {
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: `The unnested column which this rule is evaluated against.`,
-												},
-												"dimension": {
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: `The dimension a rule belongs to. Results are also aggregated at the dimension level. Supported dimensions are ["COMPLETENESS", "ACCURACY", "CONSISTENCY", "VALIDITY", "UNIQUENESS", "INTEGRITY"]`,
-												},
-												"ignore_null": {
-													Type:        schema.TypeBool,
-													Optional:    true,
-													Description: `Rows with null values will automatically fail a rule, unless ignoreNull is true. In that case, such null rows are trivially considered passing. Only applicable to ColumnMap rules.`,
-												},
-												"threshold": {
-													Type:        schema.TypeInt,
-													Optional:    true,
-													Description: `The minimum ratio of passing_rows / total_rows required to pass this rule, with a range of [0.0, 1.0]. 0 indicates default value (i.e. 1.0).`,
-												},
-												"non_null_expectation": {
-													Type:        schema.TypeList,
-													Computed:    true,
-													Description: `ColumnMap rule which evaluates whether each column value is null.`,
-													Elem: &schema.Resource{
-														Schema: map[string]*schema.Schema{},
-													},
-												},
-												"range_expectation": {
-													Type:        schema.TypeList,
-													Computed:    true,
-													Description: `ColumnMap rule which evaluates whether each column value lies between a specified range.`,
-													Elem: &schema.Resource{
-														Schema: map[string]*schema.Schema{
-															"max_value": {
-																Type:        schema.TypeString,
-																Optional:    true,
-																Description: `The maximum column value allowed for a row to pass this validation. At least one of minValue and maxValue need to be provided.`,
-															},
-															"min_value": {
-																Type:        schema.TypeString,
-																Optional:    true,
-																Description: `The minimum column value allowed for a row to pass this validation. At least one of minValue and maxValue need to be provided.`,
-															},
-															"strict_max_enabled": {
-																Type:     schema.TypeBool,
-																Optional: true,
-																Description: `Whether each value needs to be strictly lesser than ('<') the maximum, or if equality is allowed.
-Only relevant if a maxValue has been defined. Default = false.`,
-																Default: false,
-															},
-															"strict_min_enabled": {
-																Type:     schema.TypeBool,
-																Optional: true,
-																Description: `Whether each value needs to be strictly greater than ('>') the minimum, or if equality is allowed.
-Only relevant if a minValue has been defined. Default = false.`,
-																Default: false,
-															},
-														},
-													},
-												},
-												"regex_expectation": {
-													Type:        schema.TypeList,
-													Computed:    true,
-													Description: `ColumnMap rule which evaluates whether each column value matches a specified regex.`,
-													Elem: &schema.Resource{
-														Schema: map[string]*schema.Schema{
-															"regex": {
-																Type:        schema.TypeString,
-																Optional:    true,
-																Description: `A regular expression the column value is expected to match.`,
-															},
-														},
-													},
-												},
-												"row_condition_expectation": {
-													Type:        schema.TypeList,
-													Computed:    true,
-													Description: `Table rule which evaluates whether each row passes the specified condition.`,
-													Elem: &schema.Resource{
-														Schema: map[string]*schema.Schema{
-															"sql_expression": {
-																Type:        schema.TypeString,
-																Optional:    true,
-																Description: `The SQL expression.`,
-															},
-														},
-													},
-												},
-												"set_expectation": {
-													Type:        schema.TypeList,
-													Computed:    true,
-													Description: `ColumnMap rule which evaluates whether each column value is contained by a specified set.`,
-													Elem: &schema.Resource{
-														Schema: map[string]*schema.Schema{
-															"values": {
-																Type:        schema.TypeList,
-																Optional:    true,
-																Description: `Expected values for the column value.`,
-																Elem: &schema.Schema{
-																	Type: schema.TypeString,
-																},
-															},
-														},
-													},
-												},
-												"statistic_range_expectation": {
-													Type:        schema.TypeList,
-													Computed:    true,
-													Description: `ColumnAggregate rule which evaluates whether the column aggregate statistic lies between a specified range.`,
-													Elem: &schema.Resource{
-														Schema: map[string]*schema.Schema{
-															"max_value": {
-																Type:     schema.TypeString,
-																Optional: true,
-																Description: `The maximum column statistic value allowed for a row to pass this validation.
-At least one of minValue and maxValue need to be provided.`,
-															},
-															"min_value": {
-																Type:     schema.TypeString,
-																Optional: true,
-																Description: `The minimum column statistic value allowed for a row to pass this validation.
-At least one of minValue and maxValue need to be provided.`,
-															},
-															"statistic": {
-																Type:         schema.TypeString,
-																Optional:     true,
-																ValidateFunc: verify.ValidateEnum([]string{"STATISTIC_UNDEFINED", "MEAN", "MIN", "MAX", ""}),
-																Description:  `column statistics. Possible values: ["STATISTIC_UNDEFINED", "MEAN", "MIN", "MAX"]`,
-															},
-															"strict_max_enabled": {
-																Type:     schema.TypeBool,
-																Optional: true,
-																Description: `Whether column statistic needs to be strictly lesser than ('<') the maximum, or if equality is allowed.
-Only relevant if a maxValue has been defined. Default = false.`,
-															},
-															"strict_min_enabled": {
-																Type:     schema.TypeBool,
-																Optional: true,
-																Description: `Whether column statistic needs to be strictly greater than ('>') the minimum, or if equality is allowed.
-Only relevant if a minValue has been defined. Default = false.`,
-															},
-														},
-													},
-												},
-												"table_condition_expectation": {
-													Type:        schema.TypeList,
-													Computed:    true,
-													Description: `Table rule which evaluates whether the provided expression is true.`,
-													Elem: &schema.Resource{
-														Schema: map[string]*schema.Schema{
-															"sql_expression": {
-																Type:        schema.TypeString,
-																Optional:    true,
-																Description: `The SQL expression.`,
-															},
-														},
-													},
-												},
-												"uniqueness_expectation": {
-													Type:        schema.TypeList,
-													Computed:    true,
-													Description: `ColumnAggregate rule which evaluates whether the column has duplicates.`,
-													Elem: &schema.Resource{
-														Schema: map[string]*schema.Schema{},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-						"scanned_data": {
-							Type:        schema.TypeList,
-							Computed:    true,
-							Description: `The data scanned for this result.`,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"incremental_field": {
-										Type:        schema.TypeList,
-										Optional:    true,
-										Description: `The range denoted by values of an incremental field`,
-										MaxItems:    1,
-										Elem: &schema.Resource{
-											Schema: map[string]*schema.Schema{
-												"end": {
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: `Value that marks the end of the range.`,
-												},
-												"field": {
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: `The field that contains values which monotonically increases over time (e.g. a timestamp column).`,
-												},
-												"start": {
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: `Value that marks the start of the range.`,
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"execution_status": {
 				Type:        schema.TypeList,
@@ -918,6 +562,13 @@ Only relevant if a minValue has been defined. Default = false.`,
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `Current state of the DataScan.`,
+			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"type": {
 				Type:        schema.TypeString,
@@ -965,12 +616,6 @@ func resourceDataplexDatascanCreate(d *schema.ResourceData, meta interface{}) er
 	} else if v, ok := d.GetOkExists("display_name"); !tpgresource.IsEmptyValue(reflect.ValueOf(displayNameProp)) && (ok || !reflect.DeepEqual(v, displayNameProp)) {
 		obj["displayName"] = displayNameProp
 	}
-	labelsProp, err := expandDataplexDatascanLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	dataProp, err := expandDataplexDatascanData(d.Get("data"), d, config)
 	if err != nil {
 		return err
@@ -995,6 +640,12 @@ func resourceDataplexDatascanCreate(d *schema.ResourceData, meta interface{}) er
 	} else if v, ok := d.GetOkExists("data_profile_spec"); ok || !reflect.DeepEqual(v, dataProfileSpecProp) {
 		obj["dataProfileSpec"] = dataProfileSpecProp
 	}
+	labelsProp, err := expandDataplexDatascanEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{DataplexBasePath}}projects/{{project}}/locations/{{location}}/dataScans?dataScanId={{data_scan_id}}")
 	if err != nil {
@@ -1015,6 +666,7 @@ func resourceDataplexDatascanCreate(d *schema.ResourceData, meta interface{}) er
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -1023,6 +675,7 @@ func resourceDataplexDatascanCreate(d *schema.ResourceData, meta interface{}) er
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Datascan: %s", err)
@@ -1075,12 +728,14 @@ func resourceDataplexDatascanRead(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DataplexDatascan %q", d.Id()))
@@ -1132,10 +787,10 @@ func resourceDataplexDatascanRead(d *schema.ResourceData, meta interface{}) erro
 	if err := d.Set("data_profile_spec", flattenDataplexDatascanDataProfileSpec(res["dataProfileSpec"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Datascan: %s", err)
 	}
-	if err := d.Set("data_quality_result", flattenDataplexDatascanDataQualityResult(res["dataQualityResult"], d, config)); err != nil {
+	if err := d.Set("terraform_labels", flattenDataplexDatascanTerraformLabels(res["labels"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Datascan: %s", err)
 	}
-	if err := d.Set("data_profile_result", flattenDataplexDatascanDataProfileResult(res["dataProfileResult"], d, config)); err != nil {
+	if err := d.Set("effective_labels", flattenDataplexDatascanEffectiveLabels(res["labels"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Datascan: %s", err)
 	}
 
@@ -1170,12 +825,6 @@ func resourceDataplexDatascanUpdate(d *schema.ResourceData, meta interface{}) er
 	} else if v, ok := d.GetOkExists("display_name"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, displayNameProp)) {
 		obj["displayName"] = displayNameProp
 	}
-	labelsProp, err := expandDataplexDatascanLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	executionSpecProp, err := expandDataplexDatascanExecutionSpec(d.Get("execution_spec"), d, config)
 	if err != nil {
 		return err
@@ -1194,6 +843,12 @@ func resourceDataplexDatascanUpdate(d *schema.ResourceData, meta interface{}) er
 	} else if v, ok := d.GetOkExists("data_profile_spec"); ok || !reflect.DeepEqual(v, dataProfileSpecProp) {
 		obj["dataProfileSpec"] = dataProfileSpecProp
 	}
+	labelsProp, err := expandDataplexDatascanEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{DataplexBasePath}}projects/{{project}}/locations/{{location}}/dataScans/{{data_scan_id}}")
 	if err != nil {
@@ -1201,6 +856,7 @@ func resourceDataplexDatascanUpdate(d *schema.ResourceData, meta interface{}) er
 	}
 
 	log.Printf("[DEBUG] Updating Datascan %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("description") {
@@ -1209,10 +865,6 @@ func resourceDataplexDatascanUpdate(d *schema.ResourceData, meta interface{}) er
 
 	if d.HasChange("display_name") {
 		updateMask = append(updateMask, "displayName")
-	}
-
-	if d.HasChange("labels") {
-		updateMask = append(updateMask, "labels")
 	}
 
 	if d.HasChange("execution_spec") {
@@ -1226,6 +878,10 @@ func resourceDataplexDatascanUpdate(d *schema.ResourceData, meta interface{}) er
 	if d.HasChange("data_profile_spec") {
 		updateMask = append(updateMask, "dataProfileSpec")
 	}
+
+	if d.HasChange("effective_labels") {
+		updateMask = append(updateMask, "labels")
+	}
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
 	// won't set it
 	url, err = transport_tpg.AddQueryParams(url, map[string]string{"updateMask": strings.Join(updateMask, ",")})
@@ -1238,28 +894,32 @@ func resourceDataplexDatascanUpdate(d *schema.ResourceData, meta interface{}) er
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating Datascan %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating Datascan %q: %#v", d.Id(), res)
-	}
+		if err != nil {
+			return fmt.Errorf("Error updating Datascan %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating Datascan %q: %#v", d.Id(), res)
+		}
 
-	err = DataplexOperationWaitTime(
-		config, res, project, "Updating Datascan", userAgent,
-		d.Timeout(schema.TimeoutUpdate))
+		err = DataplexOperationWaitTime(
+			config, res, project, "Updating Datascan", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return resourceDataplexDatascanRead(d, meta)
@@ -1286,13 +946,15 @@ func resourceDataplexDatascanDelete(d *schema.ResourceData, meta interface{}) er
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Datascan %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Datascan %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -1301,6 +963,7 @@ func resourceDataplexDatascanDelete(d *schema.ResourceData, meta interface{}) er
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Datascan")
@@ -1321,10 +984,10 @@ func resourceDataplexDatascanDelete(d *schema.ResourceData, meta interface{}) er
 func resourceDataplexDatascanImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/dataScans/(?P<data_scan_id>[^/]+)",
-		"(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<data_scan_id>[^/]+)",
-		"(?P<location>[^/]+)/(?P<data_scan_id>[^/]+)",
-		"(?P<data_scan_id>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/dataScans/(?P<data_scan_id>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<data_scan_id>[^/]+)$",
+		"^(?P<location>[^/]+)/(?P<data_scan_id>[^/]+)$",
+		"^(?P<data_scan_id>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -1356,7 +1019,18 @@ func flattenDataplexDatascanDisplayName(v interface{}, d *schema.ResourceData, c
 }
 
 func flattenDataplexDatascanLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenDataplexDatascanState(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1493,6 +1167,8 @@ func flattenDataplexDatascanDataQualitySpec(v interface{}, d *schema.ResourceDat
 		flattenDataplexDatascanDataQualitySpecSamplingPercent(original["samplingPercent"], d, config)
 	transformed["row_filter"] =
 		flattenDataplexDatascanDataQualitySpecRowFilter(original["rowFilter"], d, config)
+	transformed["post_scan_actions"] =
+		flattenDataplexDatascanDataQualitySpecPostScanActions(original["postScanActions"], d, config)
 	transformed["rules"] =
 		flattenDataplexDatascanDataQualitySpecRules(original["rules"], d, config)
 	return []interface{}{transformed}
@@ -1502,6 +1178,36 @@ func flattenDataplexDatascanDataQualitySpecSamplingPercent(v interface{}, d *sch
 }
 
 func flattenDataplexDatascanDataQualitySpecRowFilter(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDataplexDatascanDataQualitySpecPostScanActions(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["bigquery_export"] =
+		flattenDataplexDatascanDataQualitySpecPostScanActionsBigqueryExport(original["bigqueryExport"], d, config)
+	return []interface{}{transformed}
+}
+func flattenDataplexDatascanDataQualitySpecPostScanActionsBigqueryExport(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["results_table"] =
+		flattenDataplexDatascanDataQualitySpecPostScanActionsBigqueryExportResultsTable(original["resultsTable"], d, config)
+	return []interface{}{transformed}
+}
+func flattenDataplexDatascanDataQualitySpecPostScanActionsBigqueryExportResultsTable(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1522,6 +1228,8 @@ func flattenDataplexDatascanDataQualitySpecRules(v interface{}, d *schema.Resour
 			"ignore_null":                 flattenDataplexDatascanDataQualitySpecRulesIgnoreNull(original["ignoreNull"], d, config),
 			"dimension":                   flattenDataplexDatascanDataQualitySpecRulesDimension(original["dimension"], d, config),
 			"threshold":                   flattenDataplexDatascanDataQualitySpecRulesThreshold(original["threshold"], d, config),
+			"name":                        flattenDataplexDatascanDataQualitySpecRulesName(original["name"], d, config),
+			"description":                 flattenDataplexDatascanDataQualitySpecRulesDescription(original["description"], d, config),
 			"range_expectation":           flattenDataplexDatascanDataQualitySpecRulesRangeExpectation(original["rangeExpectation"], d, config),
 			"non_null_expectation":        flattenDataplexDatascanDataQualitySpecRulesNonNullExpectation(original["nonNullExpectation"], d, config),
 			"set_expectation":             flattenDataplexDatascanDataQualitySpecRulesSetExpectation(original["setExpectation"], d, config),
@@ -1530,6 +1238,7 @@ func flattenDataplexDatascanDataQualitySpecRules(v interface{}, d *schema.Resour
 			"statistic_range_expectation": flattenDataplexDatascanDataQualitySpecRulesStatisticRangeExpectation(original["statisticRangeExpectation"], d, config),
 			"row_condition_expectation":   flattenDataplexDatascanDataQualitySpecRulesRowConditionExpectation(original["rowConditionExpectation"], d, config),
 			"table_condition_expectation": flattenDataplexDatascanDataQualitySpecRulesTableConditionExpectation(original["tableConditionExpectation"], d, config),
+			"sql_assertion":               flattenDataplexDatascanDataQualitySpecRulesSqlAssertion(original["sqlAssertion"], d, config),
 		})
 	}
 	return transformed
@@ -1547,6 +1256,14 @@ func flattenDataplexDatascanDataQualitySpecRulesDimension(v interface{}, d *sche
 }
 
 func flattenDataplexDatascanDataQualitySpecRulesThreshold(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDataplexDatascanDataQualitySpecRulesName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDataplexDatascanDataQualitySpecRulesDescription(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1710,6 +1427,23 @@ func flattenDataplexDatascanDataQualitySpecRulesTableConditionExpectationSqlExpr
 	return v
 }
 
+func flattenDataplexDatascanDataQualitySpecRulesSqlAssertion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["sql_statement"] =
+		flattenDataplexDatascanDataQualitySpecRulesSqlAssertionSqlStatement(original["sqlStatement"], d, config)
+	return []interface{}{transformed}
+}
+func flattenDataplexDatascanDataQualitySpecRulesSqlAssertionSqlStatement(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func flattenDataplexDatascanDataProfileSpec(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return nil
@@ -1720,6 +1454,12 @@ func flattenDataplexDatascanDataProfileSpec(v interface{}, d *schema.ResourceDat
 		flattenDataplexDatascanDataProfileSpecSamplingPercent(original["samplingPercent"], d, config)
 	transformed["row_filter"] =
 		flattenDataplexDatascanDataProfileSpecRowFilter(original["rowFilter"], d, config)
+	transformed["post_scan_actions"] =
+		flattenDataplexDatascanDataProfileSpecPostScanActions(original["postScanActions"], d, config)
+	transformed["include_fields"] =
+		flattenDataplexDatascanDataProfileSpecIncludeFields(original["includeFields"], d, config)
+	transformed["exclude_fields"] =
+		flattenDataplexDatascanDataProfileSpecExcludeFields(original["excludeFields"], d, config)
 	return []interface{}{transformed}
 }
 func flattenDataplexDatascanDataProfileSpecSamplingPercent(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1730,7 +1470,7 @@ func flattenDataplexDatascanDataProfileSpecRowFilter(v interface{}, d *schema.Re
 	return v
 }
 
-func flattenDataplexDatascanDataQualityResult(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+func flattenDataplexDatascanDataProfileSpecPostScanActions(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return nil
 	}
@@ -1739,737 +1479,77 @@ func flattenDataplexDatascanDataQualityResult(v interface{}, d *schema.ResourceD
 		return nil
 	}
 	transformed := make(map[string]interface{})
-	transformed["passed"] =
-		flattenDataplexDatascanDataQualityResultPassed(original["passed"], d, config)
-	transformed["dimensions"] =
-		flattenDataplexDatascanDataQualityResultDimensions(original["dimensions"], d, config)
-	transformed["rules"] =
-		flattenDataplexDatascanDataQualityResultRules(original["rules"], d, config)
-	transformed["row_count"] =
-		flattenDataplexDatascanDataQualityResultRowCount(original["rowCount"], d, config)
-	transformed["scanned_data"] =
-		flattenDataplexDatascanDataQualityResultScannedData(original["scannedData"], d, config)
+	transformed["bigquery_export"] =
+		flattenDataplexDatascanDataProfileSpecPostScanActionsBigqueryExport(original["bigqueryExport"], d, config)
 	return []interface{}{transformed}
 }
-func flattenDataplexDatascanDataQualityResultPassed(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+func flattenDataplexDatascanDataProfileSpecPostScanActionsBigqueryExport(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["results_table"] =
+		flattenDataplexDatascanDataProfileSpecPostScanActionsBigqueryExportResultsTable(original["resultsTable"], d, config)
+	return []interface{}{transformed}
+}
+func flattenDataplexDatascanDataProfileSpecPostScanActionsBigqueryExportResultsTable(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
-func flattenDataplexDatascanDataQualityResultDimensions(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+func flattenDataplexDatascanDataProfileSpecIncludeFields(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["field_names"] =
+		flattenDataplexDatascanDataProfileSpecIncludeFieldsFieldNames(original["fieldNames"], d, config)
+	return []interface{}{transformed}
+}
+func flattenDataplexDatascanDataProfileSpecIncludeFieldsFieldNames(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDataplexDatascanDataProfileSpecExcludeFields(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["field_names"] =
+		flattenDataplexDatascanDataProfileSpecExcludeFieldsFieldNames(original["fieldNames"], d, config)
+	return []interface{}{transformed}
+}
+func flattenDataplexDatascanDataProfileSpecExcludeFieldsFieldNames(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDataplexDatascanTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return v
 	}
-	l := v.([]interface{})
-	transformed := make([]interface{}, 0, len(l))
-	for _, raw := range l {
-		original := raw.(map[string]interface{})
-		if len(original) < 1 {
-			// Do not include empty json objects coming back from the api
-			continue
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
 		}
-		transformed = append(transformed, map[string]interface{}{
-			"passed": flattenDataplexDatascanDataQualityResultDimensionsPassed(original["passed"], d, config),
-		})
 	}
+
 	return transformed
 }
-func flattenDataplexDatascanDataQualityResultDimensionsPassed(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
 
-func flattenDataplexDatascanDataQualityResultRules(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return v
-	}
-	l := v.([]interface{})
-	transformed := make([]interface{}, 0, len(l))
-	for _, raw := range l {
-		original := raw.(map[string]interface{})
-		if len(original) < 1 {
-			// Do not include empty json objects coming back from the api
-			continue
-		}
-		transformed = append(transformed, map[string]interface{}{
-			"rule":               flattenDataplexDatascanDataQualityResultRulesRule(original["rule"], d, config),
-			"passed":             flattenDataplexDatascanDataQualityResultRulesPassed(original["passed"], d, config),
-			"evaluated_count":    flattenDataplexDatascanDataQualityResultRulesEvaluatedCount(original["evaluatedCount"], d, config),
-			"passed_count":       flattenDataplexDatascanDataQualityResultRulesPassedCount(original["passedCount"], d, config),
-			"null_count":         flattenDataplexDatascanDataQualityResultRulesNullCount(original["nullCount"], d, config),
-			"pass_ratio":         flattenDataplexDatascanDataQualityResultRulesPassRatio(original["passRatio"], d, config),
-			"failing_rows_query": flattenDataplexDatascanDataQualityResultRulesFailingRowsQuery(original["failingRowsQuery"], d, config),
-		})
-	}
-	return transformed
-}
-func flattenDataplexDatascanDataQualityResultRulesRule(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["column"] =
-		flattenDataplexDatascanDataQualityResultRulesRuleColumn(original["column"], d, config)
-	transformed["ignore_null"] =
-		flattenDataplexDatascanDataQualityResultRulesRuleIgnoreNull(original["ignoreNull"], d, config)
-	transformed["dimension"] =
-		flattenDataplexDatascanDataQualityResultRulesRuleDimension(original["dimension"], d, config)
-	transformed["threshold"] =
-		flattenDataplexDatascanDataQualityResultRulesRuleThreshold(original["threshold"], d, config)
-	transformed["range_expectation"] =
-		flattenDataplexDatascanDataQualityResultRulesRuleRangeExpectation(original["rangeExpectation"], d, config)
-	transformed["non_null_expectation"] =
-		flattenDataplexDatascanDataQualityResultRulesRuleNonNullExpectation(original["nonNullExpectation"], d, config)
-	transformed["set_expectation"] =
-		flattenDataplexDatascanDataQualityResultRulesRuleSetExpectation(original["setExpectation"], d, config)
-	transformed["regex_expectation"] =
-		flattenDataplexDatascanDataQualityResultRulesRuleRegexExpectation(original["regexExpectation"], d, config)
-	transformed["uniqueness_expectation"] =
-		flattenDataplexDatascanDataQualityResultRulesRuleUniquenessExpectation(original["uniquenessExpectation"], d, config)
-	transformed["statistic_range_expectation"] =
-		flattenDataplexDatascanDataQualityResultRulesRuleStatisticRangeExpectation(original["statisticRangeExpectation"], d, config)
-	transformed["row_condition_expectation"] =
-		flattenDataplexDatascanDataQualityResultRulesRuleRowConditionExpectation(original["rowConditionExpectation"], d, config)
-	transformed["table_condition_expectation"] =
-		flattenDataplexDatascanDataQualityResultRulesRuleTableConditionExpectation(original["tableConditionExpectation"], d, config)
-	return []interface{}{transformed}
-}
-func flattenDataplexDatascanDataQualityResultRulesRuleColumn(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataQualityResultRulesRuleIgnoreNull(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataQualityResultRulesRuleDimension(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataQualityResultRulesRuleThreshold(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	// Handles the string fixed64 format
-	if strVal, ok := v.(string); ok {
-		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
-			return intVal
-		}
-	}
-
-	// number values are represented as float64
-	if floatVal, ok := v.(float64); ok {
-		intVal := int(floatVal)
-		return intVal
-	}
-
-	return v // let terraform core handle it otherwise
-}
-
-func flattenDataplexDatascanDataQualityResultRulesRuleRangeExpectation(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["min_value"] =
-		flattenDataplexDatascanDataQualityResultRulesRuleRangeExpectationMinValue(original["minValue"], d, config)
-	transformed["max_value"] =
-		flattenDataplexDatascanDataQualityResultRulesRuleRangeExpectationMaxValue(original["maxValue"], d, config)
-	transformed["strict_min_enabled"] =
-		flattenDataplexDatascanDataQualityResultRulesRuleRangeExpectationStrictMinEnabled(original["strictMinEnabled"], d, config)
-	transformed["strict_max_enabled"] =
-		flattenDataplexDatascanDataQualityResultRulesRuleRangeExpectationStrictMaxEnabled(original["strictMaxEnabled"], d, config)
-	return []interface{}{transformed}
-}
-func flattenDataplexDatascanDataQualityResultRulesRuleRangeExpectationMinValue(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataQualityResultRulesRuleRangeExpectationMaxValue(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataQualityResultRulesRuleRangeExpectationStrictMinEnabled(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataQualityResultRulesRuleRangeExpectationStrictMaxEnabled(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataQualityResultRulesRuleNonNullExpectation(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	return []interface{}{transformed}
-}
-
-func flattenDataplexDatascanDataQualityResultRulesRuleSetExpectation(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["values"] =
-		flattenDataplexDatascanDataQualityResultRulesRuleSetExpectationValues(original["values"], d, config)
-	return []interface{}{transformed}
-}
-func flattenDataplexDatascanDataQualityResultRulesRuleSetExpectationValues(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataQualityResultRulesRuleRegexExpectation(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["regex"] =
-		flattenDataplexDatascanDataQualityResultRulesRuleRegexExpectationRegex(original["regex"], d, config)
-	return []interface{}{transformed}
-}
-func flattenDataplexDatascanDataQualityResultRulesRuleRegexExpectationRegex(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataQualityResultRulesRuleUniquenessExpectation(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	return []interface{}{transformed}
-}
-
-func flattenDataplexDatascanDataQualityResultRulesRuleStatisticRangeExpectation(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["statistic"] =
-		flattenDataplexDatascanDataQualityResultRulesRuleStatisticRangeExpectationStatistic(original["statistic"], d, config)
-	transformed["min_value"] =
-		flattenDataplexDatascanDataQualityResultRulesRuleStatisticRangeExpectationMinValue(original["minValue"], d, config)
-	transformed["max_value"] =
-		flattenDataplexDatascanDataQualityResultRulesRuleStatisticRangeExpectationMaxValue(original["maxValue"], d, config)
-	transformed["strict_min_enabled"] =
-		flattenDataplexDatascanDataQualityResultRulesRuleStatisticRangeExpectationStrictMinEnabled(original["strictMinEnabled"], d, config)
-	transformed["strict_max_enabled"] =
-		flattenDataplexDatascanDataQualityResultRulesRuleStatisticRangeExpectationStrictMaxEnabled(original["strictMaxEnabled"], d, config)
-	return []interface{}{transformed}
-}
-func flattenDataplexDatascanDataQualityResultRulesRuleStatisticRangeExpectationStatistic(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataQualityResultRulesRuleStatisticRangeExpectationMinValue(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataQualityResultRulesRuleStatisticRangeExpectationMaxValue(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataQualityResultRulesRuleStatisticRangeExpectationStrictMinEnabled(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataQualityResultRulesRuleStatisticRangeExpectationStrictMaxEnabled(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataQualityResultRulesRuleRowConditionExpectation(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["sql_expression"] =
-		flattenDataplexDatascanDataQualityResultRulesRuleRowConditionExpectationSqlExpression(original["sqlExpression"], d, config)
-	return []interface{}{transformed}
-}
-func flattenDataplexDatascanDataQualityResultRulesRuleRowConditionExpectationSqlExpression(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataQualityResultRulesRuleTableConditionExpectation(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["sql_expression"] =
-		flattenDataplexDatascanDataQualityResultRulesRuleTableConditionExpectationSqlExpression(original["sqlExpression"], d, config)
-	return []interface{}{transformed}
-}
-func flattenDataplexDatascanDataQualityResultRulesRuleTableConditionExpectationSqlExpression(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataQualityResultRulesPassed(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataQualityResultRulesEvaluatedCount(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataQualityResultRulesPassedCount(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataQualityResultRulesNullCount(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataQualityResultRulesPassRatio(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	// Handles the string fixed64 format
-	if strVal, ok := v.(string); ok {
-		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
-			return intVal
-		}
-	}
-
-	// number values are represented as float64
-	if floatVal, ok := v.(float64); ok {
-		intVal := int(floatVal)
-		return intVal
-	}
-
-	return v // let terraform core handle it otherwise
-}
-
-func flattenDataplexDatascanDataQualityResultRulesFailingRowsQuery(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataQualityResultRowCount(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataQualityResultScannedData(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["incremental_field"] =
-		flattenDataplexDatascanDataQualityResultScannedDataIncrementalField(original["incrementalField"], d, config)
-	return []interface{}{transformed}
-}
-func flattenDataplexDatascanDataQualityResultScannedDataIncrementalField(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["field"] =
-		flattenDataplexDatascanDataQualityResultScannedDataIncrementalFieldField(original["field"], d, config)
-	transformed["start"] =
-		flattenDataplexDatascanDataQualityResultScannedDataIncrementalFieldStart(original["start"], d, config)
-	transformed["end"] =
-		flattenDataplexDatascanDataQualityResultScannedDataIncrementalFieldEnd(original["end"], d, config)
-	return []interface{}{transformed}
-}
-func flattenDataplexDatascanDataQualityResultScannedDataIncrementalFieldField(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataQualityResultScannedDataIncrementalFieldStart(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataQualityResultScannedDataIncrementalFieldEnd(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataProfileResult(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["row_count"] =
-		flattenDataplexDatascanDataProfileResultRowCount(original["rowCount"], d, config)
-	transformed["profile"] =
-		flattenDataplexDatascanDataProfileResultProfile(original["profile"], d, config)
-	transformed["scanned_data"] =
-		flattenDataplexDatascanDataProfileResultScannedData(original["scannedData"], d, config)
-	return []interface{}{transformed}
-}
-func flattenDataplexDatascanDataProfileResultRowCount(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataProfileResultProfile(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["fields"] =
-		flattenDataplexDatascanDataProfileResultProfileFields(original["fields"], d, config)
-	return []interface{}{transformed}
-}
-func flattenDataplexDatascanDataProfileResultProfileFields(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return v
-	}
-	l := v.([]interface{})
-	transformed := make([]interface{}, 0, len(l))
-	for _, raw := range l {
-		original := raw.(map[string]interface{})
-		if len(original) < 1 {
-			// Do not include empty json objects coming back from the api
-			continue
-		}
-		transformed = append(transformed, map[string]interface{}{
-			"name":    flattenDataplexDatascanDataProfileResultProfileFieldsName(original["name"], d, config),
-			"type":    flattenDataplexDatascanDataProfileResultProfileFieldsType(original["type"], d, config),
-			"mode":    flattenDataplexDatascanDataProfileResultProfileFieldsMode(original["mode"], d, config),
-			"profile": flattenDataplexDatascanDataProfileResultProfileFieldsProfile(original["profile"], d, config),
-		})
-	}
-	return transformed
-}
-func flattenDataplexDatascanDataProfileResultProfileFieldsName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataProfileResultProfileFieldsType(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataProfileResultProfileFieldsMode(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataProfileResultProfileFieldsProfile(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["null_ratio"] =
-		flattenDataplexDatascanDataProfileResultProfileFieldsProfileNullRatio(original["nullRatio"], d, config)
-	transformed["distinct_ratio"] =
-		flattenDataplexDatascanDataProfileResultProfileFieldsProfileDistinctRatio(original["distinctRatio"], d, config)
-	transformed["top_n_values"] =
-		flattenDataplexDatascanDataProfileResultProfileFieldsProfileTopNValues(original["topNValues"], d, config)
-	transformed["string_profile"] =
-		flattenDataplexDatascanDataProfileResultProfileFieldsProfileStringProfile(original["stringProfile"], d, config)
-	transformed["integer_profile"] =
-		flattenDataplexDatascanDataProfileResultProfileFieldsProfileIntegerProfile(original["integerProfile"], d, config)
-	transformed["double_profile"] =
-		flattenDataplexDatascanDataProfileResultProfileFieldsProfileDoubleProfile(original["doubleProfile"], d, config)
-	return []interface{}{transformed}
-}
-func flattenDataplexDatascanDataProfileResultProfileFieldsProfileNullRatio(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	// Handles the string fixed64 format
-	if strVal, ok := v.(string); ok {
-		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
-			return intVal
-		}
-	}
-
-	// number values are represented as float64
-	if floatVal, ok := v.(float64); ok {
-		intVal := int(floatVal)
-		return intVal
-	}
-
-	return v // let terraform core handle it otherwise
-}
-
-func flattenDataplexDatascanDataProfileResultProfileFieldsProfileDistinctRatio(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	// Handles the string fixed64 format
-	if strVal, ok := v.(string); ok {
-		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
-			return intVal
-		}
-	}
-
-	// number values are represented as float64
-	if floatVal, ok := v.(float64); ok {
-		intVal := int(floatVal)
-		return intVal
-	}
-
-	return v // let terraform core handle it otherwise
-}
-
-func flattenDataplexDatascanDataProfileResultProfileFieldsProfileTopNValues(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["value"] =
-		flattenDataplexDatascanDataProfileResultProfileFieldsProfileTopNValuesValue(original["value"], d, config)
-	transformed["count"] =
-		flattenDataplexDatascanDataProfileResultProfileFieldsProfileTopNValuesCount(original["count"], d, config)
-	return []interface{}{transformed}
-}
-func flattenDataplexDatascanDataProfileResultProfileFieldsProfileTopNValuesValue(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataProfileResultProfileFieldsProfileTopNValuesCount(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataProfileResultProfileFieldsProfileStringProfile(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["min_length"] =
-		flattenDataplexDatascanDataProfileResultProfileFieldsProfileStringProfileMinLength(original["minLength"], d, config)
-	transformed["max_length"] =
-		flattenDataplexDatascanDataProfileResultProfileFieldsProfileStringProfileMaxLength(original["maxLength"], d, config)
-	transformed["average_length"] =
-		flattenDataplexDatascanDataProfileResultProfileFieldsProfileStringProfileAverageLength(original["averageLength"], d, config)
-	return []interface{}{transformed}
-}
-func flattenDataplexDatascanDataProfileResultProfileFieldsProfileStringProfileMinLength(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataProfileResultProfileFieldsProfileStringProfileMaxLength(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataProfileResultProfileFieldsProfileStringProfileAverageLength(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	// Handles the string fixed64 format
-	if strVal, ok := v.(string); ok {
-		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
-			return intVal
-		}
-	}
-
-	// number values are represented as float64
-	if floatVal, ok := v.(float64); ok {
-		intVal := int(floatVal)
-		return intVal
-	}
-
-	return v // let terraform core handle it otherwise
-}
-
-func flattenDataplexDatascanDataProfileResultProfileFieldsProfileIntegerProfile(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["average"] =
-		flattenDataplexDatascanDataProfileResultProfileFieldsProfileIntegerProfileAverage(original["average"], d, config)
-	transformed["standard_deviation"] =
-		flattenDataplexDatascanDataProfileResultProfileFieldsProfileIntegerProfileStandardDeviation(original["standardDeviation"], d, config)
-	transformed["min"] =
-		flattenDataplexDatascanDataProfileResultProfileFieldsProfileIntegerProfileMin(original["min"], d, config)
-	transformed["quartiles"] =
-		flattenDataplexDatascanDataProfileResultProfileFieldsProfileIntegerProfileQuartiles(original["quartiles"], d, config)
-	transformed["max"] =
-		flattenDataplexDatascanDataProfileResultProfileFieldsProfileIntegerProfileMax(original["max"], d, config)
-	return []interface{}{transformed}
-}
-func flattenDataplexDatascanDataProfileResultProfileFieldsProfileIntegerProfileAverage(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	// Handles the string fixed64 format
-	if strVal, ok := v.(string); ok {
-		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
-			return intVal
-		}
-	}
-
-	// number values are represented as float64
-	if floatVal, ok := v.(float64); ok {
-		intVal := int(floatVal)
-		return intVal
-	}
-
-	return v // let terraform core handle it otherwise
-}
-
-func flattenDataplexDatascanDataProfileResultProfileFieldsProfileIntegerProfileStandardDeviation(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	// Handles the string fixed64 format
-	if strVal, ok := v.(string); ok {
-		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
-			return intVal
-		}
-	}
-
-	// number values are represented as float64
-	if floatVal, ok := v.(float64); ok {
-		intVal := int(floatVal)
-		return intVal
-	}
-
-	return v // let terraform core handle it otherwise
-}
-
-func flattenDataplexDatascanDataProfileResultProfileFieldsProfileIntegerProfileMin(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataProfileResultProfileFieldsProfileIntegerProfileQuartiles(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataProfileResultProfileFieldsProfileIntegerProfileMax(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataProfileResultProfileFieldsProfileDoubleProfile(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["average"] =
-		flattenDataplexDatascanDataProfileResultProfileFieldsProfileDoubleProfileAverage(original["average"], d, config)
-	transformed["standard_deviation"] =
-		flattenDataplexDatascanDataProfileResultProfileFieldsProfileDoubleProfileStandardDeviation(original["standardDeviation"], d, config)
-	transformed["min"] =
-		flattenDataplexDatascanDataProfileResultProfileFieldsProfileDoubleProfileMin(original["min"], d, config)
-	transformed["quartiles"] =
-		flattenDataplexDatascanDataProfileResultProfileFieldsProfileDoubleProfileQuartiles(original["quartiles"], d, config)
-	transformed["max"] =
-		flattenDataplexDatascanDataProfileResultProfileFieldsProfileDoubleProfileMax(original["max"], d, config)
-	return []interface{}{transformed}
-}
-func flattenDataplexDatascanDataProfileResultProfileFieldsProfileDoubleProfileAverage(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	// Handles the string fixed64 format
-	if strVal, ok := v.(string); ok {
-		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
-			return intVal
-		}
-	}
-
-	// number values are represented as float64
-	if floatVal, ok := v.(float64); ok {
-		intVal := int(floatVal)
-		return intVal
-	}
-
-	return v // let terraform core handle it otherwise
-}
-
-func flattenDataplexDatascanDataProfileResultProfileFieldsProfileDoubleProfileStandardDeviation(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	// Handles the string fixed64 format
-	if strVal, ok := v.(string); ok {
-		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
-			return intVal
-		}
-	}
-
-	// number values are represented as float64
-	if floatVal, ok := v.(float64); ok {
-		intVal := int(floatVal)
-		return intVal
-	}
-
-	return v // let terraform core handle it otherwise
-}
-
-func flattenDataplexDatascanDataProfileResultProfileFieldsProfileDoubleProfileMin(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataProfileResultProfileFieldsProfileDoubleProfileQuartiles(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataProfileResultProfileFieldsProfileDoubleProfileMax(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataProfileResultScannedData(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["incremental_field"] =
-		flattenDataplexDatascanDataProfileResultScannedDataIncrementalField(original["incrementalField"], d, config)
-	return []interface{}{transformed}
-}
-func flattenDataplexDatascanDataProfileResultScannedDataIncrementalField(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["field"] =
-		flattenDataplexDatascanDataProfileResultScannedDataIncrementalFieldField(original["field"], d, config)
-	transformed["start"] =
-		flattenDataplexDatascanDataProfileResultScannedDataIncrementalFieldStart(original["start"], d, config)
-	transformed["end"] =
-		flattenDataplexDatascanDataProfileResultScannedDataIncrementalFieldEnd(original["end"], d, config)
-	return []interface{}{transformed}
-}
-func flattenDataplexDatascanDataProfileResultScannedDataIncrementalFieldField(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataProfileResultScannedDataIncrementalFieldStart(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataplexDatascanDataProfileResultScannedDataIncrementalFieldEnd(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+func flattenDataplexDatascanEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -2479,17 +1559,6 @@ func expandDataplexDatascanDescription(v interface{}, d tpgresource.TerraformRes
 
 func expandDataplexDatascanDisplayName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
-}
-
-func expandDataplexDatascanLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
-	if v == nil {
-		return map[string]string{}, nil
-	}
-	m := make(map[string]string)
-	for k, val := range v.(map[string]interface{}) {
-		m[k] = val.(string)
-	}
-	return m, nil
 }
 
 func expandDataplexDatascanData(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
@@ -2643,6 +1712,13 @@ func expandDataplexDatascanDataQualitySpec(v interface{}, d tpgresource.Terrafor
 		transformed["rowFilter"] = transformedRowFilter
 	}
 
+	transformedPostScanActions, err := expandDataplexDatascanDataQualitySpecPostScanActions(original["post_scan_actions"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPostScanActions); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["postScanActions"] = transformedPostScanActions
+	}
+
 	transformedRules, err := expandDataplexDatascanDataQualitySpecRules(original["rules"], d, config)
 	if err != nil {
 		return nil, err
@@ -2658,6 +1734,48 @@ func expandDataplexDatascanDataQualitySpecSamplingPercent(v interface{}, d tpgre
 }
 
 func expandDataplexDatascanDataQualitySpecRowFilter(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDataplexDatascanDataQualitySpecPostScanActions(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedBigqueryExport, err := expandDataplexDatascanDataQualitySpecPostScanActionsBigqueryExport(original["bigquery_export"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedBigqueryExport); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["bigqueryExport"] = transformedBigqueryExport
+	}
+
+	return transformed, nil
+}
+
+func expandDataplexDatascanDataQualitySpecPostScanActionsBigqueryExport(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedResultsTable, err := expandDataplexDatascanDataQualitySpecPostScanActionsBigqueryExportResultsTable(original["results_table"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedResultsTable); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["resultsTable"] = transformedResultsTable
+	}
+
+	return transformed, nil
+}
+
+func expandDataplexDatascanDataQualitySpecPostScanActionsBigqueryExportResultsTable(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -2697,6 +1815,20 @@ func expandDataplexDatascanDataQualitySpecRules(v interface{}, d tpgresource.Ter
 			return nil, err
 		} else if val := reflect.ValueOf(transformedThreshold); val.IsValid() && !tpgresource.IsEmptyValue(val) {
 			transformed["threshold"] = transformedThreshold
+		}
+
+		transformedName, err := expandDataplexDatascanDataQualitySpecRulesName(original["name"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedName); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["name"] = transformedName
+		}
+
+		transformedDescription, err := expandDataplexDatascanDataQualitySpecRulesDescription(original["description"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedDescription); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["description"] = transformedDescription
 		}
 
 		transformedRangeExpectation, err := expandDataplexDatascanDataQualitySpecRulesRangeExpectation(original["range_expectation"], d, config)
@@ -2755,6 +1887,13 @@ func expandDataplexDatascanDataQualitySpecRules(v interface{}, d tpgresource.Ter
 			transformed["tableConditionExpectation"] = transformedTableConditionExpectation
 		}
 
+		transformedSqlAssertion, err := expandDataplexDatascanDataQualitySpecRulesSqlAssertion(original["sql_assertion"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedSqlAssertion); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["sqlAssertion"] = transformedSqlAssertion
+		}
+
 		req = append(req, transformed)
 	}
 	return req, nil
@@ -2773,6 +1912,14 @@ func expandDataplexDatascanDataQualitySpecRulesDimension(v interface{}, d tpgres
 }
 
 func expandDataplexDatascanDataQualitySpecRulesThreshold(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDataplexDatascanDataQualitySpecRulesName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDataplexDatascanDataQualitySpecRulesDescription(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -3021,6 +2168,29 @@ func expandDataplexDatascanDataQualitySpecRulesTableConditionExpectationSqlExpre
 	return v, nil
 }
 
+func expandDataplexDatascanDataQualitySpecRulesSqlAssertion(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedSqlStatement, err := expandDataplexDatascanDataQualitySpecRulesSqlAssertionSqlStatement(original["sql_statement"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSqlStatement); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["sqlStatement"] = transformedSqlStatement
+	}
+
+	return transformed, nil
+}
+
+func expandDataplexDatascanDataQualitySpecRulesSqlAssertionSqlStatement(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandDataplexDatascanDataProfileSpec(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	l := v.([]interface{})
 	if len(l) == 0 {
@@ -3049,6 +2219,27 @@ func expandDataplexDatascanDataProfileSpec(v interface{}, d tpgresource.Terrafor
 		transformed["rowFilter"] = transformedRowFilter
 	}
 
+	transformedPostScanActions, err := expandDataplexDatascanDataProfileSpecPostScanActions(original["post_scan_actions"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPostScanActions); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["postScanActions"] = transformedPostScanActions
+	}
+
+	transformedIncludeFields, err := expandDataplexDatascanDataProfileSpecIncludeFields(original["include_fields"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedIncludeFields); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["includeFields"] = transformedIncludeFields
+	}
+
+	transformedExcludeFields, err := expandDataplexDatascanDataProfileSpecExcludeFields(original["exclude_fields"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedExcludeFields); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["excludeFields"] = transformedExcludeFields
+	}
+
 	return transformed, nil
 }
 
@@ -3058,4 +2249,103 @@ func expandDataplexDatascanDataProfileSpecSamplingPercent(v interface{}, d tpgre
 
 func expandDataplexDatascanDataProfileSpecRowFilter(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
+}
+
+func expandDataplexDatascanDataProfileSpecPostScanActions(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedBigqueryExport, err := expandDataplexDatascanDataProfileSpecPostScanActionsBigqueryExport(original["bigquery_export"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedBigqueryExport); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["bigqueryExport"] = transformedBigqueryExport
+	}
+
+	return transformed, nil
+}
+
+func expandDataplexDatascanDataProfileSpecPostScanActionsBigqueryExport(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedResultsTable, err := expandDataplexDatascanDataProfileSpecPostScanActionsBigqueryExportResultsTable(original["results_table"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedResultsTable); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["resultsTable"] = transformedResultsTable
+	}
+
+	return transformed, nil
+}
+
+func expandDataplexDatascanDataProfileSpecPostScanActionsBigqueryExportResultsTable(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDataplexDatascanDataProfileSpecIncludeFields(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedFieldNames, err := expandDataplexDatascanDataProfileSpecIncludeFieldsFieldNames(original["field_names"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedFieldNames); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["fieldNames"] = transformedFieldNames
+	}
+
+	return transformed, nil
+}
+
+func expandDataplexDatascanDataProfileSpecIncludeFieldsFieldNames(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDataplexDatascanDataProfileSpecExcludeFields(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedFieldNames, err := expandDataplexDatascanDataProfileSpecExcludeFieldsFieldNames(original["field_names"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedFieldNames); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["fieldNames"] = transformedFieldNames
+	}
+
+	return transformed, nil
+}
+
+func expandDataplexDatascanDataProfileSpecExcludeFieldsFieldNames(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDataplexDatascanEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
 }
