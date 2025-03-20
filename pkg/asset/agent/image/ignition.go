@@ -464,13 +464,28 @@ func getRendezvousHostEnv(serviceProtocol, nodeZeroIP, agentAuthtoken, userAuthT
 	// and ensure successful authentication.
 	// In the absence of PULL_SECRET_TOKEN, the cluster installation will wait forever.
 
-	return fmt.Sprintf(`NODE_ZERO_IP=%s
+	rendezvousHostEnv := fmt.Sprintf(`NODE_ZERO_IP=%s
 SERVICE_BASE_URL=%s
 IMAGE_SERVICE_BASE_URL=%s
 PULL_SECRET_TOKEN=%s
 USER_AUTH_TOKEN=%s
 WORKFLOW_TYPE=%s
 `, nodeZeroIP, serviceBaseURL.String(), imageServiceBaseURL.String(), agentAuthtoken, userAuthToken, workflowType)
+
+	if workflowType == workflow.AgentWorkflowTypeInstallInteractiveDisconnected {
+		uiBaseURL := url.URL{
+			Scheme: serviceProtocol,
+			Host:   net.JoinHostPort(nodeZeroIP, "3001"),
+			Path:   "/",
+		}
+		uiEnv := fmt.Sprintf(`
+AIUI_APP_API_URL=%s
+AIUI_URL=%s
+`, serviceBaseURL.String(), uiBaseURL.String())
+		rendezvousHostEnv = fmt.Sprintf("%s%s", rendezvousHostEnv, uiEnv)
+	}
+
+	return rendezvousHostEnv
 }
 
 func getAddNodesEnv(clusterInfo joiner.ClusterInfo, authTokenExpiry string) string {
