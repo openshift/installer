@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+        "strings"
 
 	"github.com/coreos/stream-metadata-go/arch"
 	"github.com/sirupsen/logrus"
