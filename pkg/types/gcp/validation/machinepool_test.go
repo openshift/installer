@@ -100,6 +100,30 @@ func TestValidateMachinePool(t *testing.T) {
 			},
 			expected: `test-path.OnHostMaintenance: Invalid value: "Migrate": OnHostMaintenace must be set to Terminate when ConfidentialCompute is Enabled`,
 		},
+		{
+			name: "AMDEncryptedVirtualization confidential compute with incorrect on host maintenance",
+			pool: &gcp.MachinePool{
+				ConfidentialCompute: string(gcp.ConfidentialComputePolicySEV),
+				OnHostMaintenance:   string(gcp.OnHostMaintenanceMigrate),
+			},
+			expected: `test-path.OnHostMaintenance: Invalid value: "Migrate": OnHostMaintenace must be set to Terminate when ConfidentialCompute is AMDEncryptedVirtualization`,
+		},
+		{
+			name: "AMDEncryptedVirtualizationNestedPaging confidential compute with incorrect on host maintenance",
+			pool: &gcp.MachinePool{
+				ConfidentialCompute: string(gcp.ConfidentialComputePolicySEVSNP),
+				OnHostMaintenance:   string(gcp.OnHostMaintenanceMigrate),
+			},
+			expected: `test-path.OnHostMaintenance: Invalid value: "Migrate": OnHostMaintenace must be set to Terminate when ConfidentialCompute is AMDEncryptedVirtualizationNestedPaging`,
+		},
+		{
+			name: "IntelTrustedDomainExtensions confidential compute with incorrect on host maintenance",
+			pool: &gcp.MachinePool{
+				ConfidentialCompute: string(gcp.ConfidentialComputePolicyTDX),
+				OnHostMaintenance:   string(gcp.OnHostMaintenanceMigrate),
+			},
+			expected: `test-path.OnHostMaintenance: Invalid value: "Migrate": OnHostMaintenace must be set to Terminate when ConfidentialCompute is IntelTrustedDomainExtensions`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
