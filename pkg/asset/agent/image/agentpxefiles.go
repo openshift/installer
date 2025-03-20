@@ -268,7 +268,7 @@ func (a *AgentPXEFiles) handleAdditionals390xArtifacts(bootArtifactsFullPath str
 	}
 
 	// Replace file names with dynamically generated names
-	updatedContent := strings.ReplaceAll(string(data), "kernel.img", fmt.Sprintf("%s.%s-kernel.img", a.filePrefix, a.cpuArch))
+	updatedContent := strings.ReplaceAll(string(data), "kernel.img", fmt.Sprintf("%s.%s-vmlinuz", a.filePrefix, a.cpuArch))
 	updatedContent = strings.ReplaceAll(updatedContent, "initrd.img", fmt.Sprintf("%s.%s-initrd.img", a.filePrefix, a.cpuArch))
 	updatedContent = strings.ReplaceAll(updatedContent, "initrd.addrsize", fmt.Sprintf("%s.%s-initrd.addrsize", a.filePrefix, a.cpuArch))
 
