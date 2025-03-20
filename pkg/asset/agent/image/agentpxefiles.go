@@ -266,3 +266,13 @@ func (a *AgentPXEFiles) handleAdditionals390xArtifacts(bootArtifactsFullPath str
 
 	return nil
 }
+
+func (a *AgentPXEFiles) handleAdditionals390xArtifacts(bootArtifactsFullPath string) error {
+	// initrd is already copied and file pointer is at EOF so move it to start again.
+	_, err := a.imageReader.Seek(0, io.SeekStart)
+	if err != nil {
+		return err
+	}
+
+	return a.handleAdditionalArtifactsForDay2(bootArtifactsFullPath)
+}
