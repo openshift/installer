@@ -268,7 +268,9 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 				logrus.Infof("Instance type %s does not support Accelerated Networking. Using Basic Networking instead.", mpool.InstanceType)
 			}
 		}
+
 		pool.Platform.Azure = &mpool
+		installConfig.Config.ControlPlane.Platform.Azure = &mpool
 		subnet := ic.Azure.ControlPlaneSubnet
 
 		hyperVGen, err := icazure.GetHyperVGenerationVersion(capabilities, "")

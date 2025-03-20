@@ -39,6 +39,7 @@ type CreateStorageAccountInput struct {
 	ResourceGroupName  string
 	StorageAccountName string
 	Region             string
+	Zones              []string
 	AuthType           azic.AuthenticationType
 	Tags               map[string]*string
 	CustomerManagedKey *aztypes.CustomerManagedKey
@@ -74,6 +75,15 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 		allowSharedKeyAccess = false
 	}
 
+	sku := armstorage.SKU{
+		Name: to.Ptr(armstorage.SKUNamePremiumLRS),
+	}
+	// If multiple zones, use ZRS for replication:
+	// https://learn.microsoft.com/en-us/azure/virtual-machines/azure-compute-gallery#best-practices
+	if len(in.Zones) > 1 {
+		sku.Name = to.Ptr(armstorage.SKUNamePremiumZRS)
+	}
+
 	storageClientFactory, err := armstorage.NewClientFactory(
 		in.SubscriptionID,
 		in.TokenCredential,
@@ -88,9 +98,6 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 		return nil, fmt.Errorf("failed to get storage account factory %w", err)
 	}
 
-	sku := armstorage.SKU{
-		Name: to.Ptr(armstorage.SKUNameStandardLRS),
-	}
 	accountCreateParameters := armstorage.AccountCreateParameters{
 		Identity: nil,
 		Kind:     to.Ptr(armstorage.KindStorageV2),
@@ -112,10 +119,9 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 		// When encryption is enabled, Ignition is is stored as a page blob
 		// (and not a block blob). To support this case, `Kind` can continue to be
 		// `StorageV2` and yhe `SKU` needs to be `Premium_LRS`.
-		//https://learn.microsoft.com/en-us/azure/storage/common/storage-account-create?tabs=azure-portal
-		sku = armstorage.SKU{
-			Name: to.Ptr(armstorage.SKUNamePremiumLRS),
-		}
+		// https://learn.microsoft.com/en-us/azure/storage/common/storage-account-create?tabs=azure-portal
+		sku.Name = to.Ptr(armstorage.SKUNamePremiumLRS)
+
 		identity := armstorage.Identity{
 			Type: to.Ptr(armstorage.IdentityTypeUserAssigned),
 			UserAssignedIdentities: map[string]*armstorage.UserAssignedIdentity{
@@ -304,6 +310,17 @@ func CreatePageBlob(ctx context.Context, in *CreatePageBlobInput) (string, error
 		return "", fmt.Errorf("failed to get Page Blob SAS URL: %w", err)
 	}
 	return sasURL, nil
+}
+
+func padImage(imageData []byte, align int64) ([]byte, int64) {
+	imageLength := int64(len(imageData))
+	if imageLength%align != 0 {
+		imageLength = (((imageLength / align) + 1) * align)
+	}
+	padding := imageLength - int64(len(imageData))
+	paddingString := strings.Repeat(" ", int(padding)) + string(imageData[len(imageData)-1])
+	imageData = append(imageData[0:len(imageData)-1], paddingString...)
+	return imageData, imageLength
 }
 
 func doUploadPages(ctx context.Context, pageBlobClient *pageblob.Client, imageData []byte, imageLength int64) error {

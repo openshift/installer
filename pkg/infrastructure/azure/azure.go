@@ -49,6 +49,7 @@ type Provider struct {
 	ResourceGroupName     string
 	StorageAccountName    string
 	StorageURL            string
+	Zones                 []string
 	StorageAccount        *armstorage.Account
 	StorageClientFactory  *armstorage.ClientFactory
 	StorageAccountKeys    []armstorage.AccountKey
@@ -100,6 +101,11 @@ func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionI
 	cloudConfiguration := session.CloudConfig
 	tokenCredential := session.TokenCreds
 	resourceGroupName := platform.ClusterResourceGroupName(in.InfraID)
+
+	p.Zones, err = getMachinePoolZones(in)
+	if err != nil {
+		return fmt.Errorf("failed to get machine pool zones: %w", err)
+	}
 
 	userTags := platform.UserTags
 	tags := make(map[string]*string, len(userTags)+1)
@@ -291,7 +297,6 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	if err != nil {
 		return fmt.Errorf("failed to get session: %w", err)
 	}
-
 	installConfig := in.InstallConfig.Config
 	platform := installConfig.Platform.Azure
 	subscriptionID := session.Credentials.SubscriptionID
@@ -364,6 +369,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		CustomerManagedKey: platform.CustomerManagedKey,
 		TokenCredential:    tokenCredential,
 		CloudConfiguration: cloudConfiguration,
+		Zones:              p.Zones,
 	})
 	if err != nil {
 		return err
@@ -856,8 +862,7 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	logrus.Debugf("BlobIgnitionContainer.ID=%s", *blobIgnitionContainer.ID)
 
 	sasURL := ""
-
-	if in.InstallConfig.Config.Azure.CustomerManagedKey == nil {
+	if in.InstallConfig.Config.Azure.CustomerManagedKey == nil && len(p.Zones) <= 1 {
 		logrus.Debugf("Creating a Block Blob for ignition shim")
 		sasURL, err = CreateBlockBlob(ctx, &CreateBlockBlobInput{
 			StorageURL:         p.StorageURL,
@@ -871,7 +876,7 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 			return nil, fmt.Errorf("failed to create BlockBlob for ignition shim: %w", err)
 		}
 	} else {
-		logrus.Debugf("Creating a Page Blob for ignition shim because Customer Managed Key is provided")
+		logrus.Debugf("Creating a Page Blob for ignition shim")
 		lengthBootstrapFile := int64(len(bootstrapIgnData))
 		if lengthBootstrapFile%512 != 0 {
 			lengthBootstrapFile = (((lengthBootstrapFile / 512) + 1) * 512)
@@ -891,6 +896,7 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 			return nil, fmt.Errorf("failed to create PageBlob for ignition shim: %w", err)
 		}
 	}
+
 	ignShim, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(sasURL, in.InstallConfig.Config.AdditionalTrustBundle, in.InstallConfig.Config.Proxy)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ignition shim: %w", err)
@@ -936,4 +942,17 @@ func getMachinePoolSecurityType(in clusterapi.InfraReadyInput) (string, error) {
 		return confidentialVMST, nil
 	}
 	return "", nil
+}
+
+func getMachinePoolZones(in clusterapi.PreProvisionInput) ([]string, error) {
+	var mpool *aztypes.MachinePool
+	if in.InstallConfig.Config.ControlPlane != nil && in.InstallConfig.Config.ControlPlane.Platform.Azure != nil {
+		mpool = in.InstallConfig.Config.ControlPlane.Platform.Azure
+	} else if in.InstallConfig.Config.Platform.Azure.DefaultMachinePlatform != nil {
+		mpool = in.InstallConfig.Config.Platform.Azure.DefaultMachinePlatform
+	}
+	if mpool == nil {
+		return []string{}, fmt.Errorf("failed to get machine pool")
+	}
+	return mpool.Zones, nil
 }
