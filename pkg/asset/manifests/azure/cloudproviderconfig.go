@@ -20,7 +20,6 @@ type CloudProviderConfig struct {
 	VirtualNetworkName       string
 	SubnetName               string
 	ResourceManagerEndpoint  string
-	ARO                      bool
 }
 
 // JSON generates the cloud provider json config for the azure platform.
@@ -62,10 +61,6 @@ func (params CloudProviderConfig) JSON() (string, error) {
 		// https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-tcp-reset
 		LoadBalancerSku:             "standard",
 		ExcludeMasterFromStandardLB: &excludeMasterFromStandardLB,
-	}
-
-	if params.ARO {
-		config.authConfig.UseManagedIdentityExtension = false
 	}
 
 	if params.CloudName == azure.StackCloud {
