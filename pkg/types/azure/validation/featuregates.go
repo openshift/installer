@@ -2,6 +2,7 @@ package validation
 
 import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	features "github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/types"
@@ -16,12 +17,12 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 	return []featuregates.GatedInstallConfigFeature{
 		{
 			FeatureGateName: features.FeatureGateMachineAPIMigration,
-			Condition:       cp.Azure != nil && cp.Azure.Identity != nil && cp.Azure.Identity.SystemAssignedIdentityRole != nil,
+			Condition:       cp.Azure != nil && cp.Azure.Identity != nil && cp.Azure.Identity.Type == capz.VMIdentitySystemAssigned,
 			Field:           field.NewPath("controlPlane", "azure", "identity", "systemAssignedIdentityRole"),
 		},
 		{
 			FeatureGateName: features.FeatureGateMachineAPIMigration,
-			Condition:       defMp != nil && defMp.Identity != nil && defMp.Identity.SystemAssignedIdentityRole != nil,
+			Condition:       defMp != nil && defMp.Identity != nil && defMp.Identity.Type == capz.VMIdentitySystemAssigned,
 			Field:           field.NewPath("platform", "azure", "defaultMachinePlatform", "identity", "systemAssignedIdentityRole"),
 		},
 		{

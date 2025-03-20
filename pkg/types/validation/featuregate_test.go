@@ -137,9 +137,9 @@ func TestFeatureGates(t *testing.T) {
 				c := validInstallConfig()
 				c.AWS = nil // validInstallConfig defaults to AWS
 				c.Azure = &azure.Platform{}
-				// c.Compute[0].Platform.Azure = &azure.MachinePool{}
 				c.ControlPlane.Platform.Azure = &azure.MachinePool{
 					Identity: &azure.VMIdentity{
+						Type:                       capz.VMIdentitySystemAssigned,
 						SystemAssignedIdentityRole: &capz.SystemAssignedIdentityRole{},
 					},
 				}
@@ -155,31 +155,14 @@ func TestFeatureGates(t *testing.T) {
 				c.Azure = &azure.Platform{
 					DefaultMachinePlatform: &azure.MachinePool{
 						Identity: &azure.VMIdentity{
+							Type:                       capz.VMIdentitySystemAssigned,
 							SystemAssignedIdentityRole: &capz.SystemAssignedIdentityRole{},
 						},
 					},
 				}
-				// c.Compute[0].Platform.Azure = &azure.MachinePool{}
-				// c.ControlPlane.Platform.Azure = &azure.MachinePool{}
 				return c
 			}(),
 			expected: `^platform.azure.defaultMachinePlatform.identity.systemAssignedIdentityRole: Forbidden: this field is protected by the MachineAPIMigration feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set`,
-		},
-		{
-			name: "Azure system-assigned identities (control plane) requires MachineAPIMigration feature gate",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.AWS = nil // validInstallConfig defaults to AWS
-				c.Azure = &azure.Platform{}
-				// c.Compute[0].Platform.Azure = &azure.MachinePool{}
-				c.ControlPlane.Platform.Azure = &azure.MachinePool{
-					Identity: &azure.VMIdentity{
-						SystemAssignedIdentityRole: &capz.SystemAssignedIdentityRole{},
-					},
-				}
-				return c
-			}(),
-			expected: `^controlPlane.azure.identity.systemAssignedIdentityRole: Forbidden: this field is protected by the MachineAPIMigration feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set`,
 		},
 		{
 			name: "Azure user-assigned identities (control plane) > 1 requires MachineAPIMigration feature gate",
@@ -189,6 +172,7 @@ func TestFeatureGates(t *testing.T) {
 				c.Azure = &azure.Platform{}
 				c.ControlPlane.Platform.Azure = &azure.MachinePool{
 					Identity: &azure.VMIdentity{
+						Type: capz.VMIdentityUserAssigned,
 						UserAssignedIdentities: []azure.UserAssignedIdentity{
 							{
 								Name:          "first-identity",
@@ -215,6 +199,7 @@ func TestFeatureGates(t *testing.T) {
 				c.Azure = &azure.Platform{}
 				c.Azure.DefaultMachinePlatform = &azure.MachinePool{
 					Identity: &azure.VMIdentity{
+						Type: capz.VMIdentityUserAssigned,
 						UserAssignedIdentities: []azure.UserAssignedIdentity{
 							{
 								Name:          "first-identity",
@@ -241,6 +226,7 @@ func TestFeatureGates(t *testing.T) {
 				c.Azure = &azure.Platform{}
 				c.ControlPlane.Platform.Azure = &azure.MachinePool{
 					Identity: &azure.VMIdentity{
+						Type: capz.VMIdentityUserAssigned,
 						UserAssignedIdentities: []azure.UserAssignedIdentity{
 							{
 								Name:          "solo-bolo!",
