@@ -268,8 +268,6 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 		config.Spec.PlatformSpec.VSphere = &configv1.VSpherePlatformSpec{}
 		if len(installConfig.Config.VSphere.APIVIPs) > 0 {
 			config.Status.PlatformStatus.VSphere = &configv1.VSpherePlatformStatus{
-				APIServerInternalIP:  installConfig.Config.VSphere.APIVIPs[0],
-				IngressIP:            installConfig.Config.VSphere.IngressVIPs[0],
 				APIServerInternalIPs: installConfig.Config.VSphere.APIVIPs,
 				IngressIPs:           installConfig.Config.VSphere.IngressVIPs,
 				LoadBalancer:         installConfig.Config.VSphere.LoadBalancer,
@@ -279,11 +277,12 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 		}
 
 		config.Spec.PlatformSpec.VSphere = vsphereinfra.GetInfraPlatformSpec(installConfig, clusterID.InfraID)
-		if _, exists := cloudproviderconfig.ConfigMap.Data["vsphere.conf"]; exists {
-			cloudProviderConfigMapKey = "vsphere.conf"
+		if cloudproviderconfig.ConfigMap != nil {
+			if _, exists := cloudproviderconfig.ConfigMap.Data["vsphere.conf"]; exists {
+				cloudProviderConfigMapKey = "vsphere.conf"
+			}
 		}
-
-		config.Status.PlatformStatus.VSphere.MachineNetworks = types.MachineNetworksToCIDRs(installConfig.Config.MachineNetwork)
+		config.Status.PlatformStatus.VSphere.MachineNetworks = config.Spec.PlatformSpec.VSphere.MachineNetworks
 	case ovirt.Name:
 		config.Spec.PlatformSpec.Type = configv1.OvirtPlatformType
 		config.Status.PlatformStatus.Ovirt = &configv1.OvirtPlatformStatus{

@@ -171,6 +171,9 @@ func (i *ImageBasedInstallationConfig) validate() field.ErrorList {
 	if err := i.validateInstallationDisk(); err != nil {
 		allErrs = append(allErrs, err...)
 	}
+	if err := i.validateExtraPartitionStart(); err != nil {
+		allErrs = append(allErrs, err...)
+	}
 	if err := i.validateAdditionalTrustBundle(); err != nil {
 		allErrs = append(allErrs, err...)
 	}
@@ -417,4 +420,32 @@ func validateURI(uri string, fldPath *field.Path, schemes []string) field.ErrorL
 		}
 	}
 	return field.ErrorList{field.NotSupported(fldPath, parsed.Scheme, schemes)}
+}
+
+func (i *ImageBasedInstallationConfig) validateExtraPartitionStart() field.ErrorList {
+	var allErrs field.ErrorList
+	extraPartitionStartPath := field.NewPath("ExtraPartitionStart")
+
+	start := i.Config.ExtraPartitionStart
+	if start == "" {
+		allErrs = append(allErrs, field.Required(extraPartitionStartPath, "partition start sector cannot be empty"))
+		return allErrs
+	}
+
+	if start == "0" {
+		return allErrs
+	}
+
+	// Matches patterns like: 10K, +10K, -20M, 1G, +1G, -2T, 3P, +3P.
+	//
+	// First group is optional: + or -.
+	// Second group is numeric value.
+	// Third group is K,M,G,T,P suffix.
+	validFormat := regexp.MustCompile(`^([+-])?(\d+)([KMGTP])$`)
+
+	if !validFormat.MatchString(start) {
+		allErrs = append(allErrs, field.Invalid(extraPartitionStartPath, start, "partition start must be '0' or match pattern [+-]?<number>[KMGTP]"))
+	}
+
+	return allErrs
 }

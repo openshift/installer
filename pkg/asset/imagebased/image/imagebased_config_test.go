@@ -345,6 +345,118 @@ coreosInstallerArgs:
 			expectedFound: true,
 			expectedError: "",
 		},
+		{
+			name: "valid-extraPartitionStart-zero",
+			data: `
+apiVersion: v1beta1
+metadata:
+  name: image-based-installation-config
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+seedVersion: 4.16.0
+seedImage: quay.io/openshift-kni/seed-image:4.16.0
+installationDisk: /dev/vda
+extraPartitionStart: "0"
+`,
+
+			expectedFound: true,
+			expectedError: "",
+		},
+		{
+			name: "valid-extraPartitionStart-empty-prefix",
+			data: `
+apiVersion: v1beta1
+metadata:
+  name: image-based-installation-config
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+seedVersion: 4.16.0
+seedImage: quay.io/openshift-kni/seed-image:4.16.0
+installationDisk: /dev/vda
+extraPartitionStart: "10M"
+`,
+
+			expectedFound: true,
+			expectedError: "",
+		},
+		{
+			name: "valid-extraPartitionStart-with-prefix",
+			data: `
+apiVersion: v1beta1
+metadata:
+  name: image-based-installation-config
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+seedVersion: 4.16.0
+seedImage: quay.io/openshift-kni/seed-image:4.16.0
+installationDisk: /dev/vda
+extraPartitionStart: "+10M"
+`,
+
+			expectedFound: true,
+			expectedError: "",
+		},
+		{
+			name: "invalid-extraPartitionStart-empty-suffix",
+			data: `
+apiVersion: v1beta1
+metadata:
+  name: image-based-installation-config
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+seedVersion: 4.16.0
+seedImage: quay.io/openshift-kni/seed-image:4.16.0
+installationDisk: /dev/vda
+extraPartitionStart: "-10"
+`,
+
+			expectedFound: false,
+			expectedError: "invalid Image-based Installation ISO Config: ExtraPartitionStart: Invalid value: \"-10\": partition start must be '0' or match pattern [+-]?<number>[KMGTP]",
+		},
+		{
+			name: "invalid-extraPartitionStart-invalid-suffix",
+			data: `
+apiVersion: v1beta1
+metadata:
+  name: image-based-installation-config
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+seedVersion: 4.16.0
+seedImage: quay.io/openshift-kni/seed-image:4.16.0
+installationDisk: /dev/vda
+extraPartitionStart: "-10L"
+`,
+
+			expectedFound: false,
+			expectedError: "invalid Image-based Installation ISO Config: ExtraPartitionStart: Invalid value: \"-10L\": partition start must be '0' or match pattern [+-]?<number>[KMGTP]",
+		},
+		{
+			name: "invalid-extraPartitionStart-random-string",
+			data: `
+apiVersion: v1beta1
+metadata:
+  name: image-based-installation-config
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+seedVersion: 4.16.0
+seedImage: quay.io/openshift-kni/seed-image:4.16.0
+installationDisk: /dev/vda
+extraPartitionStart: "invalid"
+`,
+
+			expectedFound: false,
+			expectedError: "invalid Image-based Installation ISO Config: ExtraPartitionStart: Invalid value: \"invalid\": partition start must be '0' or match pattern [+-]?<number>[KMGTP]",
+		},
+		{
+			name: "invalid-extraPartitionStart-empty-string",
+			data: `
+apiVersion: v1beta1
+metadata:
+  name: image-based-installation-config
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+seedVersion: 4.16.0
+seedImage: quay.io/openshift-kni/seed-image:4.16.0
+installationDisk: /dev/vda
+extraPartitionStart: ""
+`,
+
+			expectedFound: false,
+			expectedError: "invalid Image-based Installation ISO Config: ExtraPartitionStart: Required value: partition start sector cannot be empty",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -167,6 +167,8 @@ func (a *PlatformProvisionCheck) Generate(ctx context.Context, dependencies asse
 			return err
 		}
 
+		powervsconfig.ValidateClusterOSImageNotSet(client, ic.Config)
+
 		err = powervsconfig.ValidateTransitGateway(client, ic.Config)
 		if err != nil {
 			return err

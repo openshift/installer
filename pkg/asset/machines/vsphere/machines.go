@@ -19,6 +19,7 @@ import (
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
+	"github.com/openshift/installer/pkg/utils"
 )
 
 // MachineData contains all result output from the Machines() function.
@@ -32,7 +33,7 @@ type MachineData struct {
 }
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) (*MachineData, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string) (*MachineData, error) {
 	data := &MachineData{}
 	if configPlatform := config.Platform.Name(); configPlatform != vsphere.Name {
 		return data, fmt.Errorf("non vsphere configuration: %q", configPlatform)
@@ -107,7 +108,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 
 		osImageForZone := failureDomain.Topology.Template
 		if failureDomain.Topology.Template == "" {
-			osImageForZone = fmt.Sprintf("%s-%s-%s", osImage, failureDomain.Region, failureDomain.Zone)
+			osImageForZone = utils.GenerateVSphereTemplateName(clusterID, failureDomain.Name)
 		}
 
 		vcenter, err := getVCenterFromServerName(failureDomain.Server, platform)

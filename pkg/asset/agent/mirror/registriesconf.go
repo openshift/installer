@@ -163,6 +163,10 @@ func (i *RegistriesConf) Generate(_ context.Context, dependencies asset.Parents)
 		deprecatedImageContentSources = clusterInfo.DeprecatedImageContentSources
 		image = clusterInfo.ReleaseImage
 
+	case workflow.AgentWorkflowTypeInstallInteractiveDisconnected:
+		// Not required
+		return nil
+
 	default:
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
 	}

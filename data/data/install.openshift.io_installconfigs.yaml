@@ -5065,7 +5065,9 @@ spec:
                           description: |-
                             url is fully qualified URI with scheme https, that overrides the default generated
                             endpoint for a client.
-                            This must be provided and cannot be empty.
+                            This must be provided and cannot be empty. The path must follow the pattern
+                            /v[0,9]+ or /api/v[0,9]+
+                          maxLength: 300
                           type: string
                           x-kubernetes-validations:
                           - message: url must be a valid absolute URL
@@ -6715,9 +6717,8 @@ spec:
                       Deprecated: Use VCenters.Server
                     type: string
                   vcenters:
-                    description: |-
-                      VCenters holds the connection details for services to communicate with vCenter.
-                      Currently only a single vCenter is supported.
+                    description: VCenters holds the connection details for services
+                      to communicate with vCenter.
                     items:
                       description: |-
                         VCenter stores the vCenter connection fields

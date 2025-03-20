@@ -85,7 +85,6 @@ func (a *AgentPXEFiles) Generate(_ context.Context, dependencies asset.Parents) 
 func (a *AgentPXEFiles) PersistToFile(directory string) error {
 	defer os.RemoveAll(a.tmpPath)
 
-	var kernelFileType string
 	// If the imageReader is not set then it means that either one of the AgentPXEFiles
 	// dependencies or the asset itself failed for some reason
 	if a.imageReader == nil {
@@ -111,21 +110,15 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 		return err
 	}
 
-	switch a.cpuArch {
-	case arch.RpmArch(types.ArchitectureS390X):
-
-		kernelFileType = "kernel.img"
-
+	if a.cpuArch == arch.RpmArch(types.ArchitectureS390X) {
 		err = a.handleAdditionals390xArtifacts(bootArtifactsFullPath)
 		if err != nil {
 			return err
 		}
-	default:
-		kernelFileType = "vmlinuz"
 	}
 
-	agentVmlinuzFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("%s.%s-%s", a.filePrefix, a.cpuArch, kernelFileType))
-	kernelReader, err := os.Open(filepath.Join(a.tmpPath, "images", "pxeboot", kernelFileType))
+	agentVmlinuzFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("%s.%s-%s", a.filePrefix, a.cpuArch, "vmlinuz"))
+	kernelReader, err := os.Open(filepath.Join(a.tmpPath, "images", "pxeboot", "vmlinuz"))
 	if err != nil {
 		return err
 	}
