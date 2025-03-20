@@ -80,6 +80,7 @@ type MachinePool struct {
 	Architecture Architecture `json:"architecture,omitempty"`
 
 	// Fencing stores the information about a baremetal host's management controller.
+	// Fencing may only be set for control plane nodes.
 	// +optional
 	Fencing *Fencing `json:"fencing,omitempty"`
 }

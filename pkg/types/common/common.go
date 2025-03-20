@@ -6,6 +6,7 @@ import (
 	"reflect"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
@@ -37,7 +38,7 @@ func ValidateUniqueAndRequiredFields[T any](elements []T, fldPath *field.Path, f
 
 		return !valueFound
 	}); err != nil {
-		fmt.Printf("unexpected error registering validation: %v\n", err)
+		logrus.Error("Unexpected error registering validation", err)
 	}
 
 	// Apply validations and translate errors.

@@ -474,7 +474,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: ControlPlane.Replicas: Invalid value: 2: ControlPlane.Replicas can only be set to 5, 4, 3, or 1. Found 2",
+			expectedError: "invalid install-config configuration: [controlPlane.fencing.credentials: Forbidden: there should be exactly two fencing credentials to support the two node cluster, instead 0 credentials were found, ControlPlane.Replicas: Invalid value: 2: ControlPlane.Replicas can only be set to 5, 4, 3, or 1. Found 2]",
 		},
 		{
 			name: "invalid platform for SNO cluster",

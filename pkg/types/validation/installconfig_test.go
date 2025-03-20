@@ -5,6 +5,7 @@ import (
 	"net"
 	"testing"
 
+	"github.com/aws/smithy-go/ptr"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -2800,10 +2801,11 @@ func TestValidateReleaseArchitecture(t *testing.T) {
 
 func TestValidateTNF(t *testing.T) {
 	cases := []struct {
-		name        string
-		config      *types.InstallConfig
-		machinePool *types.MachinePool
-		expected    string
+		name         string
+		config       *types.InstallConfig
+		machinePool  *types.MachinePool
+		checkCompute bool
+		expected     string
 	}{
 		{
 			config:   installConfig().CpReplicas(3).build(),
@@ -2812,7 +2814,7 @@ func TestValidateTNF(t *testing.T) {
 		},
 		{
 			config: installConfig().
-				MachinePool(machinePool().
+				MachinePoolCP(machinePool().
 					Credential(c1(), c2())).
 				CpReplicas(2).
 				build(),
@@ -2821,7 +2823,7 @@ func TestValidateTNF(t *testing.T) {
 		},
 		{
 			config: installConfig().
-				MachinePool(machinePool().
+				MachinePoolCP(machinePool().
 					Credential(c1(), c2(), c3())).
 				CpReplicas(2).build(),
 			name:     "invalid_number_of_credentials_for_dual_replica",
@@ -2829,7 +2831,7 @@ func TestValidateTNF(t *testing.T) {
 		},
 		{
 			config: installConfig().
-				MachinePool(machinePool().
+				MachinePoolCP(machinePool().
 					Credential(c1(), c2())).
 				CpReplicas(3).build(),
 			name:     "invalid_number_of_credentials_for_non_dual_replica",
@@ -2837,7 +2839,7 @@ func TestValidateTNF(t *testing.T) {
 		},
 		{
 			config: installConfig().
-				MachinePool(machinePool().
+				MachinePoolCP(machinePool().
 					Credential(
 						c1().BMCAddress("ipmi://192.168.111.1"),
 						c2().BMCAddress("ipmi://192.168.111.1"))).
@@ -2847,7 +2849,7 @@ func TestValidateTNF(t *testing.T) {
 		},
 		{
 			config: installConfig().
-				MachinePool(machinePool().
+				MachinePoolCP(machinePool().
 					Credential(c1().BMCAddress(""), c2())).
 				CpReplicas(2).build(),
 			name:     "bmc_address_required",
@@ -2855,7 +2857,7 @@ func TestValidateTNF(t *testing.T) {
 		},
 		{
 			config: installConfig().
-				MachinePool(machinePool().
+				MachinePoolCP(machinePool().
 					Credential(c1(), c2().BMCUsername(""))).
 				CpReplicas(2).build(),
 			name:     "bmc_username_required",
@@ -2863,7 +2865,7 @@ func TestValidateTNF(t *testing.T) {
 		},
 		{
 			config: installConfig().
-				MachinePool(machinePool().
+				MachinePoolCP(machinePool().
 					Credential(c1().BMCPassword(""), c2())).
 				CpReplicas(2).build(),
 			name:     "bmc_password_required",
@@ -2871,21 +2873,38 @@ func TestValidateTNF(t *testing.T) {
 		},
 		{
 			config: installConfig().
-				MachinePool(machinePool().
+				MachinePoolCP(machinePool().
 					Credential(c1().HostName(""), c2())).
 				CpReplicas(2).build(),
 			name:     "host_name_required",
 			expected: "controlPlane.fencing.credentials\\[0\\].HostName: Required value: missing HostName",
 		},
+		{
+			config: installConfig().
+				MachinePoolCP(machinePool().
+					Architecture(types.ArchitectureAMD64).
+					Credential(c1(), c2())).
+				MachinePoolCompute(
+					machinePool().Name("worker").
+						Hyperthreading(types.HyperthreadingDisabled).
+						Architecture(types.ArchitectureAMD64).
+						Replicas(ptr.Int64(3)).
+						Credential(c1())).
+				CpReplicas(2).build(),
+			name:         "host_name_required",
+			checkCompute: true,
+			expected:     `compute\[\d+\]\.fencing: Invalid value: types\.Fencing\{Credentials:\[\]\*types\.Credential\{\(\*types\.Credential\)\(\S+\)\}\}: fencing is only valid for control plane`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Build default wrapping installConfig
-			if tc.config == nil {
-				tc.config = installConfig().build()
+			var err error
+			if tc.checkCompute {
+				err = validateCompute(&tc.config.Platform, tc.config.ControlPlane, tc.config.Compute, field.NewPath("compute"), false).ToAggregate()
+			} else {
+				err = validateFencingCredentials(tc.config).ToAggregate()
 			}
-
-			err := validateFencingCredentials(tc.config).ToAggregate()
 
 			if tc.expected == "" {
 				assert.NoError(t, err)
@@ -2970,6 +2989,26 @@ func machinePool() *machinePoolBuilder {
 		types.MachinePool{}}
 }
 
+func (pb *machinePoolBuilder) Name(name string) *machinePoolBuilder {
+	pb.MachinePool.Name = name
+	return pb
+}
+
+func (pb *machinePoolBuilder) Replicas(replicas *int64) *machinePoolBuilder {
+	pb.MachinePool.Replicas = replicas
+	return pb
+}
+
+func (pb *machinePoolBuilder) Architecture(architecture types.Architecture) *machinePoolBuilder {
+	pb.MachinePool.Architecture = architecture
+	return pb
+}
+
+func (pb *machinePoolBuilder) Hyperthreading(hyperthreading types.HyperthreadingMode) *machinePoolBuilder {
+	pb.MachinePool.Hyperthreading = hyperthreading
+	return pb
+}
+
 func (pb *machinePoolBuilder) Credential(builders ...*credentialBuilder) *machinePoolBuilder {
 	pb.MachinePool.Fencing = &types.Fencing{}
 	for _, builder := range builders {
@@ -2996,8 +3035,15 @@ func (icb *installConfigBuilder) CpReplicas(numOfCpReplicas int64) *installConfi
 	return icb
 }
 
-func (icb *installConfigBuilder) MachinePool(cpBuilder *machinePoolBuilder) *installConfigBuilder {
-	icb.InstallConfig.ControlPlane = cpBuilder.build()
+func (icb *installConfigBuilder) MachinePoolCP(builder *machinePoolBuilder) *installConfigBuilder {
+	icb.InstallConfig.ControlPlane = builder.build()
+	return icb
+}
+
+func (icb *installConfigBuilder) MachinePoolCompute(builders ...*machinePoolBuilder) *installConfigBuilder {
+	for _, builder := range builders {
+		icb.InstallConfig.Compute = append(icb.InstallConfig.Compute, *builder.build())
+	}
 	return icb
 }
 
