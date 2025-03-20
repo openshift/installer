@@ -153,11 +153,8 @@ func (om *offsetManager) fetchInitialOffset(topic string, partition int32, retri
 		return om.fetchInitialOffset(topic, partition, retries-1)
 	}
 
-	req := new(OffsetFetchRequest)
-	req.Version = 1
-	req.ConsumerGroup = om.group
-	req.AddPartition(topic, partition)
-
+	partitions := map[string][]int32{topic: {partition}}
+	req := NewOffsetFetchRequest(om.conf.Version, om.group, partitions)
 	resp, err := broker.FetchOffset(req)
 	if err != nil {
 		if retries <= 0 {
@@ -254,18 +251,23 @@ func (om *offsetManager) Commit() {
 }
 
 func (om *offsetManager) flushToBroker() {
-	req := om.constructRequest()
-	if req == nil {
-		return
-	}
-
 	broker, err := om.coordinator()
 	if err != nil {
 		om.handleError(err)
 		return
 	}
 
-	resp, err := broker.CommitOffset(req)
+	// Care needs to be taken to unlock this. Don't want to defer the unlock as this would
+	// cause the lock to be held while waiting for the broker to reply.
+	broker.lock.Lock()
+	req := om.constructRequest()
+	if req == nil {
+		broker.lock.Unlock()
+		return
+	}
+	resp, rp, err := sendOffsetCommit(broker, req)
+	broker.lock.Unlock()
+
 	if err != nil {
 		om.handleError(err)
 		om.releaseCoordinator(broker)
@@ -273,7 +275,26 @@ func (om *offsetManager) flushToBroker() {
 		return
 	}
 
+	err = handleResponsePromise(req, resp, rp, nil)
+	if err != nil {
+		om.handleError(err)
+		om.releaseCoordinator(broker)
+		_ = broker.Close()
+		return
+	}
+
+	broker.handleThrottledResponse(resp)
 	om.handleResponse(broker, req, resp)
+}
+
+func sendOffsetCommit(coordinator *Broker, req *OffsetCommitRequest) (*OffsetCommitResponse, *responsePromise, error) {
+	resp := new(OffsetCommitResponse)
+	responseHeaderVersion := resp.headerVersion()
+	promise, err := coordinator.send(req, true, responseHeaderVersion)
+	if err != nil {
+		return nil, nil, err
+	}
+	return resp, promise, nil
 }
 
 func (om *offsetManager) constructRequest() *OffsetCommitRequest {
@@ -318,9 +339,13 @@ func (om *offsetManager) constructRequest() *OffsetCommitRequest {
 
 	// request controlled retention was only supported from V2-V4 (it became
 	// broker-only after that) so if the user has set the config options then
-	// flow those through as retention time on the commit request
-	if r.Version >= 2 && r.Version < 5 && om.conf.Consumer.Offsets.Retention > 0 {
-		r.RetentionTime = int64(om.conf.Consumer.Offsets.Retention / time.Millisecond)
+	// flow those through as retention time on the commit request.
+	if r.Version >= 2 && r.Version < 5 {
+		// Map Sarama's default of 0 to Kafka's default of -1
+		r.RetentionTime = -1
+		if om.conf.Consumer.Offsets.Retention > 0 {
+			r.RetentionTime = int64(om.conf.Consumer.Offsets.Retention / time.Millisecond)
+		}
 	}
 
 	om.pomsLock.RLock()

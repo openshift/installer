@@ -130,8 +130,8 @@ func dataSourceIbmSccInstanceSettingsRead(context context.Context, d *schema.Res
 
 func dataSourceIbmSccInstanceSettingsEventNotificationsToMap(model *securityandcompliancecenterapiv3.EventNotifications) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	if model.InstanceCrn != nil {
-		modelMap["instance_crn"] = model.InstanceCrn
+	if model.InstanceCRN != nil {
+		modelMap["instance_crn"] = model.InstanceCRN
 	}
 	if model.UpdatedOn != nil {
 		modelMap["updated_on"] = model.UpdatedOn.String()
@@ -144,8 +144,8 @@ func dataSourceIbmSccInstanceSettingsEventNotificationsToMap(model *securityandc
 
 func dataSourceIbmSccInstanceSettingsObjectStorageToMap(model *securityandcompliancecenterapiv3.ObjectStorage) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	if model.InstanceCrn != nil {
-		modelMap["instance_crn"] = model.InstanceCrn
+	if model.InstanceCRN != nil {
+		modelMap["instance_crn"] = model.InstanceCRN
 	}
 	if model.Bucket != nil {
 		modelMap["bucket"] = model.Bucket

@@ -226,13 +226,13 @@ func resourceIBMPrivateDNSGLBMonitorCreate(d *schema.ResourceData, meta interfac
 		return err
 	}
 	instanceID := d.Get(pdnsInstanceID).(string)
-	createMonitorOptions := sess.NewCreateMonitorOptions(instanceID)
-
 	monitorname := d.Get(pdnsGlbMonitorName).(string)
+
+	createMonitorOptions := sess.NewCreateMonitorOptions(instanceID, monitorname, "")
+
 	monitorinterval := int64(d.Get(pdnsGlbMonitorInterval).(int))
 	monitorretries := int64(d.Get(pdnsGlbMonitorRetries).(int))
 	monitortimeout := int64(d.Get(pdnsGlbMonitorTimeout).(int))
-	createMonitorOptions.SetName(monitorname)
 	createMonitorOptions.SetInterval(monitorinterval)
 	createMonitorOptions.SetRetries(monitorretries)
 	createMonitorOptions.SetTimeout(monitortimeout)

@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -65,6 +66,11 @@ func ResourceIBMEnWebhookSubscription() *schema.Resource {
 							Default:     false,
 							Description: "Signing webhook attributes.",
 						},
+						"template_id_notification": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The templete id for notification",
+						},
 					},
 				},
 			},
@@ -100,7 +106,9 @@ func ResourceIBMEnWebhookSubscription() *schema.Resource {
 func resourceIBMEnWebhookSubscriptionCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_subscription_webhook", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.CreateSubscriptionOptions{}
@@ -118,9 +126,11 @@ func resourceIBMEnWebhookSubscriptionCreate(context context.Context, d *schema.R
 	attributes, _ := webhookattributesMapToAttributes(d.Get("attributes.0").(map[string]interface{}))
 	options.SetAttributes(&attributes)
 
-	result, response, err := enClient.CreateSubscriptionWithContext(context, options)
+	result, _, err := enClient.CreateSubscriptionWithContext(context, options)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("CreateSubscriptionWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateSubscriptionWithContext failed: %s", err.Error()), "ibm_en_subscription_webhook", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *options.InstanceID, *result.ID))
@@ -131,14 +141,17 @@ func resourceIBMEnWebhookSubscriptionCreate(context context.Context, d *schema.R
 func resourceIBMEnWebhookSubscriptionRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_subscription_webhook", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.GetSubscriptionOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_subscription_webhook", "read")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
@@ -150,7 +163,9 @@ func resourceIBMEnWebhookSubscriptionRead(context context.Context, d *schema.Res
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("GetSubscriptionWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetSubscriptionWithContext failed: %s", err.Error()), "ibm_en_subscription_webhook", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("instance_guid", options.InstanceID); err != nil {
@@ -211,14 +226,17 @@ func resourceIBMEnWebhookSubscriptionRead(context context.Context, d *schema.Res
 func resourceIBMEnWebhookSubscriptionUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_subscription_webhook", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.UpdateSubscriptionOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_subscription_webhook", "update")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
@@ -234,9 +252,11 @@ func resourceIBMEnWebhookSubscriptionUpdate(context context.Context, d *schema.R
 		_, attributes := webhookattributesMapToAttributes(d.Get("attributes.0").(map[string]interface{}))
 		options.SetAttributes(&attributes)
 
-		_, response, err := enClient.UpdateSubscriptionWithContext(context, options)
+		_, _, err := enClient.UpdateSubscriptionWithContext(context, options)
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("UpdateSubscriptionWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateSubscriptionWithContext failed: %s", err.Error()), "ibm_en_subscription_webhook", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 
 		return resourceIBMEnWebhookSubscriptionRead(context, d, meta)
@@ -248,14 +268,17 @@ func resourceIBMEnWebhookSubscriptionUpdate(context context.Context, d *schema.R
 func resourceIBMEnWebhookSubscriptionDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_subscription_webhook", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.DeleteSubscriptionOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_subscription_webhook", "delete")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
@@ -267,7 +290,9 @@ func resourceIBMEnWebhookSubscriptionDelete(context context.Context, d *schema.R
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("DeleteSubscriptionWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteSubscriptionWithContext: failed: %s", err.Error()), "ibm_en_subscription_webhook", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")
@@ -282,6 +307,11 @@ func webhookattributesMapToAttributes(attributeMap map[string]interface{}) (en.S
 	if attributeMap["signing_enabled"] != nil {
 		attributesCreate.SigningEnabled = core.BoolPtr(attributeMap["signing_enabled"].(bool))
 		attributesUpdate.SigningEnabled = core.BoolPtr(attributeMap["signing_enabled"].(bool))
+	}
+
+	if attributeMap["template_id_notification"] != nil {
+		attributesCreate.TemplateIDNotification = core.StringPtr(attributeMap["template_id_notification"].(string))
+		attributesUpdate.TemplateIDNotification = core.StringPtr(attributeMap["template_id_notification"].(string))
 	}
 
 	return attributesCreate, attributesUpdate

@@ -2,6 +2,7 @@ package logs
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -51,19 +52,33 @@ func getClientWithLogsInstanceEndpoint(originalClient *logsv0.LogsV0, instanceId
 	if strings.Contains(os.Getenv("IBMCLOUD_IAM_API_ENDPOINT"), "test") {
 		domain = testCloudEndpoint
 	}
+	// getting originalConfigServiceURL to not miss filemap precedence from the url constructed in config.go file
+	originalConfigServiceURL := originalClient.GetServiceURL()
+
+	log.Printf("Service URL from the config.go file %s", originalConfigServiceURL)
+
 	var endpoint string
 	if endpointType == "private" {
-		endpoint = fmt.Sprintf("https://%s.api.private.%s.logs.%s", instanceId, region, domain)
+		if strings.Contains(originalConfigServiceURL, fmt.Sprintf("https://%s.api.private.%s.logs.%s", instanceId, region, domain)) {
+			endpoint = originalConfigServiceURL
+		} else {
+			endpoint = fmt.Sprintf("https://%s.api.private.%s.logs.%s:3443", instanceId, region, domain)
+		}
 	} else {
-		endpoint = fmt.Sprintf("https://%s.api.%s.logs.%s", instanceId, region, domain)
+		if strings.Contains(originalConfigServiceURL, fmt.Sprintf("https://%s.api.%s.logs.%s", instanceId, region, domain)) {
+			endpoint = originalConfigServiceURL
+		} else {
+			endpoint = fmt.Sprintf("https://%s.api.%s.logs.%s", instanceId, region, domain)
+		}
 	}
-
 	// clone the client and set endpoint
 	newClient := &logsv0.LogsV0{
 		Service: originalClient.Service.Clone(),
 	}
 
 	endpoint = conns.EnvFallBack([]string{"IBMCLOUD_LOGS_API_ENDPOINT"}, endpoint)
+
+	log.Printf("Constructing client with new service URL %s", endpoint)
 
 	newClient.Service.SetServiceURL(endpoint)
 

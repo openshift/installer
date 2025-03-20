@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -70,7 +71,9 @@ func DataSourceIBMEnIntegration() *schema.Resource {
 func dataSourceIBMEnIntegrationRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_en_integration", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.GetIntegrationOptions{}
@@ -78,15 +81,18 @@ func dataSourceIBMEnIntegrationRead(context context.Context, d *schema.ResourceD
 	options.SetInstanceID(d.Get("instance_guid").(string))
 	options.SetID(d.Get("integration_id").(string))
 
-	result, response, err := enClient.GetIntegrationWithContext(context, options)
+	result, _, err := enClient.GetIntegrationWithContext(context, options)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("GetIntegration failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetIntegrationWithContext failed: %s", err.Error()), "(Data) ibm_en_integration", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *options.InstanceID, *options.ID))
 
 	if err = d.Set("type", result.Type); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting type: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting type: %s", err), "(Data) ibm_en_integration", "read")
+		return tfErr.GetDiag()
 	}
 
 	if result.Metadata != nil {
@@ -94,7 +100,8 @@ func dataSourceIBMEnIntegrationRead(context context.Context, d *schema.ResourceD
 	}
 
 	if err = d.Set("updated_at", flex.DateTimeToString(result.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting updated_at: %s", err), "(Data) ibm_en_integration", "read")
+		return tfErr.GetDiag()
 	}
 
 	return nil

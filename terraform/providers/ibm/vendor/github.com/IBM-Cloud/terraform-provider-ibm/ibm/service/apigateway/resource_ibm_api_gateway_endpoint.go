@@ -18,12 +18,13 @@ import (
 func ResourceIBMApiGatewayEndPoint() *schema.Resource {
 
 	return &schema.Resource{
-		Create:   resourceIBMApiGatewayEndPointCreate,
-		Read:     resourceIBMApiGatewayEndPointGet,
-		Update:   resourceIBMApiGatewayEndPointUpdate,
-		Delete:   resourceIBMApiGatewayEndPointDelete,
-		Importer: &schema.ResourceImporter{},
-		Exists:   resourceIBMApiGatewayEndPointExists,
+		Create:             resourceIBMApiGatewayEndPointCreate,
+		Read:               resourceIBMApiGatewayEndPointGet,
+		Update:             resourceIBMApiGatewayEndPointUpdate,
+		Delete:             resourceIBMApiGatewayEndPointDelete,
+		Importer:           &schema.ResourceImporter{},
+		Exists:             resourceIBMApiGatewayEndPointExists,
+		DeprecationMessage: "This service is deprecated.",
 		Schema: map[string]*schema.Schema{
 			"service_instance_crn": {
 				Type:        schema.TypeString,

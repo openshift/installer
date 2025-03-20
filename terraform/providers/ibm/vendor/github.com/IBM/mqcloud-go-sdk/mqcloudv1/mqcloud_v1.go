@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.90.0-5aad763d-20240506-203857
+ * IBM OpenAPI SDK Code Generator Version: 3.96.0-d6dec9d7-20241008-212902
  */
 
 // Package mqcloudv1 : Operations and models for the MqcloudV1 service
@@ -38,7 +38,7 @@ import (
 
 // MqcloudV1 : The MQ on Cloud API defines a REST API interface to work with MQ on Cloud service in IBM Cloud.
 //
-// API Version: 1.0.1
+// API Version: 1.1.0
 type MqcloudV1 struct {
 	Service *core.BaseService
 
@@ -2513,8 +2513,321 @@ func (mqcloud *MqcloudV1) SetCertificateAmsChannelsWithContext(ctx context.Conte
 
 	return
 }
+
+// CreateVirtualPrivateEndpointGateway : Create a new virtual private endpoint gateway
+// Create a new virtual private endpoint gateway.
+func (mqcloud *MqcloudV1) CreateVirtualPrivateEndpointGateway(createVirtualPrivateEndpointGatewayOptions *CreateVirtualPrivateEndpointGatewayOptions) (result *VirtualPrivateEndpointGatewayDetails, response *core.DetailedResponse, err error) {
+	result, response, err = mqcloud.CreateVirtualPrivateEndpointGatewayWithContext(context.Background(), createVirtualPrivateEndpointGatewayOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// CreateVirtualPrivateEndpointGatewayWithContext is an alternate form of the CreateVirtualPrivateEndpointGateway method which supports a Context parameter
+func (mqcloud *MqcloudV1) CreateVirtualPrivateEndpointGatewayWithContext(ctx context.Context, createVirtualPrivateEndpointGatewayOptions *CreateVirtualPrivateEndpointGatewayOptions) (result *VirtualPrivateEndpointGatewayDetails, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createVirtualPrivateEndpointGatewayOptions, "createVirtualPrivateEndpointGatewayOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(createVirtualPrivateEndpointGatewayOptions, "createVirtualPrivateEndpointGatewayOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"service_instance_guid": *createVirtualPrivateEndpointGatewayOptions.ServiceInstanceGuid,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/virtual_private_endpoint_gateway`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range createVirtualPrivateEndpointGatewayOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("mqcloud", "V1", "CreateVirtualPrivateEndpointGateway")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+	if mqcloud.AcceptLanguage != nil {
+		builder.AddHeader("Accept-Language", fmt.Sprint(*mqcloud.AcceptLanguage))
+	}
+	if createVirtualPrivateEndpointGatewayOptions.TrustedProfile != nil {
+		builder.AddHeader("Trusted-Profile", fmt.Sprint(*createVirtualPrivateEndpointGatewayOptions.TrustedProfile))
+	}
+
+	body := make(map[string]interface{})
+	if createVirtualPrivateEndpointGatewayOptions.Name != nil {
+		body["name"] = createVirtualPrivateEndpointGatewayOptions.Name
+	}
+	if createVirtualPrivateEndpointGatewayOptions.TargetCrn != nil {
+		body["target_crn"] = createVirtualPrivateEndpointGatewayOptions.TargetCrn
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = mqcloud.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "create_virtual_private_endpoint_gateway", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalVirtualPrivateEndpointGatewayDetails)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// ListVirtualPrivateEndpointGateways : Get a list of information for all virtual private endpoint gateways
+// Get a list of information for all Virtual private endpoint gateways.
+func (mqcloud *MqcloudV1) ListVirtualPrivateEndpointGateways(listVirtualPrivateEndpointGatewaysOptions *ListVirtualPrivateEndpointGatewaysOptions) (result *VirtualPrivateEndpointGatewayDetailsCollection, response *core.DetailedResponse, err error) {
+	result, response, err = mqcloud.ListVirtualPrivateEndpointGatewaysWithContext(context.Background(), listVirtualPrivateEndpointGatewaysOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ListVirtualPrivateEndpointGatewaysWithContext is an alternate form of the ListVirtualPrivateEndpointGateways method which supports a Context parameter
+func (mqcloud *MqcloudV1) ListVirtualPrivateEndpointGatewaysWithContext(ctx context.Context, listVirtualPrivateEndpointGatewaysOptions *ListVirtualPrivateEndpointGatewaysOptions) (result *VirtualPrivateEndpointGatewayDetailsCollection, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listVirtualPrivateEndpointGatewaysOptions, "listVirtualPrivateEndpointGatewaysOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(listVirtualPrivateEndpointGatewaysOptions, "listVirtualPrivateEndpointGatewaysOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"service_instance_guid": *listVirtualPrivateEndpointGatewaysOptions.ServiceInstanceGuid,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/virtual_private_endpoint_gateway`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range listVirtualPrivateEndpointGatewaysOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("mqcloud", "V1", "ListVirtualPrivateEndpointGateways")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	if mqcloud.AcceptLanguage != nil {
+		builder.AddHeader("Accept-Language", fmt.Sprint(*mqcloud.AcceptLanguage))
+	}
+	if listVirtualPrivateEndpointGatewaysOptions.TrustedProfile != nil {
+		builder.AddHeader("Trusted-Profile", fmt.Sprint(*listVirtualPrivateEndpointGatewaysOptions.TrustedProfile))
+	}
+
+	if listVirtualPrivateEndpointGatewaysOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listVirtualPrivateEndpointGatewaysOptions.Start))
+	}
+	if listVirtualPrivateEndpointGatewaysOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listVirtualPrivateEndpointGatewaysOptions.Limit))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = mqcloud.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "list_virtual_private_endpoint_gateways", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalVirtualPrivateEndpointGatewayDetailsCollection)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetVirtualPrivateEndpointGateway : Display the information for a specific virtual private endpoint gateway
+// Display the information for a specific virtual private endpoint gateway.
+func (mqcloud *MqcloudV1) GetVirtualPrivateEndpointGateway(getVirtualPrivateEndpointGatewayOptions *GetVirtualPrivateEndpointGatewayOptions) (result *VirtualPrivateEndpointGatewayDetails, response *core.DetailedResponse, err error) {
+	result, response, err = mqcloud.GetVirtualPrivateEndpointGatewayWithContext(context.Background(), getVirtualPrivateEndpointGatewayOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetVirtualPrivateEndpointGatewayWithContext is an alternate form of the GetVirtualPrivateEndpointGateway method which supports a Context parameter
+func (mqcloud *MqcloudV1) GetVirtualPrivateEndpointGatewayWithContext(ctx context.Context, getVirtualPrivateEndpointGatewayOptions *GetVirtualPrivateEndpointGatewayOptions) (result *VirtualPrivateEndpointGatewayDetails, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getVirtualPrivateEndpointGatewayOptions, "getVirtualPrivateEndpointGatewayOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getVirtualPrivateEndpointGatewayOptions, "getVirtualPrivateEndpointGatewayOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"service_instance_guid":                 *getVirtualPrivateEndpointGatewayOptions.ServiceInstanceGuid,
+		"virtual_private_endpoint_gateway_guid": *getVirtualPrivateEndpointGatewayOptions.VirtualPrivateEndpointGatewayGuid,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/virtual_private_endpoint_gateway/{virtual_private_endpoint_gateway_guid}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getVirtualPrivateEndpointGatewayOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("mqcloud", "V1", "GetVirtualPrivateEndpointGateway")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	if mqcloud.AcceptLanguage != nil {
+		builder.AddHeader("Accept-Language", fmt.Sprint(*mqcloud.AcceptLanguage))
+	}
+	if getVirtualPrivateEndpointGatewayOptions.TrustedProfile != nil {
+		builder.AddHeader("Trusted-Profile", fmt.Sprint(*getVirtualPrivateEndpointGatewayOptions.TrustedProfile))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = mqcloud.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_virtual_private_endpoint_gateway", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalVirtualPrivateEndpointGatewayDetails)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeleteVirtualPrivateEndpointGateway : Delete a specific virtual private endpoint gateway
+// Delete a specific virtual_private_endpoint_gateway.
+func (mqcloud *MqcloudV1) DeleteVirtualPrivateEndpointGateway(deleteVirtualPrivateEndpointGatewayOptions *DeleteVirtualPrivateEndpointGatewayOptions) (response *core.DetailedResponse, err error) {
+	response, err = mqcloud.DeleteVirtualPrivateEndpointGatewayWithContext(context.Background(), deleteVirtualPrivateEndpointGatewayOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DeleteVirtualPrivateEndpointGatewayWithContext is an alternate form of the DeleteVirtualPrivateEndpointGateway method which supports a Context parameter
+func (mqcloud *MqcloudV1) DeleteVirtualPrivateEndpointGatewayWithContext(ctx context.Context, deleteVirtualPrivateEndpointGatewayOptions *DeleteVirtualPrivateEndpointGatewayOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteVirtualPrivateEndpointGatewayOptions, "deleteVirtualPrivateEndpointGatewayOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deleteVirtualPrivateEndpointGatewayOptions, "deleteVirtualPrivateEndpointGatewayOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"service_instance_guid":                 *deleteVirtualPrivateEndpointGatewayOptions.ServiceInstanceGuid,
+		"virtual_private_endpoint_gateway_guid": *deleteVirtualPrivateEndpointGatewayOptions.VirtualPrivateEndpointGatewayGuid,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/virtual_private_endpoint_gateway/{virtual_private_endpoint_gateway_guid}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range deleteVirtualPrivateEndpointGatewayOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("mqcloud", "V1", "DeleteVirtualPrivateEndpointGateway")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	if mqcloud.AcceptLanguage != nil {
+		builder.AddHeader("Accept-Language", fmt.Sprint(*mqcloud.AcceptLanguage))
+	}
+	if deleteVirtualPrivateEndpointGatewayOptions.TrustedProfile != nil {
+		builder.AddHeader("Trusted-Profile", fmt.Sprint(*deleteVirtualPrivateEndpointGatewayOptions.TrustedProfile))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = mqcloud.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_virtual_private_endpoint_gateway", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
 func getServiceComponentInfo() *core.ProblemComponent {
-	return core.NewProblemComponent(DefaultServiceName, "1.0.1")
+	return core.NewProblemComponent(DefaultServiceName, "1.1.0")
 }
 
 // ApplicationAPIKeyCreated : A response to creating a new api key, giving the only chance to collect the new apikey.
@@ -2966,7 +3279,7 @@ type CreateApplicationApikeyOptions struct {
 	// The short name of the application api key - conforming to MQ rules.
 	Name *string `json:"name" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3011,7 +3324,7 @@ type CreateApplicationOptions struct {
 	// The name of the application - conforming to MQ rules.
 	Name *string `json:"name" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3055,7 +3368,7 @@ type CreateKeyStorePemCertificateOptions struct {
 	// The filename and path of the certificate to be uploaded.
 	CertificateFile io.ReadCloser `json:"certificate_file" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3119,7 +3432,7 @@ type CreateQueueManagerOptions struct {
 	// The IBM MQ version of the Queue Manager to deploy if not supplied the latest version will be deployed.
 	Version *string `json:"version,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3198,7 +3511,7 @@ type CreateTrustStorePemCertificateOptions struct {
 	// The filename and path of the certificate to be uploaded.
 	CertificateFile io.ReadCloser `json:"certificate_file" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3253,7 +3566,7 @@ type CreateUserOptions struct {
 	// The shortname of the user to be created.
 	Name *string `json:"name" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3290,6 +3603,63 @@ func (options *CreateUserOptions) SetHeaders(param map[string]string) *CreateUse
 	return options
 }
 
+// CreateVirtualPrivateEndpointGatewayOptions : The CreateVirtualPrivateEndpointGateway options.
+type CreateVirtualPrivateEndpointGatewayOptions struct {
+	// The GUID that uniquely identifies the MQ on Cloud service instance.
+	ServiceInstanceGuid *string `json:"service_instance_guid" validate:"required,ne="`
+
+	// The name of the virtual private endpoint gateway - conforming to naming rules.
+	Name *string `json:"name" validate:"required"`
+
+	// The CRN of the target reserved capacity service instance.
+	TargetCrn *string `json:"target_crn" validate:"required"`
+
+	// The CRN of the trusted profile to assume for this request.
+	TrustedProfile *string `json:"Trusted-Profile,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewCreateVirtualPrivateEndpointGatewayOptions : Instantiate CreateVirtualPrivateEndpointGatewayOptions
+func (*MqcloudV1) NewCreateVirtualPrivateEndpointGatewayOptions(serviceInstanceGuid string, name string, targetCrn string) *CreateVirtualPrivateEndpointGatewayOptions {
+	return &CreateVirtualPrivateEndpointGatewayOptions{
+		ServiceInstanceGuid: core.StringPtr(serviceInstanceGuid),
+		Name:                core.StringPtr(name),
+		TargetCrn:           core.StringPtr(targetCrn),
+	}
+}
+
+// SetServiceInstanceGuid : Allow user to set ServiceInstanceGuid
+func (_options *CreateVirtualPrivateEndpointGatewayOptions) SetServiceInstanceGuid(serviceInstanceGuid string) *CreateVirtualPrivateEndpointGatewayOptions {
+	_options.ServiceInstanceGuid = core.StringPtr(serviceInstanceGuid)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *CreateVirtualPrivateEndpointGatewayOptions) SetName(name string) *CreateVirtualPrivateEndpointGatewayOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetTargetCrn : Allow user to set TargetCrn
+func (_options *CreateVirtualPrivateEndpointGatewayOptions) SetTargetCrn(targetCrn string) *CreateVirtualPrivateEndpointGatewayOptions {
+	_options.TargetCrn = core.StringPtr(targetCrn)
+	return _options
+}
+
+// SetTrustedProfile : Allow user to set TrustedProfile
+func (_options *CreateVirtualPrivateEndpointGatewayOptions) SetTrustedProfile(trustedProfile string) *CreateVirtualPrivateEndpointGatewayOptions {
+	_options.TrustedProfile = core.StringPtr(trustedProfile)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CreateVirtualPrivateEndpointGatewayOptions) SetHeaders(param map[string]string) *CreateVirtualPrivateEndpointGatewayOptions {
+	options.Headers = param
+	return options
+}
+
 // DeleteApplicationOptions : The DeleteApplication options.
 type DeleteApplicationOptions struct {
 	// The GUID that uniquely identifies the MQ on Cloud service instance.
@@ -3298,7 +3668,7 @@ type DeleteApplicationOptions struct {
 	// The id of the application.
 	ApplicationID *string `json:"application_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3339,7 +3709,7 @@ type DeleteKeyStoreCertificateOptions struct {
 	// The id of the certificate.
 	CertificateID *string `json:"certificate_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3384,7 +3754,7 @@ type DeleteQueueManagerOptions struct {
 	// The id of the queue manager to retrieve its full details.
 	QueueManagerID *string `json:"queue_manager_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3425,7 +3795,7 @@ type DeleteTrustStoreCertificateOptions struct {
 	// The id of the certificate.
 	CertificateID *string `json:"certificate_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3470,7 +3840,7 @@ type DeleteUserOptions struct {
 	// The id of the user.
 	UserID *string `json:"user_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3500,6 +3870,53 @@ func (options *DeleteUserOptions) SetHeaders(param map[string]string) *DeleteUse
 	return options
 }
 
+// DeleteVirtualPrivateEndpointGatewayOptions : The DeleteVirtualPrivateEndpointGateway options.
+type DeleteVirtualPrivateEndpointGatewayOptions struct {
+	// The GUID that uniquely identifies the MQ on Cloud service instance.
+	ServiceInstanceGuid *string `json:"service_instance_guid" validate:"required,ne="`
+
+	// The id of the virtual private endpoint gateway.
+	VirtualPrivateEndpointGatewayGuid *string `json:"virtual_private_endpoint_gateway_guid" validate:"required,ne="`
+
+	// The CRN of the trusted profile to assume for this request.
+	TrustedProfile *string `json:"Trusted-Profile,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewDeleteVirtualPrivateEndpointGatewayOptions : Instantiate DeleteVirtualPrivateEndpointGatewayOptions
+func (*MqcloudV1) NewDeleteVirtualPrivateEndpointGatewayOptions(serviceInstanceGuid string, virtualPrivateEndpointGatewayGuid string) *DeleteVirtualPrivateEndpointGatewayOptions {
+	return &DeleteVirtualPrivateEndpointGatewayOptions{
+		ServiceInstanceGuid:               core.StringPtr(serviceInstanceGuid),
+		VirtualPrivateEndpointGatewayGuid: core.StringPtr(virtualPrivateEndpointGatewayGuid),
+	}
+}
+
+// SetServiceInstanceGuid : Allow user to set ServiceInstanceGuid
+func (_options *DeleteVirtualPrivateEndpointGatewayOptions) SetServiceInstanceGuid(serviceInstanceGuid string) *DeleteVirtualPrivateEndpointGatewayOptions {
+	_options.ServiceInstanceGuid = core.StringPtr(serviceInstanceGuid)
+	return _options
+}
+
+// SetVirtualPrivateEndpointGatewayGuid : Allow user to set VirtualPrivateEndpointGatewayGuid
+func (_options *DeleteVirtualPrivateEndpointGatewayOptions) SetVirtualPrivateEndpointGatewayGuid(virtualPrivateEndpointGatewayGuid string) *DeleteVirtualPrivateEndpointGatewayOptions {
+	_options.VirtualPrivateEndpointGatewayGuid = core.StringPtr(virtualPrivateEndpointGatewayGuid)
+	return _options
+}
+
+// SetTrustedProfile : Allow user to set TrustedProfile
+func (_options *DeleteVirtualPrivateEndpointGatewayOptions) SetTrustedProfile(trustedProfile string) *DeleteVirtualPrivateEndpointGatewayOptions {
+	_options.TrustedProfile = core.StringPtr(trustedProfile)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeleteVirtualPrivateEndpointGatewayOptions) SetHeaders(param map[string]string) *DeleteVirtualPrivateEndpointGatewayOptions {
+	options.Headers = param
+	return options
+}
+
 // DownloadKeyStoreCertificateOptions : The DownloadKeyStoreCertificate options.
 type DownloadKeyStoreCertificateOptions struct {
 	// The GUID that uniquely identifies the MQ on Cloud service instance.
@@ -3511,7 +3928,7 @@ type DownloadKeyStoreCertificateOptions struct {
 	// The id of the certificate.
 	CertificateID *string `json:"certificate_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3559,7 +3976,7 @@ type DownloadTrustStoreCertificateOptions struct {
 	// The id of the certificate.
 	CertificateID *string `json:"certificate_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3622,7 +4039,7 @@ type GetApplicationOptions struct {
 	// The id of the application.
 	ApplicationID *string `json:"application_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3663,7 +4080,7 @@ type GetCertificateAmsChannelsOptions struct {
 	// The GUID that uniquely identifies the MQ on Cloud service instance.
 	ServiceInstanceGuid *string `json:"service_instance_guid" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3711,7 +4128,7 @@ type GetKeyStoreCertificateOptions struct {
 	// The id of the certificate.
 	CertificateID *string `json:"certificate_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3753,7 +4170,7 @@ type GetOptionsOptions struct {
 	// The GUID that uniquely identifies the MQ on Cloud service instance.
 	ServiceInstanceGuid *string `json:"service_instance_guid" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3784,7 +4201,7 @@ type GetQueueManagerAvailableUpgradeVersionsOptions struct {
 	// The id of the queue manager to retrieve its full details.
 	QueueManagerID *string `json:"queue_manager_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3822,7 +4239,7 @@ type GetQueueManagerConnectionInfoOptions struct {
 	// The id of the queue manager to retrieve its full details.
 	QueueManagerID *string `json:"queue_manager_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3860,7 +4277,7 @@ type GetQueueManagerOptions struct {
 	// The id of the queue manager to retrieve its full details.
 	QueueManagerID *string `json:"queue_manager_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3898,7 +4315,7 @@ type GetQueueManagerStatusOptions struct {
 	// The id of the queue manager to retrieve its full details.
 	QueueManagerID *string `json:"queue_manager_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3939,7 +4356,7 @@ type GetTrustStoreCertificateOptions struct {
 	// The id of the certificate.
 	CertificateID *string `json:"certificate_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3981,7 +4398,7 @@ type GetUsageDetailsOptions struct {
 	// The GUID that uniquely identifies the MQ on Cloud service instance.
 	ServiceInstanceGuid *string `json:"service_instance_guid" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4012,7 +4429,7 @@ type GetUserOptions struct {
 	// The id of the user.
 	UserID *string `json:"user_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4038,6 +4455,53 @@ func (_options *GetUserOptions) SetUserID(userID string) *GetUserOptions {
 
 // SetHeaders : Allow user to set Headers
 func (options *GetUserOptions) SetHeaders(param map[string]string) *GetUserOptions {
+	options.Headers = param
+	return options
+}
+
+// GetVirtualPrivateEndpointGatewayOptions : The GetVirtualPrivateEndpointGateway options.
+type GetVirtualPrivateEndpointGatewayOptions struct {
+	// The GUID that uniquely identifies the MQ on Cloud service instance.
+	ServiceInstanceGuid *string `json:"service_instance_guid" validate:"required,ne="`
+
+	// The id of the virtual private endpoint gateway.
+	VirtualPrivateEndpointGatewayGuid *string `json:"virtual_private_endpoint_gateway_guid" validate:"required,ne="`
+
+	// The CRN of the trusted profile to assume for this request.
+	TrustedProfile *string `json:"Trusted-Profile,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewGetVirtualPrivateEndpointGatewayOptions : Instantiate GetVirtualPrivateEndpointGatewayOptions
+func (*MqcloudV1) NewGetVirtualPrivateEndpointGatewayOptions(serviceInstanceGuid string, virtualPrivateEndpointGatewayGuid string) *GetVirtualPrivateEndpointGatewayOptions {
+	return &GetVirtualPrivateEndpointGatewayOptions{
+		ServiceInstanceGuid:               core.StringPtr(serviceInstanceGuid),
+		VirtualPrivateEndpointGatewayGuid: core.StringPtr(virtualPrivateEndpointGatewayGuid),
+	}
+}
+
+// SetServiceInstanceGuid : Allow user to set ServiceInstanceGuid
+func (_options *GetVirtualPrivateEndpointGatewayOptions) SetServiceInstanceGuid(serviceInstanceGuid string) *GetVirtualPrivateEndpointGatewayOptions {
+	_options.ServiceInstanceGuid = core.StringPtr(serviceInstanceGuid)
+	return _options
+}
+
+// SetVirtualPrivateEndpointGatewayGuid : Allow user to set VirtualPrivateEndpointGatewayGuid
+func (_options *GetVirtualPrivateEndpointGatewayOptions) SetVirtualPrivateEndpointGatewayGuid(virtualPrivateEndpointGatewayGuid string) *GetVirtualPrivateEndpointGatewayOptions {
+	_options.VirtualPrivateEndpointGatewayGuid = core.StringPtr(virtualPrivateEndpointGatewayGuid)
+	return _options
+}
+
+// SetTrustedProfile : Allow user to set TrustedProfile
+func (_options *GetVirtualPrivateEndpointGatewayOptions) SetTrustedProfile(trustedProfile string) *GetVirtualPrivateEndpointGatewayOptions {
+	_options.TrustedProfile = core.StringPtr(trustedProfile)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetVirtualPrivateEndpointGatewayOptions) SetHeaders(param map[string]string) *GetVirtualPrivateEndpointGatewayOptions {
 	options.Headers = param
 	return options
 }
@@ -4215,7 +4679,7 @@ type ListApplicationsOptions struct {
 	// The numbers of resources to return.
 	Limit *int64 `json:"limit,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4258,7 +4722,7 @@ type ListKeyStoreCertificatesOptions struct {
 	// The id of the queue manager to retrieve its full details.
 	QueueManagerID *string `json:"queue_manager_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4299,7 +4763,7 @@ type ListQueueManagersOptions struct {
 	// The numbers of resources to return.
 	Limit *int64 `json:"limit,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4342,7 +4806,7 @@ type ListTrustStoreCertificatesOptions struct {
 	// The id of the queue manager to retrieve its full details.
 	QueueManagerID *string `json:"queue_manager_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4383,7 +4847,7 @@ type ListUsersOptions struct {
 	// The numbers of resources to return.
 	Limit *int64 `json:"limit,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4414,6 +4878,61 @@ func (_options *ListUsersOptions) SetLimit(limit int64) *ListUsersOptions {
 
 // SetHeaders : Allow user to set Headers
 func (options *ListUsersOptions) SetHeaders(param map[string]string) *ListUsersOptions {
+	options.Headers = param
+	return options
+}
+
+// ListVirtualPrivateEndpointGatewaysOptions : The ListVirtualPrivateEndpointGateways options.
+type ListVirtualPrivateEndpointGatewaysOptions struct {
+	// The GUID that uniquely identifies the MQ on Cloud service instance.
+	ServiceInstanceGuid *string `json:"service_instance_guid" validate:"required,ne="`
+
+	// The CRN of the trusted profile to assume for this request.
+	TrustedProfile *string `json:"Trusted-Profile,omitempty"`
+
+	// A server-provided token determining what resource to start the page on.
+	Start *string `json:"start,omitempty"`
+
+	// The numbers of resources to return.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewListVirtualPrivateEndpointGatewaysOptions : Instantiate ListVirtualPrivateEndpointGatewaysOptions
+func (*MqcloudV1) NewListVirtualPrivateEndpointGatewaysOptions(serviceInstanceGuid string) *ListVirtualPrivateEndpointGatewaysOptions {
+	return &ListVirtualPrivateEndpointGatewaysOptions{
+		ServiceInstanceGuid: core.StringPtr(serviceInstanceGuid),
+	}
+}
+
+// SetServiceInstanceGuid : Allow user to set ServiceInstanceGuid
+func (_options *ListVirtualPrivateEndpointGatewaysOptions) SetServiceInstanceGuid(serviceInstanceGuid string) *ListVirtualPrivateEndpointGatewaysOptions {
+	_options.ServiceInstanceGuid = core.StringPtr(serviceInstanceGuid)
+	return _options
+}
+
+// SetTrustedProfile : Allow user to set TrustedProfile
+func (_options *ListVirtualPrivateEndpointGatewaysOptions) SetTrustedProfile(trustedProfile string) *ListVirtualPrivateEndpointGatewaysOptions {
+	_options.TrustedProfile = core.StringPtr(trustedProfile)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *ListVirtualPrivateEndpointGatewaysOptions) SetStart(start string) *ListVirtualPrivateEndpointGatewaysOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListVirtualPrivateEndpointGatewaysOptions) SetLimit(limit int64) *ListVirtualPrivateEndpointGatewaysOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListVirtualPrivateEndpointGatewaysOptions) SetHeaders(param map[string]string) *ListVirtualPrivateEndpointGatewaysOptions {
 	options.Headers = param
 	return options
 }
@@ -4821,7 +5340,7 @@ type SetCertificateAmsChannelsOptions struct {
 	// Strategy for how the supplied channels should be applied.
 	UpdateStrategy *string `json:"update_strategy,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4889,7 +5408,7 @@ type SetQueueManagerVersionOptions struct {
 	// The version upgrade to apply to the queue manager.
 	Version *string `json:"version" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5230,6 +5749,113 @@ func (resp *UserDetailsCollection) GetNextOffset() (*int64, error) {
 	return core.Int64Ptr(offsetValue), nil
 }
 
+// VirtualPrivateEndpointGatewayDetails : The details of a specific Virtual Private Endpoint Gateway.
+type VirtualPrivateEndpointGatewayDetails struct {
+	// URL for the details of the virtual private endpoint gateway.
+	Href *string `json:"href" validate:"required"`
+
+	// The ID of the virtual private endpoint gateway which was allocated on creation.
+	ID *string `json:"id" validate:"required"`
+
+	// The name of the virtual private endpoint gateway, created by the user.
+	Name *string `json:"name" validate:"required"`
+
+	// The CRN of the virtual private endpoint gateway the user is trying to connect to.
+	TargetCrn *string `json:"target_crn" validate:"required"`
+
+	// The lifecycle state of this virtual privage endpoint.
+	Status *string `json:"status" validate:"required"`
+}
+
+// UnmarshalVirtualPrivateEndpointGatewayDetails unmarshals an instance of VirtualPrivateEndpointGatewayDetails from the specified map of raw messages.
+func UnmarshalVirtualPrivateEndpointGatewayDetails(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VirtualPrivateEndpointGatewayDetails)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "target_crn", &obj.TargetCrn)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "target_crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VirtualPrivateEndpointGatewayDetailsCollection : A list of virtual private endpoint gateway summaries.
+type VirtualPrivateEndpointGatewayDetailsCollection struct {
+	// Results per page, same for all collections.
+	Limit *int64 `json:"limit" validate:"required"`
+
+	// Link to first page of results.
+	First *First `json:"first" validate:"required"`
+
+	// Link to next page of results.
+	Next *Next `json:"next,omitempty"`
+
+	// List of virtual private endpoint gateways.
+	VirtualPrivateEndpointGateways []VirtualPrivateEndpointGatewayDetails `json:"virtual_private_endpoint_gateways" validate:"required"`
+}
+
+// UnmarshalVirtualPrivateEndpointGatewayDetailsCollection unmarshals an instance of VirtualPrivateEndpointGatewayDetailsCollection from the specified map of raw messages.
+func UnmarshalVirtualPrivateEndpointGatewayDetailsCollection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VirtualPrivateEndpointGatewayDetailsCollection)
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalFirst)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalNext)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "virtual_private_endpoint_gateways", &obj.VirtualPrivateEndpointGateways, UnmarshalVirtualPrivateEndpointGatewayDetails)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "virtual_private_endpoint_gateways-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *VirtualPrivateEndpointGatewayDetailsCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
+		return nil, err
+	} else if start == nil {
+		return nil, nil
+	}
+	return start, nil
+}
+
 // QueueManagersPager can be used to simplify the use of the "ListQueueManagers" method.
 type QueueManagersPager struct {
 	hasNext     bool
@@ -5501,6 +6127,98 @@ func (pager *ApplicationsPager) GetNext() (page []ApplicationDetails, err error)
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *ApplicationsPager) GetAll() (allItems []ApplicationDetails, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// VirtualPrivateEndpointGatewaysPager can be used to simplify the use of the "ListVirtualPrivateEndpointGateways" method.
+type VirtualPrivateEndpointGatewaysPager struct {
+	hasNext     bool
+	options     *ListVirtualPrivateEndpointGatewaysOptions
+	client      *MqcloudV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewVirtualPrivateEndpointGatewaysPager returns a new VirtualPrivateEndpointGatewaysPager instance.
+func (mqcloud *MqcloudV1) NewVirtualPrivateEndpointGatewaysPager(options *ListVirtualPrivateEndpointGatewaysOptions) (pager *VirtualPrivateEndpointGatewaysPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy ListVirtualPrivateEndpointGatewaysOptions = *options
+	pager = &VirtualPrivateEndpointGatewaysPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  mqcloud,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *VirtualPrivateEndpointGatewaysPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *VirtualPrivateEndpointGatewaysPager) GetNextWithContext(ctx context.Context) (page []VirtualPrivateEndpointGatewayDetails, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListVirtualPrivateEndpointGatewaysWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		var start *string
+		start, err = core.GetQueryParam(result.Next.Href, "start")
+		if err != nil {
+			errMsg := fmt.Sprintf("error retrieving 'start' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
+			return
+		}
+		next = start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.VirtualPrivateEndpointGateways
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *VirtualPrivateEndpointGatewaysPager) GetAllWithContext(ctx context.Context) (allItems []VirtualPrivateEndpointGatewayDetails, err error) {
+	for pager.HasNext() {
+		var nextPage []VirtualPrivateEndpointGatewayDetails
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *VirtualPrivateEndpointGatewaysPager) GetNext() (page []VirtualPrivateEndpointGatewayDetails, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *VirtualPrivateEndpointGatewaysPager) GetAll() (allItems []VirtualPrivateEndpointGatewayDetails, err error) {
 	allItems, err = pager.GetAllWithContext(context.Background())
 	err = core.RepurposeSDKProblem(err, "")
 	return

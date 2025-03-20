@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -89,7 +90,9 @@ func ResourceIBMEnSlackTemplate() *schema.Resource {
 func resourceIBMEnSlackTemplateCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_slack_template", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.CreateTemplateOptions{}
@@ -103,30 +106,35 @@ func resourceIBMEnSlackTemplateCreate(context context.Context, d *schema.Resourc
 		options.SetDescription(d.Get("description").(string))
 	}
 
-	params := EmailTemplateParamsMap(d.Get("params.0").(map[string]interface{}))
+	params := SlackTemplateParamsMap(d.Get("params.0").(map[string]interface{}))
 	options.SetParams(&params)
 
-	result, response, err := enClient.CreateTemplateWithContext(context, options)
+	result, _, err := enClient.CreateTemplateWithContext(context, options)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("CreateTemplateWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateTemplateWithContext failed: %s", err.Error()), "ibm_en_slack_template", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *options.InstanceID, *result.ID))
 
-	return resourceIBMEnEmailTemplateRead(context, d, meta)
+	return resourceIBMEnSlackTemplateRead(context, d, meta)
 }
 
 func resourceIBMEnSlackTemplateRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_slack_template", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.GetTemplateOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_slack_template", "update")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
@@ -138,7 +146,9 @@ func resourceIBMEnSlackTemplateRead(context context.Context, d *schema.ResourceD
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("GetTemplateWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetTemplateWithContext failed: %s", err.Error()), "ibm_en_slack_template", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("instance_guid", options.InstanceID); err != nil {
@@ -180,18 +190,23 @@ func resourceIBMEnSlackTemplateRead(context context.Context, d *schema.ResourceD
 func resourceIBMEnSlackTemplateUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_slack_template", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.ReplaceTemplateOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_slack_template", "update")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
 	options.SetID(parts[1])
+
+	options.SetType(d.Get("type").(string))
 
 	if ok := d.HasChanges("name", "description", "params"); ok {
 		options.SetName(d.Get("name").(string))
@@ -200,15 +215,17 @@ func resourceIBMEnSlackTemplateUpdate(context context.Context, d *schema.Resourc
 			options.SetDescription(d.Get("description").(string))
 		}
 
-		params := EmailTemplateParamsMap(d.Get("params.0").(map[string]interface{}))
+		params := SlackTemplateParamsMap(d.Get("params.0").(map[string]interface{}))
 		options.SetParams(&params)
 
-		_, response, err := enClient.ReplaceTemplateWithContext(context, options)
+		_, _, err := enClient.ReplaceTemplateWithContext(context, options)
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("ReplaceTemplateWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ReplaceTemplateWithContext failed: %s", err.Error()), "ibm_en_slack_template", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 
-		return resourceIBMEnEmailTemplateRead(context, d, meta)
+		return resourceIBMEnSlackTemplateRead(context, d, meta)
 	}
 
 	return nil
@@ -217,14 +234,17 @@ func resourceIBMEnSlackTemplateUpdate(context context.Context, d *schema.Resourc
 func resourceIBMEnSlackTemplateDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_slack_template", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.DeleteTemplateOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_slack_template", "delete")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
@@ -236,7 +256,9 @@ func resourceIBMEnSlackTemplateDelete(context context.Context, d *schema.Resourc
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("DeleteTemplateWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteTemplateWithContext: failed: %s", err.Error()), "ibm_en_slack_template", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")

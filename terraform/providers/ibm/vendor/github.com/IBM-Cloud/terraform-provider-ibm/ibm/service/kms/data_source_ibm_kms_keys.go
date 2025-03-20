@@ -5,7 +5,6 @@ package kms
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -195,7 +194,7 @@ func dataSourceIBMKMSKeysRead(d *schema.ResourceData, meta interface{}) error {
 		aliasName := v.(string)
 		key, err := api.GetKey(context.Background(), aliasName)
 		if err != nil {
-			return fmt.Errorf("[ERROR] Get Keys failed with error: %s", err)
+			return flex.FmtErrorf("[ERROR] Get Keys failed with error: %s", err)
 		}
 		keyMap := make([]map[string]interface{}, 0, 1)
 		keyInstance := make(map[string]interface{})
@@ -208,7 +207,7 @@ func dataSourceIBMKMSKeysRead(d *schema.ResourceData, meta interface{}) error {
 		keyInstance["key_ring_id"] = key.KeyRingID
 		policies, err := api.GetPolicies(context.Background(), key.ID)
 		if err != nil {
-			return fmt.Errorf("[ERROR] Failed to read policies: %s", err)
+			return flex.FmtErrorf("[ERROR] Failed to read policies: %s", err)
 		}
 		if len(policies) == 0 {
 			log.Printf("No Policy Configurations read\n")
@@ -221,7 +220,7 @@ func dataSourceIBMKMSKeysRead(d *schema.ResourceData, meta interface{}) error {
 	} else if v, ok := d.GetOk("key_id"); ok {
 		key, err := api.GetKey(context.Background(), v.(string))
 		if err != nil {
-			return fmt.Errorf("[ERROR] Get Keys failed with error: %s", err)
+			return flex.FmtErrorf("[ERROR] Get Keys failed with error: %s", err)
 		}
 		keyMap := make([]map[string]interface{}, 0, 1)
 		keyInstance := make(map[string]interface{})
@@ -234,7 +233,7 @@ func dataSourceIBMKMSKeysRead(d *schema.ResourceData, meta interface{}) error {
 		keyInstance["key_ring_id"] = key.KeyRingID
 		policies, err := api.GetPolicies(context.Background(), key.ID)
 		if err != nil {
-			return fmt.Errorf("[ERROR] Failed to read policies: %s", err)
+			return flex.FmtErrorf("[ERROR] Failed to read policies: %s", err)
 		}
 		if len(policies) == 0 {
 			log.Printf("No Policy Configurations read\n")
@@ -259,7 +258,7 @@ func dataSourceIBMKMSKeysRead(d *schema.ResourceData, meta interface{}) error {
 			{
 				keys, err := api.GetKeys(context.Background(), 0, offset)
 				if err != nil {
-					return fmt.Errorf("[ERROR] Get Keys failed with error: %s", err)
+					return flex.FmtErrorf("[ERROR] Get Keys failed with error: %s", err)
 				}
 				retreivedKeys := keys.Keys
 				totalKeys = append(totalKeys, retreivedKeys...)
@@ -271,7 +270,7 @@ func dataSourceIBMKMSKeysRead(d *schema.ResourceData, meta interface{}) error {
 					if (limitVal - offset) < pageSize {
 						keys, err := api.GetKeys(context.Background(), (limitVal - offset), offset)
 						if err != nil {
-							return fmt.Errorf("[ERROR] Get Keys failed with error: %s", err)
+							return flex.FmtErrorf("[ERROR] Get Keys failed with error: %s", err)
 						}
 						retreivedKeys := keys.Keys
 						totalKeys = append(totalKeys, retreivedKeys...)
@@ -279,7 +278,7 @@ func dataSourceIBMKMSKeysRead(d *schema.ResourceData, meta interface{}) error {
 					} else {
 						keys, err := api.GetKeys(context.Background(), pageSize, offset)
 						if err != nil {
-							return fmt.Errorf("[ERROR] Get Keys failed with error: %s", err)
+							return flex.FmtErrorf("[ERROR] Get Keys failed with error: %s", err)
 						}
 						numOfKeysFetched := keys.Metadata.NumberOfKeys
 						retreivedKeys := keys.Keys
@@ -294,7 +293,7 @@ func dataSourceIBMKMSKeysRead(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 		if len(totalKeys) == 0 {
-			return fmt.Errorf("[ERROR] No keys in instance %s", instanceID)
+			return flex.FmtErrorf("[ERROR] No keys in instance %s", instanceID)
 		}
 		var keyName string
 		var matchKeys []kp.Key
@@ -310,7 +309,7 @@ func dataSourceIBMKMSKeysRead(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		if len(matchKeys) == 0 {
-			return fmt.Errorf("[ERROR] No keys with name %s in instance  %s", keyName, instanceID)
+			return flex.FmtErrorf("[ERROR] No keys with name %s in instance  %s", keyName, instanceID)
 		}
 
 		keyMap := make([]map[string]interface{}, 0, len(matchKeys))

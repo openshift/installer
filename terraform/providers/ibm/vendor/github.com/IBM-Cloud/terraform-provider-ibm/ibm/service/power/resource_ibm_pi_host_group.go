@@ -19,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/go-sdk-core/v5/core"
 )
 
@@ -59,6 +60,13 @@ func ResourceIBMPIHostGroup() *schema.Resource {
 							Required:     true,
 							Type:         schema.TypeString,
 							ValidateFunc: validation.NoZeroValues,
+						},
+						Attr_UserTags: {
+							Description: "List of user tags attached to the resource.",
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Optional:    true,
+							Set:         schema.HashString,
+							Type:        schema.TypeSet,
 						},
 					},
 				},
@@ -353,6 +361,7 @@ func hostMapToAddHost(modelMap map[string]interface{}) *models.AddHost {
 	host := &models.AddHost{}
 	host.DisplayName = core.StringPtr(modelMap[Attr_DisplayName].(string))
 	host.SysType = core.StringPtr(modelMap[Attr_SysType].(string))
+	host.UserTags = flex.FlattenSet(modelMap[Attr_UserTags].(*schema.Set))
 	return host
 }
 

@@ -83,11 +83,6 @@ func dataSourceIBMEnSMTPAllowedIpsRead(context context.Context, d *schema.Resour
 		}
 	}
 
-	// if err = d.Set("subnets", flex.ToString(smtpAllowedIPs.Subnets)); err != nil {
-	// 	tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting subnets: %s", err), "(Data) ibm_en_smtp_allowed_ips", "read")
-	// 	return tfErr.GetDiag()
-	// }
-
 	return nil
 }
 

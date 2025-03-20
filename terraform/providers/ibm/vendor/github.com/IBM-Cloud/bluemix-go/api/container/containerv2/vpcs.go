@@ -29,6 +29,7 @@ type vpc struct {
 type VPCs interface {
 	ListVPCs(target ClusterTargetHeader) ([]VPCConfig, error)
 	SetOutboundTrafficProtection(string, bool, ClusterTargetHeader) error
+	EnableSecureByDefault(string, bool, ClusterTargetHeader) error
 }
 
 func newVPCsAPI(c *client.Client) VPCs {
@@ -60,6 +61,23 @@ func (v *vpc) SetOutboundTrafficProtection(clusterID string, enable bool, target
 	}
 
 	_, err := v.client.Post("/network/v2/outbound-traffic-protection", request, nil, target.ToMap())
+
+	return err
+}
+
+type EnableSecureByDefaultClusterRequest struct {
+	Cluster                          string `json:"cluster" binding:"required"`
+	DisableOutboundTrafficProtection bool   `json:"disableOutboundTrafficProtection,omitempty"`
+}
+
+// Enable Secure by Default
+func (v *vpc) EnableSecureByDefault(clusterID string, enable bool, target ClusterTargetHeader) error {
+	request := EnableSecureByDefaultClusterRequest{
+		Cluster:                          clusterID,
+		DisableOutboundTrafficProtection: enable,
+	}
+
+	_, err := v.client.Post("/network/v2/secure-by-default/enable", request, nil, target.ToMap())
 
 	return err
 }

@@ -5,10 +5,12 @@ package power
 
 import (
 	"context"
+	"log"
 
 	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -46,6 +48,11 @@ func DataSourceIBMPICloudInstance() *schema.Resource {
 						Attr_CreationDate: {
 							Computed:    true,
 							Description: "Date of PVM instance creation.",
+							Type:        schema.TypeString,
+						},
+						Attr_CRN: {
+							Computed:    true,
+							Description: "The CRN of this resource.",
 							Type:        schema.TypeString,
 						},
 						Attr_Href: {
@@ -134,7 +141,7 @@ func dataSourceIBMPICloudInstanceRead(ctx context.Context, d *schema.ResourceDat
 
 	d.Set(Attr_Capabilities, cloud_instance_data.Capabilities)
 	d.Set(Attr_Enabled, cloud_instance_data.Enabled)
-	d.Set(Attr_PVMInstances, flattenpvminstances(cloud_instance_data.PvmInstances))
+	d.Set(Attr_PVMInstances, flattenpvminstances(cloud_instance_data.PvmInstances, meta))
 	d.Set(Attr_Region, cloud_instance_data.Region)
 	d.Set(Attr_TenantID, (cloud_instance_data.TenantID))
 	d.Set(Attr_TotalInstances, cloud_instance_data.Usage.Instances)
@@ -146,7 +153,7 @@ func dataSourceIBMPICloudInstanceRead(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func flattenpvminstances(list []*models.PVMInstanceReference) []map[string]interface{} {
+func flattenpvminstances(list []*models.PVMInstanceReference, meta interface{}) []map[string]interface{} {
 	pvms := make([]map[string]interface{}, 0)
 	for _, lpars := range list {
 		l := map[string]interface{}{
@@ -156,6 +163,14 @@ func flattenpvminstances(list []*models.PVMInstanceReference) []map[string]inter
 			Attr_Name:         *lpars.ServerName,
 			Attr_Status:       *lpars.Status,
 			Attr_Systype:      lpars.SysType,
+		}
+		if lpars.Crn != "" {
+			l[Attr_CRN] = lpars.Crn
+			tags, err := flex.GetGlobalTagsUsingCRN(meta, string(lpars.Crn), "", UserTagType)
+			if err != nil {
+				log.Printf("Error on get of pi instance (%s) user_tags: %s", *lpars.PvmInstanceID, err)
+			}
+			l[Attr_UserTags] = tags
 		}
 		pvms = append(pvms, l)
 	}

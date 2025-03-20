@@ -117,7 +117,7 @@ func dataSourceIbmSccProviderTypeRead(context context.Context, d *schema.Resourc
 		return diag.FromErr(err)
 	}
 
-	getProviderTypeByIdOptions := &securityandcompliancecenterapiv3.GetProviderTypeByIdOptions{}
+	getProviderTypeByIdOptions := &securityandcompliancecenterapiv3.GetProviderTypeByIDOptions{}
 
 	getProviderTypeByIdOptions.SetInstanceID(d.Get("instance_id").(string))
 	getProviderTypeByIdOptions.SetProviderTypeID(d.Get("provider_type_id").(string))

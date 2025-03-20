@@ -9,13 +9,14 @@ import (
 	"log"
 	"sort"
 	"strings"
+	"time"
 
-	"github.com/IBM-Cloud/bluemix-go/crn"
-	"github.com/IBM-Cloud/bluemix-go/models"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 
+	"github.com/IBM/platform-services-go-sdk/iampolicymanagementv1"
+	rc "github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -111,29 +112,32 @@ func DataSourceIBMResourceKeyValidator() *validate.ResourceValidator {
 }
 
 func dataSourceIBMResourceKeyRead(d *schema.ResourceData, meta interface{}) error {
-	rsContClient, err := meta.(conns.ClientSession).ResourceControllerAPI()
+	rsContClient, err := meta.(conns.ClientSession).ResourceControllerV2API()
 	if err != nil {
 		return err
 	}
-	rkAPI := rsContClient.ResourceServiceKey()
 	name := d.Get("name").(string)
 	mostRecent := d.Get("most_recent").(bool)
 
-	keys, err := rkAPI.GetKeys(name)
+	resourceKeys := rc.ListResourceKeysOptions{
+		Name: &name,
+	}
+
+	keys, _, err := rsContClient.ListResourceKeys(&resourceKeys)
 	if err != nil {
 		return err
 	}
-	var filteredKeys []models.ServiceKey
+	var filteredKeys []rc.ResourceKey
 
 	if d.Get("resource_instance_id") == "" {
-		filteredKeys = keys
+		filteredKeys = keys.Resources
 	} else {
 		crn, err := getCRN(d, meta)
-		if err != nil {
+		if err != nil || crn == nil {
 			return err
 		}
-		for _, key := range keys {
-			if key.SourceCrn == *crn {
+		for _, key := range keys.Resources {
+			if *key.SourceCRN == *crn {
 				filteredKeys = append(filteredKeys, key)
 			}
 		}
@@ -144,7 +148,7 @@ func dataSourceIBMResourceKeyRead(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("[ERROR] No resource keys found with name [%s]", name)
 	}
 
-	var key models.ServiceKey
+	var key rc.ResourceKey
 
 	if len(filteredKeys) > 1 {
 		if mostRecent {
@@ -158,20 +162,50 @@ func dataSourceIBMResourceKeyRead(d *schema.ResourceData, meta interface{}) erro
 		key = filteredKeys[0]
 	}
 
-	d.SetId(key.ID)
+	d.SetId(*key.ID)
 
-	if redacted, ok := key.Credentials["redacted"].(string); ok {
-		log.Printf("Credentials are redacted with code: %s.The User doesn't have the correct access to view the credentials. Refer to the API documentation for additional details.", redacted)
+	if key.Credentials != nil && key.Credentials.Redacted != nil {
+		log.Printf("Credentials are redacted with code: %s.The User doesn't have the correct access to view the credentials. Refer to the API documentation for additional details.", *key.Credentials.Redacted)
 	}
-	if roleCrn, ok := key.Parameters["role_crn"].(string); ok {
-		d.Set("role", roleCrn[strings.LastIndex(roleCrn, ":")+1:])
-	} else if roleCrn, ok := key.Credentials["iam_role_crn"].(string); ok {
-		d.Set("role", roleCrn[strings.LastIndex(roleCrn, ":")+1:])
+
+	if key.Credentials != nil && key.Credentials.IamRoleCRN != nil {
+		roleCrn := *key.Credentials.IamRoleCRN
+		iamPolicyManagementClient, err := meta.(conns.ClientSession).IAMPolicyManagementV1API()
+		if err == nil {
+			var resourceCRN string
+			if key.CRN != nil {
+				serviceName := strings.Split(*key.CRN, ":")
+				if len(serviceName) > 4 {
+					resourceCRN = serviceName[4]
+				}
+			}
+			listRoleOptions := &iampolicymanagementv1.ListRolesOptions{
+				AccountID:   key.AccountID,
+				ServiceName: &resourceCRN,
+			}
+			roleList, resp, err := iamPolicyManagementClient.ListRoles(listRoleOptions)
+			roles := flex.MapRoleListToPolicyRoles(*roleList)
+			if err == nil && len(roles) > 0 {
+				for _, role := range roles {
+					if *role.RoleID == roleCrn {
+						RoleName := role.DisplayName
+						d.Set("role", RoleName)
+					}
+				}
+			}
+			if err != nil {
+				log.Printf("[ERROR] Error listing IAM Roles %s, %s", err, resp)
+			}
+		}
 	}
 
 	// ### Modification for onetime_credientails
 	d.Set("onetime_credentials", key.OnetimeCredentials)
-	d.Set("credentials", flex.Flatten(key.Credentials))
+	var credInterface map[string]interface{}
+	cred, _ := json.Marshal(key.Credentials)
+	json.Unmarshal(cred, &credInterface)
+	d.Set("credentials", flex.Flatten(credInterface))
+
 	creds, err := json.Marshal(key.Credentials)
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error marshalling resource key credentials: %s", err)
@@ -180,45 +214,57 @@ func dataSourceIBMResourceKeyRead(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("[ERROR] Error setting the credentials json: %s", err)
 	}
 	d.Set("status", key.State)
-	d.Set("crn", key.Crn.String())
+	d.Set("crn", key.CRN)
 	return nil
 }
 
-func getCRN(d *schema.ResourceData, meta interface{}) (*crn.CRN, error) {
+func getCRN(d *schema.ResourceData, meta interface{}) (*string, error) {
 
-	rsContClient, err := meta.(conns.ClientSession).ResourceControllerAPI()
+	rsConClient, err := meta.(conns.ClientSession).ResourceControllerV2API()
 	if err != nil {
 		return nil, err
 	}
 
 	if insID, ok := d.GetOk("resource_instance_id"); ok {
-		instance, err := rsContClient.ResourceServiceInstance().GetInstance(insID.(string))
-		if err != nil {
-			return nil, err
+		insIdString := insID.(string)
+		resourceInstanceGet := rc.GetResourceInstanceOptions{
+			ID: &insIdString,
 		}
-		return &(instance.Crn), nil
+		instance, resp, err := rsConClient.GetResourceInstance(&resourceInstanceGet)
+		if err != nil {
+			return nil, fmt.Errorf("[ERROR] Error retrieving resource instance: %s with resp code: %s", err, resp)
+		}
+		return instance.CRN, nil
+
+	}
+	if insID, ok := d.GetOk("resource_alias_id"); ok {
+		insaliasIdString := insID.(string)
+		resourceInstanceAliasGet := rc.GetResourceAliasOptions{
+			ID: &insaliasIdString,
+		}
+		instance, resp, err := rsConClient.GetResourceAlias(&resourceInstanceAliasGet)
+		if err != nil {
+			return nil, fmt.Errorf("[ERROR] Error retrieving resource instance: %s with resp code: %s", err, resp)
+		}
+		return instance.CRN, nil
 
 	}
 
-	alias, err := rsContClient.ResourceServiceAlias().Alias(d.Get("resource_alias_id").(string))
-	if err != nil {
-		return nil, err
-	}
-	return &(alias.CRN), nil
+	return nil, nil
 
 }
 
-type resourceKeys []models.ServiceKey
+type resourceKeys []rc.ResourceKey
 
 func (k resourceKeys) Len() int { return len(k) }
 
 func (k resourceKeys) Swap(i, j int) { k[i], k[j] = k[j], k[i] }
 
 func (k resourceKeys) Less(i, j int) bool {
-	return (*k[i].CreatedAt).Before(*k[j].CreatedAt)
+	return (time.Time(*k[i].CreatedAt)).Before(time.Time(*k[j].CreatedAt))
 }
 
-func mostRecentResourceKey(keys resourceKeys) models.ServiceKey {
+func mostRecentResourceKey(keys resourceKeys) rc.ResourceKey {
 	sortedKeys := keys
 	sort.Sort(sortedKeys)
 	return sortedKeys[len(sortedKeys)-1]

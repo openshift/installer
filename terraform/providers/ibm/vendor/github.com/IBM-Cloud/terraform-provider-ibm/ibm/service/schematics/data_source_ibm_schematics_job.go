@@ -2816,7 +2816,9 @@ func DataSourceIBMSchematicsJob() *schema.Resource {
 func dataSourceIBMSchematicsJobRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_job", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if r, ok := d.GetOk("location"); ok {
 		region := r.(string)
@@ -2831,106 +2833,156 @@ func dataSourceIBMSchematicsJobRead(context context.Context, d *schema.ResourceD
 
 	job, response, err := schematicsClient.GetJobWithContext(context, getJobOptions)
 	if err != nil {
-		log.Printf("[DEBUG] GetJobWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetJobWithContext failed %s\n%s", err, response))
+
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead GetJobWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_job", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(*getJobOptions.JobID)
 	if err = d.Set("command_object", job.CommandObject); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting command_object: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead failed with error: %s", err), "ibm_schematics_job", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("command_object_id", job.CommandObjectID); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting command_object_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead failed with error: %s", err), "ibm_schematics_job", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("command_name", job.CommandName); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting command_name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead failed with error: %s", err), "ibm_schematics_job", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("command_parameter", job.CommandParameter); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting command_parameter: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead failed with error: %s", err), "ibm_schematics_job", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if job.Inputs != nil {
 		err = d.Set("job_inputs", dataSourceJobFlattenInputs(job.Inputs))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting job_inputs %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead failed with error: %s", err), "ibm_schematics_job", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
 	if job.Settings != nil {
 		err = d.Set("job_env_settings", dataSourceJobFlattenSettings(job.Settings))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting job_env_settings %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead failed with error: %s", err), "ibm_schematics_job", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("id", job.ID); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead failed with error: %s", err), "ibm_schematics_job", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("name", job.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead failed with error: %s", err), "ibm_schematics_job", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("description", job.Description); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting description: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead failed with error: %s", err), "ibm_schematics_job", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("location", job.Location); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting location: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead failed with error: %s", err), "ibm_schematics_job", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("resource_group", job.ResourceGroup); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting resource_group: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead failed with error: %s", err), "ibm_schematics_job", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("submitted_at", flex.DateTimeToString(job.SubmittedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting submitted_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead failed with error: %s", err), "ibm_schematics_job", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("submitted_by", job.SubmittedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting submitted_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead failed with error: %s", err), "ibm_schematics_job", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("start_at", flex.DateTimeToString(job.StartAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting start_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead failed with error: %s", err), "ibm_schematics_job", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("end_at", flex.DateTimeToString(job.EndAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting end_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead failed with error: %s", err), "ibm_schematics_job", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("duration", job.Duration); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting duration: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead failed with error: %s", err), "ibm_schematics_job", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if job.Status != nil {
 		err = d.Set("status", dataSourceJobFlattenStatus(*job.Status))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting status %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead failed with error: %s", err), "ibm_schematics_job", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
 	if job.Data != nil {
 		err = d.Set("data", dataSourceJobFlattenData(*job.Data))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting data %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead failed with error: %s", err), "ibm_schematics_job", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
 	if job.Bastion != nil {
 		err = d.Set("bastion", dataSourceJobFlattenBastion(*job.Bastion))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting bastion %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead failed with error: %s", err), "ibm_schematics_job", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
 	if job.LogSummary != nil {
 		err = d.Set("log_summary", dataSourceJobFlattenLogSummary(*job.LogSummary))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting log_summary %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead failed with error: %s", err), "ibm_schematics_job", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("log_store_url", job.LogStoreURL); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting log_store_url: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead failed with error: %s", err), "ibm_schematics_job", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("state_store_url", job.StateStoreURL); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting state_store_url: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead failed with error: %s", err), "ibm_schematics_job", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("results_url", job.ResultsURL); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting results_url: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead failed with error: %s", err), "ibm_schematics_job", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("updated_at", flex.DateTimeToString(job.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsJobRead failed with error: %s", err), "ibm_schematics_job", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	return nil

@@ -12,6 +12,7 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
+	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -87,6 +88,70 @@ func ResourceIBMISLBPool() *schema.Resource {
 				Description:  "Load Balancer Pool algorithm",
 			},
 
+			"failsafe_policy": &schema.Schema{
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				Optional:    true,
+				Computed:    true,
+				Description: "The failsafe policy to use for this pool.If unspecified, the default failsafe policy action from the profile will be used.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"action": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: "A load balancer failsafe policy action:- `forward`: Forwards requests to the `target` pool.- `fail`: Rejects requests with an HTTP `503` status code.The enumerated values for this property may[expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.",
+						},
+						"healthy_member_threshold_count": &schema.Schema{
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The healthy member count at which the failsafe policy action will be triggered. At present, this is always `0`, but may be modifiable in the future.",
+						},
+						"target": &schema.Schema{
+							Type:             schema.TypeList,
+							MaxItems:         1,
+							Optional:         true,
+							DiffSuppressFunc: suppressNullTarget,
+							Description:      "If `action` is `forward`, the target pool to forward to.If `action` is `fail`, this property will be absent.The targets supported by this property may[expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"deleted": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "If present, this property indicates the referenced resource has been deleted, and providessome supplementary information.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"more_info": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Link to documentation about deleted resources.",
+												},
+											},
+										},
+									},
+									"href": &schema.Schema{
+										Type:        schema.TypeString,
+										Optional:    true,
+										Computed:    true,
+										Description: "The URL for this load balancer pool.",
+									},
+									"id": &schema.Schema{
+										Type:        schema.TypeString,
+										Optional:    true,
+										Computed:    true,
+										Description: "The unique identifier for this load balancer pool.",
+									},
+									"name": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The name for this load balancer pool. The name is unique across all pools for the load balancer.",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 			isLBPoolProtocol: {
 				Type:         schema.TypeString,
 				Required:     true,
@@ -298,24 +363,23 @@ func lbPoolCreate(d *schema.ResourceData, meta interface{}, name, lbID, algorith
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error checking for load balancer (%s) is active: %s", lbID, err)
 	}
-
+	healthMonitor := &vpcv1.LoadBalancerPoolHealthMonitorPrototype{
+		Delay:      &healthDelay,
+		MaxRetries: &maxRetries,
+		Timeout:    &healthTimeOut,
+		Type:       &healthType,
+	}
 	options := &vpcv1.CreateLoadBalancerPoolOptions{
 		LoadBalancerID: &lbID,
 		Algorithm:      &algorithm,
 		Protocol:       &protocol,
 		Name:           &name,
-		HealthMonitor: &vpcv1.LoadBalancerPoolHealthMonitorPrototype{
-			Delay:      &healthDelay,
-			MaxRetries: &maxRetries,
-			Timeout:    &healthTimeOut,
-			Type:       &healthType,
-		},
 	}
 	if healthMonitorURL != "" {
-		options.HealthMonitor.URLPath = &healthMonitorURL
+		healthMonitor.URLPath = &healthMonitorURL
 	}
 	if healthMonitorPort > int64(0) {
-		options.HealthMonitor.Port = &healthMonitorPort
+		healthMonitor.Port = &healthMonitorPort
 	}
 	if spType != "" {
 		options.SessionPersistence = &vpcv1.LoadBalancerPoolSessionPersistencePrototype{
@@ -328,6 +392,14 @@ func lbPoolCreate(d *schema.ResourceData, meta interface{}, name, lbID, algorith
 	if pProtocol != "" {
 		options.ProxyProtocol = &pProtocol
 	}
+	if _, ok := d.GetOk("failsafe_policy"); ok {
+		failsafePolicyModel, err := resourceIBMIsLbPoolMapToLoadBalancerPoolFailsafePolicyPrototype(d.Get("failsafe_policy.0").(map[string]interface{}))
+		if err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_is_lb_pool", "create", "parse-failsafe_policy")
+		}
+		options.SetFailsafePolicy(failsafePolicyModel)
+	}
+	options.HealthMonitor = healthMonitor
 	lbPool, response, err := sess.CreateLoadBalancerPool(options)
 	if err != nil {
 		return fmt.Errorf("[DEBUG] lbpool create err: %s\n%s", err, response)
@@ -390,17 +462,30 @@ func lbPoolGet(d *schema.ResourceData, meta interface{}, lbID, lbPoolID string) 
 	d.Set(isLBID, lbID)
 	d.Set(isLBPoolAlgorithm, *lbPool.Algorithm)
 	d.Set(isLBPoolProtocol, *lbPool.Protocol)
-	d.Set(isLBPoolHealthDelay, *lbPool.HealthMonitor.Delay)
-	d.Set(isLBPoolHealthRetries, *lbPool.HealthMonitor.MaxRetries)
-	d.Set(isLBPoolHealthTimeout, *lbPool.HealthMonitor.Timeout)
-	if lbPool.HealthMonitor.Type != nil {
-		d.Set(isLBPoolHealthType, *lbPool.HealthMonitor.Type)
+	if lbPool.HealthMonitor != nil {
+		poolHealthMonitor := lbPool.HealthMonitor.(*vpcv1.LoadBalancerPoolHealthMonitor)
+		d.Set(isLBPoolHealthDelay, *poolHealthMonitor.Delay)
+		d.Set(isLBPoolHealthRetries, *poolHealthMonitor.MaxRetries)
+		d.Set(isLBPoolHealthTimeout, *poolHealthMonitor.Timeout)
+		if poolHealthMonitor.Type != nil {
+			d.Set(isLBPoolHealthType, *poolHealthMonitor.Type)
+		}
+		if poolHealthMonitor.URLPath != nil {
+			d.Set(isLBPoolHealthMonitorURL, *poolHealthMonitor.URLPath)
+		}
+		if poolHealthMonitor.Port != nil {
+			d.Set(isLBPoolHealthMonitorPort, *poolHealthMonitor.Port)
+		}
 	}
-	if lbPool.HealthMonitor.URLPath != nil {
-		d.Set(isLBPoolHealthMonitorURL, *lbPool.HealthMonitor.URLPath)
-	}
-	if lbPool.HealthMonitor.Port != nil {
-		d.Set(isLBPoolHealthMonitorPort, *lbPool.HealthMonitor.Port)
+	if !core.IsNil(lbPool.FailsafePolicy) {
+		failsafePolicyMap, err := resourceIBMIsLbPoolLoadBalancerPoolFailsafePolicyToMap(lbPool.FailsafePolicy)
+		if err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_is_lb_pool", "read", "failsafe_policy-to-map")
+		}
+		if err = d.Set("failsafe_policy", []map[string]interface{}{failsafePolicyMap}); err != nil {
+			err = fmt.Errorf("Error setting failsafe_policy: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_is_lb_pool", "read", "set-failsafe_policy")
+		}
 	}
 	if lbPool.SessionPersistence != nil {
 		d.Set(isLBPoolSessPersistenceType, *lbPool.SessionPersistence.Type)
@@ -419,6 +504,7 @@ func lbPoolGet(d *schema.ResourceData, meta interface{}, lbID, lbPoolID string) 
 		d.Set(isLBPoolSessPersistenceHttpCookieName, "")
 		d.Set(isLBPoolSessPersistenceAppCookieName, "")
 	}
+
 	d.Set(isLBPoolProvisioningStatus, *lbPool.ProvisioningStatus)
 	d.Set(isLBPoolProxyProtocol, *lbPool.ProxyProtocol)
 	getLoadBalancerOptions := &vpcv1.GetLoadBalancerOptions{
@@ -466,8 +552,46 @@ func lbPoolUpdate(d *schema.ResourceData, meta interface{}, lbID, lbPoolID strin
 	loadBalancerPoolPatchModel := &vpcv1.LoadBalancerPoolPatch{}
 
 	lBPoolHealthMonitorPortRemoved := false
+	isFailSafePolicyTargetNull := false
+	hasFailSafeChanged := false
+	if d.HasChange("failsafe_policy") {
+		failsafePolicy := &vpcv1.LoadBalancerPoolFailsafePolicyPatch{}
+		hasFailSafeChanged = true
+		if d.HasChange("failsafe_policy.0.action") {
+			failsafepolicyAction := d.Get("failsafe_policy.0.action").(string)
+			failsafePolicy.Action = &failsafepolicyAction
+		}
+		if d.HasChange("failsafe_policy.0.target") {
+			failsafepolicyAction := d.Get("failsafe_policy.0.action").(string)
+			failsafePolicy.Action = &failsafepolicyAction
+			targetPatch := &vpcv1.LoadBalancerPoolFailsafePolicyTargetPatch{}
+			failsafepolicyTargetId := d.Get("failsafe_policy.0.target.0.id").(string)
+			if failsafepolicyTargetId == "null" {
+				isFailSafePolicyTargetNull = true
+				var nullStringPtr *string
+				targetPatch.ID = nullStringPtr
+				failsafePolicy.Target = targetPatch
+			} else {
+				targetPatch.ID = &failsafepolicyTargetId
+				failsafePolicy.Target = targetPatch
+
+			}
+			failsafepolicyTargetHref := d.Get("failsafe_policy.0.target.0.href").(string)
+			if failsafepolicyTargetHref == "null" {
+				isFailSafePolicyTargetNull = true
+				var nullStringPtr *string
+				targetPatch.Href = nullStringPtr
+				failsafePolicy.Target = targetPatch
+			} else {
+				targetPatch.Href = &failsafepolicyTargetHref
+				failsafePolicy.Target = targetPatch
+			}
+		}
+		loadBalancerPoolPatchModel.FailsafePolicy = failsafePolicy
+	}
+
 	if d.HasChange(isLBPoolHealthDelay) || d.HasChange(isLBPoolHealthRetries) ||
-		d.HasChange(isLBPoolHealthTimeout) || d.HasChange(isLBPoolHealthType) || d.HasChange(isLBPoolHealthMonitorURL) || d.HasChange(isLBPoolHealthMonitorPort) {
+		d.HasChange(isLBPoolHealthTimeout) || d.HasChange(isLBPoolHealthType) || d.HasChange(isLBPoolHealthMonitorURL) || d.HasChange(isLBPoolHealthMonitorPort) || d.HasChange("failsafe_policy") {
 
 		delay := int64(d.Get(isLBPoolHealthDelay).(int))
 		maxretries := int64(d.Get(isLBPoolHealthRetries).(int))
@@ -516,7 +640,7 @@ func lbPoolUpdate(d *schema.ResourceData, meta interface{}, lbID, lbPoolID strin
 		hasChanged = true
 	}
 
-	if d.HasChange(isLBPoolName) || d.HasChange(isLBPoolAlgorithm) || d.HasChange(isLBPoolProtocol) || hasChanged {
+	if d.HasChange(isLBPoolName) || d.HasChange(isLBPoolAlgorithm) || d.HasChange(isLBPoolProtocol) || hasChanged || hasFailSafeChanged {
 		name := d.Get(isLBPoolName).(string)
 		algorithm := d.Get(isLBPoolAlgorithm).(string)
 		protocol := d.Get(isLBPoolProtocol).(string)
@@ -549,6 +673,9 @@ func lbPoolUpdate(d *schema.ResourceData, meta interface{}, lbID, lbPoolID strin
 		}
 		if lBPoolHealthMonitorPortRemoved {
 			LoadBalancerPoolPatch["health_monitor"].(map[string]interface{})["port"] = nil
+		}
+		if isFailSafePolicyTargetNull {
+			LoadBalancerPoolPatch["failsafe_policy"].(map[string]interface{})["target"] = nil
 		}
 
 		updateLoadBalancerPoolOptions.LoadBalancerPoolPatch = LoadBalancerPoolPatch
@@ -747,4 +874,88 @@ func isLBPoolDeleteRefreshFunc(lbc *vpcv1.VpcV1, lbId, lbPoolId string) resource
 		}
 		return lbPool, isLBPoolDeletePending, nil
 	}
+}
+
+func resourceIBMIsLbPoolMapToLoadBalancerPoolFailsafePolicyPrototype(modelMap map[string]interface{}) (*vpcv1.LoadBalancerPoolFailsafePolicyPrototype, error) {
+	model := &vpcv1.LoadBalancerPoolFailsafePolicyPrototype{}
+	if modelMap["action"] != nil && modelMap["action"].(string) != "" {
+		model.Action = core.StringPtr(modelMap["action"].(string))
+	}
+	if modelMap["target"] != nil && len(modelMap["target"].([]interface{})) > 0 {
+		TargetModel, err := resourceIBMIsLbPoolMapToLoadBalancerPoolIdentity(modelMap["target"].([]interface{})[0].(map[string]interface{}))
+		if err != nil {
+			return model, err
+		}
+		model.Target = TargetModel
+	}
+	return model, nil
+}
+
+func resourceIBMIsLbPoolMapToLoadBalancerPoolIdentity(modelMap map[string]interface{}) (vpcv1.LoadBalancerPoolIdentityIntf, error) {
+	model := &vpcv1.LoadBalancerPoolIdentity{}
+	if modelMap["id"] != nil && modelMap["id"].(string) != "" {
+		model.ID = core.StringPtr(modelMap["id"].(string))
+	}
+	if modelMap["href"] != nil && modelMap["href"].(string) != "" {
+		model.Href = core.StringPtr(modelMap["href"].(string))
+	}
+	return model, nil
+}
+
+func resourceIBMIsLbPoolLoadBalancerPoolFailsafePolicyToMap(model *vpcv1.LoadBalancerPoolFailsafePolicy) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["action"] = *model.Action
+	modelMap["healthy_member_threshold_count"] = flex.IntValue(model.HealthyMemberThresholdCount)
+	if model.Target != nil {
+		targetMap, err := resourceIBMIsLbPoolLoadBalancerPoolReferenceToMap(model.Target)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["target"] = []map[string]interface{}{targetMap}
+	}
+	return modelMap, nil
+}
+
+func resourceIBMIsLbPoolLoadBalancerPoolReferenceToMap(model *vpcv1.LoadBalancerPoolReference) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.Deleted != nil {
+		deletedMap, err := resourceIBMIsLbPoolDeletedToMap(model.Deleted)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["deleted"] = []map[string]interface{}{deletedMap}
+	}
+	modelMap["href"] = *model.Href
+	modelMap["id"] = *model.ID
+	modelMap["name"] = *model.Name
+	return modelMap, nil
+}
+
+func resourceIBMIsLbPoolDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["more_info"] = *model.MoreInfo
+	return modelMap, nil
+}
+
+func suppressNullTarget(k, old, new string, d *schema.ResourceData) bool {
+	// If resource already exists (has an ID) and new value is "null" while old is empty
+	// then suppress the diff
+	if new != old && new == "null" && old == "" && d.Id() != "" {
+		return true
+	}
+
+	oldId, newId := d.GetChange("failsafe_policy.0.target.0.id")
+	oldHref, newHref := d.GetChange("failsafe_policy.0.target.0.href")
+
+	// Check id field
+	if newId.(string) == "null" && oldId.(string) == "" && d.Id() != "" {
+		return true
+	}
+
+	// Check href field
+	if newHref.(string) == "null" && oldHref.(string) == "" && d.Id() != "" {
+		return true
+	}
+
+	return false
 }

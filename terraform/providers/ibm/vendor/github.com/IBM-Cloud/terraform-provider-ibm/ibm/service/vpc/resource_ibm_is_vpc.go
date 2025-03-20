@@ -34,6 +34,7 @@ const (
 	isVPCDefaultSecurityGroupName             = "default_security_group_name"
 	isVPCDefaultSecurityGroupCRN              = "default_security_group_crn"
 	isVPCDefaultRoutingTableName              = "default_routing_table_name"
+	isVPCDefaultRoutingTableCRN               = "default_routing_table_crn"
 	isVPCResourceGroup                        = "resource_group"
 	isVPCStatus                               = "status"
 	isVPCDeleting                             = "deleting"
@@ -116,6 +117,15 @@ func ResourceIBMISVPC() *schema.Resource {
 		),
 
 		Schema: map[string]*schema.Schema{
+
+			"default_address_prefixes": {
+				Type: schema.TypeMap,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Computed:    true,
+				Description: "Default address prefixes for each zone.",
+			},
 			isVPCAddressPrefixManagement: {
 				Type:             schema.TypeString,
 				Optional:         true,
@@ -197,10 +207,11 @@ func ResourceIBMISVPC() *schema.Resource {
 										Description: "The VPC dns binding id whose DNS resolver provides the DNS server addresses for this VPC.",
 									},
 									"dns_binding_name": &schema.Schema{
-										Type:        schema.TypeString,
-										Optional:    true,
-										Computed:    true,
-										Description: "The VPC dns binding name whose DNS resolver provides the DNS server addresses for this VPC.",
+										Type:             schema.TypeString,
+										Optional:         true,
+										DiffSuppressFunc: suppressNullDnsBindingName,
+										Computed:         true,
+										Description:      "The VPC dns binding name whose DNS resolver provides the DNS server addresses for this VPC.",
 									},
 									"vpc_id": &schema.Schema{
 										Type:             schema.TypeString,
@@ -299,6 +310,7 @@ func ResourceIBMISVPC() *schema.Resource {
 			isVPCClassicAccess: {
 				Type:        schema.TypeBool,
 				ForceNew:    true,
+				Deprecated:  "Classic access is deprecated",
 				Default:     false,
 				Optional:    true,
 				Description: "Set to true if classic access needs to enabled to VPC",
@@ -354,6 +366,12 @@ func ResourceIBMISVPC() *schema.Resource {
 				Computed:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_is_vpc", isVPCDefaultRoutingTableName),
 				Description:  "Default routing table name",
+			},
+
+			isVPCDefaultRoutingTableCRN: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Default routing table CRN",
 			},
 
 			isVPCResourceGroup: {
@@ -929,6 +947,51 @@ func vpcGet(d *schema.ResourceData, meta interface{}, id string) error {
 		return fmt.Errorf("[ERROR] Error getting VPC : %s\n%s", err, response)
 	}
 
+	// address prefixes
+
+	vpcID := id // Assuming the VPC ID is stored in the resource ID
+
+	// Fetch all address prefixes for the VPC
+	startAdd := ""
+	allRecs := []vpcv1.AddressPrefix{}
+	for {
+		listVpcAddressPrefixesOptions := &vpcv1.ListVPCAddressPrefixesOptions{
+			VPCID: &vpcID,
+		}
+
+		if startAdd != "" {
+			listVpcAddressPrefixesOptions.Start = &startAdd
+		}
+
+		addressPrefixCollection, response, err := sess.ListVPCAddressPrefixes(listVpcAddressPrefixesOptions)
+		if err != nil {
+			log.Printf("[DEBUG] ListVpcAddressPrefixesWithContext failed %s\n%s", err, response)
+			return fmt.Errorf("ListVpcAddressPrefixesWithContext failed %s\n%s", err, response)
+		}
+
+		allRecs = append(allRecs, addressPrefixCollection.AddressPrefixes...)
+		startAdd = flex.GetNext(addressPrefixCollection.Next)
+		if startAdd == "" {
+			break
+		}
+	}
+
+	// Process address prefixes
+	defaultAddressPrefixes := map[string]string{}
+
+	for _, prefix := range allRecs {
+		zoneName := *prefix.Zone.Name
+		cidr := *prefix.CIDR
+		// Populate default_address_prefixes
+		if *prefix.IsDefault {
+			defaultAddressPrefixes[zoneName] = cidr
+		}
+	}
+
+	// Set the default_address_prefixes attribute in the Terraform state
+	if err := d.Set("default_address_prefixes", defaultAddressPrefixes); err != nil {
+		return fmt.Errorf("error setting default_address_prefixes: %w", err)
+	}
 	d.Set(isVPCName, *vpc.Name)
 	d.Set(isVPCClassicAccess, *vpc.ClassicAccess)
 	d.Set(isVPCStatus, *vpc.Status)
@@ -951,6 +1014,9 @@ func vpcGet(d *schema.ResourceData, meta interface{}, id string) error {
 	if vpc.DefaultRoutingTable != nil {
 		d.Set(isVPCDefaultRoutingTable, *vpc.DefaultRoutingTable.ID)
 		d.Set(isVPCDefaultRoutingTableName, *vpc.DefaultRoutingTable.Name)
+		if vpc.DefaultRoutingTable.CRN != nil {
+			d.Set(isVPCDefaultRoutingTableCRN, *vpc.DefaultRoutingTable.CRN)
+		}
 	}
 	healthReasons := []map[string]interface{}{}
 	if vpc.HealthReasons != nil {
@@ -1284,16 +1350,35 @@ func vpcUpdate(d *schema.ResourceData, meta interface{}, id, name string, hasCha
 	isDnsResolverVPCCrnNull := false
 	isDnsResolverManualServerChange := false
 	isDnsResolverManualServerEtag := ""
+	deleteBinding := false
+	deleteDnsBindings := &vpcv1.DeleteVPCDnsResolutionBindingOptions{}
 	var dnsPatch *vpcv1.VpcdnsPatch
 	if d.HasChange(isVPCDns) {
 		dnsPatch = &vpcv1.VpcdnsPatch{}
 		if d.HasChange("dns.0.enable_hub") {
 			_, newEH := d.GetChange("dns.0.enable_hub")
 			dnsPatch.EnableHub = core.BoolPtr(newEH.(bool))
+			hasDnsChanged = true
 		}
 		if d.HasChange("dns.0.resolver") {
 			_, newResolver := d.GetChange("dns.0.resolver")
-
+			if d.HasChange("dns.0.resolver.0.dns_binding_name") && (d.Get("dns.0.resolver.0.dns_binding_name").(string) != "null" || d.Get("dns.0.resolver.0.dns_binding_name").(string) != "") {
+				dnsBindingName := d.Get("dns.0.resolver.0.dns_binding_name").(string)
+				dnsBindingId := d.Get("dns.0.resolver.0.dns_binding_id").(string)
+				vpcdnsResolutionBindingPatch := &vpcv1.VpcdnsResolutionBindingPatch{
+					Name: &dnsBindingName,
+				}
+				vpcdnsResolutionBindingPatchAsPatch, _ := vpcdnsResolutionBindingPatch.AsPatch()
+				updateVPCDnsResolutionBinding := &vpcv1.UpdateVPCDnsResolutionBindingOptions{
+					ID:                           &dnsBindingId,
+					VPCID:                        core.StringPtr(d.Id()),
+					VpcdnsResolutionBindingPatch: vpcdnsResolutionBindingPatchAsPatch,
+				}
+				_, res, err := sess.UpdateVPCDnsResolutionBinding(updateVPCDnsResolutionBinding)
+				if err != nil {
+					return fmt.Errorf("[ERROR] Error updating dns_binding_name during VPCPatch: %s\n%s", err, res)
+				}
+			}
 			if newResolver != nil && len(newResolver.([]interface{})) > 0 {
 				ResolverModel := &vpcv1.VpcdnsResolverPatch{}
 				if d.HasChange("dns.0.resolver.0.manual_servers") {
@@ -1325,10 +1410,68 @@ func vpcUpdate(d *schema.ResourceData, meta interface{}, id, name string, hasCha
 
 				}
 				if d.HasChange("dns.0.resolver.0.type") {
-					_, newResolverType := d.GetChange("dns.0.resolver.0.type")
+					oldResolverType, newResolverType := d.GetChange("dns.0.resolver.0.type")
 					if newResolverType != nil && newResolverType.(string) != "" {
 						ResolverModel.Type = core.StringPtr(newResolverType.(string))
 					}
+					if oldResolverType != nil && newResolverType != nil && oldResolverType.(string) != "" && newResolverType.(string) != "" {
+						if oldResolverType.(string) == "system" && newResolverType.(string) == "delegated" {
+							vpcId := d.Get("dns.0.resolver.0.vpc_id").(string)
+							createDnsBindings := &vpcv1.CreateVPCDnsResolutionBindingOptions{
+								VPCID: core.StringPtr(d.Id()),
+								VPC: &vpcv1.VPCIdentity{
+									ID: &vpcId,
+								},
+							}
+							if bindingNameOk, ok := d.GetOk("dns.0.resolver.0.dns_binding_name"); ok {
+								bindingName := bindingNameOk.(string)
+								createDnsBindings.Name = &bindingName
+							}
+							_, response, err := sess.CreateVPCDnsResolutionBinding(createDnsBindings)
+							if err != nil {
+								exitError := false
+								log.Printf("[DEBUG] CreateVPCDnsResolutionBindingWithContext failed %s\n%s", err, response)
+								if response.StatusCode == 400 && strings.Contains(err.Error(), "This VPC already contains DNS Resolution Bindings") {
+									listVPCDnsResolutionBindingOptions := &vpcv1.ListVPCDnsResolutionBindingsOptions{
+										VPCID: createDnsBindings.VPCID,
+									}
+
+									pager, err := sess.NewVPCDnsResolutionBindingsPager(listVPCDnsResolutionBindingOptions)
+									if err != nil {
+										return fmt.Errorf("[ERROR] Error getting VPC dns bindings in CreateVPCDnsResolutionBindingWithContext: %s", err)
+									}
+									var allResults []vpcv1.VpcdnsResolutionBinding
+									for pager.HasNext() {
+										nextPage, err := pager.GetNext()
+										if err != nil {
+											return fmt.Errorf("[ERROR] Error getting VPC dns bindings pager next in CreateVPCDnsResolutionBindingWithContext: %s", err)
+										}
+										allResults = append(allResults, nextPage...)
+									}
+									for _, binding := range allResults {
+										if *binding.VPC.ID == vpcId {
+											log.Printf("[DEBUG] CreateVPCDnsResolutionBindingWithContext failed but binding to same vpc exists %s\n%s", err, response)
+											exitError = true
+										}
+									}
+								}
+								if !exitError {
+									return fmt.Errorf("[ERROR] CreateVPCDnsResolutionBinding failed in vpc update resource %s\n%s", err, response)
+								}
+							}
+						}
+						if _, ok := d.GetOk("dns.0.resolver.0.dns_binding_name"); ok {
+						}
+						if d.HasChange("dns.0.resolver.0.dns_binding_name") && d.Get("dns.0.resolver.0.dns_binding_name").(string) == "null" {
+							dnsid := d.Get("dns.0.resolver.0.dns_binding_id").(string)
+							deleteBinding = true
+							deleteDnsBindings = &vpcv1.DeleteVPCDnsResolutionBindingOptions{
+								VPCID: core.StringPtr(d.Id()),
+								ID:    &dnsid,
+							}
+						}
+					}
+					hasDnsChanged = true
 				}
 				if d.HasChange("dns.0.resolver.0.vpc_id") {
 					_, newResolverVpc := d.GetChange("dns.0.resolver.0.vpc_id")
@@ -1346,6 +1489,7 @@ func vpcUpdate(d *schema.ResourceData, meta interface{}, id, name string, hasCha
 							}
 						}
 					}
+					hasDnsChanged = true
 				}
 				if d.HasChange("dns.0.resolver.0.vpc_crn") {
 					_, newResolverVpc := d.GetChange("dns.0.resolver.0.vpc_crn")
@@ -1363,11 +1507,11 @@ func vpcUpdate(d *schema.ResourceData, meta interface{}, id, name string, hasCha
 							}
 						}
 					}
+					hasDnsChanged = true
 				}
 				dnsPatch.Resolver = ResolverModel
 			}
 		}
-		hasDnsChanged = true
 	}
 	if hasChanged || hasDnsChanged {
 		updateVpcOptions := &vpcv1.UpdateVPCOptions{
@@ -1408,6 +1552,13 @@ func vpcUpdate(d *schema.ResourceData, meta interface{}, id, name string, hasCha
 				}
 			} else {
 				return fmt.Errorf("[ERROR] Error Updating VPC : %s\n%s", err, response)
+			}
+		}
+		if deleteBinding && *deleteDnsBindings.VPCID != "" {
+			_, response, err := sess.DeleteVPCDnsResolutionBinding(deleteDnsBindings)
+			if err != nil {
+				log.Printf("[DEBUG] DeleteVPCDnsResolutionBindingWithContext failed %s\n%s", err, response)
+				return fmt.Errorf("[ERROR] DeleteVPCDnsResolutionBinding failed in vpc update resource %s\n%s", err, response)
 			}
 		}
 		if isDnsResolverVPCCrnNull || isDnsResolverVPCIDNull {
@@ -1599,6 +1750,13 @@ func suppressNullAddPrefix(k, old, new string, d *schema.ResourceData) bool {
 }
 
 func suppressNullVPC(k, old, new string, d *schema.ResourceData) bool {
+	if new != old && new == "null" && old == "" && d.Id() != "" {
+		return true
+	}
+	return false
+}
+
+func suppressNullDnsBindingName(k, old, new string, d *schema.ResourceData) bool {
 	if new != old && new == "null" && old == "" && d.Id() != "" {
 		return true
 	}

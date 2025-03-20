@@ -95,7 +95,7 @@ func DataSourceIbmSmSecrets() *schema.Resource {
 						"id": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "A v4 UUID identifier.",
+							Description: "A UUID identifier.",
 						},
 						"labels": &schema.Schema{
 							Type:        schema.TypeList,
@@ -118,7 +118,7 @@ func DataSourceIbmSmSecrets() *schema.Resource {
 						"secret_group_id": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "A v4 UUID identifier, or `default` secret group.",
+							Description: "A UUID identifier, or `default` secret group.",
 						},
 						"secret_type": &schema.Schema{
 							Type:        schema.TypeString,

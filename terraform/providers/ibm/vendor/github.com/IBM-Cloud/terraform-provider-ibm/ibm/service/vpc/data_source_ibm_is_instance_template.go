@@ -11,6 +11,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -74,6 +75,104 @@ func DataSourceIBMISInstanceTemplate() *schema.Resource {
 				Optional:     true,
 				Computed:     true,
 				ExactlyOneOf: []string{"identifier", isInstanceTemplateName},
+			},
+
+			// cluster changes
+			"cluster_network_attachments": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The cluster network attachments to create for this virtual server instance. A cluster network attachment represents a device that is connected to a cluster network. The number of network attachments must match one of the values from the instance profile's `cluster_network_attachment_count` before the instance can be started.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"cluster_network_interface": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "A cluster network interface for the instance cluster network attachment. This can bespecified using an existing cluster network interface that does not already have a `target`,or a prototype object for a new cluster network interface.This instance must reside in the same VPC as the specified cluster network interface. Thecluster network interface must reside in the same cluster network as the`cluster_network_interface` of any other `cluster_network_attachments` for this instance.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"auto_delete": &schema.Schema{
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "Indicates whether this cluster network interface will be automatically deleted when `target` is deleted.",
+									},
+									"name": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The name for this cluster network interface. The name must not be used by another interface in the cluster network. Names beginning with `ibm-` are reserved for provider-owned resources, and are not allowed. If unspecified, the name will be a hyphenated list of randomly-selected words.",
+									},
+									"primary_ip": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "The primary IP address to bind to the cluster network interface. May be eithera cluster network subnet reserved IP identity, or a cluster network subnet reserved IPprototype object which will be used to create a new cluster network subnet reserved IP.If a cluster network subnet reserved IP identity is provided, the specified clusternetwork subnet reserved IP must be unbound.If a cluster network subnet reserved IP prototype object with an address is provided,the address must be available on the cluster network interface's cluster networksubnet. If no address is specified, an available address on the cluster network subnetwill be automatically selected and reserved.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"id": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The unique identifier for this cluster network subnet reserved IP.",
+												},
+												"href": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The URL for this cluster network subnet reserved IP.",
+												},
+												"address": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The IP address to reserve, which must not already be reserved on the subnet.If unspecified, an available address on the subnet will automatically be selected.",
+												},
+												"auto_delete": &schema.Schema{
+													Type:        schema.TypeBool,
+													Computed:    true,
+													Description: "Indicates whether this cluster network subnet reserved IP member will be automatically deleted when either `target` is deleted, or the cluster network subnet reserved IP is unbound.",
+												},
+												"name": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The name for this cluster network subnet reserved IP. The name must not be used by another reserved IP in the cluster network subnet. Names starting with `ibm-` are reserved for provider-owned resources, and are not allowed. If unspecified, the name will be a hyphenated list of randomly-selected words.",
+												},
+											},
+										},
+									},
+									"subnet": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "The associated cluster network subnet. Required if `primary_ip` does not specify acluster network subnet reserved IP identity.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"id": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The unique identifier for this cluster network subnet.",
+												},
+												"href": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The URL for this cluster network subnet.",
+												},
+											},
+										},
+									},
+									"id": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The unique identifier for this cluster network interface.",
+									},
+									"href": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The URL for this cluster network interface.",
+									},
+								},
+							},
+						},
+						"name": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The name for this cluster network attachment. Names must be unique within the instance the cluster network attachment resides in. If unspecified, the name will be a hyphenated list of randomly-selected words. Names starting with `ibm-` are reserved for provider-owned resources, and are not allowed.",
+						},
+					},
+				},
 			},
 			"confidential_compute_mode": &schema.Schema{
 				Type:        schema.TypeString,
@@ -883,15 +982,30 @@ func dataSourceIBMISInstanceTemplateRead(context context.Context, d *schema.Reso
 				switch reflect.TypeOf(instance.DefaultTrustedProfile.Target).String() {
 				case "*vpcv1.TrustedProfileIdentityTrustedProfileByID":
 					{
-						target := instance.DefaultTrustedProfile.Target.(*vpcv1.TrustedProfileIdentityTrustedProfileByID)
+						target := instance.DefaultTrustedProfile.Target.(*vpcv1.TrustedProfileIdentityByID)
 						d.Set(isInstanceDefaultTrustedProfileTarget, target.ID)
 					}
 				case "*vpcv1.TrustedProfileIdentityTrustedProfileByCRN":
 					{
-						target := instance.DefaultTrustedProfile.Target.(*vpcv1.TrustedProfileIdentityTrustedProfileByCRN)
+						target := instance.DefaultTrustedProfile.Target.(*vpcv1.TrustedProfileIdentityByCRN)
 						d.Set(isInstanceDefaultTrustedProfileTarget, target.CRN)
 					}
 				}
+			}
+		}
+
+		// cluster changes
+		if !core.IsNil(instance.ClusterNetworkAttachments) {
+			clusterNetworkAttachments := []map[string]interface{}{}
+			for _, clusterNetworkAttachmentsItem := range instance.ClusterNetworkAttachments {
+				clusterNetworkAttachmentsItemMap, err := DataSourceIBMIsInstanceTemplateInstanceClusterNetworkAttachmentPrototypeInstanceContextToMap(&clusterNetworkAttachmentsItem) // #nosec G601
+				if err != nil {
+					return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_is_instance_template", "read", "cluster_network_attachments-to-map").GetDiag()
+				}
+				clusterNetworkAttachments = append(clusterNetworkAttachments, clusterNetworkAttachmentsItemMap)
+			}
+			if err = d.Set("cluster_network_attachments", clusterNetworkAttachments); err != nil {
+				return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting cluster_network_attachments: %s", err), "(Data) ibm_is_instance_template", "read", "set-cluster_network_attachments").GetDiag()
 			}
 		}
 
@@ -1205,6 +1319,21 @@ func dataSourceIBMISInstanceTemplateRead(context context.Context, d *schema.Reso
 				if err = d.Set("enable_secure_boot", instance.EnableSecureBoot); err != nil {
 					return diag.FromErr(fmt.Errorf("[ERROR] Error setting enable_secure_boot: %s", err))
 				}
+				// cluster changes
+				if !core.IsNil(instance.ClusterNetworkAttachments) {
+					clusterNetworkAttachments := []map[string]interface{}{}
+					for _, clusterNetworkAttachmentsItem := range instance.ClusterNetworkAttachments {
+						clusterNetworkAttachmentsItemMap, err := DataSourceIBMIsInstanceTemplateInstanceClusterNetworkAttachmentPrototypeInstanceContextToMap(&clusterNetworkAttachmentsItem) // #nosec G601
+						if err != nil {
+							return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_is_instance_template", "read", "cluster_network_attachments-to-map").GetDiag()
+						}
+						clusterNetworkAttachments = append(clusterNetworkAttachments, clusterNetworkAttachmentsItemMap)
+					}
+					if err = d.Set("cluster_network_attachments", clusterNetworkAttachments); err != nil {
+						return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting cluster_network_attachments: %s", err), "(Data) ibm_is_instance_template", "read", "set-cluster_network_attachments").GetDiag()
+					}
+				}
+
 				// catalog offering if any
 				if instance.CatalogOffering != nil {
 					catOfferingList := make([]map[string]interface{}, 0)
@@ -1265,12 +1394,12 @@ func dataSourceIBMISInstanceTemplateRead(context context.Context, d *schema.Reso
 						switch reflect.TypeOf(instance.DefaultTrustedProfile.Target).String() {
 						case "*vpcv1.TrustedProfileIdentityTrustedProfileByID":
 							{
-								target := instance.DefaultTrustedProfile.Target.(*vpcv1.TrustedProfileIdentityTrustedProfileByID)
+								target := instance.DefaultTrustedProfile.Target.(*vpcv1.TrustedProfileIdentityByID)
 								d.Set(isInstanceDefaultTrustedProfileTarget, target.ID)
 							}
 						case "*vpcv1.TrustedProfileIdentityTrustedProfileByCRN":
 							{
-								target := instance.DefaultTrustedProfile.Target.(*vpcv1.TrustedProfileIdentityTrustedProfileByCRN)
+								target := instance.DefaultTrustedProfile.Target.(*vpcv1.TrustedProfileIdentityByCRN)
 								d.Set(isInstanceDefaultTrustedProfileTarget, target.CRN)
 							}
 						}
@@ -2173,5 +2302,222 @@ func dataSourceIBMIsInstanceTemplateInstanceCatalogOfferingPrototypeCatalogOffer
 		return modelMap, err
 	}
 	modelMap["version"] = []map[string]interface{}{versionMap}
+	return modelMap, nil
+}
+
+func DataSourceIBMIsInstanceTemplateInstanceClusterNetworkAttachmentPrototypeInstanceContextToMap(model *vpcv1.InstanceClusterNetworkAttachmentPrototypeInstanceContext) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	clusterNetworkInterfaceMap, err := DataSourceIBMIsInstanceTemplateInstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceToMap(model.ClusterNetworkInterface)
+	if err != nil {
+		return modelMap, err
+	}
+	modelMap["cluster_network_interface"] = []map[string]interface{}{clusterNetworkInterfaceMap}
+	if model.Name != nil {
+		modelMap["name"] = *model.Name
+	}
+	return modelMap, nil
+}
+
+func DataSourceIBMIsInstanceTemplateInstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceToMap(model vpcv1.InstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceIntf) (map[string]interface{}, error) {
+	if _, ok := model.(*vpcv1.InstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceInstanceClusterNetworkInterfacePrototypeInstanceClusterNetworkAttachment); ok {
+		return DataSourceIBMIsInstanceTemplateInstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceInstanceClusterNetworkInterfacePrototypeInstanceClusterNetworkAttachmentToMap(model.(*vpcv1.InstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceInstanceClusterNetworkInterfacePrototypeInstanceClusterNetworkAttachment))
+	} else if _, ok := model.(*vpcv1.InstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceClusterNetworkInterfaceIdentity); ok {
+		return DataSourceIBMIsInstanceTemplateInstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceClusterNetworkInterfaceIdentityToMap(model.(*vpcv1.InstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceClusterNetworkInterfaceIdentity))
+	} else if _, ok := model.(*vpcv1.InstanceClusterNetworkAttachmentPrototypeClusterNetworkInterface); ok {
+		modelMap := make(map[string]interface{})
+		model := model.(*vpcv1.InstanceClusterNetworkAttachmentPrototypeClusterNetworkInterface)
+		if model.AutoDelete != nil {
+			modelMap["auto_delete"] = *model.AutoDelete
+		}
+		if model.Name != nil {
+			modelMap["name"] = *model.Name
+		}
+		if model.PrimaryIP != nil {
+			primaryIPMap, err := DataSourceIBMIsInstanceTemplateClusterNetworkInterfacePrimaryIPPrototypeToMap(model.PrimaryIP)
+			if err != nil {
+				return modelMap, err
+			}
+			modelMap["primary_ip"] = []map[string]interface{}{primaryIPMap}
+		}
+		if model.Subnet != nil {
+			subnetMap, err := DataSourceIBMIsInstanceTemplateClusterNetworkSubnetIdentityToMap(model.Subnet)
+			if err != nil {
+				return modelMap, err
+			}
+			modelMap["subnet"] = []map[string]interface{}{subnetMap}
+		}
+		if model.ID != nil {
+			modelMap["id"] = *model.ID
+		}
+		if model.Href != nil {
+			modelMap["href"] = *model.Href
+		}
+		return modelMap, nil
+	} else {
+		return nil, fmt.Errorf("Unrecognized vpcv1.InstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceIntf subtype encountered")
+	}
+}
+
+func DataSourceIBMIsInstanceTemplateClusterNetworkInterfacePrimaryIPPrototypeToMap(model vpcv1.ClusterNetworkInterfacePrimaryIPPrototypeIntf) (map[string]interface{}, error) {
+	if _, ok := model.(*vpcv1.ClusterNetworkInterfacePrimaryIPPrototypeClusterNetworkSubnetReservedIPIdentityClusterNetworkInterfacePrimaryIPContext); ok {
+		return DataSourceIBMIsInstanceTemplateClusterNetworkInterfacePrimaryIPPrototypeClusterNetworkSubnetReservedIPIdentityClusterNetworkInterfacePrimaryIPContextToMap(model.(*vpcv1.ClusterNetworkInterfacePrimaryIPPrototypeClusterNetworkSubnetReservedIPIdentityClusterNetworkInterfacePrimaryIPContext))
+	} else if _, ok := model.(*vpcv1.ClusterNetworkInterfacePrimaryIPPrototypeClusterNetworkSubnetReservedIPPrototypeClusterNetworkInterfacePrimaryIPContext); ok {
+		return DataSourceIBMIsInstanceTemplateClusterNetworkInterfacePrimaryIPPrototypeClusterNetworkSubnetReservedIPPrototypeClusterNetworkInterfacePrimaryIPContextToMap(model.(*vpcv1.ClusterNetworkInterfacePrimaryIPPrototypeClusterNetworkSubnetReservedIPPrototypeClusterNetworkInterfacePrimaryIPContext))
+	} else if _, ok := model.(*vpcv1.ClusterNetworkInterfacePrimaryIPPrototype); ok {
+		modelMap := make(map[string]interface{})
+		model := model.(*vpcv1.ClusterNetworkInterfacePrimaryIPPrototype)
+		if model.ID != nil {
+			modelMap["id"] = *model.ID
+		}
+		if model.Href != nil {
+			modelMap["href"] = *model.Href
+		}
+		if model.Address != nil {
+			modelMap["address"] = *model.Address
+		}
+		if model.AutoDelete != nil {
+			modelMap["auto_delete"] = *model.AutoDelete
+		}
+		if model.Name != nil {
+			modelMap["name"] = *model.Name
+		}
+		return modelMap, nil
+	} else {
+		return nil, fmt.Errorf("Unrecognized vpcv1.ClusterNetworkInterfacePrimaryIPPrototypeIntf subtype encountered")
+	}
+}
+
+func DataSourceIBMIsInstanceTemplateClusterNetworkInterfacePrimaryIPPrototypeClusterNetworkSubnetReservedIPIdentityClusterNetworkInterfacePrimaryIPContextToMap(model vpcv1.ClusterNetworkInterfacePrimaryIPPrototypeClusterNetworkSubnetReservedIPIdentityClusterNetworkInterfacePrimaryIPContextIntf) (map[string]interface{}, error) {
+	if _, ok := model.(*vpcv1.ClusterNetworkInterfacePrimaryIPPrototypeClusterNetworkSubnetReservedIPIdentityClusterNetworkInterfacePrimaryIPContextByID); ok {
+		return DataSourceIBMIsInstanceTemplateClusterNetworkInterfacePrimaryIPPrototypeClusterNetworkSubnetReservedIPIdentityClusterNetworkInterfacePrimaryIPContextByIDToMap(model.(*vpcv1.ClusterNetworkInterfacePrimaryIPPrototypeClusterNetworkSubnetReservedIPIdentityClusterNetworkInterfacePrimaryIPContextByID))
+	} else if _, ok := model.(*vpcv1.ClusterNetworkInterfacePrimaryIPPrototypeClusterNetworkSubnetReservedIPIdentityClusterNetworkInterfacePrimaryIPContextByHref); ok {
+		return DataSourceIBMIsInstanceTemplateClusterNetworkInterfacePrimaryIPPrototypeClusterNetworkSubnetReservedIPIdentityClusterNetworkInterfacePrimaryIPContextByHrefToMap(model.(*vpcv1.ClusterNetworkInterfacePrimaryIPPrototypeClusterNetworkSubnetReservedIPIdentityClusterNetworkInterfacePrimaryIPContextByHref))
+	} else if _, ok := model.(*vpcv1.ClusterNetworkInterfacePrimaryIPPrototypeClusterNetworkSubnetReservedIPIdentityClusterNetworkInterfacePrimaryIPContext); ok {
+		modelMap := make(map[string]interface{})
+		model := model.(*vpcv1.ClusterNetworkInterfacePrimaryIPPrototypeClusterNetworkSubnetReservedIPIdentityClusterNetworkInterfacePrimaryIPContext)
+		if model.ID != nil {
+			modelMap["id"] = *model.ID
+		}
+		if model.Href != nil {
+			modelMap["href"] = *model.Href
+		}
+		return modelMap, nil
+	} else {
+		return nil, fmt.Errorf("Unrecognized vpcv1.ClusterNetworkInterfacePrimaryIPPrototypeClusterNetworkSubnetReservedIPIdentityClusterNetworkInterfacePrimaryIPContextIntf subtype encountered")
+	}
+}
+
+func DataSourceIBMIsInstanceTemplateClusterNetworkInterfacePrimaryIPPrototypeClusterNetworkSubnetReservedIPIdentityClusterNetworkInterfacePrimaryIPContextByIDToMap(model *vpcv1.ClusterNetworkInterfacePrimaryIPPrototypeClusterNetworkSubnetReservedIPIdentityClusterNetworkInterfacePrimaryIPContextByID) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["id"] = *model.ID
+	return modelMap, nil
+}
+
+func DataSourceIBMIsInstanceTemplateClusterNetworkInterfacePrimaryIPPrototypeClusterNetworkSubnetReservedIPIdentityClusterNetworkInterfacePrimaryIPContextByHrefToMap(model *vpcv1.ClusterNetworkInterfacePrimaryIPPrototypeClusterNetworkSubnetReservedIPIdentityClusterNetworkInterfacePrimaryIPContextByHref) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["href"] = *model.Href
+	return modelMap, nil
+}
+
+func DataSourceIBMIsInstanceTemplateClusterNetworkInterfacePrimaryIPPrototypeClusterNetworkSubnetReservedIPPrototypeClusterNetworkInterfacePrimaryIPContextToMap(model *vpcv1.ClusterNetworkInterfacePrimaryIPPrototypeClusterNetworkSubnetReservedIPPrototypeClusterNetworkInterfacePrimaryIPContext) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.Address != nil {
+		modelMap["address"] = *model.Address
+	}
+	if model.AutoDelete != nil {
+		modelMap["auto_delete"] = *model.AutoDelete
+	}
+	if model.Name != nil {
+		modelMap["name"] = *model.Name
+	}
+	return modelMap, nil
+}
+
+func DataSourceIBMIsInstanceTemplateClusterNetworkSubnetIdentityToMap(model vpcv1.ClusterNetworkSubnetIdentityIntf) (map[string]interface{}, error) {
+	if _, ok := model.(*vpcv1.ClusterNetworkSubnetIdentityByID); ok {
+		return DataSourceIBMIsInstanceTemplateClusterNetworkSubnetIdentityByIDToMap(model.(*vpcv1.ClusterNetworkSubnetIdentityByID))
+	} else if _, ok := model.(*vpcv1.ClusterNetworkSubnetIdentityByHref); ok {
+		return DataSourceIBMIsInstanceTemplateClusterNetworkSubnetIdentityByHrefToMap(model.(*vpcv1.ClusterNetworkSubnetIdentityByHref))
+	} else if _, ok := model.(*vpcv1.ClusterNetworkSubnetIdentity); ok {
+		modelMap := make(map[string]interface{})
+		model := model.(*vpcv1.ClusterNetworkSubnetIdentity)
+		if model.ID != nil {
+			modelMap["id"] = *model.ID
+		}
+		if model.Href != nil {
+			modelMap["href"] = *model.Href
+		}
+		return modelMap, nil
+	} else {
+		return nil, fmt.Errorf("Unrecognized vpcv1.ClusterNetworkSubnetIdentityIntf subtype encountered")
+	}
+}
+
+func DataSourceIBMIsInstanceTemplateClusterNetworkSubnetIdentityByIDToMap(model *vpcv1.ClusterNetworkSubnetIdentityByID) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["id"] = *model.ID
+	return modelMap, nil
+}
+
+func DataSourceIBMIsInstanceTemplateClusterNetworkSubnetIdentityByHrefToMap(model *vpcv1.ClusterNetworkSubnetIdentityByHref) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["href"] = *model.Href
+	return modelMap, nil
+}
+
+func DataSourceIBMIsInstanceTemplateInstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceInstanceClusterNetworkInterfacePrototypeInstanceClusterNetworkAttachmentToMap(model *vpcv1.InstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceInstanceClusterNetworkInterfacePrototypeInstanceClusterNetworkAttachment) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.AutoDelete != nil {
+		modelMap["auto_delete"] = *model.AutoDelete
+	}
+	if model.Name != nil {
+		modelMap["name"] = *model.Name
+	}
+	if model.PrimaryIP != nil {
+		primaryIPMap, err := DataSourceIBMIsInstanceTemplateClusterNetworkInterfacePrimaryIPPrototypeToMap(model.PrimaryIP)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["primary_ip"] = []map[string]interface{}{primaryIPMap}
+	}
+	if model.Subnet != nil {
+		subnetMap, err := DataSourceIBMIsInstanceTemplateClusterNetworkSubnetIdentityToMap(model.Subnet)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["subnet"] = []map[string]interface{}{subnetMap}
+	}
+	return modelMap, nil
+}
+
+func DataSourceIBMIsInstanceTemplateInstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceClusterNetworkInterfaceIdentityToMap(model vpcv1.InstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceClusterNetworkInterfaceIdentityIntf) (map[string]interface{}, error) {
+	if _, ok := model.(*vpcv1.InstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceClusterNetworkInterfaceIdentityClusterNetworkInterfaceIdentityByID); ok {
+		return DataSourceIBMIsInstanceTemplateInstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceClusterNetworkInterfaceIdentityClusterNetworkInterfaceIdentityByIDToMap(model.(*vpcv1.InstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceClusterNetworkInterfaceIdentityClusterNetworkInterfaceIdentityByID))
+	} else if _, ok := model.(*vpcv1.InstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceClusterNetworkInterfaceIdentityClusterNetworkInterfaceIdentityByHref); ok {
+		return DataSourceIBMIsInstanceTemplateInstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceClusterNetworkInterfaceIdentityClusterNetworkInterfaceIdentityByHrefToMap(model.(*vpcv1.InstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceClusterNetworkInterfaceIdentityClusterNetworkInterfaceIdentityByHref))
+	} else if _, ok := model.(*vpcv1.InstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceClusterNetworkInterfaceIdentity); ok {
+		modelMap := make(map[string]interface{})
+		model := model.(*vpcv1.InstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceClusterNetworkInterfaceIdentity)
+		if model.ID != nil {
+			modelMap["id"] = *model.ID
+		}
+		if model.Href != nil {
+			modelMap["href"] = *model.Href
+		}
+		return modelMap, nil
+	} else {
+		return nil, fmt.Errorf("Unrecognized vpcv1.InstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceClusterNetworkInterfaceIdentityIntf subtype encountered")
+	}
+}
+
+func DataSourceIBMIsInstanceTemplateInstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceClusterNetworkInterfaceIdentityClusterNetworkInterfaceIdentityByIDToMap(model *vpcv1.InstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceClusterNetworkInterfaceIdentityClusterNetworkInterfaceIdentityByID) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["id"] = *model.ID
+	return modelMap, nil
+}
+
+func DataSourceIBMIsInstanceTemplateInstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceClusterNetworkInterfaceIdentityClusterNetworkInterfaceIdentityByHrefToMap(model *vpcv1.InstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceClusterNetworkInterfaceIdentityClusterNetworkInterfaceIdentityByHref) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["href"] = *model.Href
 	return modelMap, nil
 }

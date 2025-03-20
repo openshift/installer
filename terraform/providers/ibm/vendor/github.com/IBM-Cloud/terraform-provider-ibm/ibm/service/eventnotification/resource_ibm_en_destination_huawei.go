@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -113,7 +114,9 @@ func ResourceIBMEnHuaweiDestination() *schema.Resource {
 func resourceIBMEnHuaweiDestinationCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_huawei", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.CreateDestinationOptions{}
@@ -132,9 +135,11 @@ func resourceIBMEnHuaweiDestinationCreate(context context.Context, d *schema.Res
 		options.SetConfig(&config)
 	}
 
-	result, response, err := enClient.CreateDestinationWithContext(context, options)
+	result, _, err := enClient.CreateDestinationWithContext(context, options)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("CreateDestinationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateDestinationWithContext failed: %s", err.Error()), "ibm_en_destination_huawei", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *options.InstanceID, *result.ID))
@@ -145,14 +150,17 @@ func resourceIBMEnHuaweiDestinationCreate(context context.Context, d *schema.Res
 func resourceIBMEnHuaweiDestinationRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_huawei", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.GetDestinationOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_huawei", "read")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
@@ -164,7 +172,9 @@ func resourceIBMEnHuaweiDestinationRead(context context.Context, d *schema.Resou
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("GetDestinationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetDestinationWithContext failed: %s", err.Error()), "ibm_en_destination_huawei", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("instance_guid", options.InstanceID); err != nil {
@@ -217,14 +227,17 @@ func resourceIBMEnHuaweiDestinationRead(context context.Context, d *schema.Resou
 func resourceIBMEnHuaweiDestinationUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_huawei", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.UpdateDestinationOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_huawei", "update")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
@@ -245,9 +258,11 @@ func resourceIBMEnHuaweiDestinationUpdate(context context.Context, d *schema.Res
 			config := HuaweidestinationConfigMapToDestinationConfig(d.Get("config.0.params.0").(map[string]interface{}), destinationtype)
 			options.SetConfig(&config)
 		}
-		_, response, err := enClient.UpdateDestinationWithContext(context, options)
+		_, _, err := enClient.UpdateDestinationWithContext(context, options)
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("UpdateDestinationWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateDestinationWithContext failed: %s", err.Error()), "ibm_en_destination_huawei", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 
 		return resourceIBMEnHuaweiDestinationRead(context, d, meta)
@@ -259,14 +274,17 @@ func resourceIBMEnHuaweiDestinationUpdate(context context.Context, d *schema.Res
 func resourceIBMEnHuaweiDestinationDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_huawei", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.DeleteDestinationOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_huawei", "delete")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
@@ -278,7 +296,9 @@ func resourceIBMEnHuaweiDestinationDelete(context context.Context, d *schema.Res
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("DeleteDestinationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteDestinationWithContext failed: %s", err.Error()), "ibm_en_destination_huawei", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")

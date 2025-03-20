@@ -860,7 +860,7 @@ func waitForResourceInstanceCreate(d *schema.ResourceData, meta interface{}) (in
 
 	stateConf := &retry.StateChangeConf{
 		Pending: []string{RsInstanceProgressStatus, RsInstanceInactiveStatus, RsInstanceProvisioningStatus},
-		Target:  []string{RsInstanceSuccessStatus},
+		Target:  []string{RsInstanceSuccessStatus, RsInstanceUpdateSuccessStatus},
 		Refresh: func() (interface{}, string, error) {
 			instance, resp, err := rsConClient.GetResourceInstance(&resourceInstanceGet)
 			if err != nil {
@@ -869,10 +869,18 @@ func waitForResourceInstanceCreate(d *schema.ResourceData, meta interface{}) (in
 				}
 				return nil, "", fmt.Errorf("[ERROR] Get the resource instance %s failed with resp code: %s, err: %v", d.Id(), resp, err)
 			}
+			if instance.LastOperation != nil && instance.LastOperation.Async != nil && *instance.LastOperation.Async {
+				if *instance.LastOperation.State == RsInstanceFailStatus {
+					return instance, *instance.LastOperation.State, fmt.Errorf("[ERROR] The resource instance '%s' create failed during async operation. error: %v\nlast_operation_description: %+v", d.Id(), err, *instance.LastOperation.Description)
+				}
+				return instance, *instance.LastOperation.State, nil
+			}
+
 			if *instance.State == RsInstanceFailStatus {
-				return instance, *instance.State, fmt.Errorf("[ERROR] The resource instance '%s' creation failed: %v", d.Id(), err)
+				return instance, *instance.State, fmt.Errorf("[ERROR] The resource instance '%s' creation failed: %v\n response: %+v", d.Id(), err, resp)
 			}
 			return instance, *instance.State, nil
+
 		},
 		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      10 * time.Second,
@@ -905,15 +913,15 @@ func waitForResourceInstanceUpdate(d *schema.ResourceData, meta interface{}) (in
 			}
 			if instance.LastOperation != nil && instance.LastOperation.Async != nil && *instance.LastOperation.Async {
 				if *instance.LastOperation.State == RsInstanceFailStatus {
-					return instance, *instance.LastOperation.State, fmt.Errorf("[ERROR] The resource instance '%s' update failed: %v", d.Id(), err)
+					return instance, *instance.LastOperation.State, fmt.Errorf("[ERROR] The resource instance '%s' update failed during async operation. error: %v\nlast_operation_description: %+v", d.Id(), err, *instance.LastOperation.Description)
 				}
 				return instance, *instance.LastOperation.State, nil
-			} else {
-				if *instance.State == RsInstanceFailStatus {
-					return instance, *instance.State, fmt.Errorf("[ERROR] The resource instance '%s' update failed: %v", d.Id(), err)
-				}
-				return instance, *instance.State, nil
 			}
+			if *instance.State == RsInstanceFailStatus {
+				return instance, *instance.State, fmt.Errorf("[ERROR] The resource instance '%s' update failed: %v\n response: %+v", d.Id(), err, resp)
+			}
+			return instance, *instance.State, nil
+
 		},
 		Timeout:    d.Timeout(schema.TimeoutUpdate),
 		Delay:      10 * time.Second,

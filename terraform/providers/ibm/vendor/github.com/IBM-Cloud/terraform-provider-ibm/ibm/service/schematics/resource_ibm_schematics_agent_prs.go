@@ -79,11 +79,15 @@ func ResourceIbmSchematicsAgentPrs() *schema.Resource {
 func resourceIbmSchematicsAgentPrsCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentPrsCreate schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_agent_prs", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	session, err := meta.(conns.ClientSession).BluemixSession()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentPrsCreate bluemixClient initialization failed: %s", err.Error()), "ibm_schematics_agent_prs", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	iamAccessToken := session.Config.IAMAccessToken
 	iamRefreshToken := session.Config.IAMRefreshToken
@@ -101,8 +105,10 @@ func resourceIbmSchematicsAgentPrsCreate(context context.Context, d *schema.Reso
 
 	agentPrsJob, response, err := schematicsClient.PrsAgentJobWithContext(context, prsAgentJobOptions)
 	if err != nil {
-		log.Printf("[DEBUG] PrsAgentJobWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("PrsAgentJobWithContext failed %s\n%s", err, response))
+
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentPrsCreate PrsAgentJobWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_agent_prs", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *prsAgentJobOptions.AgentID, *agentPrsJob.JobID))
@@ -113,12 +119,16 @@ func resourceIbmSchematicsAgentPrsCreate(context context.Context, d *schema.Reso
 func resourceIbmSchematicsAgentPrsRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentPrsRead schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_agent_prs", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentPrsRead failed: %s", err.Error()), "ibm_schematics_agent_prs", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getAgentDataOptions := &schematicsv1.GetAgentDataOptions{
@@ -133,34 +143,52 @@ func resourceIbmSchematicsAgentPrsRead(context context.Context, d *schema.Resour
 			d.SetId("")
 			return nil
 		}
-		log.Printf("[DEBUG] GetAgentDataWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetAgentDataWithContext failed %s\n%s", err, response))
+
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentPrsRead GetAgentDataWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_agent_prs", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if agentData.RecentPrsJob != nil {
 
 		if err = d.Set("agent_id", parts[0]); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting agent_id: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentPrsRead failed with error: %s", err), "ibm_schematics_agent_prs", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("job_id", agentData.RecentPrsJob.JobID); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting job_id: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentPrsRead failed with error: %s", err), "ibm_schematics_agent_prs", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("updated_at", flex.DateTimeToString(agentData.RecentPrsJob.UpdatedAt)); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentPrsRead failed with error: %s", err), "ibm_schematics_agent_prs", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("updated_by", agentData.RecentPrsJob.UpdatedBy); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting updated_by: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentPrsRead failed with error: %s", err), "ibm_schematics_agent_prs", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("agent_version", agentData.Version); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting agent_version: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentPrsRead failed with error: %s", err), "ibm_schematics_agent_prs", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("status_code", agentData.RecentPrsJob.StatusCode); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting status_code: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentPrsRead failed with error: %s", err), "ibm_schematics_agent_prs", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("status_message", agentData.RecentPrsJob.StatusMessage); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting status_message: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentPrsRead failed with error: %s", err), "ibm_schematics_agent_prs", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("log_url", agentData.RecentPrsJob.LogURL); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting log_url: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentPrsRead failed with error: %s", err), "ibm_schematics_agent_prs", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 
 	}
@@ -170,11 +198,15 @@ func resourceIbmSchematicsAgentPrsRead(context context.Context, d *schema.Resour
 func resourceIbmSchematicsAgentPrsUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentPrsUpdate schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_agent_prs", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	session, err := meta.(conns.ClientSession).BluemixSession()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentPrsUpdate bluemixClient initialization failed: %s", err.Error()), "ibm_schematics_agent_prs", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	iamAccessToken := session.Config.IAMAccessToken
 	iamRefreshToken := session.Config.IAMRefreshToken
@@ -188,7 +220,9 @@ func resourceIbmSchematicsAgentPrsUpdate(context context.Context, d *schema.Reso
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentPrsUpdate failed: %s", err.Error()), "ibm_schematics_agent_prs", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	prsAgentJobOptions.SetAgentID(parts[0])
@@ -196,8 +230,9 @@ func resourceIbmSchematicsAgentPrsUpdate(context context.Context, d *schema.Reso
 	hasChange := false
 
 	if d.HasChange("agent_id") {
-		return diag.FromErr(fmt.Errorf("Cannot update resource property \"%s\" with the ForceNew annotation."+
-			" The resource must be re-created to update this property.", "agent_id"))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentPrsUpdate failed with error: %s", err), "ibm_schematics_agent_prs", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if d.HasChange("force") {
 		prsAgentJobOptions.SetForce(d.Get("force").(bool))
@@ -207,8 +242,10 @@ func resourceIbmSchematicsAgentPrsUpdate(context context.Context, d *schema.Reso
 	if hasChange {
 		agentPrsJob, response, err := schematicsClient.PrsAgentJobWithContext(context, prsAgentJobOptions)
 		if err != nil {
-			log.Printf("[DEBUG] PrsAgentJobWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("PrsAgentJobWithContext failed %s\n%s", err, response))
+
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentPrsUpdate PrsAgentJobWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_agent_prs", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		d.SetId(fmt.Sprintf("%s/%s", *prsAgentJobOptions.AgentID, *agentPrsJob.JobID))
 	}

@@ -163,8 +163,8 @@ func dataSourceIbmSccReportViolationDriftReportViolationDataPointToMap(model *se
 	if model.ScanTime != nil {
 		modelMap["scan_time"] = model.ScanTime
 	}
-	if model.Controls != nil {
-		controlsMap, err := dataSourceIbmSccReportViolationDriftComplianceStatsToMap(model.Controls)
+	if model.ControlsSummary != nil {
+		controlsMap, err := dataSourceIbmSccReportViolationDriftComplianceStatsToMap(model.ControlsSummary)
 		if err != nil {
 			return modelMap, err
 		}

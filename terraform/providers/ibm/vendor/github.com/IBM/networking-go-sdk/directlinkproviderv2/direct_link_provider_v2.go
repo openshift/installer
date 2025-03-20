@@ -393,7 +393,8 @@ func (directLinkProvider *DirectLinkProviderV2) DeleteProviderGatewayWithContext
 
 // GetProviderGateway : Get gateway
 // Get a Direct Link Connect gateway.
-//      Gateways with either `provider_api_managed=true` or `provider_api_managed=false` can be retrieved.
+//
+//	Gateways with either `provider_api_managed=true` or `provider_api_managed=false` can be retrieved.
 func (directLinkProvider *DirectLinkProviderV2) GetProviderGateway(getProviderGatewayOptions *GetProviderGatewayOptions) (result *ProviderGateway, response *core.DetailedResponse, err error) {
 	return directLinkProvider.GetProviderGatewayWithContext(context.Background(), getProviderGatewayOptions)
 }
@@ -722,11 +723,11 @@ type CreateProviderGatewayOptions struct {
 // NewCreateProviderGatewayOptions : Instantiate CreateProviderGatewayOptions
 func (*DirectLinkProviderV2) NewCreateProviderGatewayOptions(bgpAsn int64, customerAccountID string, name string, port *ProviderGatewayPortIdentity, speedMbps int64) *CreateProviderGatewayOptions {
 	return &CreateProviderGatewayOptions{
-		BgpAsn: core.Int64Ptr(bgpAsn),
+		BgpAsn:            core.Int64Ptr(bgpAsn),
 		CustomerAccountID: core.StringPtr(customerAccountID),
-		Name: core.StringPtr(name),
-		Port: port,
-		SpeedMbps: core.Int64Ptr(speedMbps),
+		Name:              core.StringPtr(name),
+		Port:              port,
+		SpeedMbps:         core.Int64Ptr(speedMbps),
 	}
 }
 
@@ -1014,10 +1015,10 @@ type ProviderGateway struct {
 // The list of enumerated values for this property may expand in the future. Code and processes using this field must
 // tolerate unexpected values.
 const (
-	ProviderGateway_BgpStatus_Active = "active"
-	ProviderGateway_BgpStatus_Connect = "connect"
+	ProviderGateway_BgpStatus_Active      = "active"
+	ProviderGateway_BgpStatus_Connect     = "connect"
 	ProviderGateway_BgpStatus_Established = "established"
-	ProviderGateway_BgpStatus_Idle = "idle"
+	ProviderGateway_BgpStatus_Idle        = "idle"
 )
 
 // Constants associated with the ProviderGateway.OperationalStatus property.
@@ -1026,11 +1027,11 @@ const (
 // The list of enumerated values for this property may expand in the future. Code and processes using this field must
 // tolerate unexpected values.
 const (
-	ProviderGateway_OperationalStatus_Configuring = "configuring"
-	ProviderGateway_OperationalStatus_CreatePending = "create_pending"
+	ProviderGateway_OperationalStatus_Configuring    = "configuring"
+	ProviderGateway_OperationalStatus_CreatePending  = "create_pending"
 	ProviderGateway_OperationalStatus_CreateRejected = "create_rejected"
-	ProviderGateway_OperationalStatus_DeletePending = "delete_pending"
-	ProviderGateway_OperationalStatus_Provisioned = "provisioned"
+	ProviderGateway_OperationalStatus_DeletePending  = "delete_pending"
+	ProviderGateway_OperationalStatus_Provisioned    = "provisioned"
 )
 
 // UnmarshalProviderGateway unmarshals an instance of ProviderGateway from the specified map of raw messages.
@@ -1126,6 +1127,7 @@ type ProviderGatewayChangeRequest struct {
 const (
 	ProviderGatewayChangeRequest_Type_CreateGateway = "create_gateway"
 )
+
 func (*ProviderGatewayChangeRequest) isaProviderGatewayChangeRequest() bool {
 	return true
 }
@@ -1323,6 +1325,7 @@ type ProviderGatewayUpdateAttributesUpdatesItem struct {
 	// VLAN provided should be in the range 2 to 3967.
 	Vlan *int64 `json:"vlan,omitempty"`
 }
+
 func (*ProviderGatewayUpdateAttributesUpdatesItem) isaProviderGatewayUpdateAttributesUpdatesItem() bool {
 	return true
 }
@@ -1802,13 +1805,11 @@ func UnmarshalProviderGatewayUpdateAttributesUpdatesItemProviderGatewayVLAN(m ma
 	return
 }
 
-//
 // ProviderGatewaysPager can be used to simplify the use of the "ListProviderGateways" method.
-//
 type ProviderGatewaysPager struct {
-	hasNext bool
-	options *ListProviderGatewaysOptions
-	client  *DirectLinkProviderV2
+	hasNext     bool
+	options     *ListProviderGatewaysOptions
+	client      *DirectLinkProviderV2
 	pageContext struct {
 		next *string
 	}
@@ -1883,13 +1884,11 @@ func (pager *ProviderGatewaysPager) GetAll() (allItems []ProviderGateway, err er
 	return pager.GetAllWithContext(context.Background())
 }
 
-//
 // ProviderPortsPager can be used to simplify the use of the "ListProviderPorts" method.
-//
 type ProviderPortsPager struct {
-	hasNext bool
-	options *ListProviderPortsOptions
-	client  *DirectLinkProviderV2
+	hasNext     bool
+	options     *ListProviderPortsOptions
+	client      *DirectLinkProviderV2
 	pageContext struct {
 		next *string
 	}

@@ -194,6 +194,14 @@ func resourceIBMLogsRouterTenantCreate(context context.Context, d *schema.Resour
 		return tfErr.GetDiag()
 	}
 
+	bxSession, err := meta.(conns.ClientSession).BluemixSession()
+	if err != nil {
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_logs_router_tenant", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+	}
+
+	ibmCloudLogsRoutingClient, _, err = updateClientURLWithEndpoint(ibmCloudLogsRoutingClient, d, bxSession)
 	createTenantOptions := &ibmcloudlogsroutingv0.CreateTenantOptions{}
 
 	createTenantOptions.SetName(d.Get("name").(string))
@@ -209,7 +217,7 @@ func resourceIBMLogsRouterTenantCreate(context context.Context, d *schema.Resour
 	}
 	createTenantOptions.SetTargets(targets)
 
-	tenant, _, err := ibmCloudLogsRoutingClient.CreateTenantWithContext(context, createTenantOptions)
+	tenant, _, err := ibmCloudLogsRoutingClient.CreateTenantWithContextEndpoint(context, createTenantOptions)
 	if err != nil {
 		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateTenantWithContext failed: %s", err.Error()), "ibm_logs_router_tenant", "create")
 		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
@@ -229,13 +237,21 @@ func resourceIBMLogsRouterTenantRead(context context.Context, d *schema.Resource
 		return tfErr.GetDiag()
 	}
 
+	bxSession, err := meta.(conns.ClientSession).BluemixSession()
+	if err != nil {
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_logs_router_tenant", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+	}
+
+	ibmCloudLogsRoutingClient, _, err = updateClientURLWithEndpoint(ibmCloudLogsRoutingClient, d, bxSession)
 	getTenantDetailOptions := &ibmcloudlogsroutingv0.GetTenantDetailOptions{}
 
 	tenantId := strfmt.UUID(d.Id())
 	getTenantDetailOptions.SetTenantID(&tenantId)
 	getTenantDetailOptions.SetRegion(d.Get("region").(string))
 
-	tenant, response, err := ibmCloudLogsRoutingClient.GetTenantDetailWithContext(context, getTenantDetailOptions)
+	tenant, response, err := ibmCloudLogsRoutingClient.GetTenantDetailWithContextEndpoint(context, getTenantDetailOptions)
 	if err != nil {
 		if response != nil && response.StatusCode == 404 {
 			d.SetId("")
@@ -345,6 +361,15 @@ func resourceIBMLogsRouterTenantUpdate(context context.Context, d *schema.Resour
 		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
 		return tfErr.GetDiag()
 	}
+
+	bxSession, err := meta.(conns.ClientSession).BluemixSession()
+	if err != nil {
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_logs_router_tenant", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+	}
+
+	ibmCloudLogsRoutingClient, _, err = updateClientURLWithEndpoint(ibmCloudLogsRoutingClient, d, bxSession)
 
 	updateTenantOptions := &ibmcloudlogsroutingv0.UpdateTenantOptions{}
 
@@ -462,7 +487,7 @@ func resourceIBMLogsRouterTenantUpdate(context context.Context, d *schema.Resour
 			updateTenantOptions.TenantPatch["name"] = nil
 		}
 
-		_, _, err = ibmCloudLogsRoutingClient.UpdateTenantWithContext(context, updateTenantOptions)
+		_, _, err = ibmCloudLogsRoutingClient.UpdateTenantWithContextEndpoint(context, updateTenantOptions)
 		if err != nil {
 			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateTenantWithContext failed: %s", err.Error()), "ibm_logs_router_tenant", "update")
 			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
@@ -493,9 +518,9 @@ func resourceIBMLogsRouterTenantUpdate(context context.Context, d *schema.Resour
 		_, newCRN := d.GetChange("targets.0.log_sink_crn")
 		if crn, ok := newCRN.(string); ok {
 			if strings.Contains(crn, ":logs:") {
-				_, _, err = ibmCloudLogsRoutingClient.UpdateLogsTargetWithContext(context, updateTarget0Options)
+				_, _, err = ibmCloudLogsRoutingClient.UpdateLogsTargetWithContextEndpoint(context, updateTarget0Options)
 			} else {
-				_, _, err = ibmCloudLogsRoutingClient.UpdateTargetWithContext(context, updateTarget0Options)
+				_, _, err = ibmCloudLogsRoutingClient.UpdateTargetWithContextEndpoint(context, updateTarget0Options)
 			}
 		}
 
@@ -507,7 +532,7 @@ func resourceIBMLogsRouterTenantUpdate(context context.Context, d *schema.Resour
 	}
 
 	if target1Create {
-		_, _, err := ibmCloudLogsRoutingClient.CreateTargetWithContext(context, createTarget1Options)
+		_, _, err := ibmCloudLogsRoutingClient.CreateTargetWithContextEndpoint(context, createTarget1Options)
 		if err != nil {
 			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateTargetWithContext failed: %s", err.Error()), "ibm_logs_router_target", "create")
 			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
@@ -535,7 +560,7 @@ func resourceIBMLogsRouterTenantUpdate(context context.Context, d *schema.Resour
 			deleteTargetOptions.SetTenantID(&tenantId)
 			deleteTargetOptions.SetTargetID(&target1ID)
 			deleteTargetOptions.SetRegion(d.Get("region").(string))
-			_, err = ibmCloudLogsRoutingClient.DeleteTargetWithContext(context, deleteTargetOptions)
+			_, err = ibmCloudLogsRoutingClient.DeleteTargetWithContextEndpoint(context, deleteTargetOptions)
 			if err != nil {
 				tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteTargetWithContext failed: %s", err.Error()), "ibm_logs_router_target", "delete")
 				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
@@ -546,9 +571,9 @@ func resourceIBMLogsRouterTenantUpdate(context context.Context, d *schema.Resour
 			_, newCRN := d.GetChange("targets.1.log_sink_crn")
 			if crn, ok := newCRN.(string); ok {
 				if strings.Contains(crn, ":logs:") {
-					_, _, err = ibmCloudLogsRoutingClient.UpdateLogsTargetWithContext(context, updateTarget1Options)
+					_, _, err = ibmCloudLogsRoutingClient.UpdateLogsTargetWithContextEndpoint(context, updateTarget1Options)
 				} else {
-					_, _, err = ibmCloudLogsRoutingClient.UpdateTargetWithContext(context, updateTarget1Options)
+					_, _, err = ibmCloudLogsRoutingClient.UpdateTargetWithContextEndpoint(context, updateTarget1Options)
 				}
 			}
 			if err != nil {
@@ -578,9 +603,9 @@ func resourceIBMLogsRouterTenantUpdate(context context.Context, d *schema.Resour
 		_, newCRN := d.GetChange("targets.0.log_sink_crn")
 		if crn, ok := newCRN.(string); ok {
 			if strings.Contains(crn, ":logs:") {
-				_, _, err = ibmCloudLogsRoutingClient.UpdateLogsTargetWithContext(context, updateTarget0Options)
+				_, _, err = ibmCloudLogsRoutingClient.UpdateLogsTargetWithContextEndpoint(context, updateTarget0Options)
 			} else {
-				_, _, err = ibmCloudLogsRoutingClient.UpdateTargetWithContext(context, updateTarget0Options)
+				_, _, err = ibmCloudLogsRoutingClient.UpdateTargetWithContextEndpoint(context, updateTarget0Options)
 			}
 		}
 		if err != nil {
@@ -601,13 +626,21 @@ func resourceIBMLogsRouterTenantDelete(context context.Context, d *schema.Resour
 		return tfErr.GetDiag()
 	}
 
+	bxSession, err := meta.(conns.ClientSession).BluemixSession()
+	if err != nil {
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_logs_router_tenant", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+	}
+
+	ibmCloudLogsRoutingClient, _, err = updateClientURLWithEndpoint(ibmCloudLogsRoutingClient, d, bxSession)
 	deleteTenantOptions := &ibmcloudlogsroutingv0.DeleteTenantOptions{}
 
 	tenantId := strfmt.UUID(d.Id())
 	deleteTenantOptions.SetTenantID(&tenantId)
 	deleteTenantOptions.SetRegion(d.Get("region").(string))
 
-	_, err = ibmCloudLogsRoutingClient.DeleteTenantWithContext(context, deleteTenantOptions)
+	_, err = ibmCloudLogsRoutingClient.DeleteTenantWithContextEndpoint(context, deleteTenantOptions)
 	if err != nil {
 		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteTenantWithContext failed: %s", err.Error()), "ibm_logs_router_tenant", "delete")
 		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())

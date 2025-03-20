@@ -2,6 +2,7 @@ package appconfiguration
 
 import (
 	"fmt"
+
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/appconfiguration-go-admin-sdk/appconfigurationv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -76,23 +77,23 @@ func resourceIbmIbmAppConfigCollectiontCreate(d *schema.ResourceData, meta inter
 	guid := d.Get("guid").(string)
 	appconfigClient, err := getAppConfigClient(meta, guid)
 	if err != nil {
-		return fmt.Errorf("getAppConfigClient failed %s", err)
+		return flex.FmtErrorf("getAppConfigClient failed %s", err)
 	}
 	options := &appconfigurationv1.CreateCollectionOptions{}
 	options.SetName(d.Get("name").(string))
 	options.SetCollectionID(d.Get("collection_id").(string))
 
-	if _, ok := d.GetOk("description"); ok {
+	if _, ok := GetFieldExists(d, "description"); ok {
 		options.SetDescription(d.Get("description").(string))
 	}
-	if _, ok := d.GetOk("tags"); ok {
+	if _, ok := GetFieldExists(d, "tags"); ok {
 		options.SetTags(d.Get("tags").(string))
 	}
 
 	collection, response, err := appconfigClient.CreateCollection(options)
 
 	if err != nil {
-		return fmt.Errorf("CreateCollection failed %s\n%s", err, response)
+		return flex.FmtErrorf("CreateCollection failed %s\n%s", err, response)
 	}
 	d.SetId(fmt.Sprintf("%s/%s", guid, *collection.CollectionID))
 
@@ -105,12 +106,12 @@ func resourceIbmIbmAppConfigCollectiontRead(d *schema.ResourceData, meta interfa
 		return nil
 	}
 	if len(parts) != 2 {
-		return fmt.Errorf("Kindly check the id")
+		return flex.FmtErrorf("Kindly check the id")
 	}
 
 	appconfigClient, err := getAppConfigClient(meta, parts[0])
 	if err != nil {
-		return fmt.Errorf("getAppConfigClient failed %s", err)
+		return flex.FmtErrorf("getAppConfigClient failed %s", err)
 	}
 
 	options := &appconfigurationv1.GetCollectionOptions{}
@@ -121,71 +122,71 @@ func resourceIbmIbmAppConfigCollectiontRead(d *schema.ResourceData, meta interfa
 		if response != nil && response.StatusCode == 404 {
 			d.SetId("")
 		}
-		return fmt.Errorf("[DEBUG] GetCollection failed %s\n%s", err, response)
+		return flex.FmtErrorf("[ERROR] GetCollection failed %s\n%s", err, response)
 	}
 
 	d.Set("guid", parts[0])
 
 	if result.Name != nil {
 		if err = d.Set("name", result.Name); err != nil {
-			return fmt.Errorf("[ERROR] Error setting name: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting name: %s", err)
 		}
 	}
 	if result.CollectionID != nil {
 		if err = d.Set("collection_id", result.CollectionID); err != nil {
-			return fmt.Errorf("[ERROR] Error setting collection_id: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting collection_id: %s", err)
 		}
 	}
 	if result.Description != nil {
 		if err = d.Set("description", result.Description); err != nil {
-			return fmt.Errorf("[ERROR] Error setting description: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting description: %s", err)
 		}
 	}
 	if result.Tags != nil {
 		if err = d.Set("tags", result.Tags); err != nil {
-			return fmt.Errorf("[ERROR] Error setting tags: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting tags: %s", err)
 		}
 	}
 	if result.CreatedTime != nil {
 		if err = d.Set("created_time", result.CreatedTime.String()); err != nil {
-			return fmt.Errorf("[ERROR] Error setting createdTime: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting createdTime: %s", err)
 		}
 	}
 	if result.UpdatedTime != nil {
 		if err = d.Set("updated_time", result.UpdatedTime.String()); err != nil {
-			return fmt.Errorf("[ERROR] Error setting updatedTime: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting updatedTime: %s", err)
 		}
 	}
 	if result.Href != nil {
 		if err = d.Set("href", result.Href); err != nil {
-			return fmt.Errorf("[ERROR] Error setting href: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting href: %s", err)
 		}
 	}
 	if result.FeaturesCount != nil {
 		if err = d.Set("features_count", result.FeaturesCount); err != nil {
-			return fmt.Errorf("[ERROR] Error setting features_count: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting features_count: %s", err)
 		}
 	}
 	if result.FeaturesCount != nil {
 		if err = d.Set("features_count", result.FeaturesCount); err != nil {
-			return fmt.Errorf("[ERROR] Error setting features_count: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting features_count: %s", err)
 		}
 	}
 	if result.PropertiesCount != nil {
 		if err = d.Set("properties_count", result.PropertiesCount); err != nil {
-			return fmt.Errorf("[ERROR] Error setting properties_count: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting properties_count: %s", err)
 		}
 	}
 	if result.Features != nil {
 		err = d.Set("features", resourceIbmAppConfigCollectionFeatureToMap(result.Features))
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error setting features %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting features %s", err)
 		}
 	}
 	if result.Properties != nil {
 		err = d.Set("properties", resourceIbmAppConfigCollectionPropertiesToMap(result.Properties))
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error setting properties %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting properties %s", err)
 		}
 	}
 
@@ -237,7 +238,7 @@ func resourceIbmIbmAppConfigCollectionUpdate(d *schema.ResourceData, meta interf
 	}
 	appconfigClient, err := getAppConfigClient(meta, parts[0])
 	if err != nil {
-		return fmt.Errorf("getAppConfigClient failed %s", err)
+		return flex.FmtErrorf("getAppConfigClient failed %s", err)
 	}
 	options := &appconfigurationv1.UpdateCollectionOptions{}
 
@@ -245,19 +246,19 @@ func resourceIbmIbmAppConfigCollectionUpdate(d *schema.ResourceData, meta interf
 
 	if ok := d.HasChanges("name", "description", "tags"); ok {
 
-		if _, ok := d.GetOk("name"); ok {
+		if _, ok := GetFieldExists(d, "name"); ok {
 			options.SetName(d.Get("name").(string))
 		}
-		if _, ok := d.GetOk("description"); ok {
+		if _, ok := GetFieldExists(d, "description"); ok {
 			options.SetDescription(d.Get("description").(string))
 		}
-		if _, ok := d.GetOk("tags"); ok {
+		if _, ok := GetFieldExists(d, "tags"); ok {
 			options.SetTags(d.Get("tags").(string))
 		}
 
 		_, response, err := appconfigClient.UpdateCollection(options)
 		if err != nil {
-			return fmt.Errorf("UpdateCollection failed %s\n%s", err, response)
+			return flex.FmtErrorf("UpdateCollection failed %s\n%s", err, response)
 		}
 		return resourceIbmIbmAppConfigCollectiontRead(d, meta)
 	}
@@ -271,7 +272,7 @@ func resourceIbmIbmAppConfigCollectionDelete(d *schema.ResourceData, meta interf
 	}
 	appconfigClient, err := getAppConfigClient(meta, parts[0])
 	if err != nil {
-		return fmt.Errorf("getAppConfigClient failed %s", err)
+		return flex.FmtErrorf("getAppConfigClient failed %s", err)
 	}
 
 	options := &appconfigurationv1.DeleteCollectionOptions{}
@@ -283,7 +284,7 @@ func resourceIbmIbmAppConfigCollectionDelete(d *schema.ResourceData, meta interf
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("[DEBUG] DeleteCollection failed %s\n%s", err, response)
+		return flex.FmtErrorf("[ERROR] DeleteCollection failed %s\n%s", err, response)
 	}
 
 	d.SetId("")

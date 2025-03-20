@@ -114,7 +114,7 @@ func NewAlertsV1(options *AlertsV1Options) (service *AlertsV1, err error) {
 
 	service = &AlertsV1{
 		Service: baseService,
-		Crn: options.Crn,
+		Crn:     options.Crn,
 	}
 
 	return
@@ -329,7 +329,7 @@ func (alerts *AlertsV1) GetAlertPolicyWithContext(ctx context.Context, getAlertP
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *alerts.Crn,
+		"crn":       *alerts.Crn,
 		"policy_id": *getAlertPolicyOptions.PolicyID,
 	}
 
@@ -390,7 +390,7 @@ func (alerts *AlertsV1) UpdateAlertPolicyWithContext(ctx context.Context, update
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *alerts.Crn,
+		"crn":       *alerts.Crn,
 		"policy_id": *updateAlertPolicyOptions.PolicyID,
 	}
 
@@ -479,7 +479,7 @@ func (alerts *AlertsV1) DeleteAlertPolicyWithContext(ctx context.Context, delete
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *alerts.Crn,
+		"crn":       *alerts.Crn,
 		"policy_id": *deleteAlertPolicyOptions.PolicyID,
 	}
 
@@ -657,10 +657,10 @@ type CreateAlertPolicyOptions struct {
 // Constants associated with the CreateAlertPolicyOptions.AlertType property.
 // Condition for the alert.
 const (
-	CreateAlertPolicyOptions_AlertType_ClickhouseAlertFwAnomaly = "clickhouse_alert_fw_anomaly"
+	CreateAlertPolicyOptions_AlertType_ClickhouseAlertFwAnomaly    = "clickhouse_alert_fw_anomaly"
 	CreateAlertPolicyOptions_AlertType_ClickhouseAlertFwEntAnomaly = "clickhouse_alert_fw_ent_anomaly"
-	CreateAlertPolicyOptions_AlertType_DosAttackL7 = "dos_attack_l7"
-	CreateAlertPolicyOptions_AlertType_G6PoolToggleAlert = "g6_pool_toggle_alert"
+	CreateAlertPolicyOptions_AlertType_DosAttackL7                 = "dos_attack_l7"
+	CreateAlertPolicyOptions_AlertType_G6PoolToggleAlert           = "g6_pool_toggle_alert"
 )
 
 // NewCreateAlertPolicyOptions : Instantiate CreateAlertPolicyOptions
@@ -858,10 +858,10 @@ type GetAlertPolicyRespResult struct {
 // Constants associated with the GetAlertPolicyRespResult.AlertType property.
 // Condition for the alert.
 const (
-	GetAlertPolicyRespResult_AlertType_ClickhouseAlertFwAnomaly = "clickhouse_alert_fw_anomaly"
+	GetAlertPolicyRespResult_AlertType_ClickhouseAlertFwAnomaly    = "clickhouse_alert_fw_anomaly"
 	GetAlertPolicyRespResult_AlertType_ClickhouseAlertFwEntAnomaly = "clickhouse_alert_fw_ent_anomaly"
-	GetAlertPolicyRespResult_AlertType_DosAttackL7 = "dos_attack_l7"
-	GetAlertPolicyRespResult_AlertType_G6PoolToggleAlert = "g6_pool_toggle_alert"
+	GetAlertPolicyRespResult_AlertType_DosAttackL7                 = "dos_attack_l7"
+	GetAlertPolicyRespResult_AlertType_G6PoolToggleAlert           = "g6_pool_toggle_alert"
 )
 
 // UnmarshalGetAlertPolicyRespResult unmarshals an instance of GetAlertPolicyRespResult from the specified map of raw messages.
@@ -1033,10 +1033,10 @@ type ListAlertPoliciesRespResultItem struct {
 // Constants associated with the ListAlertPoliciesRespResultItem.AlertType property.
 // Condition for the alert.
 const (
-	ListAlertPoliciesRespResultItem_AlertType_ClickhouseAlertFwAnomaly = "clickhouse_alert_fw_anomaly"
+	ListAlertPoliciesRespResultItem_AlertType_ClickhouseAlertFwAnomaly    = "clickhouse_alert_fw_anomaly"
 	ListAlertPoliciesRespResultItem_AlertType_ClickhouseAlertFwEntAnomaly = "clickhouse_alert_fw_ent_anomaly"
-	ListAlertPoliciesRespResultItem_AlertType_DosAttackL7 = "dos_attack_l7"
-	ListAlertPoliciesRespResultItem_AlertType_G6PoolToggleAlert = "g6_pool_toggle_alert"
+	ListAlertPoliciesRespResultItem_AlertType_DosAttackL7                 = "dos_attack_l7"
+	ListAlertPoliciesRespResultItem_AlertType_G6PoolToggleAlert           = "g6_pool_toggle_alert"
 )
 
 // UnmarshalListAlertPoliciesRespResultItem unmarshals an instance of ListAlertPoliciesRespResultItem from the specified map of raw messages.
@@ -1237,10 +1237,10 @@ type UpdateAlertPolicyOptions struct {
 // up Load Balancing Pool Enablement Alerter, use 'clickhouse_alert_fw_anomaly' to set up WAF Alerter and
 // 'clickhouse_alert_fw_ent_anomaly' to set up Advanced Security Alerter.
 const (
-	UpdateAlertPolicyOptions_AlertType_ClickhouseAlertFwAnomaly = "clickhouse_alert_fw_anomaly"
+	UpdateAlertPolicyOptions_AlertType_ClickhouseAlertFwAnomaly    = "clickhouse_alert_fw_anomaly"
 	UpdateAlertPolicyOptions_AlertType_ClickhouseAlertFwEntAnomaly = "clickhouse_alert_fw_ent_anomaly"
-	UpdateAlertPolicyOptions_AlertType_DosAttackL7 = "dos_attack_l7"
-	UpdateAlertPolicyOptions_AlertType_G6PoolToggleAlert = "g6_pool_toggle_alert"
+	UpdateAlertPolicyOptions_AlertType_DosAttackL7                 = "dos_attack_l7"
+	UpdateAlertPolicyOptions_AlertType_G6PoolToggleAlert           = "g6_pool_toggle_alert"
 )
 
 // NewUpdateAlertPolicyOptions : Instantiate UpdateAlertPolicyOptions

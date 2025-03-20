@@ -203,9 +203,9 @@ func dataSourceShareProfileIopsToMap(iops vpcv1.ShareProfileIops) (iopsMap map[s
 }
 func dataSourceShareProfileCapacityToMap(capacity vpcv1.ShareProfileCapacity) (capacityMap map[string]interface{}) {
 	capacityMap = map[string]interface{}{}
-	if capacity.Default != nil {
-		capacityMap["default"] = int(*capacity.Default)
-	}
+	// if capacity.Default != nil {
+	// 	capacityMap["default"] = int(*capacity.Default)
+	// }
 	capacityMap["max"] = capacity.Max
 	capacityMap["min"] = capacity.Min
 	capacityMap["step"] = capacity.Step

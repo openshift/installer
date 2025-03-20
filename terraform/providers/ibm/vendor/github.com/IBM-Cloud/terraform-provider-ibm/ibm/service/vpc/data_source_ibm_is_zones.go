@@ -4,9 +4,14 @@
 package vpc
 
 import (
+	"context"
+	"fmt"
+	"log"
 	"time"
 
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -17,7 +22,7 @@ const (
 
 func DataSourceIBMISZones() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceIBMISZonesRead,
+		ReadContext: dataSourceIBMISZonesRead,
 
 		Schema: map[string]*schema.Schema{
 
@@ -65,23 +70,27 @@ func DataSourceIBMISZones() *schema.Resource {
 	}
 }
 
-func dataSourceIBMISZonesRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceIBMISZonesRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	regionName := d.Get(isZoneRegion).(string)
-	return zonesList(d, meta, regionName)
+	return zonesList(ctx, d, meta, regionName)
 }
 
-func zonesList(d *schema.ResourceData, meta interface{}, regionName string) error {
+func zonesList(ctx context.Context, d *schema.ResourceData, meta interface{}, regionName string) diag.Diagnostics {
 	sess, err := vpcClient(meta)
 	if err != nil {
-		return err
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_is_zones", "read", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	listRegionZonesOptions := &vpcv1.ListRegionZonesOptions{
 		RegionName: &regionName,
 	}
-	availableZones, _, err := sess.ListRegionZones(listRegionZonesOptions)
+	availableZones, _, err := sess.ListRegionZonesWithContext(ctx, listRegionZonesOptions)
 	if err != nil {
-		return err
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ListRegionZonesWithContext failed: %s", err.Error()), "(Data) ibm_is_zones", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	names := make([]string, 0)
 	status := d.Get(isZoneStatus).(string)
@@ -102,8 +111,12 @@ func zonesList(d *schema.ResourceData, meta interface{}, regionName string) erro
 		zonesList = append(zonesList, zoneInfo)
 	}
 	d.SetId(dataSourceIBMISZonesId(d))
-	d.Set(isZoneNames, names)
-	d.Set(isZonesInfo, zonesList)
+	if err = d.Set(isZoneNames, names); err != nil {
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting zones: %s", err), "(Data) ibm_is_zones", "read", "set-zones").GetDiag()
+	}
+	if err = d.Set(isZonesInfo, zonesList); err != nil {
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_is_zones", "read", "set-zone_info").GetDiag()
+	}
 	return nil
 }
 

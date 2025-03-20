@@ -532,6 +532,64 @@ func DataSourceIbmIsShare() *schema.Resource {
 					},
 				},
 			},
+			"snapshot_count": &schema.Schema{
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "The total number of snapshots for this share.",
+			},
+			"snapshot_size": &schema.Schema{
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "The total size (in gigabytes) of snapshots used for this file share.",
+			},
+			"source_snapshot": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The snapshot from which this share was cloned.This property will be present when the share was created from a snapshot.The resources supported by this property may[expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in thefuture.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"crn": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The CRN for this share snapshot.",
+						},
+						"deleted": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "If present, this property indicates the referenced resource has been deleted, and providessome supplementary information.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"more_info": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about deleted resources.",
+									},
+								},
+							},
+						},
+						"href": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The URL for this share snapshot.",
+						},
+						"id": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The unique identifier for this share snapshot.",
+						},
+						"name": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The name for this share snapshot. The name is unique across all snapshots for the file share.",
+						},
+						"resource_type": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The resource type.",
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -552,15 +610,8 @@ func dataSourceIbmIsShareRead(context context.Context, d *schema.ResourceData, m
 
 		shareItem, response, err := vpcClient.GetShareWithContext(context, getShareOptions)
 		if err != nil {
-			if response != nil {
-				if response.StatusCode == 404 {
-					d.SetId("")
-				}
-				log.Printf("[DEBUG] GetShareWithContext failed %s\n%s", err, response)
-				return nil
-			}
-			log.Printf("[DEBUG] GetShareWithContext failed %s\n", err)
-			return diag.FromErr(err)
+			log.Printf("[DEBUG] GetShareWithContext failed %s\n%s", err, response)
+			return diag.FromErr(fmt.Errorf("[ERROR] GetShareWithContext failed %s\n%s", err, response))
 		}
 		share = shareItem
 	} else if shareName != "" {
@@ -726,7 +777,24 @@ func dataSourceIbmIsShareRead(context context.Context, d *schema.ResourceData, m
 			return diag.FromErr(fmt.Errorf("Error setting zone %s", err))
 		}
 	}
+	if err = d.Set("snapshot_count", flex.IntValue(share.SnapshotCount)); err != nil {
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting snapshot_count: %s", err), "(Data) ibm_is_share", "read", "set-snapshot_count").GetDiag()
+	}
 
+	if err = d.Set("snapshot_size", flex.IntValue(share.SnapshotSize)); err != nil {
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting snapshot_size: %s", err), "(Data) ibm_is_share", "read", "set-snapshot_size").GetDiag()
+	}
+	sourceSnapshot := []map[string]interface{}{}
+	if share.SourceSnapshot != nil {
+		modelMap, err := DataSourceIBMIsShareShareSourceSnapshotToMap(share.SourceSnapshot)
+		if err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_is_share", "read", "source_snapshot-to-map").GetDiag()
+		}
+		sourceSnapshot = append(sourceSnapshot, modelMap)
+	}
+	if err = d.Set("source_snapshot", sourceSnapshot); err != nil {
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting source_snapshot: %s", err), "(Data) ibm_is_share", "read", "set-source_snapshot").GetDiag()
+	}
 	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *share.CRN, "", isAccessTagType)
 	if err != nil {
 		log.Printf(
@@ -946,4 +1014,58 @@ func dataSourceShareSourceShareDeletedToMap(deletedItem vpcv1.Deleted) (deletedM
 	}
 
 	return deletedMap
+}
+func DataSourceIBMIsShareShareSourceSnapshotToMap(model vpcv1.ShareSourceSnapshotIntf) (map[string]interface{}, error) {
+	if _, ok := model.(*vpcv1.ShareSourceSnapshotShareSnapshotReference); ok {
+		return DataSourceIBMIsShareShareSourceSnapshotShareSnapshotReferenceToMap(model.(*vpcv1.ShareSourceSnapshotShareSnapshotReference))
+	} else if _, ok := model.(*vpcv1.ShareSourceSnapshot); ok {
+		modelMap := make(map[string]interface{})
+		model := model.(*vpcv1.ShareSourceSnapshot)
+		if model.CRN != nil {
+			modelMap["crn"] = *model.CRN
+		}
+		if model.Deleted != nil {
+			deletedMap, err := DataSourceIBMIsShareDeletedToMap(model.Deleted)
+			if err != nil {
+				return modelMap, err
+			}
+			modelMap["deleted"] = []map[string]interface{}{deletedMap}
+		}
+		if model.Href != nil {
+			modelMap["href"] = *model.Href
+		}
+		if model.ID != nil {
+			modelMap["id"] = *model.ID
+		}
+		if model.Name != nil {
+			modelMap["name"] = *model.Name
+		}
+		if model.ResourceType != nil {
+			modelMap["resource_type"] = *model.ResourceType
+		}
+		return modelMap, nil
+	} else {
+		return nil, fmt.Errorf("Unrecognized vpcv1.ShareSourceSnapshotIntf subtype encountered")
+	}
+}
+func DataSourceIBMIsShareShareSourceSnapshotShareSnapshotReferenceToMap(model *vpcv1.ShareSourceSnapshotShareSnapshotReference) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["crn"] = *model.CRN
+	if model.Deleted != nil {
+		deletedMap, err := DataSourceIBMIsShareDeletedToMap(model.Deleted)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["deleted"] = []map[string]interface{}{deletedMap}
+	}
+	modelMap["href"] = *model.Href
+	modelMap["id"] = *model.ID
+	modelMap["name"] = *model.Name
+	modelMap["resource_type"] = *model.ResourceType
+	return modelMap, nil
+}
+func DataSourceIBMIsShareDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["more_info"] = *model.MoreInfo
+	return modelMap, nil
 }

@@ -19,7 +19,7 @@ import (
 // swagger:model PVMInstanceVolumeUpdate
 type PVMInstanceVolumeUpdate struct {
 
-	// Indicates if the volume should be deleted when the PVMInstance is terminated
+	// Indicates if the volume should be deleted when the PVMInstance is terminated.
 	// Required: true
 	DeleteOnTermination *bool `json:"deleteOnTermination"`
 }

@@ -281,7 +281,7 @@ func dataSourceIbmSccControlLibraryRead(context context.Context, d *schema.Resou
 
 	getControlLibraryOptions := &securityandcompliancecenterapiv3.GetControlLibraryOptions{}
 
-	getControlLibraryOptions.SetControlLibrariesID(d.Get("control_library_id").(string))
+	getControlLibraryOptions.SetControlLibraryID(d.Get("control_library_id").(string))
 	getControlLibraryOptions.SetInstanceID(d.Get("instance_id").(string))
 
 	controlLibrary, response, err := securityandcompliancecenterapiClient.GetControlLibraryWithContext(context, getControlLibraryOptions)
@@ -290,7 +290,7 @@ func dataSourceIbmSccControlLibraryRead(context context.Context, d *schema.Resou
 		return diag.FromErr(flex.FmtErrorf("GetControlLibraryWithContext failed %s\n%s", err, response))
 	}
 
-	d.SetId(fmt.Sprintf("%s", *getControlLibraryOptions.ControlLibrariesID))
+	d.SetId(fmt.Sprintf("%s", *getControlLibraryOptions.ControlLibraryID))
 
 	if err = d.Set("account_id", controlLibrary.AccountID); err != nil {
 		return diag.FromErr(flex.FmtErrorf("Error setting account_id: %s", err))
@@ -365,7 +365,7 @@ func dataSourceIbmSccControlLibraryRead(context context.Context, d *schema.Resou
 	return nil
 }
 
-func dataSourceIbmSccControlLibraryControlsInControlLibToMap(model *securityandcompliancecenterapiv3.ControlsInControlLib) (map[string]interface{}, error) {
+func dataSourceIbmSccControlLibraryControlsInControlLibToMap(model *securityandcompliancecenterapiv3.Control) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ControlName != nil {
 		modelMap["control_name"] = model.ControlName
@@ -412,10 +412,10 @@ func dataSourceIbmSccControlLibraryControlsInControlLibToMap(model *securityandc
 	return modelMap, nil
 }
 
-func dataSourceIbmSccControlLibraryControlSpecificationsToMap(model *securityandcompliancecenterapiv3.ControlSpecifications) (map[string]interface{}, error) {
+func dataSourceIbmSccControlLibraryControlSpecificationsToMap(model *securityandcompliancecenterapiv3.ControlSpecification) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	if model.ControlSpecificationID != nil {
-		modelMap["control_specification_id"] = model.ControlSpecificationID
+	if model.ID != nil {
+		modelMap["control_specification_id"] = model.ID
 	}
 	if model.Responsibility != nil {
 		modelMap["responsibility"] = model.Responsibility
@@ -429,8 +429,8 @@ func dataSourceIbmSccControlLibraryControlSpecificationsToMap(model *securityand
 	if model.Environment != nil {
 		modelMap["environment"] = model.Environment
 	}
-	if model.ControlSpecificationDescription != nil {
-		modelMap["control_specification_description"] = model.ControlSpecificationDescription
+	if model.Description != nil {
+		modelMap["control_specification_description"] = model.Description
 	}
 	if model.AssessmentsCount != nil {
 		modelMap["assessments_count"] = flex.IntValue(model.AssessmentsCount)
@@ -449,7 +449,7 @@ func dataSourceIbmSccControlLibraryControlSpecificationsToMap(model *securityand
 	return modelMap, nil
 }
 
-func dataSourceIbmSccControlLibraryImplementationToMap(model *securityandcompliancecenterapiv3.Implementation) (map[string]interface{}, error) {
+func dataSourceIbmSccControlLibraryImplementationToMap(model *securityandcompliancecenterapiv3.Assessment) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.AssessmentID != nil {
 		modelMap["assessment_id"] = model.AssessmentID
@@ -480,7 +480,7 @@ func dataSourceIbmSccControlLibraryImplementationToMap(model *securityandcomplia
 	return modelMap, nil
 }
 
-func dataSourceIbmSccControlLibraryParameterInfoToMap(model *securityandcompliancecenterapiv3.ParameterInfo) (map[string]interface{}, error) {
+func dataSourceIbmSccControlLibraryParameterInfoToMap(model *securityandcompliancecenterapiv3.Parameter) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ParameterName != nil {
 		modelMap["parameter_name"] = model.ParameterName
@@ -494,7 +494,7 @@ func dataSourceIbmSccControlLibraryParameterInfoToMap(model *securityandcomplian
 	return modelMap, nil
 }
 
-func dataSourceIbmSccControlLibraryControlDocsToMap(model *securityandcompliancecenterapiv3.ControlDocs) (map[string]interface{}, error) {
+func dataSourceIbmSccControlLibraryControlDocsToMap(model *securityandcompliancecenterapiv3.ControlDoc) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ControlDocsID != nil {
 		modelMap["control_docs_id"] = model.ControlDocsID

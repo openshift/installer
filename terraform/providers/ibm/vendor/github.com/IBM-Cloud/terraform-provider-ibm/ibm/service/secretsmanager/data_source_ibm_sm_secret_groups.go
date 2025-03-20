@@ -31,7 +31,7 @@ func DataSourceIbmSmSecretGroups() *schema.Resource {
 						"id": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "A v4 UUID identifier.",
+							Description: "A UUID identifier.",
 						},
 						"name": &schema.Schema{
 							Type:        schema.TypeString,

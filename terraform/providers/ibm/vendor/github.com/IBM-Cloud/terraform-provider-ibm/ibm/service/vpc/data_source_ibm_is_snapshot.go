@@ -543,12 +543,12 @@ func snapshotGetByNameOrID(d *schema.ResourceData, meta interface{}, name, id st
 					d.Set(isSnapshotOperatingSystem, *snapshot.OperatingSystem.Name)
 				}
 				// catalog
+				catalogList := make([]map[string]interface{}, 0)
 				if snapshot.CatalogOffering != nil {
 					versionCrn := ""
 					if snapshot.CatalogOffering.Version != nil && snapshot.CatalogOffering.Version.CRN != nil {
 						versionCrn = *snapshot.CatalogOffering.Version.CRN
 					}
-					catalogList := make([]map[string]interface{}, 0)
 					catalogMap := map[string]interface{}{}
 					if versionCrn != "" {
 						catalogMap[isSnapshotCatalogOfferingVersionCrn] = versionCrn
@@ -567,8 +567,8 @@ func snapshotGetByNameOrID(d *schema.ResourceData, meta interface{}, name, id st
 						}
 					}
 					catalogList = append(catalogList, catalogMap)
-					d.Set(isSnapshotCatalogOffering, catalogList)
 				}
+				d.Set(isSnapshotCatalogOffering, catalogList)
 
 				var clones []string
 				clones = make([]string, 0)
@@ -614,10 +614,7 @@ func snapshotGetByNameOrID(d *schema.ResourceData, meta interface{}, name, id st
 		}
 		snapshot, response, err := sess.GetSnapshot(getSnapshotOptions)
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error fetching snapshot %s\n%s", err, response)
-		}
-		if (response != nil && response.StatusCode == 404) || snapshot == nil {
-			return fmt.Errorf("[ERROR] No snapshot found with id %s", id)
+			return fmt.Errorf("[ERROR] Error fetching snapshot with id(%s) %s\n%s", id, err, response)
 		}
 		d.SetId(*snapshot.ID)
 		d.Set(isSnapshotName, *snapshot.Name)

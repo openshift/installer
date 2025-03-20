@@ -115,23 +115,61 @@ func ResourceIBMCmCatalog() *schema.Resource {
 			"catalog_filters": &schema.Schema{
 				Type:        schema.TypeList,
 				Computed:    true,
+				Optional:    true,
 				Description: "Filters for account and catalog filters.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"include_all": &schema.Schema{
 							Type:        schema.TypeBool,
+							Computed:    true,
 							Optional:    true,
 							Description: "-> true - Include all of the public catalog when filtering. Further settings will specifically exclude some offerings. false - Exclude all of the public catalog when filtering. Further settings will specifically include some offerings.",
 						},
 						"category_filters": &schema.Schema{
-							Type:        schema.TypeMap,
+							Type:        schema.TypeList,
+							Computed:    true,
 							Optional:    true,
-							Description: "Filter against offering properties.",
-							Elem:        &schema.Schema{Type: schema.TypeString},
+							Description: "Filter against offering categories with dynamic keys.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"category_name": &schema.Schema{
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "Name of this category",
+									},
+									"include": &schema.Schema{
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Optional:    true,
+										Description: "Whether to include the category in the catalog filter.",
+									},
+									"filter": &schema.Schema{
+										Type:        schema.TypeList,
+										MaxItems:    1,
+										Computed:    true,
+										Optional:    true,
+										Description: "Filter terms related to the category.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"filter_terms": &schema.Schema{
+													Type:        schema.TypeList,
+													Computed:    true,
+													Optional:    true,
+													Description: "List of filter terms for the category.",
+													Elem: &schema.Schema{
+														Type: schema.TypeString,
+													},
+												},
+											},
+										},
+									},
+								},
+							},
 						},
 						"id_filters": &schema.Schema{
 							Type:        schema.TypeList,
 							MaxItems:    1,
+							Computed:    true,
 							Optional:    true,
 							Description: "Filter on offering ID's. There is an include filter and an exclule filter. Both can be set.",
 							Elem: &schema.Resource{
@@ -139,12 +177,14 @@ func ResourceIBMCmCatalog() *schema.Resource {
 									"include": &schema.Schema{
 										Type:        schema.TypeList,
 										MaxItems:    1,
+										Computed:    true,
 										Optional:    true,
 										Description: "Offering filter terms.",
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"filter_terms": &schema.Schema{
 													Type:        schema.TypeList,
+													Computed:    true,
 													Optional:    true,
 													Description: "List of values to match against. If include is true, then if the offering has one of the values then the offering is included. If include is false, then if the offering has one of the values then the offering is excluded.",
 													Elem:        &schema.Schema{Type: schema.TypeString},
@@ -156,11 +196,13 @@ func ResourceIBMCmCatalog() *schema.Resource {
 										Type:        schema.TypeList,
 										MaxItems:    1,
 										Optional:    true,
+										Computed:    true,
 										Description: "Offering filter terms.",
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"filter_terms": &schema.Schema{
 													Type:        schema.TypeList,
+													Computed:    true,
 													Optional:    true,
 													Description: "List of values to match against. If include is true, then if the offering has one of the values then the offering is included. If include is false, then if the offering has one of the values then the offering is excluded.",
 													Elem:        &schema.Schema{Type: schema.TypeString},
@@ -725,6 +767,27 @@ func resourceIBMCmCatalogMapToFilters(modelMap map[string]interface{}) (*catalog
 		}
 		model.IDFilters = IDFiltersModel
 	}
+	if modelMap["category_filters"] != nil {
+		categoryFiltersList := modelMap["category_filters"].([]interface{})
+		categoryFilters := make(map[string]catalogmanagementv1.CategoryFilter) // Initialize the map for category filters
+
+		for _, item := range categoryFiltersList {
+			categoryFilterMap := item.(map[string]interface{})
+			categoryName := categoryFilterMap["category_name"].(string) // Extract category_name as the map key
+
+			// Convert the category filter to the appropriate struct
+			categoryFilter, err := resourceIBMCmCatalogMapToCategoryFilter(categoryFilterMap)
+			if err != nil {
+				return model, err
+			}
+
+			// Add the category filter to the map using category_name as the key
+			categoryFilters[categoryName] = *categoryFilter
+		}
+
+		// Assign the map to the model
+		model.CategoryFilters = categoryFilters
+	}
 	return model, nil
 }
 
@@ -758,18 +821,22 @@ func resourceIBMCmCatalogMapToFilterTerms(modelMap map[string]interface{}) (*cat
 func resourceIBMCmCatalogMapToIDFilter(modelMap map[string]interface{}) (*catalogmanagementv1.IDFilter, error) {
 	model := &catalogmanagementv1.IDFilter{}
 	if modelMap["include"] != nil && len(modelMap["include"].([]interface{})) > 0 {
-		IncludeModel, err := resourceIBMCmCatalogMapToFilterTerms(modelMap["include"].([]interface{})[0].(map[string]interface{}))
-		if err != nil {
-			return model, err
+		if modelMap["include"].([]interface{})[0] != nil && modelMap["include"].([]interface{})[0].(map[string]interface{}) != nil {
+			IncludeModel, err := resourceIBMCmCatalogMapToFilterTerms(modelMap["include"].([]interface{})[0].(map[string]interface{}))
+			if err != nil {
+				return model, err
+			}
+			model.Include = IncludeModel
 		}
-		model.Include = IncludeModel
 	}
 	if modelMap["exclude"] != nil && len(modelMap["exclude"].([]interface{})) > 0 {
-		ExcludeModel, err := resourceIBMCmCatalogMapToFilterTerms(modelMap["exclude"].([]interface{})[0].(map[string]interface{}))
-		if err != nil {
-			return model, err
+		if modelMap["exclude"].([]interface{})[0] != nil && modelMap["exclude"].([]interface{})[0].(map[string]interface{}) != nil {
+			ExcludeModel, err := resourceIBMCmCatalogMapToFilterTerms(modelMap["exclude"].([]interface{})[0].(map[string]interface{}))
+			if err != nil {
+				return model, err
+			}
+			model.Exclude = ExcludeModel
 		}
-		model.Exclude = ExcludeModel
 	}
 	return model, nil
 }
@@ -838,11 +905,25 @@ func resourceIBMCmCatalogFiltersToMap(model *catalogmanagementv1.Filters) (map[s
 		}
 		modelMap["id_filters"] = []map[string]interface{}{idFiltersMap}
 	}
+	if model.CategoryFilters != nil {
+		var categoryFiltersList []map[string]interface{}
+		for k, category := range model.CategoryFilters {
+			categoryFilterMap, err := resourceIBMCmCatalogCategoryFilterToMap(k, &category)
+			if err != nil {
+				return modelMap, err
+			}
+			categoryFiltersList = append(categoryFiltersList, categoryFilterMap)
+		}
+		modelMap["category_filters"] = categoryFiltersList
+	}
 	return modelMap, nil
 }
 
-func resourceIBMCmCatalogCategoryFilterToMap(model *catalogmanagementv1.CategoryFilter) (map[string]interface{}, error) {
+func resourceIBMCmCatalogCategoryFilterToMap(key string, model *catalogmanagementv1.CategoryFilter) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
+	if key != "" {
+		modelMap["category_name"] = key
+	}
 	if model.Include != nil {
 		modelMap["include"] = model.Include
 	}

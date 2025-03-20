@@ -796,12 +796,12 @@ func snapshotGet(d *schema.ResourceData, meta interface{}, id string) error {
 	d.Set(isSnapshotClones, flex.NewStringSet(schema.HashString, clones))
 
 	// catalog
+	catalogList := make([]map[string]interface{}, 0)
 	if snapshot.CatalogOffering != nil {
 		versionCrn := ""
 		if snapshot.CatalogOffering.Version != nil && snapshot.CatalogOffering.Version.CRN != nil {
 			versionCrn = *snapshot.CatalogOffering.Version.CRN
 		}
-		catalogList := make([]map[string]interface{}, 0)
 		catalogMap := map[string]interface{}{}
 		if versionCrn != "" {
 			catalogMap[isSnapshotCatalogOfferingVersionCrn] = versionCrn
@@ -820,8 +820,8 @@ func snapshotGet(d *schema.ResourceData, meta interface{}, id string) error {
 			}
 		}
 		catalogList = append(catalogList, catalogMap)
-		d.Set(isSnapshotCatalogOffering, catalogList)
 	}
+	d.Set(isSnapshotCatalogOffering, catalogList)
 
 	backupPolicyPlanList := []map[string]interface{}{}
 	if snapshot.BackupPolicyPlan != nil {
@@ -1133,7 +1133,7 @@ func snapshotDelete(d *schema.ResourceData, meta interface{}, id string) error {
 	deleteSnapshotOptions := &vpcv1.DeleteSnapshotOptions{
 		ID: &id,
 	}
-	response, err = sess.DeleteSnapshot(deleteSnapshotOptions)
+	_, response, err = sess.DeleteSnapshot(deleteSnapshotOptions)
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error deleting Snapshot : %s\n%s", err, response)
 	}
