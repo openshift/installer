@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -97,6 +97,7 @@ func DCLTagKeySchema() *dcl.Schema {
 								Description:              "Immutable. The generated numeric id for the TagKey.",
 								Immutable:                true,
 								ServerGeneratedParameter: true,
+								HasLongForm:              true,
 							},
 							"namespacedName": &dcl.Property{
 								Type:        "string",

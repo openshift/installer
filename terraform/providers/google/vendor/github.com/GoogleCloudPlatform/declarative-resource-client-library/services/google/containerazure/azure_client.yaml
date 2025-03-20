@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC. All Rights Reserved.
+# Copyright 2024 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@ info:
   x-dcl-has-iam: false
   x-dcl-ref:
     text: API reference
-    url: https://cloud.google.com/anthos/clusters/docs/multi-cloud/reference/rest/v1/projects.locations.azureClients
+    url: https://cloud.google.com/kubernetes-engine/multi-cloud/docs/reference/rest/v1/projects.locations.azureClients
   x-dcl-guides:
   - text: Multicloud overview
-    url: https://cloud.google.com/anthos/clusters/docs/multi-cloud
+    url: https://cloud.google.com/kubernetes-engine/multi-cloud/docs
 paths:
   get:
     description: The function used to get information about a Client
@@ -111,11 +111,13 @@ components:
           x-dcl-go-name: Location
           description: The location for the resource
           x-kubernetes-immutable: true
+          x-dcl-parameter: true
         name:
           type: string
           x-dcl-go-name: Name
           description: The name of this resource.
           x-kubernetes-immutable: true
+          x-dcl-has-long-form: true
         project:
           type: string
           x-dcl-go-name: Project
@@ -125,6 +127,7 @@ components:
           - resource: Cloudresourcemanager/Project
             field: name
             parent: true
+          x-dcl-parameter: true
         tenantId:
           type: string
           x-dcl-go-name: TenantId

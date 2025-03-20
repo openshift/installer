@@ -21,15 +21,18 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/id"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
+	"github.com/hashicorp/terraform-provider-google/google/verify"
 )
 
 func ResourceWorkflowsWorkflow() *schema.Resource {
@@ -54,8 +57,20 @@ func ResourceWorkflowsWorkflow() *schema.Resource {
 				Version: 0,
 			},
 		},
+		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
+			"call_log_level": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: verify.ValidateEnum([]string{"CALL_LOG_LEVEL_UNSPECIFIED", "LOG_ALL_CALLS", "LOG_ERRORS_ONLY", "LOG_NONE", ""}),
+				Description: `Describes the level of platform logging to apply to calls and call responses during
+executions of this workflow. If both the workflow and the execution specify a logging level,
+the execution level takes precedence. Possible values: ["CALL_LOG_LEVEL_UNSPECIFIED", "LOG_ALL_CALLS", "LOG_ERRORS_ONLY", "LOG_NONE"]`,
+			},
 			"crypto_key_name": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -70,10 +85,14 @@ Format: projects/{project}/locations/{location}/keyRings/{keyRing}/cryptoKeys/{c
 				Description: `Description of the workflow provided by the user. Must be at most 1000 unicode characters long.`,
 			},
 			"labels": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: `A set of key/value label pairs to assign to this Workflow.`,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `A set of key/value label pairs to assign to this Workflow.
+
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -104,12 +123,24 @@ Modifying this field for an existing workflow results in a new workflow revision
 			"source_contents": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: `Workflow code to be executed. The size limit is 32KB.`,
+				Description: `Workflow code to be executed. The size limit is 128KB.`,
+			},
+			"user_env_vars": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: `User-defined environment variables associated with this workflow revision. This map has a maximum length of 20. Each string can take up to 4KiB. Keys cannot be empty strings and cannot start with “GOOGLE” or “WORKFLOWS".`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"create_time": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `The timestamp of when the workflow was created in RFC3339 UTC "Zulu" format, with nanosecond resolution and up to nine fractional digits.`,
+			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"revision_id": {
 				Type:        schema.TypeString,
@@ -120,6 +151,13 @@ Modifying this field for an existing workflow results in a new workflow revision
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `State of the workflow deployment.`,
+			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"update_time": {
 				Type:        schema.TypeString,
@@ -164,12 +202,6 @@ func resourceWorkflowsWorkflowCreate(d *schema.ResourceData, meta interface{}) e
 	} else if v, ok := d.GetOkExists("description"); !tpgresource.IsEmptyValue(reflect.ValueOf(descriptionProp)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
 	}
-	labelsProp, err := expandWorkflowsWorkflowLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	serviceAccountProp, err := expandWorkflowsWorkflowServiceAccount(d.Get("service_account"), d, config)
 	if err != nil {
 		return err
@@ -187,6 +219,24 @@ func resourceWorkflowsWorkflowCreate(d *schema.ResourceData, meta interface{}) e
 		return err
 	} else if v, ok := d.GetOkExists("crypto_key_name"); !tpgresource.IsEmptyValue(reflect.ValueOf(cryptoKeyNameProp)) && (ok || !reflect.DeepEqual(v, cryptoKeyNameProp)) {
 		obj["cryptoKeyName"] = cryptoKeyNameProp
+	}
+	callLogLevelProp, err := expandWorkflowsWorkflowCallLogLevel(d.Get("call_log_level"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("call_log_level"); !tpgresource.IsEmptyValue(reflect.ValueOf(callLogLevelProp)) && (ok || !reflect.DeepEqual(v, callLogLevelProp)) {
+		obj["callLogLevel"] = callLogLevelProp
+	}
+	userEnvVarsProp, err := expandWorkflowsWorkflowUserEnvVars(d.Get("user_env_vars"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("user_env_vars"); !tpgresource.IsEmptyValue(reflect.ValueOf(userEnvVarsProp)) && (ok || !reflect.DeepEqual(v, userEnvVarsProp)) {
+		obj["userEnvVars"] = userEnvVarsProp
+	}
+	labelsProp, err := expandWorkflowsWorkflowEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
 	}
 
 	obj, err = resourceWorkflowsWorkflowEncoder(d, meta, obj)
@@ -213,6 +263,7 @@ func resourceWorkflowsWorkflowCreate(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -221,6 +272,7 @@ func resourceWorkflowsWorkflowCreate(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Workflow: %s", err)
@@ -287,12 +339,14 @@ func resourceWorkflowsWorkflowRead(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("WorkflowsWorkflow %q", d.Id()))
@@ -332,6 +386,18 @@ func resourceWorkflowsWorkflowRead(d *schema.ResourceData, meta interface{}) err
 	if err := d.Set("crypto_key_name", flattenWorkflowsWorkflowCryptoKeyName(res["cryptoKeyName"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Workflow: %s", err)
 	}
+	if err := d.Set("call_log_level", flattenWorkflowsWorkflowCallLogLevel(res["callLogLevel"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Workflow: %s", err)
+	}
+	if err := d.Set("user_env_vars", flattenWorkflowsWorkflowUserEnvVars(res["userEnvVars"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Workflow: %s", err)
+	}
+	if err := d.Set("terraform_labels", flattenWorkflowsWorkflowTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Workflow: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenWorkflowsWorkflowEffectiveLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Workflow: %s", err)
+	}
 
 	return nil
 }
@@ -358,12 +424,6 @@ func resourceWorkflowsWorkflowUpdate(d *schema.ResourceData, meta interface{}) e
 	} else if v, ok := d.GetOkExists("description"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
 	}
-	labelsProp, err := expandWorkflowsWorkflowLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	serviceAccountProp, err := expandWorkflowsWorkflowServiceAccount(d.Get("service_account"), d, config)
 	if err != nil {
 		return err
@@ -382,6 +442,24 @@ func resourceWorkflowsWorkflowUpdate(d *schema.ResourceData, meta interface{}) e
 	} else if v, ok := d.GetOkExists("crypto_key_name"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, cryptoKeyNameProp)) {
 		obj["cryptoKeyName"] = cryptoKeyNameProp
 	}
+	callLogLevelProp, err := expandWorkflowsWorkflowCallLogLevel(d.Get("call_log_level"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("call_log_level"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, callLogLevelProp)) {
+		obj["callLogLevel"] = callLogLevelProp
+	}
+	userEnvVarsProp, err := expandWorkflowsWorkflowUserEnvVars(d.Get("user_env_vars"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("user_env_vars"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, userEnvVarsProp)) {
+		obj["userEnvVars"] = userEnvVarsProp
+	}
+	labelsProp, err := expandWorkflowsWorkflowEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
 
 	obj, err = resourceWorkflowsWorkflowEncoder(d, meta, obj)
 	if err != nil {
@@ -394,14 +472,11 @@ func resourceWorkflowsWorkflowUpdate(d *schema.ResourceData, meta interface{}) e
 	}
 
 	log.Printf("[DEBUG] Updating Workflow %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("description") {
 		updateMask = append(updateMask, "description")
-	}
-
-	if d.HasChange("labels") {
-		updateMask = append(updateMask, "labels")
 	}
 
 	if d.HasChange("service_account") {
@@ -415,6 +490,18 @@ func resourceWorkflowsWorkflowUpdate(d *schema.ResourceData, meta interface{}) e
 	if d.HasChange("crypto_key_name") {
 		updateMask = append(updateMask, "cryptoKeyName")
 	}
+
+	if d.HasChange("call_log_level") {
+		updateMask = append(updateMask, "callLogLevel")
+	}
+
+	if d.HasChange("user_env_vars") {
+		updateMask = append(updateMask, "userEnvVars")
+	}
+
+	if d.HasChange("effective_labels") {
+		updateMask = append(updateMask, "labels")
+	}
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
 	// won't set it
 	url, err = transport_tpg.AddQueryParams(url, map[string]string{"updateMask": strings.Join(updateMask, ",")})
@@ -427,28 +514,32 @@ func resourceWorkflowsWorkflowUpdate(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating Workflow %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating Workflow %q: %#v", d.Id(), res)
-	}
+		if err != nil {
+			return fmt.Errorf("Error updating Workflow %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating Workflow %q: %#v", d.Id(), res)
+		}
 
-	err = WorkflowsOperationWaitTime(
-		config, res, project, "Updating Workflow", userAgent,
-		d.Timeout(schema.TimeoutUpdate))
+		err = WorkflowsOperationWaitTime(
+			config, res, project, "Updating Workflow", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return resourceWorkflowsWorkflowRead(d, meta)
@@ -475,13 +566,15 @@ func resourceWorkflowsWorkflowDelete(d *schema.ResourceData, meta interface{}) e
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Workflow %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Workflow %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -490,6 +583,7 @@ func resourceWorkflowsWorkflowDelete(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Workflow")
@@ -531,7 +625,18 @@ func flattenWorkflowsWorkflowState(v interface{}, d *schema.ResourceData, config
 }
 
 func flattenWorkflowsWorkflowLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenWorkflowsWorkflowServiceAccount(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -550,23 +655,39 @@ func flattenWorkflowsWorkflowCryptoKeyName(v interface{}, d *schema.ResourceData
 	return v
 }
 
+func flattenWorkflowsWorkflowCallLogLevel(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenWorkflowsWorkflowUserEnvVars(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenWorkflowsWorkflowTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
+}
+
+func flattenWorkflowsWorkflowEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func expandWorkflowsWorkflowName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
 func expandWorkflowsWorkflowDescription(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
-}
-
-func expandWorkflowsWorkflowLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
-	if v == nil {
-		return map[string]string{}, nil
-	}
-	m := make(map[string]string)
-	for k, val := range v.(map[string]interface{}) {
-		m[k] = val.(string)
-	}
-	return m, nil
 }
 
 func expandWorkflowsWorkflowServiceAccount(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
@@ -581,14 +702,40 @@ func expandWorkflowsWorkflowCryptoKeyName(v interface{}, d tpgresource.Terraform
 	return v, nil
 }
 
+func expandWorkflowsWorkflowCallLogLevel(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandWorkflowsWorkflowUserEnvVars(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
+}
+
+func expandWorkflowsWorkflowEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
+}
+
 func resourceWorkflowsWorkflowEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {
 	var ResName string
 	if v, ok := d.GetOk("name"); ok {
 		ResName = v.(string)
 	} else if v, ok := d.GetOk("name_prefix"); ok {
-		ResName = resource.PrefixedUniqueId(v.(string))
+		ResName = id.PrefixedUniqueId(v.(string))
 	} else {
-		ResName = resource.UniqueId()
+		ResName = id.UniqueId()
 	}
 
 	if err := d.Set("name", ResName); err != nil {

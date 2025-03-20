@@ -7,9 +7,12 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	"google.golang.org/api/logging/v2"
 )
+
+func OptionalSurroundingSpacesSuppress(k, old, new string, d *schema.ResourceData) bool {
+	return strings.TrimSpace(old) == strings.TrimSpace(new)
+}
 
 func resourceLoggingSinkSchema() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
@@ -29,7 +32,7 @@ func resourceLoggingSinkSchema() map[string]*schema.Schema {
 		"filter": {
 			Type:             schema.TypeString,
 			Optional:         true,
-			DiffSuppressFunc: tpgresource.OptionalSurroundingSpacesSuppress,
+			DiffSuppressFunc: OptionalSurroundingSpacesSuppress,
 			Description:      `The filter to apply when exporting logs. Only log entries that match the filter are exported.`,
 		},
 
@@ -157,10 +160,11 @@ func expandResourceLoggingSinkForUpdate(d *schema.ResourceData) (sink *logging.L
 		Filter:          d.Get("filter").(string),
 		Disabled:        d.Get("disabled").(bool),
 		Description:     d.Get("description").(string),
-		ForceSendFields: []string{"Destination", "Filter", "Disabled"},
+		Exclusions:      expandLoggingSinkExclusions(d.Get("exclusions")),
+		ForceSendFields: []string{"Destination", "Filter", "Disabled", "Exclusions"},
 	}
 
-	updateFields := []string{}
+	updateFields := []string{"exclusions"}
 	if d.HasChange("destination") {
 		updateFields = append(updateFields, "destination")
 	}
@@ -173,13 +177,15 @@ func expandResourceLoggingSinkForUpdate(d *schema.ResourceData) (sink *logging.L
 	if d.HasChange("disabled") {
 		updateFields = append(updateFields, "disabled")
 	}
-	if d.HasChange("exclusions") {
-		sink.Exclusions = expandLoggingSinkExclusions(d.Get("exclusions"))
-		updateFields = append(updateFields, "exclusions")
-	}
 	if d.HasChange("bigquery_options") {
 		sink.BigqueryOptions = expandLoggingSinkBigqueryOptions(d.Get("bigquery_options"))
 		updateFields = append(updateFields, "bigqueryOptions")
+	}
+	if d.HasChange("include_children") {
+		updateFields = append(updateFields, "includeChildren")
+	}
+	if d.HasChange("intercept_children") {
+		updateFields = append(updateFields, "interceptChildren")
 	}
 	updateMask = strings.Join(updateFields, ",")
 	return

@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC. All Rights Reserved.
+# Copyright 2024 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -74,6 +74,7 @@ components:
           description: Immutable. The generated numeric id for the TagValue.
           x-kubernetes-immutable: true
           x-dcl-server-generated-parameter: true
+          x-dcl-has-long-form: true
         namespacedName:
           type: string
           x-dcl-go-name: NamespacedName

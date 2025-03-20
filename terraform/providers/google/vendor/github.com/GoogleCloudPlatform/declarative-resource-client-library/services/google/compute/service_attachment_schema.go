@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -177,7 +177,7 @@ func DCLServiceAttachmentSchema() *dcl.Schema {
 								GoName:      "ConsumerAcceptLists",
 								Description: "Projects that are allowed to connect to this service attachment.",
 								SendEmpty:   true,
-								ListType:    "list",
+								ListType:    "set",
 								Items: &dcl.Property{
 									Type:   "object",
 									GoType: "ServiceAttachmentConsumerAcceptLists",
@@ -253,6 +253,7 @@ func DCLServiceAttachmentSchema() *dcl.Schema {
 								GoName:      "Location",
 								Description: "The location for the resource",
 								Immutable:   true,
+								Parameter:   true,
 							},
 							"name": &dcl.Property{
 								Type:        "string",
@@ -289,6 +290,7 @@ func DCLServiceAttachmentSchema() *dcl.Schema {
 										Parent:   true,
 									},
 								},
+								Parameter: true,
 							},
 							"pscServiceAttachmentId": &dcl.Property{
 								Type:        "object",

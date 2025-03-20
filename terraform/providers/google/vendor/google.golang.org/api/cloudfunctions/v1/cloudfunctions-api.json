@@ -140,23 +140,23 @@
           "parameterOrder": [],
           "parameters": {
             "filter": {
-              "description": "Required. A filter for matching the requested operations. The supported formats of *filter* are: To query for a specific function: project:*,location:*,function:* To query for all of the latest operations for a project: project:*,latest:true",
+              "description": "The standard list filter.",
               "location": "query",
               "type": "string"
             },
             "name": {
-              "description": "Must not be set.",
+              "description": "The name of the operation's parent resource.",
               "location": "query",
               "type": "string"
             },
             "pageSize": {
-              "description": "The maximum number of records that should be returned. Requested page size cannot exceed 100. If not set, the default page size is 100. Pagination is only supported when querying for a specific function.",
+              "description": "The standard list page size.",
               "format": "int32",
               "location": "query",
               "type": "integer"
             },
             "pageToken": {
-              "description": "Token identifying which result to start with, which is returned by a previous list call. Pagination is only supported when querying for a specific function.",
+              "description": "The standard list page token.",
               "location": "query",
               "type": "string"
             }
@@ -372,6 +372,12 @@
                       "pattern": "^projects/[^/]+/locations/[^/]+/functions/[^/]+$",
                       "required": true,
                       "type": "string"
+                    },
+                    "versionId": {
+                      "description": "Optional. The optional version of the function whose details should be obtained. The version of a 1st Gen function is an integer that starts from 1 and gets incremented on redeployments. Each deployment creates a config version of the underlying function. GCF may keep historical configs for old versions. This field can be specified to fetch the historical configs. Leave it blank or set to 0 to get the latest version of the function.",
+                      "format": "int64",
+                      "location": "query",
+                      "type": "string"
                     }
                   },
                   "path": "v1/{+name}",
@@ -546,7 +552,7 @@
       }
     }
   },
-  "revision": "20230608",
+  "revision": "20240523",
   "rootUrl": "https://cloudfunctions.googleapis.com/",
   "schemas": {
     "AuditConfig": {
@@ -597,6 +603,12 @@
       },
       "type": "object"
     },
+    "AutomaticUpdatePolicy": {
+      "description": "Security patches are applied automatically to the runtime without requiring the function to be redeployed.",
+      "id": "AutomaticUpdatePolicy",
+      "properties": {},
+      "type": "object"
+    },
     "Binding": {
       "description": "Associates `members`, or principals, with a `role`.",
       "id": "Binding",
@@ -606,14 +618,14 @@
           "description": "The condition that is associated with this binding. If the condition evaluates to `true`, then this binding applies to the current request. If the condition evaluates to `false`, then this binding does not apply to the current request. However, a different role binding might grant the same role to one or more of the principals in this binding. To learn which resources support conditions in their IAM policies, see the [IAM documentation](https://cloud.google.com/iam/help/conditions/resource-policies)."
         },
         "members": {
-          "description": "Specifies the principals requesting access for a Google Cloud resource. `members` can have the following values: * `allUsers`: A special identifier that represents anyone who is on the internet; with or without a Google account. * `allAuthenticatedUsers`: A special identifier that represents anyone who is authenticated with a Google account or a service account. Does not include identities that come from external identity providers (IdPs) through identity federation. * `user:{emailid}`: An email address that represents a specific Google account. For example, `alice@example.com` . * `serviceAccount:{emailid}`: An email address that represents a Google service account. For example, `my-other-app@appspot.gserviceaccount.com`. * `serviceAccount:{projectid}.svc.id.goog[{namespace}/{kubernetes-sa}]`: An identifier for a [Kubernetes service account](https://cloud.google.com/kubernetes-engine/docs/how-to/kubernetes-service-accounts). For example, `my-project.svc.id.goog[my-namespace/my-kubernetes-sa]`. * `group:{emailid}`: An email address that represents a Google group. For example, `admins@example.com`. * `domain:{domain}`: The G Suite domain (primary) that represents all the users of that domain. For example, `google.com` or `example.com`. * `deleted:user:{emailid}?uid={uniqueid}`: An email address (plus unique identifier) representing a user that has been recently deleted. For example, `alice@example.com?uid=123456789012345678901`. If the user is recovered, this value reverts to `user:{emailid}` and the recovered user retains the role in the binding. * `deleted:serviceAccount:{emailid}?uid={uniqueid}`: An email address (plus unique identifier) representing a service account that has been recently deleted. For example, `my-other-app@appspot.gserviceaccount.com?uid=123456789012345678901`. If the service account is undeleted, this value reverts to `serviceAccount:{emailid}` and the undeleted service account retains the role in the binding. * `deleted:group:{emailid}?uid={uniqueid}`: An email address (plus unique identifier) representing a Google group that has been recently deleted. For example, `admins@example.com?uid=123456789012345678901`. If the group is recovered, this value reverts to `group:{emailid}` and the recovered group retains the role in the binding.",
+          "description": "Specifies the principals requesting access for a Google Cloud resource. `members` can have the following values: * `allUsers`: A special identifier that represents anyone who is on the internet; with or without a Google account. * `allAuthenticatedUsers`: A special identifier that represents anyone who is authenticated with a Google account or a service account. Does not include identities that come from external identity providers (IdPs) through identity federation. * `user:{emailid}`: An email address that represents a specific Google account. For example, `alice@example.com` . * `serviceAccount:{emailid}`: An email address that represents a Google service account. For example, `my-other-app@appspot.gserviceaccount.com`. * `serviceAccount:{projectid}.svc.id.goog[{namespace}/{kubernetes-sa}]`: An identifier for a [Kubernetes service account](https://cloud.google.com/kubernetes-engine/docs/how-to/kubernetes-service-accounts). For example, `my-project.svc.id.goog[my-namespace/my-kubernetes-sa]`. * `group:{emailid}`: An email address that represents a Google group. For example, `admins@example.com`. * `domain:{domain}`: The G Suite domain (primary) that represents all the users of that domain. For example, `google.com` or `example.com`. * `principal://iam.googleapis.com/locations/global/workforcePools/{pool_id}/subject/{subject_attribute_value}`: A single identity in a workforce identity pool. * `principalSet://iam.googleapis.com/locations/global/workforcePools/{pool_id}/group/{group_id}`: All workforce identities in a group. * `principalSet://iam.googleapis.com/locations/global/workforcePools/{pool_id}/attribute.{attribute_name}/{attribute_value}`: All workforce identities with a specific attribute value. * `principalSet://iam.googleapis.com/locations/global/workforcePools/{pool_id}/*`: All identities in a workforce identity pool. * `principal://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/subject/{subject_attribute_value}`: A single identity in a workload identity pool. * `principalSet://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/group/{group_id}`: A workload identity pool group. * `principalSet://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/attribute.{attribute_name}/{attribute_value}`: All identities in a workload identity pool with a certain attribute. * `principalSet://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/*`: All identities in a workload identity pool. * `deleted:user:{emailid}?uid={uniqueid}`: An email address (plus unique identifier) representing a user that has been recently deleted. For example, `alice@example.com?uid=123456789012345678901`. If the user is recovered, this value reverts to `user:{emailid}` and the recovered user retains the role in the binding. * `deleted:serviceAccount:{emailid}?uid={uniqueid}`: An email address (plus unique identifier) representing a service account that has been recently deleted. For example, `my-other-app@appspot.gserviceaccount.com?uid=123456789012345678901`. If the service account is undeleted, this value reverts to `serviceAccount:{emailid}` and the undeleted service account retains the role in the binding. * `deleted:group:{emailid}?uid={uniqueid}`: An email address (plus unique identifier) representing a Google group that has been recently deleted. For example, `admins@example.com?uid=123456789012345678901`. If the group is recovered, this value reverts to `group:{emailid}` and the recovered group retains the role in the binding. * `deleted:principal://iam.googleapis.com/locations/global/workforcePools/{pool_id}/subject/{subject_attribute_value}`: Deleted single identity in a workforce identity pool. For example, `deleted:principal://iam.googleapis.com/locations/global/workforcePools/my-pool-id/subject/my-subject-attribute-value`.",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
         "role": {
-          "description": "Role that is assigned to the list of `members`, or principals. For example, `roles/viewer`, `roles/editor`, or `roles/owner`.",
+          "description": "Role that is assigned to the list of `members`, or principals. For example, `roles/viewer`, `roles/editor`, or `roles/owner`. For an overview of the IAM roles and permissions, see the [IAM documentation](https://cloud.google.com/iam/docs/roles-overview). For a list of the available pre-defined roles, see [here](https://cloud.google.com/iam/docs/understanding-roles).",
           "type": "string"
         }
       },
@@ -653,6 +665,9 @@
       "description": "Describes a Cloud Function that contains user computation executed in response to an event. It encapsulate function and triggers configurations.",
       "id": "CloudFunction",
       "properties": {
+        "automaticUpdatePolicy": {
+          "$ref": "AutomaticUpdatePolicy"
+        },
         "availableMemoryMb": {
           "description": "The amount of memory in MB available for a function. Defaults to 256MB.",
           "format": "int32",
@@ -675,6 +690,10 @@
           "readOnly": true,
           "type": "string"
         },
+        "buildServiceAccount": {
+          "description": "Optional. A service account the user provides for use with Cloud Build.",
+          "type": "string"
+        },
         "buildWorkerPool": {
           "description": "Name of the Cloud Build Custom Worker Pool that should be used to build the function. The format of this field is `projects/{project}/locations/{region}/workerPools/{workerPool}` where `{project}` and `{region}` are the project id and region respectively where the worker pool is defined and `{workerPool}` is the short name of the worker pool. If the project id is not the same as the function, then the Cloud Functions Service Agent (`service-@gcf-admin-robot.iam.gserviceaccount.com`) must be granted the role Cloud Build Custom Workers Builder (`roles/cloudbuild.customworkers.builder`) in the project.",
           "type": "string"
@@ -684,7 +703,7 @@
           "type": "string"
         },
         "dockerRegistry": {
-          "description": "Docker Registry to use for this deployment. If `docker_repository` field is specified, this field will be automatically set as `ARTIFACT_REGISTRY`. If unspecified, it currently defaults to `CONTAINER_REGISTRY`. This field may be overridden by the backend for eligible deployments.",
+          "description": "Docker Registry to use for this deployment. If unspecified, it defaults to `ARTIFACT_REGISTRY`. If `docker_repository` field is specified, this field should either be left unspecified or set to `ARTIFACT_REGISTRY`.",
           "enum": [
             "DOCKER_REGISTRY_UNSPECIFIED",
             "CONTAINER_REGISTRY",
@@ -698,7 +717,7 @@
           "type": "string"
         },
         "dockerRepository": {
-          "description": "User managed repository created in Artifact Registry optionally with a customer managed encryption key. If specified, deployments will use Artifact Registry. If unspecified and the deployment is eligible to use Artifact Registry, GCF will create and use a repository named 'gcf-artifacts' for every deployed region. This is the repository to which the function docker image will be pushed after it is built by Cloud Build. It must match the pattern `projects/{project}/locations/{location}/repositories/{repository}`. Cross-project repositories are not supported. Cross-location repositories are not supported. Repository format must be 'DOCKER'.",
+          "description": "User-managed repository created in Artifact Registry to which the function's Docker image will be pushed after it is built by Cloud Build. May optionally be encrypted with a customer-managed encryption key (CMEK). If unspecified and `docker_registry` is not explicitly set to `CONTAINER_REGISTRY`, GCF will create and use a default Artifact Registry repository named 'gcf-artifacts' in the region. It must match the pattern `projects/{project}/locations/{location}/repositories/{repository}`. Cross-project repositories are not supported. Cross-location repositories are not supported. Repository format must be 'DOCKER'.",
           "type": "string"
         },
         "entryPoint": {
@@ -762,8 +781,12 @@
           "type": "string"
         },
         "network": {
-          "description": "The VPC Network that this cloud function can connect to. It can be either the fully-qualified URI, or the short name of the network resource. If the short network name is used, the network must belong to the same project. Otherwise, it must belong to a project within the same organization. The format of this field is either `projects/{project}/global/networks/{network}` or `{network}`, where `{project}` is a project id where the network is defined, and `{network}` is the short name of the network. This field is mutually exclusive with `vpc_connector` and will be replaced by it. See [the VPC documentation](https://cloud.google.com/compute/docs/vpc) for more information on connecting Cloud projects.",
+          "deprecated": true,
+          "description": "Deprecated: use vpc_connector",
           "type": "string"
+        },
+        "onDeployUpdatePolicy": {
+          "$ref": "OnDeployUpdatePolicy"
         },
         "runtime": {
           "description": "The runtime in which to run the function. Required when deploying a new function, optional when updating an existing function. For a complete list of possible choices, see the [`gcloud` command reference](https://cloud.google.com/sdk/gcloud/reference/functions/deploy#--runtime).",
@@ -947,7 +970,7 @@
       "id": "GenerateUploadUrlRequest",
       "properties": {
         "kmsKeyName": {
-          "description": "Resource name of a KMS crypto key (managed by the user) used to encrypt/decrypt function source code objects in staging Cloud Storage buckets. When you generate an upload url and upload your source code, it gets copied to a staging Cloud Storage bucket in an internal regional project. The source code is then copied to a versioned directory in the sources bucket in the consumer project during the function deployment. It must match the pattern `projects/{project}/locations/{location}/keyRings/{key_ring}/cryptoKeys/{crypto_key}`. The Google Cloud Functions service account (service-{project_number}@gcf-admin-robot.iam.gserviceaccount.com) must be granted the role 'Cloud KMS CryptoKey Encrypter/Decrypter (roles/cloudkms.cryptoKeyEncrypterDecrypter)' on the Key/KeyRing/Project/Organization (least access preferred). GCF will delegate access to the Google Storage service account in the internal project.",
+          "description": "Resource name of a KMS crypto key (managed by the user) used to encrypt/decrypt function source code objects in intermediate Cloud Storage buckets. When you generate an upload url and upload your source code, it gets copied to an intermediate Cloud Storage bucket. The source code is then copied to a versioned directory in the sources bucket in the consumer project during the function deployment. It must match the pattern `projects/{project}/locations/{location}/keyRings/{key_ring}/cryptoKeys/{crypto_key}`. The Google Cloud Functions service account (service-{project_number}@gcf-admin-robot.iam.gserviceaccount.com) must be granted the role 'Cloud KMS CryptoKey Encrypter/Decrypter (roles/cloudkms.cryptoKeyEncrypterDecrypter)' on the Key/KeyRing/Project/Organization (least access preferred). GCF will delegate access to the Google Storage service account in the internal project.",
           "type": "string"
         }
       },
@@ -1010,6 +1033,32 @@
           "format": "google-datetime",
           "type": "string"
         },
+        "operationType": {
+          "description": "The operation type.",
+          "enum": [
+            "OPERATIONTYPE_UNSPECIFIED",
+            "CREATE_FUNCTION",
+            "UPDATE_FUNCTION",
+            "DELETE_FUNCTION",
+            "REDIRECT_FUNCTION_UPGRADE_TRAFFIC",
+            "ROLLBACK_FUNCTION_UPGRADE_TRAFFIC",
+            "SETUP_FUNCTION_UPGRADE_CONFIG",
+            "ABORT_FUNCTION_UPGRADE",
+            "COMMIT_FUNCTION_UPGRADE"
+          ],
+          "enumDescriptions": [
+            "Unspecified",
+            "CreateFunction",
+            "UpdateFunction",
+            "DeleteFunction",
+            "RedirectFunctionUpgradeTraffic",
+            "RollbackFunctionUpgradeTraffic",
+            "SetupFunctionUpgradeConfig",
+            "AbortFunctionUpgrade",
+            "CommitFunctionUpgrade"
+          ],
+          "type": "string"
+        },
         "requestResource": {
           "additionalProperties": {
             "description": "Properties of the object. Contains field @type with type URL.",
@@ -1017,6 +1066,10 @@
           },
           "description": "The original request that started the operation.",
           "type": "object"
+        },
+        "sourceToken": {
+          "description": "An identifier for Firebase function sources. Disclaimer: This field is only supported for Firebase function deployments.",
+          "type": "string"
         },
         "stages": {
           "description": "Mechanism for reporting in-progress stages",
@@ -1181,6 +1234,32 @@
           "format": "google-datetime",
           "type": "string"
         },
+        "operationType": {
+          "description": "The operation type.",
+          "enum": [
+            "OPERATIONTYPE_UNSPECIFIED",
+            "CREATE_FUNCTION",
+            "UPDATE_FUNCTION",
+            "DELETE_FUNCTION",
+            "REDIRECT_FUNCTION_UPGRADE_TRAFFIC",
+            "ROLLBACK_FUNCTION_UPGRADE_TRAFFIC",
+            "SETUP_FUNCTION_UPGRADE_CONFIG",
+            "ABORT_FUNCTION_UPGRADE",
+            "COMMIT_FUNCTION_UPGRADE"
+          ],
+          "enumDescriptions": [
+            "Unspecified",
+            "CreateFunction",
+            "UpdateFunction",
+            "DeleteFunction",
+            "RedirectFunctionUpgradeTraffic",
+            "RollbackFunctionUpgradeTraffic",
+            "SetupFunctionUpgradeConfig",
+            "AbortFunctionUpgrade",
+            "CommitFunctionUpgrade"
+          ],
+          "type": "string"
+        },
         "requestResource": {
           "additionalProperties": {
             "description": "Properties of the object. Contains field @type with type URL.",
@@ -1188,6 +1267,10 @@
           },
           "description": "The original request that started the operation.",
           "type": "object"
+        },
+        "sourceToken": {
+          "description": "An identifier for Firebase function sources. Disclaimer: This field is only supported for Firebase function deployments.",
+          "type": "string"
         },
         "stages": {
           "description": "Mechanism for reporting in-progress stages",
@@ -1352,6 +1435,32 @@
           "format": "google-datetime",
           "type": "string"
         },
+        "operationType": {
+          "description": "The operation type.",
+          "enum": [
+            "OPERATIONTYPE_UNSPECIFIED",
+            "CREATE_FUNCTION",
+            "UPDATE_FUNCTION",
+            "DELETE_FUNCTION",
+            "REDIRECT_FUNCTION_UPGRADE_TRAFFIC",
+            "ROLLBACK_FUNCTION_UPGRADE_TRAFFIC",
+            "SETUP_FUNCTION_UPGRADE_CONFIG",
+            "ABORT_FUNCTION_UPGRADE",
+            "COMMIT_FUNCTION_UPGRADE"
+          ],
+          "enumDescriptions": [
+            "Unspecified",
+            "CreateFunction",
+            "UpdateFunction",
+            "DeleteFunction",
+            "RedirectFunctionUpgradeTraffic",
+            "RollbackFunctionUpgradeTraffic",
+            "SetupFunctionUpgradeConfig",
+            "AbortFunctionUpgrade",
+            "CommitFunctionUpgrade"
+          ],
+          "type": "string"
+        },
         "requestResource": {
           "additionalProperties": {
             "description": "Properties of the object. Contains field @type with type URL.",
@@ -1359,6 +1468,10 @@
           },
           "description": "The original request that started the operation.",
           "type": "object"
+        },
+        "sourceToken": {
+          "description": "An identifier for Firebase function sources. Disclaimer: This field is only supported for Firebase function deployments.",
+          "type": "string"
         },
         "stages": {
           "description": "Mechanism for reporting in-progress stages",
@@ -1598,6 +1711,18 @@
       },
       "type": "object"
     },
+    "OnDeployUpdatePolicy": {
+      "description": "Security patches are only applied when a function is redeployed.",
+      "id": "OnDeployUpdatePolicy",
+      "properties": {
+        "runtimeVersion": {
+          "description": "Output only. Contains the runtime version which was used during latest function deployment.",
+          "readOnly": true,
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "Operation": {
       "description": "This resource represents a long-running operation that is the result of a network API call.",
       "id": "Operation",
@@ -1627,7 +1752,7 @@
             "description": "Properties of the object. Contains field @type with type URL.",
             "type": "any"
           },
-          "description": "The normal response of the operation in case of success. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.",
+          "description": "The normal, successful response of the operation. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.",
           "type": "object"
         }
       },
@@ -1691,7 +1816,7 @@
       "type": "object"
     },
     "Policy": {
-      "description": "An Identity and Access Management (IAM) policy, which specifies access controls for Google Cloud resources. A `Policy` is a collection of `bindings`. A `binding` binds one or more `members`, or principals, to a single `role`. Principals can be user accounts, service accounts, Google groups, and domains (such as G Suite). A `role` is a named list of permissions; each `role` can be an IAM predefined role or a user-created custom role. For some types of Google Cloud resources, a `binding` can also specify a `condition`, which is a logical expression that allows access to a resource only if the expression evaluates to `true`. A condition can add constraints based on attributes of the request, the resource, or both. To learn which resources support conditions in their IAM policies, see the [IAM documentation](https://cloud.google.com/iam/help/conditions/resource-policies). **JSON example:** { \"bindings\": [ { \"role\": \"roles/resourcemanager.organizationAdmin\", \"members\": [ \"user:mike@example.com\", \"group:admins@example.com\", \"domain:google.com\", \"serviceAccount:my-project-id@appspot.gserviceaccount.com\" ] }, { \"role\": \"roles/resourcemanager.organizationViewer\", \"members\": [ \"user:eve@example.com\" ], \"condition\": { \"title\": \"expirable access\", \"description\": \"Does not grant access after Sep 2020\", \"expression\": \"request.time \u003c timestamp('2020-10-01T00:00:00.000Z')\", } } ], \"etag\": \"BwWWja0YfJA=\", \"version\": 3 } **YAML example:** bindings: - members: - user:mike@example.com - group:admins@example.com - domain:google.com - serviceAccount:my-project-id@appspot.gserviceaccount.com role: roles/resourcemanager.organizationAdmin - members: - user:eve@example.com role: roles/resourcemanager.organizationViewer condition: title: expirable access description: Does not grant access after Sep 2020 expression: request.time \u003c timestamp('2020-10-01T00:00:00.000Z') etag: BwWWja0YfJA= version: 3 For a description of IAM and its features, see the [IAM documentation](https://cloud.google.com/iam/docs/).",
+      "description": "An Identity and Access Management (IAM) policy, which specifies access controls for Google Cloud resources. A `Policy` is a collection of `bindings`. A `binding` binds one or more `members`, or principals, to a single `role`. Principals can be user accounts, service accounts, Google groups, and domains (such as G Suite). A `role` is a named list of permissions; each `role` can be an IAM predefined role or a user-created custom role. For some types of Google Cloud resources, a `binding` can also specify a `condition`, which is a logical expression that allows access to a resource only if the expression evaluates to `true`. A condition can add constraints based on attributes of the request, the resource, or both. To learn which resources support conditions in their IAM policies, see the [IAM documentation](https://cloud.google.com/iam/help/conditions/resource-policies). **JSON example:** ``` { \"bindings\": [ { \"role\": \"roles/resourcemanager.organizationAdmin\", \"members\": [ \"user:mike@example.com\", \"group:admins@example.com\", \"domain:google.com\", \"serviceAccount:my-project-id@appspot.gserviceaccount.com\" ] }, { \"role\": \"roles/resourcemanager.organizationViewer\", \"members\": [ \"user:eve@example.com\" ], \"condition\": { \"title\": \"expirable access\", \"description\": \"Does not grant access after Sep 2020\", \"expression\": \"request.time \u003c timestamp('2020-10-01T00:00:00.000Z')\", } } ], \"etag\": \"BwWWja0YfJA=\", \"version\": 3 } ``` **YAML example:** ``` bindings: - members: - user:mike@example.com - group:admins@example.com - domain:google.com - serviceAccount:my-project-id@appspot.gserviceaccount.com role: roles/resourcemanager.organizationAdmin - members: - user:eve@example.com role: roles/resourcemanager.organizationViewer condition: title: expirable access description: Does not grant access after Sep 2020 expression: request.time \u003c timestamp('2020-10-01T00:00:00.000Z') etag: BwWWja0YfJA= version: 3 ``` For a description of IAM and its features, see the [IAM documentation](https://cloud.google.com/iam/docs/).",
       "id": "Policy",
       "properties": {
         "auditConfigs": {

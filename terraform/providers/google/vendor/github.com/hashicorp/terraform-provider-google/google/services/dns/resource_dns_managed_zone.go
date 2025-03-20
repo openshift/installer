@@ -21,10 +21,12 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"google.golang.org/api/dns/v1"
@@ -50,6 +52,11 @@ func ResourceDNSManagedZone() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"dns_name": {
@@ -193,10 +200,14 @@ one target is given.`,
 				},
 			},
 			"labels": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: `A set of key/value label pairs to assign to this ManagedZone.`,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `A set of key/value label pairs to assign to this ManagedZone.
+
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"peering_config": {
 				Type:     schema.TypeList,
@@ -231,32 +242,10 @@ This should be formatted like 'projects/{project}/global/networks/{network}' or
 				Type:     schema.TypeList,
 				Optional: true,
 				Description: `For privately visible zones, the set of Virtual Private Cloud
-resources that the zone is visible from.`,
+resources that the zone is visible from. At least one of 'gke_clusters' or 'networks' must be specified.`,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"networks": {
-							Type:     schema.TypeSet,
-							Required: true,
-							Description: `The list of VPC networks that can see this zone. Until the provider updates to use the Terraform 0.12 SDK in a future release, you
-may experience issues with this resource while updating. If you've defined a 'networks' block and
-add another 'networks' block while keeping the old block, Terraform will see an incorrect diff
-and apply an incorrect update to the resource. If you encounter this issue, remove all 'networks'
-blocks in an update and then apply another update adding all of them back simultaneously.`,
-							Elem: dnsManagedZonePrivateVisibilityConfigNetworksSchema(),
-							Set: func(v interface{}) int {
-								if v == nil {
-									return 0
-								}
-								raw := v.(map[string]interface{})
-								if url, ok := raw["network_url"]; ok {
-									return tpgresource.SelfLinkNameHash(url)
-								}
-								var buf bytes.Buffer
-								schema.SerializeResourceForHash(&buf, raw, dnsManagedZonePrivateVisibilityConfigNetworksSchema())
-								return tpgresource.Hashcode(buf.String())
-							},
-						},
 						"gke_clusters": {
 							Type:        schema.TypeList,
 							Optional:    true,
@@ -273,8 +262,31 @@ This should be specified in the format like
 								},
 							},
 						},
+						"networks": {
+							Type:     schema.TypeSet,
+							Optional: true,
+							Description: `The list of VPC networks that can see this zone. Until the provider updates to use the Terraform 0.12 SDK in a future release, you
+may experience issues with this resource while updating. If you've defined a 'networks' block and
+add another 'networks' block while keeping the old block, Terraform will see an incorrect diff
+and apply an incorrect update to the resource. If you encounter this issue, remove all 'networks'
+blocks in an update and then apply another update adding all of them back simultaneously.`,
+							Elem: dnsManagedZonePrivateVisibilityConfigNetworksSchema(),
+							Set: func(v interface{}) int {
+								if v == nil {
+									return 0
+								}
+								raw := v.(map[string]interface{})
+								if url, ok := raw["network_url"]; ok {
+									return tpgresource.SelfLinkRelativePathHash(url)
+								}
+								var buf bytes.Buffer
+								schema.SerializeResourceForHash(&buf, raw, dnsManagedZonePrivateVisibilityConfigNetworksSchema())
+								return tpgresource.Hashcode(buf.String())
+							},
+						},
 					},
 				},
+				AtLeastOneOf: []string{},
 			},
 			"visibility": {
 				Type:             schema.TypeString,
@@ -292,6 +304,12 @@ while private zones are visible only to Virtual Private Cloud resources. Default
 				Description: `The time that this resource was created on the server.
 This is in RFC3339 text format.`,
 			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 			"managed_zone_id": {
 				Type:        schema.TypeInt,
 				Computed:    true,
@@ -305,6 +323,13 @@ defined by the server`,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"force_destroy": {
 				Type:        schema.TypeBool,
@@ -390,12 +415,6 @@ func resourceDNSManagedZoneCreate(d *schema.ResourceData, meta interface{}) erro
 	} else if v, ok := d.GetOkExists("name"); !tpgresource.IsEmptyValue(reflect.ValueOf(nameProp)) && (ok || !reflect.DeepEqual(v, nameProp)) {
 		obj["name"] = nameProp
 	}
-	labelsProp, err := expandDNSManagedZoneLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	visibilityProp, err := expandDNSManagedZoneVisibility(d.Get("visibility"), d, config)
 	if err != nil {
 		return err
@@ -426,6 +445,12 @@ func resourceDNSManagedZoneCreate(d *schema.ResourceData, meta interface{}) erro
 	} else if v, ok := d.GetOkExists("cloud_logging_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(cloudLoggingConfigProp)) && (ok || !reflect.DeepEqual(v, cloudLoggingConfigProp)) {
 		obj["cloudLoggingConfig"] = cloudLoggingConfigProp
 	}
+	labelsProp, err := expandDNSManagedZoneEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{DNSBasePath}}projects/{{project}}/managedZones")
 	if err != nil {
@@ -446,6 +471,7 @@ func resourceDNSManagedZoneCreate(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -454,6 +480,7 @@ func resourceDNSManagedZoneCreate(d *schema.ResourceData, meta interface{}) erro
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating ManagedZone: %s", err)
@@ -496,12 +523,14 @@ func resourceDNSManagedZoneRead(d *schema.ResourceData, meta interface{}) error 
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DNSManagedZone %q", d.Id()))
@@ -556,6 +585,12 @@ func resourceDNSManagedZoneRead(d *schema.ResourceData, meta interface{}) error 
 	if err := d.Set("cloud_logging_config", flattenDNSManagedZoneCloudLoggingConfig(res["cloudLoggingConfig"], d, config)); err != nil {
 		return fmt.Errorf("Error reading ManagedZone: %s", err)
 	}
+	if err := d.Set("terraform_labels", flattenDNSManagedZoneTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading ManagedZone: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenDNSManagedZoneEffectiveLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading ManagedZone: %s", err)
+	}
 
 	return nil
 }
@@ -600,12 +635,6 @@ func resourceDNSManagedZoneUpdate(d *schema.ResourceData, meta interface{}) erro
 	} else if v, ok := d.GetOkExists("name"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, nameProp)) {
 		obj["name"] = nameProp
 	}
-	labelsProp, err := expandDNSManagedZoneLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	visibilityProp, err := expandDNSManagedZoneVisibility(d.Get("visibility"), d, config)
 	if err != nil {
 		return err
@@ -636,6 +665,12 @@ func resourceDNSManagedZoneUpdate(d *schema.ResourceData, meta interface{}) erro
 	} else if v, ok := d.GetOkExists("cloud_logging_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, cloudLoggingConfigProp)) {
 		obj["cloudLoggingConfig"] = cloudLoggingConfigProp
 	}
+	labelsProp, err := expandDNSManagedZoneEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
 
 	obj, err = resourceDNSManagedZoneUpdateEncoder(d, meta, obj)
 	if err != nil {
@@ -648,6 +683,7 @@ func resourceDNSManagedZoneUpdate(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	log.Printf("[DEBUG] Updating ManagedZone %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -662,6 +698,7 @@ func resourceDNSManagedZoneUpdate(d *schema.ResourceData, meta interface{}) erro
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
+		Headers:   headers,
 	})
 
 	if err != nil {
@@ -694,6 +731,13 @@ func resourceDNSManagedZoneDelete(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	var obj map[string]interface{}
+
+	// err == nil indicates that the billing_project value was found
+	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+		billingProject = bp
+	}
+
+	headers := make(http.Header)
 	if d.Get("force_destroy").(bool) {
 		zone := d.Get("name").(string)
 		token := ""
@@ -764,13 +808,8 @@ func resourceDNSManagedZoneDelete(d *schema.ResourceData, meta interface{}) erro
 			paginate = token != ""
 		}
 	}
+
 	log.Printf("[DEBUG] Deleting ManagedZone %q", d.Id())
-
-	// err == nil indicates that the billing_project value was found
-	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
-		billingProject = bp
-	}
-
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -779,6 +818,7 @@ func resourceDNSManagedZoneDelete(d *schema.ResourceData, meta interface{}) erro
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "ManagedZone")
@@ -791,9 +831,9 @@ func resourceDNSManagedZoneDelete(d *schema.ResourceData, meta interface{}) erro
 func resourceDNSManagedZoneImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/managedZones/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/managedZones/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -932,7 +972,18 @@ func flattenDNSManagedZoneCreationTime(v interface{}, d *schema.ResourceData, co
 }
 
 func flattenDNSManagedZoneLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenDNSManagedZoneVisibility(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -991,7 +1042,7 @@ func flattenDNSManagedZonePrivateVisibilityConfigNetworks(v interface{}, d *sche
 		}
 		raw := v.(map[string]interface{})
 		if url, ok := raw["network_url"]; ok {
-			return tpgresource.SelfLinkNameHash(url)
+			return tpgresource.SelfLinkRelativePathHash(url)
 		}
 		var buf bytes.Buffer
 		schema.SerializeResourceForHash(&buf, raw, dnsManagedZonePrivateVisibilityConfigNetworksSchema())
@@ -1105,6 +1156,25 @@ func flattenDNSManagedZoneCloudLoggingConfig(v interface{}, d *schema.ResourceDa
 	return []interface{}{transformed}
 }
 func flattenDNSManagedZoneCloudLoggingConfigEnableLogging(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDNSManagedZoneTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
+}
+
+func flattenDNSManagedZoneEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1229,17 +1299,6 @@ func expandDNSManagedZoneDnssecConfigDefaultKeySpecsKind(v interface{}, d tpgres
 
 func expandDNSManagedZoneName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
-}
-
-func expandDNSManagedZoneLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
-	if v == nil {
-		return map[string]string{}, nil
-	}
-	m := make(map[string]string)
-	for k, val := range v.(map[string]interface{}) {
-		m[k] = val.(string)
-	}
-	return m, nil
 }
 
 func expandDNSManagedZoneVisibility(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
@@ -1467,6 +1526,17 @@ func expandDNSManagedZoneCloudLoggingConfig(v interface{}, d tpgresource.Terrafo
 
 func expandDNSManagedZoneCloudLoggingConfigEnableLogging(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
+}
+
+func expandDNSManagedZoneEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
 }
 
 func resourceDNSManagedZoneUpdateEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {

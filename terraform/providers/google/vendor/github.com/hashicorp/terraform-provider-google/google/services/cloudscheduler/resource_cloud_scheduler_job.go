@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"regexp"
 	"strings"
@@ -50,6 +51,20 @@ func validateAuthHeaders(_ context.Context, diff *schema.ResourceDiff, v interfa
 	}
 
 	return nil
+}
+
+// Suppress diffs in below cases
+// "https://hello-rehvs75zla-uc.a.run.app/" -> "https://hello-rehvs75zla-uc.a.run.app"
+// "https://hello-rehvs75zla-uc.a.run.app" -> "https://hello-rehvs75zla-uc.a.run.app/"
+func LastSlashDiffSuppress(_, old, new string, _ *schema.ResourceData) bool {
+	if last := len(new) - 1; last >= 0 && new[last] == '/' {
+		new = new[:last]
+	}
+
+	if last := len(old) - 1; last >= 0 && old[last] == '/' {
+		old = old[:last]
+	}
+	return new == old
 }
 
 func authHeaderDiffSuppress(k, old, new string, d *schema.ResourceData) bool {
@@ -121,6 +136,8 @@ func ResourceCloudSchedulerJob() *schema.Resource {
 
 		CustomizeDiff: customdiff.All(
 			validateAuthHeaders,
+			tpgresource.DefaultProviderProject,
+			tpgresource.DefaultProviderRegion,
 		),
 
 		Schema: map[string]*schema.Schema{
@@ -239,7 +256,7 @@ send a request to the targeted url`,
 						"uri": {
 							Type:             schema.TypeString,
 							Required:         true,
-							DiffSuppressFunc: tpgresource.LastSlashDiffSuppress,
+							DiffSuppressFunc: LastSlashDiffSuppress,
 							Description:      `The full URI path that the request will be sent to.`,
 						},
 						"body": {
@@ -544,6 +561,7 @@ func resourceCloudSchedulerJobCreate(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -552,6 +570,7 @@ func resourceCloudSchedulerJobCreate(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Job: %s", err)
@@ -624,12 +643,14 @@ func resourceCloudSchedulerJobRead(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("CloudSchedulerJob %q", d.Id()))
@@ -766,6 +787,7 @@ func resourceCloudSchedulerJobUpdate(d *schema.ResourceData, meta interface{}) e
 	}
 
 	log.Printf("[DEBUG] Updating Job %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -780,6 +802,7 @@ func resourceCloudSchedulerJobUpdate(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
+		Headers:   headers,
 	})
 
 	if err != nil {
@@ -845,13 +868,15 @@ func resourceCloudSchedulerJobDelete(d *schema.ResourceData, meta interface{}) e
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Job %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Job %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -860,6 +885,7 @@ func resourceCloudSchedulerJobDelete(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Job")
@@ -872,10 +898,10 @@ func resourceCloudSchedulerJobDelete(d *schema.ResourceData, meta interface{}) e
 func resourceCloudSchedulerJobImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/(?P<region>[^/]+)/jobs/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/(?P<region>[^/]+)/jobs/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

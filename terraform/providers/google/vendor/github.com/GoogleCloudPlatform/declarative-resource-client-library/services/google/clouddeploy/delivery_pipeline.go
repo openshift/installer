@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ func (r *DeliveryPipelineSerialPipeline) String() string {
 func (r *DeliveryPipelineSerialPipeline) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -142,7 +142,7 @@ func (r *DeliveryPipelineSerialPipelineStages) String() string {
 func (r *DeliveryPipelineSerialPipelineStages) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -191,13 +191,15 @@ func (r *DeliveryPipelineSerialPipelineStagesStrategy) String() string {
 func (r *DeliveryPipelineSerialPipelineStagesStrategy) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
 type DeliveryPipelineSerialPipelineStagesStrategyStandard struct {
-	empty  bool  `json:"-"`
-	Verify *bool `json:"verify"`
+	empty      bool                                                            `json:"-"`
+	Verify     *bool                                                           `json:"verify"`
+	Predeploy  *DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy  `json:"predeploy"`
+	Postdeploy *DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy `json:"postdeploy"`
 }
 
 type jsonDeliveryPipelineSerialPipelineStagesStrategyStandard DeliveryPipelineSerialPipelineStagesStrategyStandard
@@ -216,6 +218,10 @@ func (r *DeliveryPipelineSerialPipelineStagesStrategyStandard) UnmarshalJSON(dat
 	} else {
 
 		r.Verify = res.Verify
+
+		r.Predeploy = res.Predeploy
+
+		r.Postdeploy = res.Postdeploy
 
 	}
 	return nil
@@ -237,7 +243,99 @@ func (r *DeliveryPipelineSerialPipelineStagesStrategyStandard) String() string {
 func (r *DeliveryPipelineSerialPipelineStagesStrategyStandard) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy struct {
+	empty   bool     `json:"-"`
+	Actions []string `json:"actions"`
+}
+
+type jsonDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy) UnmarshalJSON(data []byte) error {
+	var res jsonDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy
+	} else {
+
+		r.Actions = res.Actions
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy *DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy = &DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy{empty: true}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy) Empty() bool {
+	return r.empty
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.Sum256([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy struct {
+	empty   bool     `json:"-"`
+	Actions []string `json:"actions"`
+}
+
+type jsonDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy) UnmarshalJSON(data []byte) error {
+	var res jsonDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy
+	} else {
+
+		r.Actions = res.Actions
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy *DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy = &DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy{empty: true}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy) Empty() bool {
+	return r.empty
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -289,7 +387,7 @@ func (r *DeliveryPipelineSerialPipelineStagesStrategyCanary) String() string {
 func (r *DeliveryPipelineSerialPipelineStagesStrategyCanary) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -338,7 +436,7 @@ func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfig) String
 func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -387,15 +485,17 @@ func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernet
 func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetes) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
 type DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesGatewayServiceMesh struct {
-	empty      bool    `json:"-"`
-	HttpRoute  *string `json:"httpRoute"`
-	Service    *string `json:"service"`
-	Deployment *string `json:"deployment"`
+	empty                 bool    `json:"-"`
+	HttpRoute             *string `json:"httpRoute"`
+	Service               *string `json:"service"`
+	Deployment            *string `json:"deployment"`
+	RouteUpdateWaitTime   *string `json:"routeUpdateWaitTime"`
+	StableCutbackDuration *string `json:"stableCutbackDuration"`
 }
 
 type jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesGatewayServiceMesh DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesGatewayServiceMesh
@@ -419,6 +519,10 @@ func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernet
 
 		r.Deployment = res.Deployment
 
+		r.RouteUpdateWaitTime = res.RouteUpdateWaitTime
+
+		r.StableCutbackDuration = res.StableCutbackDuration
+
 	}
 	return nil
 }
@@ -439,7 +543,7 @@ func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernet
 func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesGatewayServiceMesh) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -491,13 +595,16 @@ func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernet
 func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesServiceNetworking) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
 type DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloudRun struct {
-	empty                   bool  `json:"-"`
-	AutomaticTrafficControl *bool `json:"automaticTrafficControl"`
+	empty                   bool     `json:"-"`
+	AutomaticTrafficControl *bool    `json:"automaticTrafficControl"`
+	CanaryRevisionTags      []string `json:"canaryRevisionTags"`
+	PriorRevisionTags       []string `json:"priorRevisionTags"`
+	StableRevisionTags      []string `json:"stableRevisionTags"`
 }
 
 type jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloudRun DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloudRun
@@ -516,6 +623,12 @@ func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloudRun
 	} else {
 
 		r.AutomaticTrafficControl = res.AutomaticTrafficControl
+
+		r.CanaryRevisionTags = res.CanaryRevisionTags
+
+		r.PriorRevisionTags = res.PriorRevisionTags
+
+		r.StableRevisionTags = res.StableRevisionTags
 
 	}
 	return nil
@@ -537,14 +650,16 @@ func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloudRun
 func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloudRun) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
 type DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment struct {
-	empty       bool    `json:"-"`
-	Percentages []int64 `json:"percentages"`
-	Verify      *bool   `json:"verify"`
+	empty       bool                                                                          `json:"-"`
+	Percentages []int64                                                                       `json:"percentages"`
+	Verify      *bool                                                                         `json:"verify"`
+	Predeploy   *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy  `json:"predeploy"`
+	Postdeploy  *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy `json:"postdeploy"`
 }
 
 type jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment
@@ -566,6 +681,10 @@ func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment) Unm
 
 		r.Verify = res.Verify
 
+		r.Predeploy = res.Predeploy
+
+		r.Postdeploy = res.Postdeploy
+
 	}
 	return nil
 }
@@ -586,7 +705,99 @@ func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment) Str
 func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy struct {
+	empty   bool     `json:"-"`
+	Actions []string `json:"actions"`
+}
+
+type jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy) UnmarshalJSON(data []byte) error {
+	var res jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy
+	} else {
+
+		r.Actions = res.Actions
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy = &DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy{empty: true}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy) Empty() bool {
+	return r.empty
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.Sum256([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy struct {
+	empty   bool     `json:"-"`
+	Actions []string `json:"actions"`
+}
+
+type jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy) UnmarshalJSON(data []byte) error {
+	var res jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy
+	} else {
+
+		r.Actions = res.Actions
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy = &DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy{empty: true}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy) Empty() bool {
+	return r.empty
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -632,16 +843,18 @@ func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymen
 func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeployment) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
 type DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigs struct {
-	empty      bool     `json:"-"`
-	PhaseId    *string  `json:"phaseId"`
-	Percentage *int64   `json:"percentage"`
-	Profiles   []string `json:"profiles"`
-	Verify     *bool    `json:"verify"`
+	empty      bool                                                                                            `json:"-"`
+	PhaseId    *string                                                                                         `json:"phaseId"`
+	Percentage *int64                                                                                          `json:"percentage"`
+	Profiles   []string                                                                                        `json:"profiles"`
+	Verify     *bool                                                                                           `json:"verify"`
+	Predeploy  *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy  `json:"predeploy"`
+	Postdeploy *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy `json:"postdeploy"`
 }
 
 type jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigs DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigs
@@ -667,6 +880,10 @@ func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymen
 
 		r.Verify = res.Verify
 
+		r.Predeploy = res.Predeploy
+
+		r.Postdeploy = res.Postdeploy
+
 	}
 	return nil
 }
@@ -687,7 +904,99 @@ func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymen
 func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigs) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy struct {
+	empty   bool     `json:"-"`
+	Actions []string `json:"actions"`
+}
+
+type jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy) UnmarshalJSON(data []byte) error {
+	var res jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy
+	} else {
+
+		r.Actions = res.Actions
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy = &DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy{empty: true}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy) Empty() bool {
+	return r.empty
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.Sum256([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy struct {
+	empty   bool     `json:"-"`
+	Actions []string `json:"actions"`
+}
+
+type jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy) UnmarshalJSON(data []byte) error {
+	var res jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy
+	} else {
+
+		r.Actions = res.Actions
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy = &DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy{empty: true}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy) Empty() bool {
+	return r.empty
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -736,7 +1045,7 @@ func (r *DeliveryPipelineSerialPipelineStagesDeployParameters) String() string {
 func (r *DeliveryPipelineSerialPipelineStagesDeployParameters) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -788,7 +1097,7 @@ func (r *DeliveryPipelineCondition) String() string {
 func (r *DeliveryPipelineCondition) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -837,7 +1146,7 @@ func (r *DeliveryPipelineConditionPipelineReadyCondition) String() string {
 func (r *DeliveryPipelineConditionPipelineReadyCondition) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -889,7 +1198,7 @@ func (r *DeliveryPipelineConditionTargetsPresentCondition) String() string {
 func (r *DeliveryPipelineConditionTargetsPresentCondition) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -938,7 +1247,7 @@ func (r *DeliveryPipelineConditionTargetsTypeCondition) String() string {
 func (r *DeliveryPipelineConditionTargetsTypeCondition) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ type Spoke struct {
 	LinkedVpnTunnels               *SpokeLinkedVpnTunnels               `json:"linkedVpnTunnels"`
 	LinkedInterconnectAttachments  *SpokeLinkedInterconnectAttachments  `json:"linkedInterconnectAttachments"`
 	LinkedRouterApplianceInstances *SpokeLinkedRouterApplianceInstances `json:"linkedRouterApplianceInstances"`
+	LinkedVPCNetwork               *SpokeLinkedVPCNetwork               `json:"linkedVPCNetwork"`
 	UniqueId                       *string                              `json:"uniqueId"`
 	State                          *SpokeStateEnum                      `json:"state"`
 	Project                        *string                              `json:"project"`
@@ -116,7 +117,7 @@ func (r *SpokeLinkedVpnTunnels) String() string {
 func (r *SpokeLinkedVpnTunnels) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -165,7 +166,7 @@ func (r *SpokeLinkedInterconnectAttachments) String() string {
 func (r *SpokeLinkedInterconnectAttachments) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -214,7 +215,7 @@ func (r *SpokeLinkedRouterApplianceInstances) String() string {
 func (r *SpokeLinkedRouterApplianceInstances) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -263,7 +264,56 @@ func (r *SpokeLinkedRouterApplianceInstancesInstances) String() string {
 func (r *SpokeLinkedRouterApplianceInstancesInstances) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type SpokeLinkedVPCNetwork struct {
+	empty               bool     `json:"-"`
+	Uri                 *string  `json:"uri"`
+	ExcludeExportRanges []string `json:"excludeExportRanges"`
+}
+
+type jsonSpokeLinkedVPCNetwork SpokeLinkedVPCNetwork
+
+func (r *SpokeLinkedVPCNetwork) UnmarshalJSON(data []byte) error {
+	var res jsonSpokeLinkedVPCNetwork
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptySpokeLinkedVPCNetwork
+	} else {
+
+		r.Uri = res.Uri
+
+		r.ExcludeExportRanges = res.ExcludeExportRanges
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this SpokeLinkedVPCNetwork is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptySpokeLinkedVPCNetwork *SpokeLinkedVPCNetwork = &SpokeLinkedVPCNetwork{empty: true}
+
+func (r *SpokeLinkedVPCNetwork) Empty() bool {
+	return r.empty
+}
+
+func (r *SpokeLinkedVPCNetwork) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *SpokeLinkedVPCNetwork) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -292,6 +342,7 @@ func (r *Spoke) ID() (string, error) {
 		"linked_vpn_tunnels":                dcl.ValueOrEmptyString(nr.LinkedVpnTunnels),
 		"linked_interconnect_attachments":   dcl.ValueOrEmptyString(nr.LinkedInterconnectAttachments),
 		"linked_router_appliance_instances": dcl.ValueOrEmptyString(nr.LinkedRouterApplianceInstances),
+		"linked_vpc_network":                dcl.ValueOrEmptyString(nr.LinkedVPCNetwork),
 		"unique_id":                         dcl.ValueOrEmptyString(nr.UniqueId),
 		"state":                             dcl.ValueOrEmptyString(nr.State),
 		"project":                           dcl.ValueOrEmptyString(nr.Project),

@@ -1,9 +1,15 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package schema
 
 import (
+	"context"
+
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/internal/fwschema"
 	"github.com/hashicorp/terraform-plugin-framework/internal/fwschema/fwxschema"
+	"github.com/hashicorp/terraform-plugin-framework/internal/fwtype"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -12,8 +18,9 @@ import (
 
 // Ensure the implementation satisifies the desired interfaces.
 var (
-	_ Attribute                            = SetAttribute{}
-	_ fwxschema.AttributeWithSetValidators = SetAttribute{}
+	_ Attribute                                    = SetAttribute{}
+	_ fwschema.AttributeWithValidateImplementation = SetAttribute{}
+	_ fwxschema.AttributeWithSetValidators         = SetAttribute{}
 )
 
 // SetAttribute represents a schema attribute that is a set with a single
@@ -36,6 +43,10 @@ var (
 type SetAttribute struct {
 	// ElementType is the type for all elements of the set. This field must be
 	// set.
+	//
+	// Element types that contain a dynamic type (i.e. types.Dynamic) are not supported.
+	// If underlying dynamic values are required, replace this attribute definition with
+	// DynamicAttribute instead.
 	ElementType attr.Type
 
 	// CustomType enables the use of a custom attribute type in place of the
@@ -192,4 +203,18 @@ func (a SetAttribute) IsSensitive() bool {
 // SetValidators returns the Validators field value.
 func (a SetAttribute) SetValidators() []validator.Set {
 	return a.Validators
+}
+
+// ValidateImplementation contains logic for validating the
+// provider-defined implementation of the attribute to prevent unexpected
+// errors or panics. This logic runs during the GetProviderSchema RPC
+// and should never include false positives.
+func (a SetAttribute) ValidateImplementation(ctx context.Context, req fwschema.ValidateImplementationRequest, resp *fwschema.ValidateImplementationResponse) {
+	if a.CustomType == nil && a.ElementType == nil {
+		resp.Diagnostics.Append(fwschema.AttributeMissingElementTypeDiag(req.Path))
+	}
+
+	if a.CustomType == nil && fwtype.ContainsCollectionWithDynamic(a.GetType()) {
+		resp.Diagnostics.Append(fwtype.AttributeCollectionWithDynamicTypeDiag(req.Path))
+	}
 }

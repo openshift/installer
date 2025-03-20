@@ -20,10 +20,12 @@ package bigqueryconnection
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -47,6 +49,10 @@ func ResourceBigqueryConnectionConnection() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"aws": {
@@ -78,7 +84,7 @@ func ResourceBigqueryConnectionConnection() *schema.Resource {
 						},
 					},
 				},
-				ExactlyOneOf: []string{"cloud_sql", "aws", "azure", "cloud_spanner", "cloud_resource"},
+				ExactlyOneOf: []string{"cloud_sql", "aws", "azure", "cloud_spanner", "cloud_resource", "spark"},
 			},
 			"azure": {
 				Type:        schema.TypeList,
@@ -124,7 +130,7 @@ func ResourceBigqueryConnectionConnection() *schema.Resource {
 						},
 					},
 				},
-				ExactlyOneOf: []string{"cloud_sql", "aws", "azure", "cloud_spanner", "cloud_resource"},
+				ExactlyOneOf: []string{"cloud_sql", "aws", "azure", "cloud_spanner", "cloud_resource", "spark"},
 			},
 			"cloud_resource": {
 				Type:        schema.TypeList,
@@ -140,7 +146,7 @@ func ResourceBigqueryConnectionConnection() *schema.Resource {
 						},
 					},
 				},
-				ExactlyOneOf: []string{"cloud_sql", "aws", "azure", "cloud_spanner", "cloud_resource"},
+				ExactlyOneOf: []string{"cloud_sql", "aws", "azure", "cloud_spanner", "cloud_resource", "spark"},
 			},
 			"cloud_spanner": {
 				Type:        schema.TypeList,
@@ -152,21 +158,40 @@ func ResourceBigqueryConnectionConnection() *schema.Resource {
 						"database": {
 							Type:        schema.TypeString,
 							Required:    true,
-							Description: `Cloud Spanner database in the form 'project/instance/database'`,
+							Description: `Cloud Spanner database in the form 'project/instance/database'.`,
+						},
+						"database_role": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: verify.ValidateRegexp(`^[a-zA-Z][a-zA-Z0-9_]*$`),
+							Description:  `Cloud Spanner database role for fine-grained access control. The Cloud Spanner admin should have provisioned the database role with appropriate permissions, such as 'SELECT' and 'INSERT'. Other users should only use roles provided by their Cloud Spanner admins. The database role name must start with a letter, and can only contain letters, numbers, and underscores. For more details, see https://cloud.google.com/spanner/docs/fgac-about.`,
+						},
+						"max_parallelism": {
+							Type:         schema.TypeInt,
+							Optional:     true,
+							Description:  `Allows setting max parallelism per query when executing on Spanner independent compute resources. If unspecified, default values of parallelism are chosen that are dependent on the Cloud Spanner instance configuration. 'useParallelism' and 'useDataBoost' must be set when setting max parallelism.`,
+							RequiredWith: []string{"cloud_spanner.0.use_data_boost", "cloud_spanner.0.use_parallelism"},
+						},
+						"use_data_boost": {
+							Type:         schema.TypeBool,
+							Optional:     true,
+							Description:  `If set, the request will be executed via Spanner independent compute resources. 'use_parallelism' must be set when using data boost.`,
+							RequiredWith: []string{"cloud_spanner.0.use_parallelism"},
 						},
 						"use_parallelism": {
 							Type:        schema.TypeBool,
 							Optional:    true,
-							Description: `If parallelism should be used when reading from Cloud Spanner`,
+							Description: `If parallelism should be used when reading from Cloud Spanner.`,
 						},
 						"use_serverless_analytics": {
 							Type:        schema.TypeBool,
 							Optional:    true,
-							Description: `If the serverless analytics service should be used to read data from Cloud Spanner. useParallelism must be set when using serverless analytics`,
+							Deprecated:  "`useServerlessAnalytics` is deprecated and will be removed in a future major release. Use `useDataBoost` instead.",
+							Description: `If the serverless analytics service should be used to read data from Cloud Spanner. 'useParallelism' must be set when using serverless analytics.`,
 						},
 					},
 				},
-				ExactlyOneOf: []string{"cloud_sql", "aws", "azure", "cloud_spanner", "cloud_resource"},
+				ExactlyOneOf: []string{"cloud_sql", "aws", "azure", "cloud_spanner", "cloud_resource", "spark"},
 			},
 			"cloud_sql": {
 				Type:        schema.TypeList,
@@ -219,7 +244,7 @@ func ResourceBigqueryConnectionConnection() *schema.Resource {
 						},
 					},
 				},
-				ExactlyOneOf: []string{"cloud_sql", "aws", "azure", "cloud_spanner", "cloud_resource"},
+				ExactlyOneOf: []string{"cloud_sql", "aws", "azure", "cloud_spanner", "cloud_resource", "spark"},
 			},
 			"connection_id": {
 				Type:        schema.TypeString,
@@ -238,6 +263,13 @@ func ResourceBigqueryConnectionConnection() *schema.Resource {
 				Optional:    true,
 				Description: `A descriptive name for the connection`,
 			},
+			"kms_key_name": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Description: `Optional. The Cloud KMS key that is used for encryption.
+
+Example: projects/[kms_project_id]/locations/[region]/keyRings/[key_region]/cryptoKeys/[key]`,
+			},
 			"location": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -249,6 +281,52 @@ Examples: US, EU, asia-northeast1, us-central1, europe-west1.
 Spanner Connections same as spanner region
 AWS allowed regions are aws-us-east-1
 Azure allowed regions are azure-eastus2`,
+			},
+			"spark": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `Container for connection properties to execute stored procedures for Apache Spark. resources.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"metastore_service_config": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `Dataproc Metastore Service configuration for the connection.`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"metastore_service": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: `Resource name of an existing Dataproc Metastore service in the form of projects/[projectId]/locations/[region]/services/[serviceId].`,
+									},
+								},
+							},
+						},
+						"spark_history_server_config": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `Spark History Server configuration for the connection.`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"dataproc_cluster": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: `Resource name of an existing Dataproc Cluster to act as a Spark History Server for the connection if the form of projects/[projectId]/regions/[region]/clusters/[cluster_name].`,
+									},
+								},
+							},
+						},
+						"service_account_id": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: `The account ID of the service created for the purpose of this connection.`,
+						},
+					},
+				},
+				ExactlyOneOf: []string{"cloud_sql", "aws", "azure", "cloud_spanner", "cloud_resource", "spark"},
 			},
 			"has_credential": {
 				Type:        schema.TypeBool,
@@ -298,6 +376,12 @@ func resourceBigqueryConnectionConnectionCreate(d *schema.ResourceData, meta int
 	} else if v, ok := d.GetOkExists("description"); !tpgresource.IsEmptyValue(reflect.ValueOf(descriptionProp)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
 	}
+	kmsKeyNameProp, err := expandBigqueryConnectionConnectionKmsKeyName(d.Get("kms_key_name"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("kms_key_name"); !tpgresource.IsEmptyValue(reflect.ValueOf(kmsKeyNameProp)) && (ok || !reflect.DeepEqual(v, kmsKeyNameProp)) {
+		obj["kmsKeyName"] = kmsKeyNameProp
+	}
 	cloudSqlProp, err := expandBigqueryConnectionConnectionCloudSql(d.Get("cloud_sql"), d, config)
 	if err != nil {
 		return err
@@ -328,6 +412,12 @@ func resourceBigqueryConnectionConnectionCreate(d *schema.ResourceData, meta int
 	} else if v, ok := d.GetOkExists("cloud_resource"); ok || !reflect.DeepEqual(v, cloudResourceProp) {
 		obj["cloudResource"] = cloudResourceProp
 	}
+	sparkProp, err := expandBigqueryConnectionConnectionSpark(d.Get("spark"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("spark"); ok || !reflect.DeepEqual(v, sparkProp) {
+		obj["spark"] = sparkProp
+	}
 
 	obj, err = resourceBigqueryConnectionConnectionEncoder(d, meta, obj)
 	if err != nil {
@@ -353,6 +443,7 @@ func resourceBigqueryConnectionConnectionCreate(d *schema.ResourceData, meta int
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -361,6 +452,7 @@ func resourceBigqueryConnectionConnectionCreate(d *schema.ResourceData, meta int
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Connection: %s", err)
@@ -421,12 +513,14 @@ func resourceBigqueryConnectionConnectionRead(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("BigqueryConnectionConnection %q", d.Id()))
@@ -451,6 +545,9 @@ func resourceBigqueryConnectionConnectionRead(d *schema.ResourceData, meta inter
 	if err := d.Set("has_credential", flattenBigqueryConnectionConnectionHasCredential(res["hasCredential"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Connection: %s", err)
 	}
+	if err := d.Set("kms_key_name", flattenBigqueryConnectionConnectionKmsKeyName(res["kmsKeyName"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Connection: %s", err)
+	}
 	if err := d.Set("cloud_sql", flattenBigqueryConnectionConnectionCloudSql(res["cloudSql"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Connection: %s", err)
 	}
@@ -464,6 +561,9 @@ func resourceBigqueryConnectionConnectionRead(d *schema.ResourceData, meta inter
 		return fmt.Errorf("Error reading Connection: %s", err)
 	}
 	if err := d.Set("cloud_resource", flattenBigqueryConnectionConnectionCloudResource(res["cloudResource"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Connection: %s", err)
+	}
+	if err := d.Set("spark", flattenBigqueryConnectionConnectionSpark(res["spark"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Connection: %s", err)
 	}
 
@@ -498,6 +598,12 @@ func resourceBigqueryConnectionConnectionUpdate(d *schema.ResourceData, meta int
 	} else if v, ok := d.GetOkExists("description"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
 	}
+	kmsKeyNameProp, err := expandBigqueryConnectionConnectionKmsKeyName(d.Get("kms_key_name"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("kms_key_name"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, kmsKeyNameProp)) {
+		obj["kmsKeyName"] = kmsKeyNameProp
+	}
 	cloudSqlProp, err := expandBigqueryConnectionConnectionCloudSql(d.Get("cloud_sql"), d, config)
 	if err != nil {
 		return err
@@ -528,6 +634,12 @@ func resourceBigqueryConnectionConnectionUpdate(d *schema.ResourceData, meta int
 	} else if v, ok := d.GetOkExists("cloud_resource"); ok || !reflect.DeepEqual(v, cloudResourceProp) {
 		obj["cloudResource"] = cloudResourceProp
 	}
+	sparkProp, err := expandBigqueryConnectionConnectionSpark(d.Get("spark"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("spark"); ok || !reflect.DeepEqual(v, sparkProp) {
+		obj["spark"] = sparkProp
+	}
 
 	obj, err = resourceBigqueryConnectionConnectionEncoder(d, meta, obj)
 	if err != nil {
@@ -540,6 +652,7 @@ func resourceBigqueryConnectionConnectionUpdate(d *schema.ResourceData, meta int
 	}
 
 	log.Printf("[DEBUG] Updating Connection %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("friendly_name") {
@@ -548,6 +661,10 @@ func resourceBigqueryConnectionConnectionUpdate(d *schema.ResourceData, meta int
 
 	if d.HasChange("description") {
 		updateMask = append(updateMask, "description")
+	}
+
+	if d.HasChange("kms_key_name") {
+		updateMask = append(updateMask, "kmsKeyName")
 	}
 
 	if d.HasChange("cloud_sql") {
@@ -570,6 +687,10 @@ func resourceBigqueryConnectionConnectionUpdate(d *schema.ResourceData, meta int
 	if d.HasChange("cloud_resource") {
 		updateMask = append(updateMask, "cloudResource")
 	}
+
+	if d.HasChange("spark") {
+		updateMask = append(updateMask, "spark")
+	}
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
 	// won't set it
 	url, err = transport_tpg.AddQueryParams(url, map[string]string{"updateMask": strings.Join(updateMask, ",")})
@@ -582,20 +703,25 @@ func resourceBigqueryConnectionConnectionUpdate(d *schema.ResourceData, meta int
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating Connection %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating Connection %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating Connection %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating Connection %q: %#v", d.Id(), res)
+		}
+
 	}
 
 	return resourceBigqueryConnectionConnectionRead(d, meta)
@@ -622,13 +748,15 @@ func resourceBigqueryConnectionConnectionDelete(d *schema.ResourceData, meta int
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Connection %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Connection %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -637,6 +765,7 @@ func resourceBigqueryConnectionConnectionDelete(d *schema.ResourceData, meta int
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Connection")
@@ -649,9 +778,9 @@ func resourceBigqueryConnectionConnectionDelete(d *schema.ResourceData, meta int
 func resourceBigqueryConnectionConnectionImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/connections/(?P<connection_id>[^/]+)",
-		"(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<connection_id>[^/]+)",
-		"(?P<location>[^/]+)/(?P<connection_id>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/connections/(?P<connection_id>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<connection_id>[^/]+)$",
+		"^(?P<location>[^/]+)/(?P<connection_id>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -684,6 +813,10 @@ func flattenBigqueryConnectionConnectionDescription(v interface{}, d *schema.Res
 }
 
 func flattenBigqueryConnectionConnectionHasCredential(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenBigqueryConnectionConnectionKmsKeyName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -835,6 +968,12 @@ func flattenBigqueryConnectionConnectionCloudSpanner(v interface{}, d *schema.Re
 		flattenBigqueryConnectionConnectionCloudSpannerDatabase(original["database"], d, config)
 	transformed["use_parallelism"] =
 		flattenBigqueryConnectionConnectionCloudSpannerUseParallelism(original["useParallelism"], d, config)
+	transformed["max_parallelism"] =
+		flattenBigqueryConnectionConnectionCloudSpannerMaxParallelism(original["maxParallelism"], d, config)
+	transformed["use_data_boost"] =
+		flattenBigqueryConnectionConnectionCloudSpannerUseDataBoost(original["useDataBoost"], d, config)
+	transformed["database_role"] =
+		flattenBigqueryConnectionConnectionCloudSpannerDatabaseRole(original["databaseRole"], d, config)
 	transformed["use_serverless_analytics"] =
 		flattenBigqueryConnectionConnectionCloudSpannerUseServerlessAnalytics(original["useServerlessAnalytics"], d, config)
 	return []interface{}{transformed}
@@ -844,6 +983,31 @@ func flattenBigqueryConnectionConnectionCloudSpannerDatabase(v interface{}, d *s
 }
 
 func flattenBigqueryConnectionConnectionCloudSpannerUseParallelism(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenBigqueryConnectionConnectionCloudSpannerMaxParallelism(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenBigqueryConnectionConnectionCloudSpannerUseDataBoost(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenBigqueryConnectionConnectionCloudSpannerDatabaseRole(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -868,6 +1032,61 @@ func flattenBigqueryConnectionConnectionCloudResourceServiceAccountId(v interfac
 	return v
 }
 
+func flattenBigqueryConnectionConnectionSpark(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["service_account_id"] =
+		flattenBigqueryConnectionConnectionSparkServiceAccountId(original["serviceAccountId"], d, config)
+	transformed["metastore_service_config"] =
+		flattenBigqueryConnectionConnectionSparkMetastoreServiceConfig(original["metastoreServiceConfig"], d, config)
+	transformed["spark_history_server_config"] =
+		flattenBigqueryConnectionConnectionSparkSparkHistoryServerConfig(original["sparkHistoryServerConfig"], d, config)
+	return []interface{}{transformed}
+}
+func flattenBigqueryConnectionConnectionSparkServiceAccountId(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenBigqueryConnectionConnectionSparkMetastoreServiceConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["metastore_service"] =
+		flattenBigqueryConnectionConnectionSparkMetastoreServiceConfigMetastoreService(original["metastoreService"], d, config)
+	return []interface{}{transformed}
+}
+func flattenBigqueryConnectionConnectionSparkMetastoreServiceConfigMetastoreService(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenBigqueryConnectionConnectionSparkSparkHistoryServerConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["dataproc_cluster"] =
+		flattenBigqueryConnectionConnectionSparkSparkHistoryServerConfigDataprocCluster(original["dataprocCluster"], d, config)
+	return []interface{}{transformed}
+}
+func flattenBigqueryConnectionConnectionSparkSparkHistoryServerConfigDataprocCluster(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func expandBigqueryConnectionConnectionConnectionId(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
@@ -877,6 +1096,10 @@ func expandBigqueryConnectionConnectionFriendlyName(v interface{}, d tpgresource
 }
 
 func expandBigqueryConnectionConnectionDescription(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandBigqueryConnectionConnectionKmsKeyName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -1142,6 +1365,27 @@ func expandBigqueryConnectionConnectionCloudSpanner(v interface{}, d tpgresource
 		transformed["useParallelism"] = transformedUseParallelism
 	}
 
+	transformedMaxParallelism, err := expandBigqueryConnectionConnectionCloudSpannerMaxParallelism(original["max_parallelism"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedMaxParallelism); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["maxParallelism"] = transformedMaxParallelism
+	}
+
+	transformedUseDataBoost, err := expandBigqueryConnectionConnectionCloudSpannerUseDataBoost(original["use_data_boost"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedUseDataBoost); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["useDataBoost"] = transformedUseDataBoost
+	}
+
+	transformedDatabaseRole, err := expandBigqueryConnectionConnectionCloudSpannerDatabaseRole(original["database_role"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedDatabaseRole); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["databaseRole"] = transformedDatabaseRole
+	}
+
 	transformedUseServerlessAnalytics, err := expandBigqueryConnectionConnectionCloudSpannerUseServerlessAnalytics(original["use_serverless_analytics"], d, config)
 	if err != nil {
 		return nil, err
@@ -1157,6 +1401,18 @@ func expandBigqueryConnectionConnectionCloudSpannerDatabase(v interface{}, d tpg
 }
 
 func expandBigqueryConnectionConnectionCloudSpannerUseParallelism(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandBigqueryConnectionConnectionCloudSpannerMaxParallelism(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandBigqueryConnectionConnectionCloudSpannerUseDataBoost(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandBigqueryConnectionConnectionCloudSpannerDatabaseRole(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -1184,6 +1440,89 @@ func expandBigqueryConnectionConnectionCloudResource(v interface{}, d tpgresourc
 }
 
 func expandBigqueryConnectionConnectionCloudResourceServiceAccountId(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandBigqueryConnectionConnectionSpark(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedServiceAccountId, err := expandBigqueryConnectionConnectionSparkServiceAccountId(original["service_account_id"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedServiceAccountId); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["serviceAccountId"] = transformedServiceAccountId
+	}
+
+	transformedMetastoreServiceConfig, err := expandBigqueryConnectionConnectionSparkMetastoreServiceConfig(original["metastore_service_config"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedMetastoreServiceConfig); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["metastoreServiceConfig"] = transformedMetastoreServiceConfig
+	}
+
+	transformedSparkHistoryServerConfig, err := expandBigqueryConnectionConnectionSparkSparkHistoryServerConfig(original["spark_history_server_config"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSparkHistoryServerConfig); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["sparkHistoryServerConfig"] = transformedSparkHistoryServerConfig
+	}
+
+	return transformed, nil
+}
+
+func expandBigqueryConnectionConnectionSparkServiceAccountId(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandBigqueryConnectionConnectionSparkMetastoreServiceConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedMetastoreService, err := expandBigqueryConnectionConnectionSparkMetastoreServiceConfigMetastoreService(original["metastore_service"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedMetastoreService); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["metastoreService"] = transformedMetastoreService
+	}
+
+	return transformed, nil
+}
+
+func expandBigqueryConnectionConnectionSparkMetastoreServiceConfigMetastoreService(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandBigqueryConnectionConnectionSparkSparkHistoryServerConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedDataprocCluster, err := expandBigqueryConnectionConnectionSparkSparkHistoryServerConfigDataprocCluster(original["dataproc_cluster"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedDataprocCluster); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["dataprocCluster"] = transformedDataprocCluster
+	}
+
+	return transformed, nil
+}
+
+func expandBigqueryConnectionConnectionSparkSparkHistoryServerConfigDataprocCluster(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

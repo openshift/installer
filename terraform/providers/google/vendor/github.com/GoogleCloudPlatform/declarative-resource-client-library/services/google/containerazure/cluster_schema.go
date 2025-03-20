@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,12 +25,12 @@ func DCLClusterSchema() *dcl.Schema {
 			StructName:  "Cluster",
 			Reference: &dcl.Link{
 				Text: "API reference",
-				URL:  "https://cloud.google.com/anthos/clusters/docs/multi-cloud/reference/rest/v1/projects.locations.azureClusters",
+				URL:  "https://cloud.google.com/kubernetes-engine/multi-cloud/docs/reference/rest/v1/projects.locations.azureClusters",
 			},
 			Guides: []*dcl.Link{
 				&dcl.Link{
 					Text: "Multicloud overview",
-					URL:  "https://cloud.google.com/anthos/clusters/docs/multi-cloud",
+					URL:  "https://cloud.google.com/kubernetes-engine/multi-cloud/docs",
 				},
 			},
 		},
@@ -143,6 +143,27 @@ func DCLClusterSchema() *dcl.Schema {
 									"adminUsers",
 								},
 								Properties: map[string]*dcl.Property{
+									"adminGroups": &dcl.Property{
+										Type:        "array",
+										GoName:      "AdminGroups",
+										Description: "Groups of users that can perform operations as a cluster admin. A managed ClusterRoleBinding will be created to grant the `cluster-admin` ClusterRole to the groups. Up to ten admin groups can be provided. For more info on RBAC, see https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles",
+										SendEmpty:   true,
+										ListType:    "list",
+										Items: &dcl.Property{
+											Type:   "object",
+											GoType: "ClusterAuthorizationAdminGroups",
+											Required: []string{
+												"group",
+											},
+											Properties: map[string]*dcl.Property{
+												"group": &dcl.Property{
+													Type:        "string",
+													GoName:      "Group",
+													Description: "The name of the group, e.g. `my-group@domain.com`.",
+												},
+											},
+										},
+									},
 									"adminUsers": &dcl.Property{
 										Type:        "array",
 										GoName:      "AdminUsers",
@@ -431,6 +452,7 @@ func DCLClusterSchema() *dcl.Schema {
 												Parent:   true,
 											},
 										},
+										HasLongForm: true,
 									},
 								},
 							},
@@ -439,12 +461,14 @@ func DCLClusterSchema() *dcl.Schema {
 								GoName:      "Location",
 								Description: "The location for the resource",
 								Immutable:   true,
+								Parameter:   true,
 							},
 							"name": &dcl.Property{
 								Type:        "string",
 								GoName:      "Name",
 								Description: "The name of this resource.",
 								Immutable:   true,
+								HasLongForm: true,
 							},
 							"networking": &dcl.Property{
 								Type:        "object",
@@ -502,6 +526,7 @@ func DCLClusterSchema() *dcl.Schema {
 										Parent:   true,
 									},
 								},
+								Parameter: true,
 							},
 							"reconciling": &dcl.Property{
 								Type:        "boolean",

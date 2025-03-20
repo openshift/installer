@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -154,6 +154,7 @@ func DCLAssetSchema() *dcl.Schema {
 								GoName:      "DataplexZone",
 								Description: "The zone for the resource",
 								Immutable:   true,
+								Parameter:   true,
 							},
 							"description": &dcl.Property{
 								Type:        "string",
@@ -346,17 +347,20 @@ func DCLAssetSchema() *dcl.Schema {
 								GoName:      "Lake",
 								Description: "The lake for the resource",
 								Immutable:   true,
+								Parameter:   true,
 							},
 							"location": &dcl.Property{
 								Type:        "string",
 								GoName:      "Location",
 								Description: "The location for the resource",
 								Immutable:   true,
+								Parameter:   true,
 							},
 							"name": &dcl.Property{
 								Type:        "string",
 								GoName:      "Name",
 								Description: "The name of the asset.",
+								HasLongForm: true,
 							},
 							"project": &dcl.Property{
 								Type:        "string",
@@ -370,13 +374,13 @@ func DCLAssetSchema() *dcl.Schema {
 										Parent:   true,
 									},
 								},
+								Parameter: true,
 							},
 							"resourceSpec": &dcl.Property{
 								Type:        "object",
 								GoName:      "ResourceSpec",
 								GoType:      "AssetResourceSpec",
 								Description: "Required. Immutable. Specification of the resource that is referenced by this asset.",
-								Immutable:   true,
 								Required: []string{
 									"type",
 								},
@@ -386,6 +390,17 @@ func DCLAssetSchema() *dcl.Schema {
 										GoName:      "Name",
 										Description: "Immutable. Relative name of the cloud resource that contains the data that is being managed within a lake. For example: `projects/{project_number}/buckets/{bucket_id}` `projects/{project_number}/datasets/{dataset_id}`",
 										Immutable:   true,
+									},
+									"readAccessMode": &dcl.Property{
+										Type:          "string",
+										GoName:        "ReadAccessMode",
+										GoType:        "AssetResourceSpecReadAccessModeEnum",
+										Description:   "Optional. Determines how read permissions are handled for each asset and their associated tables. Only available to storage buckets assets. Possible values: DIRECT, MANAGED",
+										ServerDefault: true,
+										Enum: []string{
+											"DIRECT",
+											"MANAGED",
+										},
 									},
 									"type": &dcl.Property{
 										Type:        "string",

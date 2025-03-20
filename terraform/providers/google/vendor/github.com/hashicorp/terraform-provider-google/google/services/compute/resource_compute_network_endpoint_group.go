@@ -20,15 +20,27 @@ package compute
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
 	"github.com/hashicorp/terraform-provider-google/google/verify"
 )
+
+// Use this method when subnet is optioanl and auto_create_subnetworks = true
+// API sometimes choose a subnet so the diff needs to be ignored
+func compareOptionalSubnet(_, old, new string, _ *schema.ResourceData) bool {
+	if tpgresource.IsEmptyValue(reflect.ValueOf(new)) {
+		return true
+	}
+	// otherwise compare as self links
+	return tpgresource.CompareSelfLinkOrResourceName("", old, new, nil)
+}
 
 func ResourceComputeNetworkEndpointGroup() *schema.Resource {
 	return &schema.Resource{
@@ -44,6 +56,11 @@ func ResourceComputeNetworkEndpointGroup() *schema.Resource {
 			Create: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+			tpgresource.DefaultProviderZone,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -85,7 +102,7 @@ you create the resource.`,
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: verify.ValidateEnum([]string{"GCE_VM_IP", "GCE_VM_IP_PORT", "NON_GCP_PRIVATE_IP_PORT", ""}),
+				ValidateFunc: verify.ValidateEnum([]string{"GCE_VM_IP", "GCE_VM_IP_PORT", "NON_GCP_PRIVATE_IP_PORT", "INTERNET_IP_PORT", "INTERNET_FQDN_PORT", "SERVERLESS", "PRIVATE_SERVICE_CONNECT", ""}),
 				Description: `Type of network endpoints in this network endpoint group.
 NON_GCP_PRIVATE_IP_PORT is used for hybrid connectivity network
 endpoint groups (see https://cloud.google.com/load-balancing/docs/hybrid).
@@ -94,14 +111,14 @@ that 1) have the following load balancing schemes: EXTERNAL, EXTERNAL_MANAGED,
 INTERNAL_MANAGED, and INTERNAL_SELF_MANAGED and 2) support the RATE or
 CONNECTION balancing modes.
 
-Possible values include: GCE_VM_IP, GCE_VM_IP_PORT, and NON_GCP_PRIVATE_IP_PORT. Default value: "GCE_VM_IP_PORT" Possible values: ["GCE_VM_IP", "GCE_VM_IP_PORT", "NON_GCP_PRIVATE_IP_PORT"]`,
+Possible values include: GCE_VM_IP, GCE_VM_IP_PORT, NON_GCP_PRIVATE_IP_PORT, INTERNET_IP_PORT, INTERNET_FQDN_PORT, SERVERLESS, and PRIVATE_SERVICE_CONNECT. Default value: "GCE_VM_IP_PORT" Possible values: ["GCE_VM_IP", "GCE_VM_IP_PORT", "NON_GCP_PRIVATE_IP_PORT", "INTERNET_IP_PORT", "INTERNET_FQDN_PORT", "SERVERLESS", "PRIVATE_SERVICE_CONNECT"]`,
 				Default: "GCE_VM_IP_PORT",
 			},
 			"subnetwork": {
 				Type:             schema.TypeString,
 				Optional:         true,
 				ForceNew:         true,
-				DiffSuppressFunc: tpgresource.CompareOptionalSubnet,
+				DiffSuppressFunc: compareOptionalSubnet,
 				Description:      `Optional subnetwork to which all network endpoints in the NEG belong.`,
 			},
 			"zone": {
@@ -202,6 +219,7 @@ func resourceComputeNetworkEndpointGroupCreate(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -210,6 +228,7 @@ func resourceComputeNetworkEndpointGroupCreate(d *schema.ResourceData, meta inte
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating NetworkEndpointGroup: %s", err)
@@ -262,18 +281,28 @@ func resourceComputeNetworkEndpointGroupRead(d *schema.ResourceData, meta interf
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeNetworkEndpointGroup %q", d.Id()))
 	}
 
 	if err := d.Set("project", project); err != nil {
+		return fmt.Errorf("Error reading NetworkEndpointGroup: %s", err)
+	}
+
+	zone, err := tpgresource.GetZone(d, config)
+	if err != nil {
+		return err
+	}
+	if err := d.Set("zone", zone); err != nil {
 		return fmt.Errorf("Error reading NetworkEndpointGroup: %s", err)
 	}
 
@@ -296,9 +325,6 @@ func resourceComputeNetworkEndpointGroupRead(d *schema.ResourceData, meta interf
 		return fmt.Errorf("Error reading NetworkEndpointGroup: %s", err)
 	}
 	if err := d.Set("default_port", flattenComputeNetworkEndpointGroupDefaultPort(res["defaultPort"], d, config)); err != nil {
-		return fmt.Errorf("Error reading NetworkEndpointGroup: %s", err)
-	}
-	if err := d.Set("zone", flattenComputeNetworkEndpointGroupZone(res["zone"], d, config)); err != nil {
 		return fmt.Errorf("Error reading NetworkEndpointGroup: %s", err)
 	}
 	if err := d.Set("self_link", tpgresource.ConvertSelfLinkToV1(res["selfLink"].(string))); err != nil {
@@ -329,13 +355,15 @@ func resourceComputeNetworkEndpointGroupDelete(d *schema.ResourceData, meta inte
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting NetworkEndpointGroup %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting NetworkEndpointGroup %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -344,6 +372,7 @@ func resourceComputeNetworkEndpointGroupDelete(d *schema.ResourceData, meta inte
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "NetworkEndpointGroup")
@@ -364,10 +393,10 @@ func resourceComputeNetworkEndpointGroupDelete(d *schema.ResourceData, meta inte
 func resourceComputeNetworkEndpointGroupImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/zones/(?P<zone>[^/]+)/networkEndpointGroups/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<zone>[^/]+)/(?P<name>[^/]+)",
-		"(?P<zone>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/zones/(?P<zone>[^/]+)/networkEndpointGroups/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<zone>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<zone>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -440,13 +469,6 @@ func flattenComputeNetworkEndpointGroupDefaultPort(v interface{}, d *schema.Reso
 	}
 
 	return v // let terraform core handle it otherwise
-}
-
-func flattenComputeNetworkEndpointGroupZone(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return v
-	}
-	return tpgresource.ConvertSelfLinkToV1(v.(string))
 }
 
 func expandComputeNetworkEndpointGroupName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {

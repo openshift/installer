@@ -20,9 +20,11 @@ package storage
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -46,6 +48,10 @@ func ResourceStorageHmacKey() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"service_account_email": {
@@ -133,6 +139,7 @@ func resourceStorageHmacKeyCreate(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -141,6 +148,7 @@ func resourceStorageHmacKeyCreate(d *schema.ResourceData, meta interface{}) erro
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating HmacKey: %s", err)
@@ -196,6 +204,7 @@ func resourceStorageHmacKeyPollRead(d *schema.ResourceData, meta interface{}) tr
 		config := meta.(*transport_tpg.Config)
 
 		url, err := tpgresource.ReplaceVars(d, config, "{{StorageBasePath}}projects/{{project}}/hmacKeys/{{access_id}}")
+
 		if err != nil {
 			return nil, err
 		}
@@ -265,12 +274,14 @@ func resourceStorageHmacKeyRead(d *schema.ResourceData, meta interface{}) error 
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("StorageHmacKey %q", d.Id()))
@@ -366,6 +377,8 @@ func resourceStorageHmacKeyUpdate(d *schema.ResourceData, meta interface{}) erro
 			return err
 		}
 
+		headers := make(http.Header)
+
 		// err == nil indicates that the billing_project value was found
 		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 			billingProject = bp
@@ -379,6 +392,7 @@ func resourceStorageHmacKeyUpdate(d *schema.ResourceData, meta interface{}) erro
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
 		})
 		if err != nil {
 			return fmt.Errorf("Error updating HmacKey %q: %s", d.Id(), err)
@@ -414,6 +428,13 @@ func resourceStorageHmacKeyDelete(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	var obj map[string]interface{}
+
+	// err == nil indicates that the billing_project value was found
+	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+		billingProject = bp
+	}
+
+	headers := make(http.Header)
 	getUrl, err := tpgresource.ReplaceVars(d, config, "{{StorageBasePath}}projects/{{project}}/hmacKeys/{{access_id}}")
 	if err != nil {
 		return err
@@ -453,13 +474,8 @@ func resourceStorageHmacKeyDelete(d *schema.ResourceData, meta interface{}) erro
 			return fmt.Errorf("Error deactivating HmacKey %q: %s", d.Id(), err)
 		}
 	}
+
 	log.Printf("[DEBUG] Deleting HmacKey %q", d.Id())
-
-	// err == nil indicates that the billing_project value was found
-	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
-		billingProject = bp
-	}
-
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -468,6 +484,7 @@ func resourceStorageHmacKeyDelete(d *schema.ResourceData, meta interface{}) erro
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "HmacKey")
@@ -480,9 +497,9 @@ func resourceStorageHmacKeyDelete(d *schema.ResourceData, meta interface{}) erro
 func resourceStorageHmacKeyImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/hmacKeys/(?P<access_id>[^/]+)",
-		"(?P<project>[^/]+)/(?P<access_id>[^/]+)",
-		"(?P<access_id>[^/]+)",
+		"^projects/(?P<project>[^/]+)/hmacKeys/(?P<access_id>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<access_id>[^/]+)$",
+		"^(?P<access_id>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

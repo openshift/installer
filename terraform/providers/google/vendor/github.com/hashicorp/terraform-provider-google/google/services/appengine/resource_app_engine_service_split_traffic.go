@@ -20,10 +20,12 @@ package appengine
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -47,6 +49,10 @@ func ResourceAppEngineServiceSplitTraffic() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"service": {
@@ -139,6 +145,7 @@ func resourceAppEngineServiceSplitTrafficCreate(d *schema.ResourceData, meta int
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "PATCH",
@@ -147,6 +154,7 @@ func resourceAppEngineServiceSplitTrafficCreate(d *schema.ResourceData, meta int
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating ServiceSplitTraffic: %s", err)
@@ -199,12 +207,14 @@ func resourceAppEngineServiceSplitTrafficRead(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("AppEngineServiceSplitTraffic %q", d.Id()))
@@ -263,6 +273,7 @@ func resourceAppEngineServiceSplitTrafficUpdate(d *schema.ResourceData, meta int
 	}
 
 	log.Printf("[DEBUG] Updating ServiceSplitTraffic %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("service") {
@@ -284,28 +295,32 @@ func resourceAppEngineServiceSplitTrafficUpdate(d *schema.ResourceData, meta int
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating ServiceSplitTraffic %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating ServiceSplitTraffic %q: %#v", d.Id(), res)
-	}
+		if err != nil {
+			return fmt.Errorf("Error updating ServiceSplitTraffic %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating ServiceSplitTraffic %q: %#v", d.Id(), res)
+		}
 
-	err = AppEngineOperationWaitTime(
-		config, res, project, "Updating ServiceSplitTraffic", userAgent,
-		d.Timeout(schema.TimeoutUpdate))
+		err = AppEngineOperationWaitTime(
+			config, res, project, "Updating ServiceSplitTraffic", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return resourceAppEngineServiceSplitTrafficRead(d, meta)
@@ -323,9 +338,9 @@ func resourceAppEngineServiceSplitTrafficDelete(d *schema.ResourceData, meta int
 func resourceAppEngineServiceSplitTrafficImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"apps/(?P<project>[^/]+)/services/(?P<service>[^/]+)",
-		"(?P<project>[^/]+)/(?P<service>[^/]+)",
-		"(?P<service>[^/]+)",
+		"^apps/(?P<project>[^/]+)/services/(?P<service>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<service>[^/]+)$",
+		"^(?P<service>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

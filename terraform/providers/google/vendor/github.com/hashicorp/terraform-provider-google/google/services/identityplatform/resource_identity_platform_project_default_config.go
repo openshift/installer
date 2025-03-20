@@ -20,10 +20,12 @@ package identityplatform
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -46,6 +48,12 @@ func ResourceIdentityPlatformProjectDefaultConfig() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
+
+		DeprecationMessage: "`google_identity_platform_config` is deprecated and will be removed in the next major release of the provider. Use the `google_identity_platform_config` resource instead. It contains a more comprehensive list of fields, and was created before `google_identity_platform_project_default_config` was added.",
 
 		Schema: map[string]*schema.Schema{
 			"sign_in": {
@@ -205,6 +213,7 @@ func resourceIdentityPlatformProjectDefaultConfigCreate(d *schema.ResourceData, 
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "PATCH",
@@ -213,6 +222,7 @@ func resourceIdentityPlatformProjectDefaultConfigCreate(d *schema.ResourceData, 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating ProjectDefaultConfig: %s", err)
@@ -258,12 +268,14 @@ func resourceIdentityPlatformProjectDefaultConfigRead(d *schema.ResourceData, me
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("IdentityPlatformProjectDefaultConfig %q", d.Id()))
@@ -312,6 +324,7 @@ func resourceIdentityPlatformProjectDefaultConfigUpdate(d *schema.ResourceData, 
 	}
 
 	log.Printf("[DEBUG] Updating ProjectDefaultConfig %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("sign_in") {
@@ -329,20 +342,25 @@ func resourceIdentityPlatformProjectDefaultConfigUpdate(d *schema.ResourceData, 
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating ProjectDefaultConfig %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating ProjectDefaultConfig %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating ProjectDefaultConfig %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating ProjectDefaultConfig %q: %#v", d.Id(), res)
+		}
+
 	}
 
 	return resourceIdentityPlatformProjectDefaultConfigRead(d, meta)
@@ -369,13 +387,15 @@ func resourceIdentityPlatformProjectDefaultConfigDelete(d *schema.ResourceData, 
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting ProjectDefaultConfig %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting ProjectDefaultConfig %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "PATCH",
@@ -384,6 +404,7 @@ func resourceIdentityPlatformProjectDefaultConfigDelete(d *schema.ResourceData, 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "ProjectDefaultConfig")
@@ -396,9 +417,9 @@ func resourceIdentityPlatformProjectDefaultConfigDelete(d *schema.ResourceData, 
 func resourceIdentityPlatformProjectDefaultConfigImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/config/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/config/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
