@@ -26,6 +26,12 @@ func SetPlatformDefaults(p *openstack.Platform, n *types.Networking) {
 			p.Cloud = DefaultCloudName
 		}
 	}
+	// When there is no loadbalancer present create a default Openshift managed loadbalancer
+	if p.LoadBalancer == nil {
+		p.LoadBalancer = &configv1.OpenStackPlatformLoadBalancer{
+			Type: configv1.LoadBalancerTypeOpenShiftManagedDefault,
+		}
+	}
 
 	// When using user-managed loadbalancer do not generate default API and Ingress VIPs
 	if p.LoadBalancer.Type != configv1.LoadBalancerTypeUserManaged {
