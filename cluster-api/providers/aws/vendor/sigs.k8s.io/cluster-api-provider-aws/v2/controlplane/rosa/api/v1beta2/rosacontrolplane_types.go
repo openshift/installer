@@ -38,7 +38,7 @@ const (
 	Private RosaEndpointAccessType = "Private"
 )
 
-// VersionGateAckType specifies the version gate acknowledgement.
+// VersionGateAckType specifies the version gate acknowledgment.
 type VersionGateAckType string
 
 const (
@@ -50,6 +50,20 @@ const (
 
 	// AlwaysAcknowledge always acknowledg if required and proceed with the upgrade.
 	AlwaysAcknowledge VersionGateAckType = "AlwaysAcknowledge"
+)
+
+// ChannelGroupType specifies the OpenShift version channel group.
+type ChannelGroupType string
+
+const (
+	// Stable channel group is the default channel group for stable releases.
+	Stable ChannelGroupType = "stable"
+
+	// Candidate channel group is for testing candidate builds.
+	Candidate ChannelGroupType = "candidate"
+
+	// Nightly channel group is for testing nigtly builds.
+	Nightly ChannelGroupType = "nightly"
 )
 
 // RosaControlPlaneSpec defines the desired state of ROSAControlPlane.
@@ -90,6 +104,12 @@ type RosaControlPlaneSpec struct { //nolint: maligned
 
 	// OpenShift semantic version, for example "4.14.5".
 	Version string `json:"version"`
+
+	// OpenShift version channel group, default is stable.
+	//
+	// +kubebuilder:validation:Enum=stable;candidate;nightly
+	// +kubebuilder:default=stable
+	ChannelGroup ChannelGroupType `json:"channelGroup"`
 
 	// VersionGate requires acknowledgment when upgrading ROSA-HCP y-stream versions (e.g., from 4.15 to 4.16).
 	// Default is WaitForAcknowledge.
@@ -134,8 +154,8 @@ type RosaControlPlaneSpec struct { //nolint: maligned
 	// WorkerRoleARN is an AWS IAM role that will be attached to worker instances.
 	WorkerRoleARN string `json:"workerRoleARN"`
 
-	// BillingAccount is an optional AWS account to use for billing the subscription fees for ROSA clusters.
-	// The cost of running each ROSA cluster will be billed to the infrastructure account in which the cluster
+	// BillingAccount is an optional AWS account to use for billing the subscription fees for ROSA HCP clusters.
+	// The cost of running each ROSA HCP cluster will be billed to the infrastructure account in which the cluster
 	// is running.
 	//
 	// +kubebuilder:validation:Optional
@@ -182,7 +202,7 @@ type RosaControlPlaneSpec struct { //nolint: maligned
 	// +optional
 	AuditLogRoleARN string `json:"auditLogRoleARN,omitempty"`
 
-	// ProvisionShardID defines the shard where rosa control plane components will be hosted.
+	// ProvisionShardID defines the shard where ROSA hosted control plane components will be hosted.
 	//
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="provisionShardID is immutable"
 	// +optional
@@ -308,6 +328,13 @@ type DefaultMachinePoolSpec struct {
 	// must be equal or multiple of the availability zones count.
 	// +optional
 	Autoscaling *expinfrav1.RosaMachinePoolAutoScaling `json:"autoscaling,omitempty"`
+
+	// VolumeSize set the disk volume size for the default workers machine pool in Gib. The default is 300 GiB.
+	// +kubebuilder:validation:Minimum=75
+	// +kubebuilder:validation:Maximum=16384
+	// +immutable
+	// +optional
+	VolumeSize int `json:"volumeSize,omitempty"`
 }
 
 // AWSRolesRef contains references to various AWS IAM roles required for operators to make calls against the AWS API.

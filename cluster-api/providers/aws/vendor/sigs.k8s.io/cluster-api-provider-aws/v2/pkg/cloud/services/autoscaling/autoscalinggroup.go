@@ -45,9 +45,9 @@ func (s *Service) SDKToAutoScalingGroup(v *autoscaling.Group) (*expinfrav1.AutoS
 		ID:   aws.StringValue(v.AutoScalingGroupARN),
 		Name: aws.StringValue(v.AutoScalingGroupName),
 		// TODO(rudoi): this is just terrible
-		DesiredCapacity:   aws.Int32(int32(aws.Int64Value(v.DesiredCapacity))),
-		MaxSize:           int32(aws.Int64Value(v.MaxSize)),
-		MinSize:           int32(aws.Int64Value(v.MinSize)),
+		DesiredCapacity:   aws.Int32(int32(aws.Int64Value(v.DesiredCapacity))), //#nosec G115
+		MaxSize:           int32(aws.Int64Value(v.MaxSize)),                    //#nosec G115
+		MinSize:           int32(aws.Int64Value(v.MinSize)),                    //#nosec G115
 		CapacityRebalance: aws.BoolValue(v.CapacityRebalance),
 		// TODO: determine what additional values go here and what else should be in the struct
 	}

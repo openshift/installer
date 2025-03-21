@@ -189,9 +189,9 @@ func (s *RosaMachinePoolScope) Namespace() string {
 	return s.Cluster.Namespace
 }
 
-// RosaMchinePoolReadyFalse marks the ready condition false using warning if error isn't
+// RosaMachinePoolReadyFalse marks the ready condition false using warning if error isn't
 // empty.
-func (s *RosaMachinePoolScope) RosaMchinePoolReadyFalse(reason string, err string) error {
+func (s *RosaMachinePoolScope) RosaMachinePoolReadyFalse(reason string, err string) error {
 	severity := clusterv1.ConditionSeverityWarning
 	if err == "" {
 		severity = clusterv1.ConditionSeverityInfo
@@ -201,6 +201,7 @@ func (s *RosaMachinePoolScope) RosaMchinePoolReadyFalse(reason string, err strin
 		expinfrav1.RosaMachinePoolReadyCondition,
 		reason,
 		severity,
+		"%s",
 		err,
 	)
 	if err := s.PatchObject(); err != nil {

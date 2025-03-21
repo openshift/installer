@@ -38,7 +38,7 @@ type AddonBuilder struct {
 	name                 string
 	namespaces           []*AddonNamespaceBuilder
 	operatorName         string
-	parameters           *AddonParametersBuilder
+	parameters           *AddonParameterListBuilder
 	requirements         []*AddonRequirementBuilder
 	resourceCost         float64
 	resourceName         string
@@ -212,16 +212,10 @@ func (b *AddonBuilder) OperatorName(value string) *AddonBuilder {
 	return b
 }
 
-// Parameters sets the value of the 'parameters' attribute to the given value.
-//
-// Representation of AddonParameters
-func (b *AddonBuilder) Parameters(value *AddonParametersBuilder) *AddonBuilder {
+// Parameters sets the value of the 'parameters' attribute to the given values.
+func (b *AddonBuilder) Parameters(value *AddonParameterListBuilder) *AddonBuilder {
 	b.parameters = value
-	if value != nil {
-		b.bitmap_ |= 524288
-	} else {
-		b.bitmap_ &^= 524288
-	}
+	b.bitmap_ |= 524288
 	return b
 }
 
@@ -332,7 +326,7 @@ func (b *AddonBuilder) Copy(object *Addon) *AddonBuilder {
 	}
 	b.operatorName = object.operatorName
 	if object.parameters != nil {
-		b.parameters = NewAddonParameters().Copy(object.parameters)
+		b.parameters = NewAddonParameterList().Copy(object.parameters)
 	} else {
 		b.parameters = nil
 	}

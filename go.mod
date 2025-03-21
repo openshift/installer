@@ -62,7 +62,7 @@ require (
 	github.com/go-openapi/swag v0.23.0
 	github.com/go-openapi/validate v0.24.0
 	github.com/go-playground/validator/v10 v10.19.0
-	github.com/golang-jwt/jwt/v4 v4.5.0
+	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/golang/protobuf v1.5.4
 	github.com/google/go-cmp v0.6.0
 	github.com/google/uuid v1.6.0
@@ -136,7 +136,7 @@ require (
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738
 	libvirt.org/go/libvirtxml v1.10002.0
 	sigs.k8s.io/cluster-api v1.9.4
-	sigs.k8s.io/cluster-api-provider-aws/v2 v2.6.1-0.20241026111253-5b4f7c1acb52
+	sigs.k8s.io/cluster-api-provider-aws/v2 v2.7.1-0.20250314180547-17a09f59176c
 	sigs.k8s.io/cluster-api-provider-azure v1.15.1-0.20240617212811-a52056dfb88c
 	sigs.k8s.io/cluster-api-provider-gcp v1.7.1-0.20240724153512-c3b8b533143c
 	sigs.k8s.io/cluster-api-provider-ibmcloud v0.10.0
@@ -320,11 +320,11 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/gorm v1.24.5 // indirect
 	k8s.io/apiserver v0.32.1 // indirect
-	k8s.io/cli-runtime v0.31.1 // indirect
+	k8s.io/cli-runtime v0.31.3 // indirect
 	k8s.io/cluster-bootstrap v0.31.4 // indirect
 	k8s.io/component-base v0.32.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20241105132330-32ad38e42d3f // indirect
-	k8s.io/kubectl v0.31.1 // indirect
+	k8s.io/kubectl v0.31.3 // indirect
 	sigs.k8s.io/kustomize/api v0.17.3 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.17.2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.2 // indirect

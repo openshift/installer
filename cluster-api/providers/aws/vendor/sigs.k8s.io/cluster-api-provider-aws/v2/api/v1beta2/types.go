@@ -217,6 +217,9 @@ type Instance struct {
 	// Specifies ENIs attached to instance
 	NetworkInterfaces []string `json:"networkInterfaces,omitempty"`
 
+	// NetworkInterfaceType is the interface type of the primary network Interface.
+	NetworkInterfaceType NetworkInterfaceType `json:"networkInterfaceType,omitempty"`
+
 	// The tags associated with the instance.
 	Tags map[string]string `json:"tags,omitempty"`
 
@@ -261,7 +264,31 @@ type Instance struct {
 	// CapacityReservationID specifies the target Capacity Reservation into which the instance should be launched.
 	// +optional
 	CapacityReservationID *string `json:"capacityReservationId,omitempty"`
+
+	// MarketType specifies the type of market for the EC2 instance. Valid values include:
+	// "OnDemand" (default): The instance runs as a standard OnDemand instance.
+	// "Spot": The instance runs as a Spot instance. When SpotMarketOptions is provided, the marketType defaults to "Spot".
+	// "CapacityBlock": The instance utilizes pre-purchased compute capacity (capacity blocks) with AWS Capacity Reservations.
+	//  If this value is selected, CapacityReservationID must be specified to identify the target reservation.
+	// If marketType is not specified and spotMarketOptions is provided, the marketType defaults to "Spot".
+	// +optional
+	MarketType MarketType `json:"marketType,omitempty"`
 }
+
+// MarketType describes the market type of an Instance
+// +kubebuilder:validation:Enum:=OnDemand;Spot;CapacityBlock
+type MarketType string
+
+const (
+	// MarketTypeOnDemand is a MarketType enum value
+	MarketTypeOnDemand MarketType = "OnDemand"
+
+	// MarketTypeSpot is a MarketType enum value
+	MarketTypeSpot MarketType = "Spot"
+
+	// MarketTypeCapacityBlock is a MarketType enum value
+	MarketTypeCapacityBlock MarketType = "CapacityBlock"
+)
 
 // InstanceMetadataState describes the state of InstanceMetadataOptions.HttpEndpoint and InstanceMetadataOptions.InstanceMetadataTags
 type InstanceMetadataState string
