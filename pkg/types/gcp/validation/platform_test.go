@@ -17,6 +17,7 @@ func TestValidatePlatform(t *testing.T) {
 		name            string
 		platform        *gcp.Platform
 		credentialsMode types.CredentialsMode
+		publishStrategy types.PublishingStrategy
 		valid           bool
 	}{
 		{
@@ -165,7 +166,8 @@ func TestValidatePlatform(t *testing.T) {
 					},
 				},
 			},
-			valid: false,
+			publishStrategy: types.InternalPublishingStrategy,
+			valid:           false,
 		},
 		{
 			name: "invalid gcp endpoint invalid name",
@@ -178,7 +180,8 @@ func TestValidatePlatform(t *testing.T) {
 					},
 				},
 			},
-			valid: false,
+			publishStrategy: types.InternalPublishingStrategy,
+			valid:           false,
 		},
 		{
 			name: "invalid gcp endpoint duplicate name",
@@ -195,7 +198,8 @@ func TestValidatePlatform(t *testing.T) {
 					},
 				},
 			},
-			valid: false,
+			publishStrategy: types.InternalPublishingStrategy,
+			valid:           false,
 		},
 		{
 			name: "invalid gcp endpoint url blank",
@@ -208,7 +212,8 @@ func TestValidatePlatform(t *testing.T) {
 					},
 				},
 			},
-			valid: false,
+			publishStrategy: types.InternalPublishingStrategy,
+			valid:           false,
 		},
 		{
 			name: "invalid scheme gcp endpoint url",
@@ -221,7 +226,8 @@ func TestValidatePlatform(t *testing.T) {
 					},
 				},
 			},
-			valid: false,
+			publishStrategy: types.InternalPublishingStrategy,
+			valid:           false,
 		},
 		{
 			name: "valid gcp endpoint",
@@ -234,7 +240,8 @@ func TestValidatePlatform(t *testing.T) {
 					},
 				},
 			},
-			valid: true,
+			publishStrategy: types.InternalPublishingStrategy,
+			valid:           true,
 		},
 		{
 			name: "invalid gcp endpoint relative path",
@@ -247,7 +254,8 @@ func TestValidatePlatform(t *testing.T) {
 					},
 				},
 			},
-			valid: false,
+			publishStrategy: types.InternalPublishingStrategy,
+			valid:           false,
 		},
 		{
 			name: "valid gcp endpoint url no scheme",
@@ -260,7 +268,8 @@ func TestValidatePlatform(t *testing.T) {
 					},
 				},
 			},
-			valid: true,
+			publishStrategy: types.InternalPublishingStrategy,
+			valid:           true,
 		},
 	}
 	for _, tc := range cases {
@@ -271,9 +280,15 @@ func TestValidatePlatform(t *testing.T) {
 				credentialsMode = types.MintCredentialsMode
 			}
 
+			publishStrategy := types.ExternalPublishingStrategy
+			if tc.publishStrategy != "" {
+				publishStrategy = tc.publishStrategy
+			}
+
 			// the only item currently used is the credentialsMode
 			ic := types.InstallConfig{
 				CredentialsMode: credentialsMode,
+				Publish:         publishStrategy,
 			}
 
 			err := ValidatePlatform(tc.platform, field.NewPath("test-path"), &ic).ToAggregate()
