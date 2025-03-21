@@ -124,8 +124,8 @@ func (r *AWSManagedClusterReconciler) SetupWithManager(ctx context.Context, mgr 
 	controller, err := ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options).
 		For(awsManagedCluster).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(ctrl.LoggerFrom(ctx), r.WatchFilterValue)).
-		WithEventFilter(predicates.ResourceIsNotExternallyManaged(log.GetLogger())).
+		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), ctrl.LoggerFrom(ctx), r.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceIsNotExternallyManaged(mgr.GetScheme(), log.GetLogger())).
 		Build(r)
 
 	if err != nil {
@@ -136,7 +136,7 @@ func (r *AWSManagedClusterReconciler) SetupWithManager(ctx context.Context, mgr 
 	if err = controller.Watch(
 		source.Kind[client.Object](mgr.GetCache(), &clusterv1.Cluster{},
 			handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, infrav1.GroupVersion.WithKind("AWSManagedCluster"), mgr.GetClient(), &infrav1.AWSManagedCluster{})),
-			predicates.ClusterUnpaused(log.GetLogger())),
+			predicates.ClusterUnpaused(mgr.GetScheme(), log.GetLogger())),
 	); err != nil {
 		return fmt.Errorf("failed adding a watch for ready clusters: %w", err)
 	}

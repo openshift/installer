@@ -31,7 +31,6 @@ import (
 	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/record"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	capierrors "sigs.k8s.io/cluster-api/errors"
 	"sigs.k8s.io/cluster-api/util/conditions"
 )
 
@@ -54,6 +53,7 @@ func (s *FargateService) Reconcile() (reconcile.Result, error) {
 			expinfrav1.IAMFargateRolesReadyCondition,
 			expinfrav1.IAMFargateRolesReconciliationFailedReason,
 			clusterv1.ConditionSeverityError,
+			"%s",
 			err.Error(),
 		)
 		return reconcile.Result{}, err
@@ -73,6 +73,7 @@ func (s *FargateService) Reconcile() (reconcile.Result, error) {
 			clusterv1.ReadyCondition,
 			expinfrav1.EKSFargateReconciliationFailedReason,
 			clusterv1.ConditionSeverityError,
+			"%s",
 			err.Error(),
 		)
 		return reconcile.Result{}, err
@@ -132,7 +133,7 @@ func (s *FargateService) handleStatus(profile *eks.FargateProfile) (requeue bool
 	case eks.FargateProfileStatusCreateFailed, eks.FargateProfileStatusDeleteFailed:
 		s.scope.FargateProfile.Status.Ready = false
 		s.scope.FargateProfile.Status.FailureMessage = aws.String(fmt.Sprintf("unexpected profile status: %s", *profile.Status))
-		reason := capierrors.MachineStatusError(expinfrav1.EKSFargateFailedReason)
+		reason := expinfrav1.EKSFargateFailedReason
 		s.scope.FargateProfile.Status.FailureReason = &reason
 		conditions.MarkFalse(s.scope.FargateProfile, expinfrav1.EKSFargateProfileReadyCondition, expinfrav1.EKSFargateFailedReason, clusterv1.ConditionSeverityError, "")
 	case eks.FargateProfileStatusActive:
@@ -169,6 +170,7 @@ func (s *FargateService) ReconcileDelete() (reconcile.Result, error) {
 			clusterv1.ReadyCondition,
 			expinfrav1.EKSFargateReconciliationFailedReason,
 			clusterv1.ConditionSeverityError,
+			"%s",
 			err.Error(),
 		)
 		return reconcile.Result{}, err
@@ -185,6 +187,7 @@ func (s *FargateService) ReconcileDelete() (reconcile.Result, error) {
 			expinfrav1.IAMFargateRolesReadyCondition,
 			expinfrav1.IAMFargateRolesReconciliationFailedReason,
 			clusterv1.ConditionSeverityError,
+			"%s",
 			err.Error(),
 		)
 	}

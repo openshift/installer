@@ -38,6 +38,7 @@ type ServerConfig struct {
 	bitmap_    uint32
 	id         string
 	href       string
+	awsShard   *AWSShard
 	kubeconfig string
 	server     string
 	topology   ProvisionShardTopology
@@ -100,12 +101,35 @@ func (o *ServerConfig) Empty() bool {
 	return o == nil || o.bitmap_&^1 == 0
 }
 
+// AWSShard returns the value of the 'AWS_shard' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Config for AWS provision shards
+func (o *ServerConfig) AWSShard() *AWSShard {
+	if o != nil && o.bitmap_&8 != 0 {
+		return o.awsShard
+	}
+	return nil
+}
+
+// GetAWSShard returns the value of the 'AWS_shard' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Config for AWS provision shards
+func (o *ServerConfig) GetAWSShard() (value *AWSShard, ok bool) {
+	ok = o != nil && o.bitmap_&8 != 0
+	if ok {
+		value = o.awsShard
+	}
+	return
+}
+
 // Kubeconfig returns the value of the 'kubeconfig' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
 // The kubeconfig of the server.
 func (o *ServerConfig) Kubeconfig() string {
-	if o != nil && o.bitmap_&8 != 0 {
+	if o != nil && o.bitmap_&16 != 0 {
 		return o.kubeconfig
 	}
 	return ""
@@ -116,7 +140,7 @@ func (o *ServerConfig) Kubeconfig() string {
 //
 // The kubeconfig of the server.
 func (o *ServerConfig) GetKubeconfig() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&8 != 0
+	ok = o != nil && o.bitmap_&16 != 0
 	if ok {
 		value = o.kubeconfig
 	}
@@ -128,7 +152,7 @@ func (o *ServerConfig) GetKubeconfig() (value string, ok bool) {
 //
 // The URL of the server.
 func (o *ServerConfig) Server() string {
-	if o != nil && o.bitmap_&16 != 0 {
+	if o != nil && o.bitmap_&32 != 0 {
 		return o.server
 	}
 	return ""
@@ -139,7 +163,7 @@ func (o *ServerConfig) Server() string {
 //
 // The URL of the server.
 func (o *ServerConfig) GetServer() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&16 != 0
+	ok = o != nil && o.bitmap_&32 != 0
 	if ok {
 		value = o.server
 	}
@@ -151,7 +175,7 @@ func (o *ServerConfig) GetServer() (value string, ok bool) {
 //
 // The topology of a provision shard (Optional).
 func (o *ServerConfig) Topology() ProvisionShardTopology {
-	if o != nil && o.bitmap_&32 != 0 {
+	if o != nil && o.bitmap_&64 != 0 {
 		return o.topology
 	}
 	return ProvisionShardTopology("")
@@ -162,7 +186,7 @@ func (o *ServerConfig) Topology() ProvisionShardTopology {
 //
 // The topology of a provision shard (Optional).
 func (o *ServerConfig) GetTopology() (value ProvisionShardTopology, ok bool) {
-	ok = o != nil && o.bitmap_&32 != 0
+	ok = o != nil && o.bitmap_&64 != 0
 	if ok {
 		value = o.topology
 	}

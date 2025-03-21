@@ -114,7 +114,16 @@ func writeGCP(object *GCP, stream *jsoniter.Stream) {
 		stream.WriteString(object.privateKeyID)
 		count++
 	}
-	present_ = object.bitmap_&256 != 0
+	present_ = object.bitmap_&256 != 0 && object.privateServiceConnect != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("private_service_connect")
+		writeGcpPrivateServiceConnect(object.privateServiceConnect, stream)
+		count++
+	}
+	present_ = object.bitmap_&512 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -123,7 +132,7 @@ func writeGCP(object *GCP, stream *jsoniter.Stream) {
 		stream.WriteString(object.projectID)
 		count++
 	}
-	present_ = object.bitmap_&512 != 0 && object.security != nil
+	present_ = object.bitmap_&1024 != 0 && object.security != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -132,7 +141,7 @@ func writeGCP(object *GCP, stream *jsoniter.Stream) {
 		writeGcpSecurity(object.security, stream)
 		count++
 	}
-	present_ = object.bitmap_&1024 != 0
+	present_ = object.bitmap_&2048 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -141,7 +150,7 @@ func writeGCP(object *GCP, stream *jsoniter.Stream) {
 		stream.WriteString(object.tokenURI)
 		count++
 	}
-	present_ = object.bitmap_&2048 != 0
+	present_ = object.bitmap_&4096 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -205,22 +214,26 @@ func readGCP(iterator *jsoniter.Iterator) *GCP {
 			value := iterator.ReadString()
 			object.privateKeyID = value
 			object.bitmap_ |= 128
+		case "private_service_connect":
+			value := readGcpPrivateServiceConnect(iterator)
+			object.privateServiceConnect = value
+			object.bitmap_ |= 256
 		case "project_id":
 			value := iterator.ReadString()
 			object.projectID = value
-			object.bitmap_ |= 256
+			object.bitmap_ |= 512
 		case "security":
 			value := readGcpSecurity(iterator)
 			object.security = value
-			object.bitmap_ |= 512
+			object.bitmap_ |= 1024
 		case "token_uri":
 			value := iterator.ReadString()
 			object.tokenURI = value
-			object.bitmap_ |= 1024
+			object.bitmap_ |= 2048
 		case "type":
 			value := iterator.ReadString()
 			object.type_ = value
-			object.bitmap_ |= 2048
+			object.bitmap_ |= 4096
 		default:
 			iterator.ReadAny()
 		}
