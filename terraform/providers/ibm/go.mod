@@ -243,3 +243,6 @@ exclude (
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
 	k8s.io/client-go v12.0.0+incompatible
 )
+
+// NOTE(cjschaef): To align with installer's golang version and since the provider has a very restrictive golang version, override to use the forked repository, which maintains unique branches based on golang version and provider release
+replace github.com/IBM-Cloud/terraform-provider-ibm => github.com/openshift/terraform-provider-ibm v1.70.2-0.20250321144105-7e769934732a
