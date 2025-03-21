@@ -33,8 +33,8 @@ func ValidateMachinePool(platform *gcp.Platform, p *gcp.MachinePool, fldPath *fi
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("diskType"), diskType, sets.List(gcp.ComputeSupportedDisks)))
 	}
 
-	if p.ConfidentialCompute == string(gcp.EnabledFeature) && p.OnHostMaintenance != string(gcp.OnHostMaintenanceTerminate) {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("OnHostMaintenance"), p.OnHostMaintenance, "OnHostMaintenace must be set to Terminate when ConfidentialCompute is Enabled"))
+	if p.ConfidentialCompute != "" && p.ConfidentialCompute != string(gcp.DisabledFeature) && p.OnHostMaintenance != string(gcp.OnHostMaintenanceTerminate) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("OnHostMaintenance"), p.OnHostMaintenance, fmt.Sprintf("OnHostMaintenace must be set to Terminate when ConfidentialCompute is %s", p.ConfidentialCompute)))
 	}
 
 	for i, tag := range p.Tags {
