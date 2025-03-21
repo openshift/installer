@@ -234,45 +234,44 @@ func getKernelArgs(filepath string) (string, error) {
 }
 
 func (a *AgentPXEFiles) handleAdditionals390xArtifacts(bootArtifactsFullPath string) error {
-	// initrd is already copied and file pointer is at EOF so move it to start again.
-	_, err := a.imageReader.Seek(0, io.SeekStart)
-	if err != nil {
-		return err
-	}
+    // Reset imageReader position
+    _, err := a.imageReader.Seek(0, io.SeekStart)
+    if err != nil {
+        return err
+    }
 
-	agentInitrdAddrFilePath := filepath.Join(a.tmpPath, "images", "initrd.addrsize")
-	addrsizeFile, err := isoeditor.NewInitrdAddrsizeReader(agentInitrdAddrFilePath, a.imageReader)
-	if err != nil {
-		return err
-	}
-
-	agentInitrdAddrFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("%s.%s-initrd.addrsize", a.filePrefix, a.cpuArch))
-	err = copyfile(agentInitrdAddrFile, addrsizeFile)
-	if err != nil {
-		return err
-	}
-
-	agentINSFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("%s.%s-generic.ins", a.filePrefix, a.cpuArch))
-	genericReader, err := os.Open(filepath.Join(a.tmpPath, "generic.ins"))
-	if err != nil {
-		return err
-	}
-	defer genericReader.Close()
-
-	err = copyfile(agentINSFile, genericReader)
-	if err != nil {
-		return err
-	}
-
-	return nil
+    // Generate artifacts for Day-2 PXE boot
+    return a.handleAdditionalArtifactsForDay2(bootArtifactsFullPath)
 }
 
-func (a *AgentPXEFiles) handleAdditionals390xArtifacts(bootArtifactsFullPath string) error {
-	// initrd is already copied and file pointer is at EOF so move it to start again.
-	_, err := a.imageReader.Seek(0, io.SeekStart)
-	if err != nil {
-		return err
-	}
+// Fix: Define the missing function to generate artifacts for Day-2 PXE
+func (a *AgentPXEFiles) handleAdditionalArtifactsForDay2(bootArtifactsFullPath string) error {
+    // Generate initrd.addrsize
+    agentInitrdAddrFilePath := filepath.Join(a.tmpPath, "images", "initrd.addrsize")
+    addrsizeFile, err := isoeditor.NewInitrdAddrsizeReader(agentInitrdAddrFilePath, a.imageReader)
+    if err != nil {
+        return err
+    }
 
-	return a.handleAdditionalArtifactsForDay2(bootArtifactsFullPath)
+    agentInitrdAddrFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("%s.%s-initrd.addrsize", a.filePrefix, a.cpuArch))
+    err = copyfile(agentInitrdAddrFile, addrsizeFile)
+    if err != nil {
+        return err
+    }
+
+    // Generate generic.ins
+    agentINSFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("%s.%s-generic.ins", a.filePrefix, a.cpuArch))
+    genericReader, err := os.Open(filepath.Join(a.tmpPath, "generic.ins"))
+    if err != nil {
+        return err
+    }
+    defer genericReader.Close()
+
+    err = copyfile(agentINSFile, genericReader)
+    if err != nil {
+        return err
+    }
+
+    logrus.Infof("Successfully generated Day-2 PXE artifacts in: %s", bootArtifactsFullPath)
+    return nil
 }
