@@ -178,6 +178,10 @@ func Print(resource interface{}) error {
 		if accessRequest, ok := resource.(*arv1.AccessRequest); ok {
 			arv1.MarshalAccessRequest(accessRequest, &b)
 		}
+	case "[]*v1.AccessRequest":
+		if accessRequests, ok := resource.([]*arv1.AccessRequest); ok {
+			arv1.MarshalAccessRequestList(accessRequests, &b)
+		}
 	// default to catch non concrete types
 	default:
 		{

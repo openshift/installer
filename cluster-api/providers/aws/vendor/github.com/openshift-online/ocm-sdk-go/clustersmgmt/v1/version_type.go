@@ -55,6 +55,7 @@ type Version struct {
 	enabled                   bool
 	hostedControlPlaneDefault bool
 	hostedControlPlaneEnabled bool
+	wifEnabled                bool
 }
 
 // Kind returns the name of the type of the object.
@@ -419,6 +420,29 @@ func (o *Version) GetReleaseImages() (value *ReleaseImages, ok bool) {
 	ok = o != nil && o.bitmap_&32768 != 0
 	if ok {
 		value = o.releaseImages
+	}
+	return
+}
+
+// WifEnabled returns the value of the 'wif_enabled' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// WifEnabled is a flag that indicates whether this version is enabled for Workload Identity Federation.
+func (o *Version) WifEnabled() bool {
+	if o != nil && o.bitmap_&65536 != 0 {
+		return o.wifEnabled
+	}
+	return false
+}
+
+// GetWifEnabled returns the value of the 'wif_enabled' attribute and
+// a flag indicating if the attribute has a value.
+//
+// WifEnabled is a flag that indicates whether this version is enabled for Workload Identity Federation.
+func (o *Version) GetWifEnabled() (value bool, ok bool) {
+	ok = o != nil && o.bitmap_&65536 != 0
+	if ok {
+		value = o.wifEnabled
 	}
 	return
 }

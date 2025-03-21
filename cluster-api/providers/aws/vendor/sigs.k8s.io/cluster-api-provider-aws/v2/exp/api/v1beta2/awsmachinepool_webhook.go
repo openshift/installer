@@ -176,6 +176,7 @@ func (r *AWSMachinePool) ValidateCreate() (admission.Warnings, error) {
 	allErrs = append(allErrs, r.validateAdditionalSecurityGroups()...)
 	allErrs = append(allErrs, r.validateSpotInstances()...)
 	allErrs = append(allErrs, r.validateRefreshPreferences()...)
+	allErrs = append(allErrs, r.validateInstanceMarketType()...)
 
 	if len(allErrs) == 0 {
 		return nil, nil
@@ -186,6 +187,22 @@ func (r *AWSMachinePool) ValidateCreate() (admission.Warnings, error) {
 		r.Name,
 		allErrs,
 	)
+}
+
+func (r *AWSMachinePool) validateInstanceMarketType() field.ErrorList {
+	var allErrs field.ErrorList
+	if r.Spec.AWSLaunchTemplate.MarketType == v1beta2.MarketTypeCapacityBlock && r.Spec.AWSLaunchTemplate.SpotMarketOptions != nil {
+		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.awsLaunchTemplate.marketType"), "setting marketType to CapacityBlock and spotMarketOptions cannot be used together"))
+	}
+	if r.Spec.AWSLaunchTemplate.MarketType == v1beta2.MarketTypeOnDemand && r.Spec.AWSLaunchTemplate.SpotMarketOptions != nil {
+		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.awsLaunchTemplate.marketType"), "setting marketType to OnDemand and spotMarketOptions cannot be used together"))
+	}
+
+	if r.Spec.AWSLaunchTemplate.MarketType == v1beta2.MarketTypeCapacityBlock && r.Spec.AWSLaunchTemplate.CapacityReservationID == nil {
+		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.awsLaunchTemplate.capacityReservationID"), "is required when CapacityBlock is provided"))
+	}
+
+	return allErrs
 }
 
 // ValidateUpdate will do any extra validation when updating a AWSMachinePool.

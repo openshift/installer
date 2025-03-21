@@ -50,7 +50,7 @@ type AddonInstallation struct {
 	deletedTimestamp  time.Time
 	desiredVersion    string
 	operatorVersion   string
-	parameters        *AddonInstallationParameters
+	parameters        *AddonInstallationParameterList
 	state             AddonInstallationState
 	stateDescription  string
 	subscription      *ObjectReference
@@ -302,7 +302,7 @@ func (o *AddonInstallation) GetOperatorVersion() (value string, ok bool) {
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Parameters in the installation
-func (o *AddonInstallation) Parameters() *AddonInstallationParameters {
+func (o *AddonInstallation) Parameters() *AddonInstallationParameterList {
 	if o != nil && o.bitmap_&2048 != 0 {
 		return o.parameters
 	}
@@ -313,7 +313,7 @@ func (o *AddonInstallation) Parameters() *AddonInstallationParameters {
 // a flag indicating if the attribute has a value.
 //
 // Parameters in the installation
-func (o *AddonInstallation) GetParameters() (value *AddonInstallationParameters, ok bool) {
+func (o *AddonInstallation) GetParameters() (value *AddonInstallationParameterList, ok bool) {
 	ok = o != nil && o.bitmap_&2048 != 0
 	if ok {
 		value = o.parameters

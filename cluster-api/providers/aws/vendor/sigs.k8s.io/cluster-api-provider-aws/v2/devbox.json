@@ -1,0 +1,23 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.13.7/.schema/devbox.schema.json",
+  "packages": [
+    "go@1.22",
+    "kubectl",
+    "kind",
+    "docker",
+    "helm",
+    "jq",
+    "yq",
+    "git",
+    "k9s",
+    "tilt",
+    "awscli"
+  ],
+  "shell": {
+    "scripts": {
+      "build": [
+        "make clusterawsadm"
+      ]
+    }
+  }
+}
