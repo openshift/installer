@@ -346,8 +346,9 @@ func provider(clusterID string, vcenter *vsphere.VCenter, failureDomain vsphere.
 	dataDisks := []machineapi.VSphereDisk{}
 	for _, curDisk := range mpool.DataDisks {
 		newDisk := machineapi.VSphereDisk{
-			Name:    curDisk.Name,
-			SizeGiB: curDisk.SizeGiB,
+			Name:             curDisk.Name,
+			SizeGiB:          curDisk.SizeGiB,
+			ProvisioningMode: machineapi.ProvisioningMode(curDisk.ProvisioningMode),
 		}
 		dataDisks = append(dataDisks, newDisk)
 	}
