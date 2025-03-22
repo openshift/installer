@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -103,7 +104,9 @@ func ResourceIBMEnMSTeamsDestination() *schema.Resource {
 func resourceIBMEnMSTeamsDestinationCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_msteams", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.CreateDestinationOptions{}
@@ -122,9 +125,11 @@ func resourceIBMEnMSTeamsDestinationCreate(context context.Context, d *schema.Re
 		options.SetConfig(&config)
 	}
 
-	result, response, err := enClient.CreateDestinationWithContext(context, options)
+	result, _, err := enClient.CreateDestinationWithContext(context, options)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("CreateDestinationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateDestinationWithContext failed: %s", err.Error()), "ibm_en_destination_msteams", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *options.InstanceID, *result.ID))
@@ -135,14 +140,17 @@ func resourceIBMEnMSTeamsDestinationCreate(context context.Context, d *schema.Re
 func resourceIBMEnMSTeamsDestinationRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_msteams", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.GetDestinationOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_msteams", "read")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
@@ -154,7 +162,9 @@ func resourceIBMEnMSTeamsDestinationRead(context context.Context, d *schema.Reso
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("GetDestinationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetDestinationWithContext failed: %s", err.Error()), "ibm_en_destination_msteams", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("instance_guid", options.InstanceID); err != nil {
@@ -207,14 +217,17 @@ func resourceIBMEnMSTeamsDestinationRead(context context.Context, d *schema.Reso
 func resourceIBMEnMSTeamsDestinationUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_msteams", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.UpdateDestinationOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_msteams", "update")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
@@ -236,11 +249,12 @@ func resourceIBMEnMSTeamsDestinationUpdate(context context.Context, d *schema.Re
 			config := MSTeamsdestinationConfigMapToDestinationConfig(d.Get("config.0.params.0").(map[string]interface{}), destinationtype)
 			options.SetConfig(&config)
 		}
-		_, response, err := enClient.UpdateDestinationWithContext(context, options)
+		_, _, err := enClient.UpdateDestinationWithContext(context, options)
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("UpdateDestinationWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateDestinationWithContext failed: %s", err.Error()), "ibm_en_destination_msteams", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
-
 		return resourceIBMEnMSTeamsDestinationRead(context, d, meta)
 	}
 
@@ -250,14 +264,17 @@ func resourceIBMEnMSTeamsDestinationUpdate(context context.Context, d *schema.Re
 func resourceIBMEnMSTeamsDestinationDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_msteams", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.DeleteDestinationOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_msteams", "delete")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
@@ -269,7 +286,9 @@ func resourceIBMEnMSTeamsDestinationDelete(context context.Context, d *schema.Re
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("DeleteDestinationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteDestinationWithContext failed: %s", err.Error()), "ibm_en_destination_msteams", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")

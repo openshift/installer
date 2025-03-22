@@ -2,7 +2,7 @@
 // Licensed under the Mozilla Public License v2.0
 
 /*
- * IBM OpenAPI Terraform Generator Version: 3.90.0-5aad763d-20240506-203857
+ * IBM OpenAPI Terraform Generator Version: 3.95.2-120e65bc-20240924-152329
  */
 
 package mqcloud
@@ -29,7 +29,7 @@ func DataSourceIbmMqcloudTruststoreCertificate() *schema.Resource {
 			"service_instance_guid": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The GUID that uniquely identifies the MQ on Cloud service instance.",
+				Description: "The GUID that uniquely identifies the MQaaS service instance.",
 			},
 			"queue_manager_id": {
 				Type:        schema.TypeString,
@@ -177,7 +177,6 @@ func dataSourceIbmMqcloudTruststoreCertificateRead(context context.Context, d *s
 	if err = d.Set("total_count", flex.IntValue(trustStoreCertificateDetailsCollection.TotalCount)); err != nil {
 		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting total_count: %s", err), "(Data) ibm_mqcloud_truststore_certificate", "read", "set-total_count").GetDiag()
 	}
-
 	trustStore := []map[string]interface{}{}
 	if trustStoreCertificateDetailsCollection.TrustStore != nil {
 		for _, modelItem := range trustStoreCertificateDetailsCollection.TrustStore {

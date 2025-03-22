@@ -394,7 +394,7 @@ func dataSourceIbmIsDedicatedHostProfilesID(d *schema.ResourceData) string {
 	return time.Now().UTC().String()
 }
 
-func dataSourceDedicatedHostProfileCollectionFlattenFirst(result vpcv1.DedicatedHostProfileCollectionFirst) (finalList []map[string]interface{}) {
+func dataSourceDedicatedHostProfileCollectionFlattenFirst(result vpcv1.PageLink) (finalList []map[string]interface{}) {
 	finalList = []map[string]interface{}{}
 	finalMap := dataSourceDedicatedHostProfileCollectionFirstToMap(result)
 	finalList = append(finalList, finalMap)
@@ -402,7 +402,7 @@ func dataSourceDedicatedHostProfileCollectionFlattenFirst(result vpcv1.Dedicated
 	return finalList
 }
 
-func dataSourceDedicatedHostProfileCollectionFirstToMap(firstItem vpcv1.DedicatedHostProfileCollectionFirst) (firstMap map[string]interface{}) {
+func dataSourceDedicatedHostProfileCollectionFirstToMap(firstItem vpcv1.PageLink) (firstMap map[string]interface{}) {
 	firstMap = map[string]interface{}{}
 
 	if firstItem.Href != nil {
@@ -412,7 +412,7 @@ func dataSourceDedicatedHostProfileCollectionFirstToMap(firstItem vpcv1.Dedicate
 	return firstMap
 }
 
-func dataSourceDedicatedHostProfileCollectionFlattenNext(result vpcv1.DedicatedHostProfileCollectionNext) (finalList []map[string]interface{}) {
+func dataSourceDedicatedHostProfileCollectionFlattenNext(result vpcv1.PageLink) (finalList []map[string]interface{}) {
 	finalList = []map[string]interface{}{}
 	finalMap := dataSourceDedicatedHostProfileCollectionNextToMap(result)
 	finalList = append(finalList, finalMap)
@@ -420,7 +420,7 @@ func dataSourceDedicatedHostProfileCollectionFlattenNext(result vpcv1.DedicatedH
 	return finalList
 }
 
-func dataSourceDedicatedHostProfileCollectionNextToMap(nextItem vpcv1.DedicatedHostProfileCollectionNext) (nextMap map[string]interface{}) {
+func dataSourceDedicatedHostProfileCollectionNextToMap(nextItem vpcv1.PageLink) (nextMap map[string]interface{}) {
 	nextMap = map[string]interface{}{}
 
 	if nextItem.Href != nil {

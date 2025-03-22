@@ -46,11 +46,10 @@ func ResourceIBMSchematicsAction() *schema.Resource {
 				Description: "Action description.",
 			},
 			"location": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validate.InvokeValidator("ibm_schematics_action", "location"),
-				Description:  "List of locations supported by IBM Cloud Schematics service.  While creating your workspace or action, choose the right region, since it cannot be changed.  Note, this does not limit the location of the IBM Cloud resources, provisioned using Schematics.",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "List of locations supported by IBM Cloud Schematics service.  While creating your workspace or action, choose the right region, since it cannot be changed.  Note, this does not limit the location of the IBM Cloud resources, provisioned using Schematics.",
 			},
 			"resource_group": {
 				Type:        schema.TypeString,
@@ -949,18 +948,11 @@ func ResourceIBMSchematicsActionValidator() *validate.ResourceValidator {
 	validateSchema := make([]validate.ValidateSchema, 0)
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
-			Identifier:                 "location",
-			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
-			Type:                       validate.TypeString,
-			Optional:                   true,
-			AllowedValues:              "eu-de, eu-gb, us-east, us-south",
-		},
-		validate.ValidateSchema{
 			Identifier:                 "source_type",
 			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
 			Type:                       validate.TypeString,
 			Optional:                   true,
-			AllowedValues:              "cos_bucket, external_scm, git_hub, git_hub_enterprise, git_lab, ibm_cloud_catalog, ibm_git_lab, local",
+			AllowedValues:              "cos_bucket, external_scm, git_hub, git_hub_enterprise, git_lab, ibm_schematics_action_catalog, ibm_git_lab, local",
 		},
 		validate.ValidateSchema{
 			Identifier:                 actionName,
@@ -978,7 +970,9 @@ func ResourceIBMSchematicsActionValidator() *validate.ResourceValidator {
 func resourceIBMSchematicsActionCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionCreate schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_action", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if r, ok := d.GetOk("location"); ok {
 		region := r.(string)
@@ -1077,8 +1071,10 @@ func resourceIBMSchematicsActionCreate(context context.Context, d *schema.Resour
 
 	action, response, err := schematicsClient.CreateActionWithContext(context, createActionOptions)
 	if err != nil {
-		log.Printf("[DEBUG] CreateActionWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateActionWithContext failed %s\n%s", err, response))
+
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionCreate CreateActionWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(*action.ID)
@@ -1334,7 +1330,9 @@ func resourceIBMSchematicsActionMapToSystemLock(systemLockMap map[string]interfa
 func resourceIBMSchematicsActionRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	actionIDSplit := strings.Split(d.Id(), ".")
 	region := actionIDSplit[0]
@@ -1352,51 +1350,75 @@ func resourceIBMSchematicsActionRead(context context.Context, d *schema.Resource
 			d.SetId("")
 			return nil
 		}
-		log.Printf("[DEBUG] GetActionWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetActionWithContext failed %s\n%s", err, response))
+
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead GetActionWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("name", action.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("description", action.Description); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting description: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("location", action.Location); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting location: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("resource_group", action.ResourceGroup); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting resource_group: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if action.Tags != nil {
 		if err = d.Set("tags", action.Tags); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting tags: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if action.UserState != nil {
 		userStateMap := resourceIBMSchematicsActionUserStateToMap(*action.UserState)
 		if err = d.Set("user_state", []map[string]interface{}{userStateMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting user_state: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("source_readme_url", action.SourceReadmeURL); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting source_readme_url: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if _, ok := d.GetOk("source"); ok {
 		if action.Source != nil {
 			sourceMap := resourceIBMSchematicsActionExternalSourceToMap(*action.Source)
 			if err = d.Set("source", []map[string]interface{}{sourceMap}); err != nil {
-				return diag.FromErr(fmt.Errorf("[ERROR] Error setting source: %s", err))
+				tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 		}
 	}
 	if err = d.Set("source_type", action.SourceType); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting source_type: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("command_parameter", action.CommandParameter); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting command_parameter: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("inventory", action.Inventory); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting inventory: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if action.Credentials != nil {
 		credentials := []map[string]interface{}{}
@@ -1405,25 +1427,33 @@ func resourceIBMSchematicsActionRead(context context.Context, d *schema.Resource
 			credentials = append(credentials, credentialsItemMap)
 		}
 		if err = d.Set("credentials", credentials); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting credentials: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if _, ok := d.GetOk("bastion"); ok {
 		if action.Bastion != nil {
 			bastionMap := resourceIBMSchematicsActionBastionResourceDefinitionToMap(*action.Bastion)
 			if err = d.Set("bastion", []map[string]interface{}{bastionMap}); err != nil {
-				return diag.FromErr(fmt.Errorf("[ERROR] Error setting bastion: %s", err))
+				tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 		}
 	}
 	if action.BastionCredential != nil {
 		bastionCredentialMap := resourceIBMSchematicsActionCredentialVariableDataToMap(*action.BastionCredential)
 		if err = d.Set("bastion_credential", []map[string]interface{}{bastionCredentialMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting bastion_credential: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("targets_ini", action.TargetsIni); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting targets_ini: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if action.Inputs != nil {
 		actionInputs := []map[string]interface{}{}
@@ -1432,7 +1462,9 @@ func resourceIBMSchematicsActionRead(context context.Context, d *schema.Resource
 			actionInputs = append(actionInputs, actionInputsItemMap)
 		}
 		if err = d.Set("action_inputs", actionInputs); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting action_inputs: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if action.Outputs != nil {
@@ -1442,7 +1474,9 @@ func resourceIBMSchematicsActionRead(context context.Context, d *schema.Resource
 			actionOutputs = append(actionOutputs, actionOutputsItemMap)
 		}
 		if err = d.Set("action_outputs", actionOutputs); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting action_outputs: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if action.Settings != nil {
@@ -1452,54 +1486,82 @@ func resourceIBMSchematicsActionRead(context context.Context, d *schema.Resource
 			settings = append(settings, settingsItemMap)
 		}
 		if err = d.Set("settings", settings); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting settings: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if action.State != nil {
 		stateMap := resourceIBMSchematicsActionActionStateToMap(*action.State)
 		if err = d.Set("state", []map[string]interface{}{stateMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting state: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if action.SysLock != nil {
 		sysLockMap := resourceIBMSchematicsActionSystemLockToMap(*action.SysLock)
 		if err = d.Set("sys_lock", []map[string]interface{}{sysLockMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting sys_lock: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("crn", action.Crn); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting crn: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("account", action.Account); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting account: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("source_created_at", flex.DateTimeToString(action.SourceCreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting source_created_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("source_created_by", action.SourceCreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting source_created_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("source_updated_at", flex.DateTimeToString(action.SourceUpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting source_updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("source_updated_by", action.SourceUpdatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting source_updated_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("created_at", flex.DateTimeToString(action.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting created_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("created_by", action.CreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting created_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("updated_at", flex.DateTimeToString(action.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("updated_by", action.UpdatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting updated_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if action.PlaybookNames != nil && len(action.PlaybookNames) > 0 {
 		if err = d.Set("playbook_names", action.PlaybookNames); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting playbook_names: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	} else {
 		d.Set("playbook_names", []string{})
@@ -1782,7 +1844,9 @@ func resourceIBMSchematicsActionSystemLockToMap(systemLock schematicsv1.SystemLo
 func resourceIBMSchematicsActionUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionUpdate schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_action", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	actionIDSplit := strings.Split(d.Id(), ".")
 	region := actionIDSplit[0]
@@ -1907,8 +1971,10 @@ func resourceIBMSchematicsActionUpdate(context context.Context, d *schema.Resour
 	if hasChange {
 		_, response, err := schematicsClient.UpdateActionWithContext(context, updateActionOptions)
 		if err != nil {
-			log.Printf("[DEBUG] UpdateActionWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("UpdateActionWithContext failed %s\n%s", err, response))
+
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionUpdate failed with error: %s and response:\n%s", err, response), "ibm_schematics_action", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -1918,7 +1984,9 @@ func resourceIBMSchematicsActionUpdate(context context.Context, d *schema.Resour
 func resourceIBMSchematicsActionDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionDelete schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_action", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	actionIDSplit := strings.Split(d.Id(), ".")
 	region := actionIDSplit[0]
@@ -1932,8 +2000,10 @@ func resourceIBMSchematicsActionDelete(context context.Context, d *schema.Resour
 
 	response, err := schematicsClient.DeleteActionWithContext(context, deleteActionOptions)
 	if err != nil {
-		log.Printf("[DEBUG] DeleteActionWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteActionWithContext failed %s\n%s", err, response))
+
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsActionDelete DeleteActionWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_action", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")

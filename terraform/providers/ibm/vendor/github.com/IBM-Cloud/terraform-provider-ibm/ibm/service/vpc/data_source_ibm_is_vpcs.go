@@ -51,8 +51,9 @@ func DataSourceIBMISVPCs() *schema.Resource {
 						},
 
 						isVPCClassicAccess: {
-							Type:     schema.TypeBool,
-							Computed: true,
+							Type:       schema.TypeBool,
+							Computed:   true,
+							Deprecated: "Classic access is deprecated",
 						},
 
 						isVPCDefaultRoutingTable: {
@@ -83,7 +84,15 @@ func DataSourceIBMISVPCs() *schema.Resource {
 							Computed:    true,
 							Description: "Default security group name",
 						},
-
+						// address prefixes
+						"default_address_prefixes": {
+							Type: schema.TypeMap,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+							Computed:    true,
+							Description: "Default address prefixes for each zone.",
+						},
 						isVPCDefaultSecurityGroupCRN: {
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -606,6 +615,49 @@ func dataSourceIBMISVPCListRead(context context.Context, d *schema.ResourceData,
 			}
 			l[cseSourceAddresses] = cseSourceIpsList
 		}
+
+		// address prefixes
+		vpcID := *vpc.ID // Assuming the VPC ID is stored in the resource ID
+
+		// Fetch all address prefixes for the VPC
+		startAdd := ""
+		allRecs := []vpcv1.AddressPrefix{}
+		for {
+			listVpcAddressPrefixesOptions := &vpcv1.ListVPCAddressPrefixesOptions{
+				VPCID: &vpcID,
+			}
+
+			if startAdd != "" {
+				listVpcAddressPrefixesOptions.Start = &startAdd
+			}
+
+			addressPrefixCollection, response, err := sess.ListVPCAddressPrefixes(listVpcAddressPrefixesOptions)
+			if err != nil {
+				log.Printf("[DEBUG] ListVpcAddressPrefixesWithContext failed %s\n%s", err, response)
+				diag.FromErr(fmt.Errorf("ListVpcAddressPrefixesWithContext failed %s\n%s", err, response))
+			}
+
+			allRecs = append(allRecs, addressPrefixCollection.AddressPrefixes...)
+			startAdd = flex.GetNext(addressPrefixCollection.Next)
+			if startAdd == "" {
+				break
+			}
+		}
+
+		// Process address prefixes
+		defaultAddressPrefixes := map[string]string{}
+
+		for _, prefix := range allRecs {
+			zoneName := *prefix.Zone.Name
+			cidr := *prefix.CIDR
+			// Populate default_address_prefixes
+			if *prefix.IsDefault {
+				defaultAddressPrefixes[zoneName] = cidr
+			}
+		}
+
+		// Set the default_address_prefixes attribute in the Terraform state
+		l["default_address_prefixes"] = defaultAddressPrefixes
 
 		// adding pagination support for subnets inside vpc
 

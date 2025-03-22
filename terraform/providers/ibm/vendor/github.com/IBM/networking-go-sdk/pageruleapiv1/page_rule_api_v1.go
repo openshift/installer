@@ -895,7 +895,9 @@ type PageRulesBodyActionsItem struct {
 
 // Constants associated with the PageRulesBodyActionsItem.ID property.
 // " Page rule action field map from UI to API
-//     CF-UI                    map             API,
+//
+//	CF-UI                    map             API,
+//
 // 'Disable Security'           to        'disable_security',
 // 'Browser Integrity Check'    to        'browser_check',
 // 'Server Side Excludes'       to        'server_side_exclude',
@@ -916,7 +918,8 @@ type PageRulesBodyActionsItem struct {
 // 'Cache Deception Armor'      to        'cache_deception_armor',
 // 'WAF'                        to        'waf'
 //
-//                   Page rule conflict list
+//	Page rule conflict list
+//
 // "forwarding_url"             with     all other settings for the rules
 // "always_use_https"           with     all other settings for the rules
 // "disable_security"           with     "email_obfuscation", "server_side_exclude", "waf"

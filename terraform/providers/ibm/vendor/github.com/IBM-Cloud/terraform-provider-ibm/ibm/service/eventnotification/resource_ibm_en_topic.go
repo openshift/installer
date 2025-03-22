@@ -6,12 +6,14 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/IBM/event-notifications-go-admin-sdk/eventnotificationsv1"
 	en "github.com/IBM/event-notifications-go-admin-sdk/eventnotificationsv1"
 	"github.com/IBM/go-sdk-core/v5/core"
 )
@@ -66,7 +68,7 @@ func ResourceIBMEnTopic() *schema.Resource {
 									},
 									"event_type_filter": {
 										Type:        schema.TypeString,
-										Required:    true,
+										Optional:    true,
 										Description: "Event type filter.",
 									},
 									"notification_filter": {
@@ -74,6 +76,30 @@ func ResourceIBMEnTopic() *schema.Resource {
 										Optional:    true,
 										Default:     "",
 										Description: "Notification filter.",
+									},
+									"event_schedule_filter": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										Description: "Event Schedule Filter for periodic-timer source.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"starts_at": {
+													Type:        schema.TypeString,
+													Optional:    true,
+													Description: "event schedule start time.",
+												},
+												"ends_at": {
+													Type:        schema.TypeString,
+													Required:    true,
+													Description: "event schedule end time.",
+												},
+												"expression": {
+													Type:        schema.TypeString,
+													Optional:    true,
+													Description: "cron schedule expression.",
+												},
+											},
+										},
 									},
 								},
 							},
@@ -152,7 +178,9 @@ func ResourceIBMEnTopic() *schema.Resource {
 func resourceIBMEnTopicCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_subscription_webhook", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.CreateTopicOptions{}
@@ -174,10 +202,12 @@ func resourceIBMEnTopicCreate(context context.Context, d *schema.ResourceData, m
 		options.SetSources(sources)
 	}
 
-	result, response, err := enClient.CreateTopicWithContext(context, options)
+	result, _, err := enClient.CreateTopicWithContext(context, options)
 
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("CreateTopicWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateTopicWithContext failed: %s", err.Error()), "ibm_en_topic", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *options.InstanceID, *result.ID))
@@ -188,14 +218,17 @@ func resourceIBMEnTopicCreate(context context.Context, d *schema.ResourceData, m
 func resourceIBMEnTopicRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_topic", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.GetTopicOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_topic", "read")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
@@ -208,8 +241,9 @@ func resourceIBMEnTopicRead(context context.Context, d *schema.ResourceData, met
 			d.SetId("")
 			return nil
 		}
-
-		return diag.FromErr(fmt.Errorf("GetTopicWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetTopicWithContext failed: %s", err.Error()), "ibm_en_topic", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.Set("instance_guid", options.InstanceID)
@@ -262,14 +296,17 @@ func resourceIBMEnTopicRead(context context.Context, d *schema.ResourceData, met
 func resourceIBMEnTopicUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_topic", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.ReplaceTopicOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_topic", "update")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
@@ -292,9 +329,11 @@ func resourceIBMEnTopicUpdate(context context.Context, d *schema.ResourceData, m
 		options.SetSources(sources)
 	}
 
-	_, response, err := enClient.ReplaceTopicWithContext(context, options)
+	_, _, err = enClient.ReplaceTopicWithContext(context, options)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("ReplaceTopicWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ReplaceTopicWithContext failed: %s", err.Error()), "ibm_en_topic", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	return resourceIBMEnTopicRead(context, d, meta)
@@ -303,14 +342,17 @@ func resourceIBMEnTopicUpdate(context context.Context, d *schema.ResourceData, m
 func resourceIBMEnTopicDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_topic", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.DeleteTopicOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_topic", "delete")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
@@ -322,7 +364,9 @@ func resourceIBMEnTopicDelete(context context.Context, d *schema.ResourceData, m
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("DeleteTopicWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteTopicWithContext: failed: %s", err.Error()), "ibm_en_topic", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")
@@ -361,7 +405,37 @@ func resourceIBMEnTopicMapToRules(rulesMap map[string]interface{}) en.Rules {
 		rules.NotificationFilter = core.StringPtr(rulesMap["notification_filter"].(string))
 	}
 
+	if rulesMap["event_schedule_filter"] != nil && len(rulesMap["event_schedule_filter"].([]interface{})) > 0 {
+		EventScheduleFilterModel, err := resourceIBMEnTopicsMapToEventScheduleFilterAttributes(rulesMap["event_schedule_filter"].([]interface{})[0].(map[string]interface{}))
+		if err != nil {
+			return rules
+		}
+		rules.EventScheduleFilter = EventScheduleFilterModel
+	}
+
 	return rules
+}
+
+func resourceIBMEnTopicsMapToEventScheduleFilterAttributes(modelMap map[string]interface{}) (*eventnotificationsv1.EventScheduleFilterAttributes, error) {
+	model := &en.EventScheduleFilterAttributes{}
+	if modelMap["starts_at"] != nil {
+		dateTime, err := core.ParseDateTime(modelMap["starts_at"].(string))
+		if err != nil {
+			return model, err
+		}
+		model.StartsAt = &dateTime
+	}
+	if modelMap["ends_at"] != nil {
+		dateTime, err := core.ParseDateTime(modelMap["ends_at"].(string))
+		if err != nil {
+			return model, err
+		}
+		model.EndsAt = &dateTime
+	}
+	if modelMap["expression"] != nil && modelMap["expression"].(string) != "" {
+		model.Expression = core.StringPtr(modelMap["expression"].(string))
+	}
+	return model, nil
 }
 
 func enTopicUpdateSourcesItemToMap(source en.SourcesListItems) map[string]interface{} {
@@ -396,7 +470,29 @@ func resourceIBMEnTopicRulesToMap(rules en.RulesGet) map[string]interface{} {
 		rulesMap["notification_filter"] = rules.NotificationFilter
 	}
 
+	if rules.EventScheduleFilter != nil {
+		eventScheduleFilterMap, err := resourceIBMEnTopicsEventScheduleFilterAttributesToMap(rules.EventScheduleFilter)
+		if err != nil {
+			return rulesMap
+		}
+		rulesMap["event_schedule_filter"] = []map[string]interface{}{eventScheduleFilterMap}
+	}
+
 	return rulesMap
+}
+
+func resourceIBMEnTopicsEventScheduleFilterAttributesToMap(model *eventnotificationsv1.EventScheduleFilterAttributes) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.StartsAt != nil {
+		modelMap["starts_at"] = model.StartsAt.String()
+	}
+	if model.EndsAt != nil {
+		modelMap["ends_at"] = model.EndsAt.String()
+	}
+	if model.Expression != nil {
+		modelMap["expression"] = model.Expression
+	}
+	return modelMap, nil
 }
 
 func enTopicSubscriptionToMap(subscriptionListItem en.SubscriptionListItem) map[string]interface{} {
@@ -420,3 +516,21 @@ func enTopicSubscriptionToMap(subscriptionListItem en.SubscriptionListItem) map[
 
 	return subscriptionMap
 }
+
+// func enEventScheduleFilterMap(eventschedulerfilter en.EventScheduleFilterAttributes) map[string]interface{} {
+// 	schedulerFilter := map[string]interface{}{}
+
+// 	if eventschedulerfilter.StartsAt != nil {
+// 		schedulerFilter["enabled"] = eventschedulerfilter.StartsAt
+// 	}
+
+// 	if eventschedulerfilter.EndsAt != nil {
+// 		schedulerFilter["ends_at"] = eventschedulerfilter.EndsAt
+// 	}
+
+// 	if eventschedulerfilter.Expression != nil {
+// 		schedulerFilter["expression"] = eventschedulerfilter.Expression
+// 	}
+
+// 	return schedulerFilter
+// }

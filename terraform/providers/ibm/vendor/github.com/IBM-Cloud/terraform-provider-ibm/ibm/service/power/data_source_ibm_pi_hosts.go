@@ -5,6 +5,7 @@ package power
 
 import (
 	"context"
+	"log"
 
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 )
 
 func DataSourceIBMPIHosts() *schema.Resource {
@@ -82,6 +84,11 @@ func DataSourceIBMPIHosts() *schema.Resource {
 							},
 							Type: schema.TypeList,
 						},
+						Attr_CRN: {
+							Computed:    true,
+							Description: "The CRN of this resource.",
+							Type:        schema.TypeString,
+						},
 						Attr_DisplayName: {
 							Computed:    true,
 							Description: "Name of the host (chosen by the user).",
@@ -97,6 +104,11 @@ func DataSourceIBMPIHosts() *schema.Resource {
 							Description: "Link to host group resource.",
 							Type:        schema.TypeMap,
 						},
+						Attr_HostReference: {
+							Computed:    true,
+							Description: "Current physical ID of the host.",
+							Type:        schema.TypeInt,
+						},
 						Attr_State: {
 							Computed:    true,
 							Description: "State of the host (up/down).",
@@ -111,6 +123,13 @@ func DataSourceIBMPIHosts() *schema.Resource {
 							Computed:    true,
 							Description: "System type.",
 							Type:        schema.TypeString,
+						},
+						Attr_UserTags: {
+							Computed:    true,
+							Description: "List of user tags attached to the resource.",
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         schema.HashString,
+							Type:        schema.TypeSet,
 						},
 					},
 				},
@@ -142,6 +161,14 @@ func dataSourceIBMPIHostsRead(ctx context.Context, d *schema.ResourceData, meta 
 			if host.Capacity != nil {
 				hs[Attr_Capacity] = hostCapacityToMap(host.Capacity)
 			}
+			if host.Crn != "" {
+				hs[Attr_CRN] = host.Crn
+				tags, err := flex.GetTagsUsingCRN(meta, string(host.Crn))
+				if err != nil {
+					log.Printf("Error on get of pi host (%s) user_tags: %s", host.ID, err)
+				}
+				hs[Attr_UserTags] = tags
+			}
 			if host.DisplayName != "" {
 				hs[Attr_DisplayName] = host.DisplayName
 			}
@@ -150,6 +177,9 @@ func dataSourceIBMPIHostsRead(ctx context.Context, d *schema.ResourceData, meta 
 			}
 			if host.HostGroup != nil {
 				hs[Attr_HostGroup] = hostGroupToMap(host.HostGroup)
+			}
+			if host.HostReference != 0 {
+				hs[Attr_HostReference] = host.HostReference
 			}
 			if host.State != "" {
 				hs[Attr_State] = host.State

@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -96,7 +97,9 @@ func DataSourceIBMEnSubscriptions() *schema.Resource {
 func dataSourceIBMEnSubscriptionsRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_en_subscriptions", "list")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.ListSubscriptionsOptions{}
@@ -118,12 +121,14 @@ func dataSourceIBMEnSubscriptionsRead(context context.Context, d *schema.Resourc
 	for {
 		options.SetOffset(offset)
 
-		result, response, err := enClient.ListSubscriptionsWithContext(context, options)
+		result, _, err := enClient.ListSubscriptionsWithContext(context, options)
 
 		subscriptionList = result
 
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("ListSubscriptionsWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ListSubscriptionsWithContext failed: %s", err.Error()), "(Data) ibm_en_subscriptions", "list")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 
 		offset = offset + limit
@@ -140,13 +145,15 @@ func dataSourceIBMEnSubscriptionsRead(context context.Context, d *schema.Resourc
 	d.SetId(fmt.Sprintf("subscriptions_%s", d.Get("instance_guid").(string)))
 
 	if err = d.Set("total_count", flex.IntValue(subscriptionList.TotalCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting total_count: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting total_count: %s", err), "(Data) ibm_en_subscriptions", "list")
+		return tfErr.GetDiag()
 	}
 
 	if subscriptionList.Subscriptions != nil {
 		err = d.Set("subscriptions", enFlattenSubscriptionList(subscriptionList.Subscriptions))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting subscriptions %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting subscriptions: %s", err), "(Data) ibm_en_subscriptions", "list")
+			return tfErr.GetDiag()
 		}
 	}
 

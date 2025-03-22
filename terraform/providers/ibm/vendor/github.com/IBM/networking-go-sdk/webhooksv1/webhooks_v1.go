@@ -114,7 +114,7 @@ func NewWebhooksV1(options *WebhooksV1Options) (service *WebhooksV1, err error) 
 
 	service = &WebhooksV1{
 		Service: baseService,
-		Crn: options.Crn,
+		Crn:     options.Crn,
 	}
 
 	return
@@ -317,7 +317,7 @@ func (webhooks *WebhooksV1) GetWebhookWithContext(ctx context.Context, getWebhoo
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *webhooks.Crn,
+		"crn":        *webhooks.Crn,
 		"webhook_id": *getWebhookOptions.WebhookID,
 	}
 
@@ -378,7 +378,7 @@ func (webhooks *WebhooksV1) UpdateAlertWebhookWithContext(ctx context.Context, u
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *webhooks.Crn,
+		"crn":        *webhooks.Crn,
 		"webhook_id": *updateAlertWebhookOptions.WebhookID,
 	}
 
@@ -455,7 +455,7 @@ func (webhooks *WebhooksV1) DeleteWebhookWithContext(ctx context.Context, delete
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *webhooks.Crn,
+		"crn":        *webhooks.Crn,
 		"webhook_id": *deleteWebhookOptions.WebhookID,
 	}
 

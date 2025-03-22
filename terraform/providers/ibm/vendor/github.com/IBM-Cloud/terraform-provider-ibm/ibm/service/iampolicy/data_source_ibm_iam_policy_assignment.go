@@ -233,7 +233,7 @@ func dataSourceIBMIAMPolicyAssignmentRead(context context.Context, d *schema.Res
 		return diag.FromErr(fmt.Errorf("GetPolicyAssignmentWithContext failed %s\n%s", err, response))
 	}
 
-	policyAssignmentRecord := assignmentResponse.(*iampolicymanagementv1.GetPolicyAssignmentResponse)
+	policyAssignmentRecord := assignmentResponse.(*iampolicymanagementv1.PolicyTemplateAssignmentItems)
 	d.SetId(*policyAssignmentRecord.ID)
 
 	targetMap, err := ResourceIBMPolicyAssignmentAssignmentTargetDetailsToMap(policyAssignmentRecord.Target)
@@ -415,7 +415,7 @@ func ResourceIBMPolicyAssignmentPolicyAssignmentV1ResourcesToMap(model *iampolic
 	}
 	return modelMap, nil
 }
-func DataSourceIBMPolicyAssignmentPolicyAssignmentV1Subject(model *iampolicymanagementv1.GetPolicyAssignmentResponseSubject) (map[string]interface{}, error) {
+func DataSourceIBMPolicyAssignmentPolicyAssignmentV1Subject(model *iampolicymanagementv1.PolicyAssignmentV1Subject) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ID != nil {
 		modelMap["id"] = *model.ID

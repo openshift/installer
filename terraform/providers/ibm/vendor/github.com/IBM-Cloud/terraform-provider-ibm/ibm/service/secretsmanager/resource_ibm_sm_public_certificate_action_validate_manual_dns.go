@@ -28,7 +28,7 @@ func ResourceIbmSmPublicCertificateActionValidateManualDns() *schema.Resource {
 			"secret_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "A v4 UUID identifier.",
+				Description: "A UUID identifier.",
 				ForceNew:    true,
 			},
 		},

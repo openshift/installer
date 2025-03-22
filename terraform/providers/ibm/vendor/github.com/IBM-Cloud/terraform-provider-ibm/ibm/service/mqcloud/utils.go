@@ -32,6 +32,8 @@ const qmCreating = "initializing"
 const isQueueManagerDeleting = "true"
 const isQueueManagerDeleteDone = "true"
 const reservedDeploymentPlan = "reserved-deployment"
+const reservedCapacityPlan = "reserved-capacity"
+const reservedCapacitySubscriptionPlan = "reserved-capacity-subscription"
 const enforceReservedDeploymentPlan = true // change to false for testing in IKS clusters.
 
 // waitForQmStatusUpdate waits for Queue Manager to be in running state
@@ -213,8 +215,8 @@ func fetchServicePlan(meta interface{}, instanceID string) (string, error) {
 }
 
 func handlePlanCheck(plan string, instanceID string) error {
-	if !strings.Contains(plan, reservedDeploymentPlan) {
-		return fmt.Errorf("[ERROR] Terraform is only supported for Reserved Deployment Plan. Your Service Plan is: %s for the instance %s", plan, instanceID)
+	if !strings.Contains(plan, reservedDeploymentPlan) && !strings.Contains(plan, reservedCapacityPlan) && !strings.Contains(plan, reservedCapacitySubscriptionPlan) {
+		return fmt.Errorf("[ERROR] Terraform is only supported for Reserved Deployment, Reserved Capacity, and Reserved Capacity Subscription Plans. Your Service Plan is: %s for the instance %s", plan, instanceID)
 	}
 	return nil
 }

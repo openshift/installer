@@ -408,6 +408,28 @@ func DataSourceIBMIsBareMetalServerProfile() *schema.Resource {
 					},
 				},
 			},
+			"reservation_terms": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The type for this profile field",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The type for this profile field.",
+						},
+						"values": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The supported committed use terms for a reservation using this profile",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -611,8 +633,35 @@ func dataSourceIBMISBMSProfileRead(context context.Context, d *schema.ResourceDa
 			return diag.FromErr(fmt.Errorf("Error setting network_attachment_count %s", err))
 		}
 	}
+	if bmsProfile.ReservationTerms != nil {
+		err = d.Set("reservation_terms", dataSourceBaremetalServerProfileFlattenReservationTerms(*bmsProfile.ReservationTerms))
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("Error setting reservation_terms %s", err))
+		}
+	}
 
 	return nil
+}
+
+func dataSourceBaremetalServerProfileFlattenReservationTerms(result vpcv1.BareMetalServerProfileReservationTerms) (finalList []map[string]interface{}) {
+	finalList = []map[string]interface{}{}
+	finalMap := dataSourceBaremetalServerProfileReservationTermsToMap(result)
+	finalList = append(finalList, finalMap)
+
+	return finalList
+}
+
+func dataSourceBaremetalServerProfileReservationTermsToMap(resTermItem vpcv1.BareMetalServerProfileReservationTerms) map[string]interface{} {
+	resTermMap := map[string]interface{}{}
+
+	if resTermItem.Type != nil {
+		resTermMap["type"] = resTermItem.Type
+	}
+	if resTermItem.Values != nil {
+		resTermMap["values"] = resTermItem.Values
+	}
+
+	return resTermMap
 }
 
 func dataSourceIBMIsBareMetalServerProfileBareMetalServerProfileConsoleTypesToMap(model *vpcv1.BareMetalServerProfileConsoleTypes) (map[string]interface{}, error) {

@@ -222,7 +222,8 @@ func getSubRuleSchema(currentDepth int) map[string]*schema.Schema {
 
 // requiredConfigItemsToListMap will dicipher the list of conditions and return a []map[string]interface{} to abide to the
 // terraform type TypeList
-func requiredConfigItemsToListMap(items securityandcompliancecenterapiv3.RequiredConfigItems) ([]map[string]interface{}, error) {
+func requiredConfigItemsToListMap(items []securityandcompliancecenterapiv3.RequiredConfigIntf) ([]map[string]interface{}, error) {
+
 	rcItems := []map[string]interface{}{}
 	for _, rcItem := range items {
 		rcMap, err := requiredConfigToModelMap(rcItem)
@@ -236,7 +237,7 @@ func requiredConfigItemsToListMap(items securityandcompliancecenterapiv3.Require
 
 // requiredConfigSubRuleToMap will dicipher the sub rule brought in and return a []map[string]interface{} for the terraform
 // state file
-func requiredConfigSubRuleToMap(subRule *securityandcompliancecenterapiv3.RequiredConfigSubRule) ([]map[string]interface{}, error) {
+func requiredConfigSubRuleToMap(subRule *securityandcompliancecenterapiv3.SubRule) ([]map[string]interface{}, error) {
 	srMap := make(map[string]interface{})
 	subRuleTarget, err := targetToModelMap(subRule.Target)
 	if err != nil {
@@ -281,8 +282,8 @@ func requiredConfigToModelMap(model securityandcompliancecenterapiv3.RequiredCon
 				modelMap["all"] = subRule
 			}
 		}
-		if rc.AllIf != nil {
-			if subRule, err := requiredConfigSubRuleToMap(rc.AllIf); err != nil {
+		if rc.AllIfexists != nil {
+			if subRule, err := requiredConfigSubRuleToMap(rc.All); err != nil {
 				return map[string]interface{}{}, err
 			} else {
 				modelMap["all_if"] = subRule
@@ -295,8 +296,8 @@ func requiredConfigToModelMap(model securityandcompliancecenterapiv3.RequiredCon
 				modelMap["any"] = subRule
 			}
 		}
-		if rc.AnyIf != nil {
-			if subRule, err := requiredConfigSubRuleToMap(rc.AnyIf); err != nil {
+		if rc.AnyIfexists != nil {
+			if subRule, err := requiredConfigSubRuleToMap(rc.AnyIfexists); err != nil {
 				return map[string]interface{}{}, err
 			} else {
 				modelMap["any_if"] = subRule
@@ -328,8 +329,8 @@ func requiredConfigToModelMap(model securityandcompliancecenterapiv3.RequiredCon
 }
 
 // listMapToSccSubRule is a helper function that converts a map into a SubRule
-func listMapToSccSubRule(subRuleModel []interface{}) (*securityandcompliancecenterapiv3.RequiredConfigSubRule, error) {
-	subRule := securityandcompliancecenterapiv3.RequiredConfigSubRule{}
+func listMapToSccSubRule(subRuleModel []interface{}) (*securityandcompliancecenterapiv3.SubRule, error) {
+	subRule := securityandcompliancecenterapiv3.SubRule{}
 	subMap := subRuleModel[0].(map[string]interface{})
 	target, err := modelMapToTarget(subMap["target"].([]interface{})[0].(map[string]interface{}))
 	if err != nil {
@@ -384,7 +385,7 @@ func modelMapToRequiredConfig(modelMap map[string]interface{}) (securityandcompl
 		if err != nil {
 			return model, err
 		}
-		model.AnyIf = anyIfSubRule
+		model.AnyIfexists = anyIfSubRule
 	}
 	if allSM, ok := modelMap["all"].([]interface{}); ok && len(allSM) > 0 {
 		allSubRule, err := listMapToSccSubRule(allSM)
@@ -398,7 +399,7 @@ func modelMapToRequiredConfig(modelMap map[string]interface{}) (securityandcompl
 		if err != nil {
 			return model, err
 		}
-		model.AllIf = allIfSubRule
+		model.AllIfexists = allIfSubRule
 	}
 	if modelMap["property"] != nil && modelMap["property"].(string) != "" {
 		model.Property = core.StringPtr(modelMap["property"].(string))
@@ -421,14 +422,33 @@ func modelMapToRequiredConfig(modelMap map[string]interface{}) (securityandcompl
 }
 
 // modelMapToTarget transforms a map and transforms into a Target object
-func modelMapToTarget(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.Target, error) {
-	model := &securityandcompliancecenterapiv3.Target{}
+func modelMapToTarget(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.RuleTarget, error) {
+	model := &securityandcompliancecenterapiv3.RuleTarget{}
 	model.ServiceName = core.StringPtr(modelMap["service_name"].(string))
-	if modelMap["service_display_name"] != nil && modelMap["service_display_name"].(string) != "" {
-		model.ServiceDisplayName = core.StringPtr(modelMap["service_display_name"].(string))
-	}
 	if modelMap["reference_name"] != nil && modelMap["reference_name"].(string) != "" {
-		model.ReferenceName = core.StringPtr(modelMap["reference_name"].(string))
+		model.Ref = core.StringPtr(modelMap["reference_name"].(string))
+	}
+	model.ResourceKind = core.StringPtr(modelMap["resource_kind"].(string))
+	if modelMap["additional_target_attributes"] != nil {
+		additionalTargetAttributes := []securityandcompliancecenterapiv3.AdditionalTargetAttribute{}
+		for _, additionalTargetAttributesItem := range modelMap["additional_target_attributes"].([]interface{}) {
+			additionalTargetAttributesItemModel, err := ruleMapToAdditionalTargetAttribute(additionalTargetAttributesItem.(map[string]interface{}))
+			if err != nil {
+				return model, err
+			}
+			additionalTargetAttributes = append(additionalTargetAttributes, *additionalTargetAttributesItemModel)
+		}
+		model.AdditionalTargetAttributes = additionalTargetAttributes
+	}
+	return model, nil
+}
+
+// modelMapToTargetPrototype transforms a map and transforms into a TargetPrototype object
+func modelMapToTargetPrototype(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.RuleTargetPrototype, error) {
+	model := &securityandcompliancecenterapiv3.RuleTargetPrototype{}
+	model.ServiceName = core.StringPtr(modelMap["service_name"].(string))
+	if modelMap["reference_name"] != nil && modelMap["reference_name"].(string) != "" {
+		model.Ref = core.StringPtr(modelMap["reference_name"].(string))
 	}
 	model.ResourceKind = core.StringPtr(modelMap["resource_kind"].(string))
 	if modelMap["additional_target_attributes"] != nil {
@@ -461,15 +481,15 @@ func ruleMapToAdditionalTargetAttribute(modelMap map[string]interface{}) (*secur
 }
 
 // targetToModelMap will convert a Target object to a map for the terraform state file.
-func targetToModelMap(model *securityandcompliancecenterapiv3.Target) (map[string]interface{}, error) {
+func targetToModelMap(model *securityandcompliancecenterapiv3.RuleTarget) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 
 	modelMap["service_name"] = model.ServiceName
 
 	modelMap["resource_kind"] = model.ResourceKind
 
-	if model.ReferenceName != nil {
-		modelMap["reference_name"] = model.ReferenceName
+	if model.Ref != nil {
+		modelMap["reference_name"] = model.Ref
 	}
 
 	if model.ServiceDisplayName != nil {
@@ -503,4 +523,23 @@ func ruleAdditionalTargetAttributeToMap(model *securityandcompliancecenterapiv3.
 		modelMap["value"] = model.Value
 	}
 	return modelMap, nil
+}
+
+// scopePropertiesToMap returns a map[string]interface{}
+//
+// This function is used for any scc resource/datasource that
+// need to read scope.properties
+func scopePropertiesToMap(model securityandcompliancecenterapiv3.ScopePropertyIntf) (map[string]interface{}, error) {
+	if prop, ok := model.(*securityandcompliancecenterapiv3.ScopeProperty); ok && prop.Name != nil && prop.Value != nil {
+		modelMap := make(map[string]interface{})
+		modelMap["name"] = prop.Name
+		if val, ok := prop.Value.(string); !ok {
+			modelMap["value"] = fmt.Sprintf("%v", val)
+		} else {
+			modelMap["value"] = prop.Value
+		}
+		return modelMap, nil
+	} else {
+		return nil, fmt.Errorf("Unrecognized securityandcompliancecenterv3.ScopePropertyIntf subtype encountered")
+	}
 }

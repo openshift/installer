@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/platform-services-go-sdk/contextbasedrestrictionsv1"
 )
@@ -152,7 +153,9 @@ func resourceIBMCbrZoneAddressesCreate(context context.Context, d *schema.Resour
 	addressesId := fmt.Sprintf("TF-%s", newUuid)
 	err := resourceReplaceZoneAddresses(context, d, meta, zoneId, addressesId, false)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("%s", err.Error()), "ibm_cbr_zone_addresses", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	d.SetId(composeZoneAddressesId(zoneId, addressesId))
 	return nil
@@ -162,7 +165,9 @@ func resourceIBMCbrZoneAddressesCreate(context context.Context, d *schema.Resour
 func resourceIBMCbrZoneAddressesRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	contextBasedRestrictionsClient, err := meta.(conns.ClientSession).ContextBasedRestrictionsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cbr_zone_addresses", "read", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	zoneId, addressesId := decomposeZoneAddressesId(d.Id())
@@ -171,7 +176,9 @@ func resourceIBMCbrZoneAddressesRead(context context.Context, d *schema.Resource
 	var found bool
 	zone, _, found, err = getZone(contextBasedRestrictionsClient, context, zoneId)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("%s", err.Error()), "ibm_cbr_zone_addresses", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if !found {
 		d.SetId("")
@@ -179,13 +186,13 @@ func resourceIBMCbrZoneAddressesRead(context context.Context, d *schema.Resource
 	}
 
 	if err = d.Set("zone_id", zoneId); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting zone_id: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cbr_zone_addresses", "read", "set-zone-id").GetDiag()
 	}
 
 	var addresses []map[string]interface{}
-	addresses, err = resourceDecodeAddressList(zone.Addresses, addressesId)
+	addresses, err = ResourceDecodeAddressList(zone.Addresses, addressesId)
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cbr_zone_addresses", "read", "ResourceDecodeAddressList").GetDiag()
 	}
 	if len(addresses) == 0 {
 		d.SetId("")
@@ -193,7 +200,7 @@ func resourceIBMCbrZoneAddressesRead(context context.Context, d *schema.Resource
 	}
 
 	if err = d.Set("addresses", addresses); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting addresses: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cbr_zone_addresses", "read", "set-addresses").GetDiag()
 	}
 
 	return nil
@@ -203,7 +210,9 @@ func resourceIBMCbrZoneAddressesUpdate(context context.Context, d *schema.Resour
 	zoneId, addressesId := decomposeZoneAddressesId(d.Id())
 	err := resourceReplaceZoneAddresses(context, d, meta, zoneId, addressesId, false)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("%s", err.Error()), "ibm_cbr_zone_addresses", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	return nil
 }
@@ -212,11 +221,13 @@ func resourceIBMCbrZoneAddressesDelete(context context.Context, d *schema.Resour
 	zoneId, addressesId := decomposeZoneAddressesId(d.Id())
 	err := d.Set("addresses", nil)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting addresses: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cbr_zone_addresses", "delete", "set-addresses").GetDiag()
 	}
 	err = resourceReplaceZoneAddresses(context, d, meta, zoneId, addressesId, true)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("%s", err.Error()), "ibm_cbr_zone_addresses", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")
@@ -259,7 +270,7 @@ func resourceReplaceZoneAddresses(context context.Context, d *schema.ResourceDat
 
 	addresses := []contextbasedrestrictionsv1.AddressIntf{}
 	if _, ok := d.GetOk("addresses"); ok {
-		addresses, err = resourceEncodeAddressList(d.Get("addresses").([]interface{}), addressesId)
+		addresses, err = ResourceEncodeAddressList(d.Get("addresses").([]interface{}), addressesId)
 		if err != nil {
 			return err
 		}
@@ -274,7 +285,6 @@ func resourceReplaceZoneAddresses(context context.Context, d *schema.ResourceDat
 
 	_, response, err = contextBasedRestrictionsClient.ReplaceZoneWithContext(context, replaceZoneOptions)
 	if err != nil {
-		log.Printf("[DEBUG] ReplaceZoneWithContext failed %s\n%s", err, response)
 		return fmt.Errorf("ReplaceZoneWithContext failed %s\n%s", err, response)
 	}
 

@@ -117,7 +117,9 @@ func DataSourceIBMSchematicsResourceQuery() *schema.Resource {
 func dataSourceIBMSchematicsResourceQueryRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsResourceQueryRead schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_resource_query", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if r, ok := d.GetOk("location"); ok {
@@ -133,37 +135,55 @@ func dataSourceIBMSchematicsResourceQueryRead(context context.Context, d *schema
 
 	resourceQueryRecord, response, err := schematicsClient.GetResourcesQueryWithContext(context, getResourcesQueryOptions)
 	if err != nil {
-		log.Printf("[DEBUG] GetResourcesQueryWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetResourcesQueryWithContext failed %s\n%s", err, response))
+
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsResourceQueryRead GetResourcesQueryWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_resource_query", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(*getResourcesQueryOptions.QueryID)
 	if err = d.Set("type", resourceQueryRecord.Type); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting type: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsResourceQueryRead failed with error: %s", err), "ibm_schematics_resource_query", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("name", resourceQueryRecord.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsResourceQueryRead failed with error: %s", err), "ibm_schematics_resource_query", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("id", resourceQueryRecord.ID); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsResourceQueryRead failed with error: %s", err), "ibm_schematics_resource_query", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("created_at", flex.DateTimeToString(resourceQueryRecord.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting created_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsResourceQueryRead failed with error: %s", err), "ibm_schematics_resource_query", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("created_by", resourceQueryRecord.CreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting created_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsResourceQueryRead failed with error: %s", err), "ibm_schematics_resource_query", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("updated_at", flex.DateTimeToString(resourceQueryRecord.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsResourceQueryRead failed with error: %s", err), "ibm_schematics_resource_query", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("updated_by", resourceQueryRecord.UpdatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting updated_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsResourceQueryRead failed with error: %s", err), "ibm_schematics_resource_query", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if resourceQueryRecord.Queries != nil {
 		err = d.Set("queries", dataSourceResourceQueryRecordFlattenQueries(resourceQueryRecord.Queries))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting queries %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsResourceQueryRead failed with error: %s", err), "ibm_schematics_resource_query", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 

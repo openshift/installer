@@ -152,12 +152,11 @@ func resourceIBMPrivateDNSGLBCreate(d *schema.ResourceData, meta interface{}) er
 	}
 	instanceID := d.Get(pdnsInstanceID).(string)
 	zoneID := d.Get(pdnsZoneID).(string)
-	createlbOptions := sess.NewCreateLoadBalancerOptions(instanceID, zoneID)
-
 	lbname := d.Get(pdnsGLBName).(string)
-	createlbOptions.SetName(lbname)
-	createlbOptions.SetFallbackPool(d.Get(pdnsGLBFallbackPool).(string))
-	createlbOptions.SetDefaultPools(flex.ExpandStringList(d.Get(pdnsGLBDefaultPool).([]interface{})))
+	fallbackPool := d.Get(pdnsGLBFallbackPool).(string)
+	defaultPool := flex.ExpandStringList(d.Get(pdnsGLBDefaultPool).([]interface{}))
+
+	createlbOptions := sess.NewCreateLoadBalancerOptions(instanceID, zoneID, lbname, fallbackPool, defaultPool)
 
 	if description, ok := d.GetOk(pdnsGLBDescription); ok {
 		createlbOptions.SetDescription(description.(string))
@@ -308,14 +307,14 @@ func resourceIBMPrivateDNSGLBExists(d *schema.ResourceData, meta interface{}) (b
 	return true, nil
 }
 
-func expandPDNSGlbAZPools(azpool interface{}) ([]dnssvcsv1.LoadBalancerAzPoolsItem, error) {
+func expandPDNSGlbAZPools(azpool interface{}) ([]dnssvcsv1.AzPoolsItem, error) {
 	azpools := azpool.(*schema.Set).List()
-	expandAZpools := make([]dnssvcsv1.LoadBalancerAzPoolsItem, 0)
+	expandAZpools := make([]dnssvcsv1.AzPoolsItem, 0)
 	for _, v := range azpools {
 		locationConfig := v.(map[string]interface{})
 		avzone := locationConfig[pdnsGLBAvailabilityZone].(string)
 		pools := flex.ExpandStringList(locationConfig[pdnsGLBAZPoolsPools].([]interface{}))
-		aZItem := dnssvcsv1.LoadBalancerAzPoolsItem{
+		aZItem := dnssvcsv1.AzPoolsItem{
 			AvailabilityZone: &avzone,
 			Pools:            pools,
 		}
@@ -324,7 +323,7 @@ func expandPDNSGlbAZPools(azpool interface{}) ([]dnssvcsv1.LoadBalancerAzPoolsIt
 	return expandAZpools, nil
 }
 
-func flattenPDNSGlbAZpool(azpool []dnssvcsv1.LoadBalancerAzPoolsItem) interface{} {
+func flattenPDNSGlbAZpool(azpool []dnssvcsv1.AzPoolsItem) interface{} {
 	flattened := make([]interface{}, 0)
 	for _, v := range azpool {
 		cfg := map[string]interface{}{

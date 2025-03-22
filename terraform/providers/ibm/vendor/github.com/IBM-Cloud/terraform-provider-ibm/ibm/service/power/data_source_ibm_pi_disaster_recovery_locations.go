@@ -43,6 +43,25 @@ func DataSourceIBMPIDisasterRecoveryLocations() *schema.Resource {
 										Description: "The region zone of the location.",
 										Type:        schema.TypeString,
 									},
+									Attr_ReplicationPoolMap: {
+										Computed:    true,
+										Description: "List of replication pool map.",
+										Type:        schema.TypeList,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												Attr_RemotePool: {
+													Computed:    true,
+													Description: "Remote pool.",
+													Type:        schema.TypeString,
+												},
+												Attr_VolumePool: {
+													Computed:    true,
+													Description: "Volume pool.",
+													Type:        schema.TypeString,
+												},
+											},
+										},
+									},
 								},
 							},
 							Type: schema.TypeList,
@@ -67,20 +86,30 @@ func dataSourceIBMPIDisasterRecoveryLocations(ctx context.Context, d *schema.Res
 	}
 
 	results := make([]map[string]interface{}, 0, len(drLocationSites.DisasterRecoveryLocations))
-	for _, i := range drLocationSites.DisasterRecoveryLocations {
-		if i != nil {
-			replicationSites := make([]map[string]interface{}, 0, len(i.ReplicationSites))
-			for _, j := range i.ReplicationSites {
-				if j != nil {
+	for _, drl := range drLocationSites.DisasterRecoveryLocations {
+		if drl != nil {
+			replicationSites := make([]map[string]interface{}, 0, len(drl.ReplicationSites))
+			for _, site := range drl.ReplicationSites {
+				if site != nil {
+					replicationPoolMap := make([]map[string]string, 0)
+					if site.ReplicationPoolMap != nil {
+						for _, rMap := range site.ReplicationPoolMap {
+							replicationPool := make(map[string]string)
+							replicationPool[Attr_RemotePool] = rMap.RemotePool
+							replicationPool[Attr_VolumePool] = rMap.VolumePool
+							replicationPoolMap = append(replicationPoolMap, replicationPool)
+						}
+					}
 					r := map[string]interface{}{
-						Attr_IsActive: j.IsActive,
-						Attr_Location: j.Location,
+						Attr_IsActive:           site.IsActive,
+						Attr_Location:           site.Location,
+						Attr_ReplicationPoolMap: replicationPoolMap,
 					}
 					replicationSites = append(replicationSites, r)
 				}
 			}
 			l := map[string]interface{}{
-				Attr_Location:         i.Location,
+				Attr_Location:         drl.Location,
 				Attr_ReplicationSites: replicationSites,
 			}
 			results = append(results, l)

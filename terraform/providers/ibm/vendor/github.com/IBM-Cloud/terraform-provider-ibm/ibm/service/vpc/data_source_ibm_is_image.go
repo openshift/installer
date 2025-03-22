@@ -386,10 +386,7 @@ func imageGetById(d *schema.ResourceData, meta interface{}, identifier string) e
 
 	image, response, err := sess.GetImage(getImageOptions)
 	if err != nil {
-		if response.StatusCode == 404 {
-			return fmt.Errorf("[ERROR] No image found with id  %s", identifier)
-		}
-		return fmt.Errorf("[ERROR] Error Fetching Images %s\n%s", err, response)
+		return fmt.Errorf("[ERROR] Error fetching image with id(%s) %s\n%s", identifier, err, response)
 	}
 
 	d.SetId(*image.ID)

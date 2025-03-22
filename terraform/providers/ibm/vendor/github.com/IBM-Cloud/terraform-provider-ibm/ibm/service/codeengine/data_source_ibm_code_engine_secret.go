@@ -1,6 +1,10 @@
 // Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.94.1-71478489-20240820-161623
+ */
+
 package codeengine
 
 import (
@@ -8,12 +12,12 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/code-engine-go-sdk/codeenginev2"
+	"github.com/IBM/go-sdk-core/v5/core"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func DataSourceIbmCodeEngineSecret() *schema.Resource {
@@ -212,7 +216,7 @@ func DataSourceIbmCodeEngineSecret() *schema.Resource {
 func dataSourceIbmCodeEngineSecretRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_secret", "read")
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_secret", "read", "initialize-client")
 		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
 		return tfErr.GetDiag()
 	}
@@ -231,104 +235,100 @@ func dataSourceIbmCodeEngineSecretRead(context context.Context, d *schema.Resour
 
 	d.SetId(fmt.Sprintf("%s/%s", *getSecretOptions.ProjectID, *getSecretOptions.Name))
 
-	if err = d.Set("created_at", secret.CreatedAt); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting created_at: %s", err), "(Data) ibm_code_engine_secret", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(secret.CreatedAt) {
+		if err = d.Set("created_at", secret.CreatedAt); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting created_at: %s", err), "(Data) ibm_code_engine_secret", "read", "set-created_at").GetDiag()
+		}
 	}
 
-	if secret.Data != nil {
+	if !core.IsNil(secret.Data) {
 		if err = d.Set("data", secret.Data); err != nil {
-			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting data: %s", err), "(Data) ibm_code_engine_secret", "read")
-			return tfErr.GetDiag()
-		}
-		if err != nil {
-			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting data: %s", err), "(Data) ibm_code_engine_secret", "read")
-			return tfErr.GetDiag()
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting data: %s", err), "(Data) ibm_code_engine_secret", "read", "set-data").GetDiag()
 		}
 	}
 
 	if err = d.Set("entity_tag", secret.EntityTag); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting entity_tag: %s", err), "(Data) ibm_code_engine_secret", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting entity_tag: %s", err), "(Data) ibm_code_engine_secret", "read", "set-entity_tag").GetDiag()
 	}
 
-	if err = d.Set("format", secret.Format); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting format: %s", err), "(Data) ibm_code_engine_secret", "read")
-		return tfErr.GetDiag()
-	}
-
-	if err = d.Set("href", secret.Href); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting href: %s", err), "(Data) ibm_code_engine_secret", "read")
-		return tfErr.GetDiag()
-	}
-
-	if err = d.Set("secret_id", secret.ID); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting secret_id: %s", err), "(Data) ibm_code_engine_secret", "read")
-		return tfErr.GetDiag()
-	}
-
-	if err = d.Set("region", secret.Region); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting region: %s", err), "(Data) ibm_code_engine_secret", "read")
-		return tfErr.GetDiag()
-	}
-
-	if err = d.Set("resource_type", secret.ResourceType); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting resource_type: %s", err), "(Data) ibm_code_engine_secret", "read")
-		return tfErr.GetDiag()
-	}
-
-	serviceAccess := []map[string]interface{}{}
-	if secret.ServiceAccess != nil {
-		modelMap, err := dataSourceIbmCodeEngineSecretServiceAccessSecretPropsToMap(secret.ServiceAccess)
-		if err != nil {
-			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_secret", "read")
-			return tfErr.GetDiag()
+	if !core.IsNil(secret.Format) {
+		if err = d.Set("format", secret.Format); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting format: %s", err), "(Data) ibm_code_engine_secret", "read", "set-format").GetDiag()
 		}
-		serviceAccess = append(serviceAccess, modelMap)
-	}
-	if err = d.Set("service_access", serviceAccess); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting service_access: %s", err), "(Data) ibm_code_engine_secret", "read")
-		return tfErr.GetDiag()
 	}
 
-	serviceOperator := []map[string]interface{}{}
-	if secret.ServiceOperator != nil {
-		modelMap, err := dataSourceIbmCodeEngineSecretOperatorSecretPropsToMap(secret.ServiceOperator)
-		if err != nil {
-			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_secret", "read")
-			return tfErr.GetDiag()
+	if !core.IsNil(secret.Href) {
+		if err = d.Set("href", secret.Href); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting href: %s", err), "(Data) ibm_code_engine_secret", "read", "set-href").GetDiag()
 		}
-		serviceOperator = append(serviceOperator, modelMap)
 	}
-	if err = d.Set("service_operator", serviceOperator); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting service_operator: %s", err), "(Data) ibm_code_engine_secret", "read")
-		return tfErr.GetDiag()
+
+	if !core.IsNil(secret.ID) {
+		if err = d.Set("secret_id", secret.ID); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting secret_id: %s", err), "(Data) ibm_code_engine_secret", "read", "set-secret_id").GetDiag()
+		}
+	}
+
+	if !core.IsNil(secret.Region) {
+		if err = d.Set("region", secret.Region); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting region: %s", err), "(Data) ibm_code_engine_secret", "read", "set-region").GetDiag()
+		}
+	}
+
+	if !core.IsNil(secret.ResourceType) {
+		if err = d.Set("resource_type", secret.ResourceType); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting resource_type: %s", err), "(Data) ibm_code_engine_secret", "read", "set-resource_type").GetDiag()
+		}
+	}
+
+	if !core.IsNil(secret.ServiceAccess) {
+		serviceAccess := []map[string]interface{}{}
+		serviceAccessMap, err := DataSourceIbmCodeEngineSecretServiceAccessSecretPropsToMap(secret.ServiceAccess)
+		if err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_secret", "read", "service_access-to-map").GetDiag()
+		}
+		serviceAccess = append(serviceAccess, serviceAccessMap)
+		if err = d.Set("service_access", serviceAccess); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting service_access: %s", err), "(Data) ibm_code_engine_secret", "read", "set-service_access").GetDiag()
+		}
+	}
+
+	if !core.IsNil(secret.ServiceOperator) {
+		serviceOperator := []map[string]interface{}{}
+		serviceOperatorMap, err := DataSourceIbmCodeEngineSecretOperatorSecretPropsToMap(secret.ServiceOperator)
+		if err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_secret", "read", "service_operator-to-map").GetDiag()
+		}
+		serviceOperator = append(serviceOperator, serviceOperatorMap)
+		if err = d.Set("service_operator", serviceOperator); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting service_operator: %s", err), "(Data) ibm_code_engine_secret", "read", "set-service_operator").GetDiag()
+		}
 	}
 
 	return nil
 }
 
-func dataSourceIbmCodeEngineSecretServiceAccessSecretPropsToMap(model *codeenginev2.ServiceAccessSecretProps) (map[string]interface{}, error) {
+func DataSourceIbmCodeEngineSecretServiceAccessSecretPropsToMap(model *codeenginev2.ServiceAccessSecretProps) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	resourceKeyMap, err := dataSourceIbmCodeEngineSecretResourceKeyRefToMap(model.ResourceKey)
+	resourceKeyMap, err := DataSourceIbmCodeEngineSecretResourceKeyRefToMap(model.ResourceKey)
 	if err != nil {
 		return modelMap, err
 	}
 	modelMap["resource_key"] = []map[string]interface{}{resourceKeyMap}
 	if model.Role != nil {
-		roleMap, err := dataSourceIbmCodeEngineSecretRoleRefToMap(model.Role)
+		roleMap, err := DataSourceIbmCodeEngineSecretRoleRefToMap(model.Role)
 		if err != nil {
 			return modelMap, err
 		}
 		modelMap["role"] = []map[string]interface{}{roleMap}
 	}
-	serviceInstanceMap, err := dataSourceIbmCodeEngineSecretServiceInstanceRefToMap(model.ServiceInstance)
+	serviceInstanceMap, err := DataSourceIbmCodeEngineSecretServiceInstanceRefToMap(model.ServiceInstance)
 	if err != nil {
 		return modelMap, err
 	}
 	modelMap["service_instance"] = []map[string]interface{}{serviceInstanceMap}
 	if model.Serviceid != nil {
-		serviceidMap, err := dataSourceIbmCodeEngineSecretServiceIDRefToMap(model.Serviceid)
+		serviceidMap, err := DataSourceIbmCodeEngineSecretServiceIDRefToMap(model.Serviceid)
 		if err != nil {
 			return modelMap, err
 		}
@@ -337,59 +337,59 @@ func dataSourceIbmCodeEngineSecretServiceAccessSecretPropsToMap(model *codeengin
 	return modelMap, nil
 }
 
-func dataSourceIbmCodeEngineSecretResourceKeyRefToMap(model *codeenginev2.ResourceKeyRef) (map[string]interface{}, error) {
+func DataSourceIbmCodeEngineSecretResourceKeyRefToMap(model *codeenginev2.ResourceKeyRef) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ID != nil {
-		modelMap["id"] = model.ID
+		modelMap["id"] = *model.ID
 	}
 	if model.Name != nil {
-		modelMap["name"] = model.Name
+		modelMap["name"] = *model.Name
 	}
 	return modelMap, nil
 }
 
-func dataSourceIbmCodeEngineSecretRoleRefToMap(model *codeenginev2.RoleRef) (map[string]interface{}, error) {
+func DataSourceIbmCodeEngineSecretRoleRefToMap(model *codeenginev2.RoleRef) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Crn != nil {
-		modelMap["crn"] = model.Crn
+		modelMap["crn"] = *model.Crn
 	}
 	if model.Name != nil {
-		modelMap["name"] = model.Name
+		modelMap["name"] = *model.Name
 	}
 	return modelMap, nil
 }
 
-func dataSourceIbmCodeEngineSecretServiceInstanceRefToMap(model *codeenginev2.ServiceInstanceRef) (map[string]interface{}, error) {
+func DataSourceIbmCodeEngineSecretServiceInstanceRefToMap(model *codeenginev2.ServiceInstanceRef) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ID != nil {
-		modelMap["id"] = model.ID
+		modelMap["id"] = *model.ID
 	}
 	if model.Type != nil {
-		modelMap["type"] = model.Type
+		modelMap["type"] = *model.Type
 	}
 	return modelMap, nil
 }
 
-func dataSourceIbmCodeEngineSecretServiceIDRefToMap(model *codeenginev2.ServiceIDRef) (map[string]interface{}, error) {
+func DataSourceIbmCodeEngineSecretServiceIDRefToMap(model *codeenginev2.ServiceIDRef) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Crn != nil {
-		modelMap["crn"] = model.Crn
+		modelMap["crn"] = *model.Crn
 	}
 	if model.ID != nil {
-		modelMap["id"] = model.ID
+		modelMap["id"] = *model.ID
 	}
 	return modelMap, nil
 }
 
-func dataSourceIbmCodeEngineSecretOperatorSecretPropsToMap(model *codeenginev2.OperatorSecretProps) (map[string]interface{}, error) {
+func DataSourceIbmCodeEngineSecretOperatorSecretPropsToMap(model *codeenginev2.OperatorSecretProps) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	modelMap["apikey_id"] = model.ApikeyID
+	modelMap["apikey_id"] = *model.ApikeyID
 	modelMap["resource_group_ids"] = model.ResourceGroupIds
-	serviceidMap, err := dataSourceIbmCodeEngineSecretServiceIDRefToMap(model.Serviceid)
+	serviceidMap, err := DataSourceIbmCodeEngineSecretServiceIDRefToMap(model.Serviceid)
 	if err != nil {
 		return modelMap, err
 	}
 	modelMap["serviceid"] = []map[string]interface{}{serviceidMap}
-	modelMap["user_managed"] = model.UserManaged
+	modelMap["user_managed"] = *model.UserManaged
 	return modelMap, nil
 }

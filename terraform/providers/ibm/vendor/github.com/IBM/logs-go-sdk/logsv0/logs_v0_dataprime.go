@@ -31,8 +31,8 @@ import (
 	"reflect"
 
 	"github.com/IBM/go-sdk-core/v5/core"
-	common "github.com/IBM/logs-go-sdk/common"
 	"github.com/go-openapi/strfmt"
+	common "github.com/IBM/logs-go-sdk/common"
 )
 
 const (
@@ -41,9 +41,10 @@ const (
 
 // QueryCallBack interface
 type QueryCallBack interface {
-	OnClose()
-	OnData(*core.DetailedResponse)
-	OnError(error)
+	OnClose()                      // called when the connection is closed from the server
+	OnData(*core.DetailedResponse) // called when the data is received from the server
+	OnError(error)                 // called when there is an error in receiving or processing the received data
+	OnKeepAlive()                  // called when the server sends empty response to keep the connection alive
 }
 
 // Query : Query
@@ -69,7 +70,7 @@ func (logs *LogsV0) QueryWithContext(ctx context.Context, queryOptions *QueryOpt
 	builder := core.NewRequestBuilder(core.POST)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = logs.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(logs.Service.Options.URL, `/v1/dataprime/query/run`, nil)
+	_, err = builder.ResolveRequestURL(logs.Service.Options.URL, `/v1/query`, nil)
 	if err != nil {
 		callBack.OnError(err)
 		return
@@ -195,6 +196,14 @@ func (queryListener *QueryListener) readEventLoop(ctx context.Context, reader *b
 
 			// end of event
 			case bytes.Equal(line, []byte("\n")):
+				// there will be empty response sent from the server for keeping the connection alive
+				// this response will only have ":" in the output. not handling this case will lead to
+				// error when we try to decode as JSON
+				if buf.Len() == 0 {
+					queryListener.callback.OnKeepAlive()
+					continue
+				}
+
 				b := buf.Bytes()
 
 				// we have to decode the JSON to "map[string]json.RawMessage" type

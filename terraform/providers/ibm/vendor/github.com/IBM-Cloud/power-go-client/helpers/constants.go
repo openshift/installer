@@ -245,4 +245,8 @@ const (
 
 	// Stratos region prefix
 	PIStratosRegionPrefix = "satloc"
+
+	// Standard "not supported" messages
+	NotOnPremSupported  = "operation not supported in on-prem location"
+	NotOffPremSupported = "operation not supported in off-prem location"
 )

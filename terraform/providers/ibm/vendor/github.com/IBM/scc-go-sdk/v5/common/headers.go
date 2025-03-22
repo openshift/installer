@@ -20,12 +20,15 @@ import (
 	"fmt"
 	"runtime"
 
+	"github.com/google/uuid"
+
 	"github.com/IBM/go-sdk-core/v5/core"
 )
 
 const (
 	sdkName             = "scc-go-sdk"
 	headerNameUserAgent = "User-Agent"
+	xRequestId          = "x-request-id"
 )
 
 // GetSdkHeaders - returns the set of SDK-specific headers to be included in an outgoing request.
@@ -67,6 +70,7 @@ func GetSdkHeaders(serviceName string, serviceVersion string, operationId string
 	sdkHeaders := make(map[string]string)
 
 	sdkHeaders[headerNameUserAgent] = GetUserAgentInfo()
+	sdkHeaders[xRequestId] = GetNewXRequestID()
 
 	return sdkHeaders
 }
@@ -78,6 +82,10 @@ func GetUserAgentInfo() string {
 }
 
 var systemInfo = fmt.Sprintf("(lang=go; arch=%s; os=%s; go.version=%s)", runtime.GOARCH, runtime.GOOS, runtime.Version())
+
+func GetNewXRequestID() string {
+	return uuid.New().String()
+}
 
 func GetSystemInfo() string {
 	return systemInfo

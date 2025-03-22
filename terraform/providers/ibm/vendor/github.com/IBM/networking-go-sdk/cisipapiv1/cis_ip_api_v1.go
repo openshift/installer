@@ -17,7 +17,6 @@
 /*
  * IBM OpenAPI SDK Code Generator Version: 3.20.0-debb9f29-20201203-202043
  */
- 
 
 // Package cisipapiv1 : Operations and models for the CisIpApiV1 service
 package cisipapiv1
@@ -218,7 +217,6 @@ type IpResponseResult struct {
 	Ipv6Cidrs []string `json:"ipv6_cidrs,omitempty"`
 }
 
-
 // UnmarshalIpResponseResult unmarshals an instance of IpResponseResult from the specified map of raw messages.
 func UnmarshalIpResponseResult(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(IpResponseResult)
@@ -266,7 +264,6 @@ type IpResponse struct {
 	// Container for response information.
 	Result *IpResponseResult `json:"result" validate:"required"`
 }
-
 
 // UnmarshalIpResponse unmarshals an instance of IpResponse from the specified map of raw messages.
 func UnmarshalIpResponse(m map[string]json.RawMessage, result interface{}) (err error) {

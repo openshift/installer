@@ -4,7 +4,6 @@
 package globaltagging
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -62,7 +61,7 @@ func dataSourceIBMResourceTagRead(d *schema.ResourceData, meta interface{}) erro
 
 	tags, err := flex.GetGlobalTagsUsingCRN(meta, rID, rType, tType)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error on get of resource tags (%s) tags: %s", d.Id(), err)
+		return flex.FmtErrorf("[ERROR] Error on get of resource tags (%s) tags: %s", d.Id(), err)
 	}
 
 	d.SetId(time.Now().UTC().String())

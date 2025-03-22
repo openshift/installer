@@ -13,6 +13,13 @@ import (
 	"github.com/rcrowley/go-metrics"
 )
 
+// ErrProducerRetryBufferOverflow is returned when the bridging retry buffer is full and OOM prevention needs to be applied.
+var ErrProducerRetryBufferOverflow = errors.New("retry buffer full: message discarded to prevent buffer overflow")
+
+// minFunctionalRetryBufferLength is the lower limit of Producer.Retry.MaxBufferLength for it to function.
+// Any non-zero maxBufferLength but less than this lower limit is pushed to the lower limit.
+const minFunctionalRetryBufferLength = 4 * 1024
+
 // AsyncProducer publishes Kafka messages using a non-blocking API. It routes messages
 // to the correct broker for the provided topic-partition, refreshing metadata as appropriate,
 // and parses responses for errors. You must read from the Errors() channel or the
@@ -1101,7 +1108,7 @@ func (bp *brokerProducer) handleSuccess(sent *produceSet, response *ProduceRespo
 			bp.parent.returnSuccesses(pSet.msgs)
 		// Retriable errors
 		case ErrInvalidMessage, ErrUnknownTopicOrPartition, ErrLeaderNotAvailable, ErrNotLeaderForPartition,
-			ErrRequestTimedOut, ErrNotEnoughReplicas, ErrNotEnoughReplicasAfterAppend:
+			ErrRequestTimedOut, ErrNotEnoughReplicas, ErrNotEnoughReplicasAfterAppend, ErrKafkaStorageError:
 			if bp.parent.conf.Producer.Retry.Max <= 0 {
 				bp.parent.abandonBrokerConnection(bp.broker)
 				bp.parent.returnErrors(pSet.msgs, block.Err)
@@ -1134,7 +1141,7 @@ func (bp *brokerProducer) handleSuccess(sent *produceSet, response *ProduceRespo
 
 			switch block.Err {
 			case ErrInvalidMessage, ErrUnknownTopicOrPartition, ErrLeaderNotAvailable, ErrNotLeaderForPartition,
-				ErrRequestTimedOut, ErrNotEnoughReplicas, ErrNotEnoughReplicasAfterAppend:
+				ErrRequestTimedOut, ErrNotEnoughReplicas, ErrNotEnoughReplicasAfterAppend, ErrKafkaStorageError:
 				Logger.Printf("producer/broker/%d state change to [retrying] on %s/%d because %v\n",
 					bp.broker.ID(), topic, partition, block.Err)
 				if bp.currentRetries[topic] == nil {
@@ -1207,6 +1214,11 @@ func (bp *brokerProducer) handleError(sent *produceSet, err error) {
 // effectively a "bridge" between the flushers and the dispatcher in order to avoid deadlock
 // based on https://godoc.org/github.com/eapache/channels#InfiniteChannel
 func (p *asyncProducer) retryHandler() {
+	maxBufferSize := p.conf.Producer.Retry.MaxBufferLength
+	if 0 < maxBufferSize && maxBufferSize < minFunctionalRetryBufferLength {
+		maxBufferSize = minFunctionalRetryBufferLength
+	}
+
 	var msg *ProducerMessage
 	buf := queue.New()
 
@@ -1227,6 +1239,19 @@ func (p *asyncProducer) retryHandler() {
 		}
 
 		buf.Add(msg)
+
+		if maxBufferSize > 0 && buf.Length() >= maxBufferSize {
+			msgToHandle := buf.Peek().(*ProducerMessage)
+			if msgToHandle.flags == 0 {
+				select {
+				case p.input <- msgToHandle:
+					buf.Remove()
+				default:
+					buf.Remove()
+					p.returnError(msgToHandle, ErrProducerRetryBufferOverflow)
+				}
+			}
+		}
 	}
 }
 

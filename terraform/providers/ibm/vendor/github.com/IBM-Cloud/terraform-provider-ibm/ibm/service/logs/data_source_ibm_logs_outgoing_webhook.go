@@ -69,6 +69,11 @@ func DataSourceIbmLogsOutgoingWebhook() *schema.Resource {
 							Computed:    true,
 							Description: "The ID of the selected IBM Event Notifications instance.",
 						},
+						"endpoint_type": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The endpoint type of integration",
+						},
 						"region_id": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -167,6 +172,9 @@ func DataSourceIbmLogsOutgoingWebhookOutgoingWebhooksV1IbmEventNotificationsConf
 	modelMap := make(map[string]interface{})
 	modelMap["event_notifications_instance_id"] = model.EventNotificationsInstanceID.String()
 	modelMap["region_id"] = *model.RegionID
+	if model.EndpointType != nil {
+		modelMap["endpoint_type"] = *model.SourceID
+	}
 	if model.SourceID != nil {
 		modelMap["source_id"] = *model.SourceID
 	}

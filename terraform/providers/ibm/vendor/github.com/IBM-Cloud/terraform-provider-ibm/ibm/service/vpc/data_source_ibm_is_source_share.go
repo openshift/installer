@@ -62,15 +62,8 @@ func dataSourceIbmIsSourceShareRead(context context.Context, d *schema.ResourceD
 
 	share, response, err := vpcClient.GetShareSourceWithContext(context, getShareSourceOptions)
 	if err != nil {
-		if response != nil {
-			if response.StatusCode == 404 {
-				d.SetId("")
-			}
-			log.Printf("[DEBUG] GetShareWithContext failed %s\n%s", err, response)
-			return nil
-		}
-		log.Printf("[DEBUG] GetShareWithContext failed %s\n", err)
-		return diag.FromErr(fmt.Errorf("[DEBUG] GetShareWithContext failed %s\n", err))
+		log.Printf("[DEBUG] GetShareSourceWithContext failed %s\n%s", err, response)
+		return diag.FromErr(fmt.Errorf("[ERROR] GetShareSourceWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId(*share.ID)

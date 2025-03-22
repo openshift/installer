@@ -155,7 +155,7 @@ func dataSourceIbmSccProfilesRead(context context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func dataSourceIbmSccProfileToMap(profile *securityandcompliancecenterapiv3.ProfileItem) (map[string]interface{}, error) {
+func dataSourceIbmSccProfileToMap(profile *securityandcompliancecenterapiv3.Profile) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if profile.ID != nil {
 		modelMap["id"] = profile.ID

@@ -152,6 +152,15 @@ func dataSourceIBMLogsRouterTenantsRead(context context.Context, d *schema.Resou
 		return tfErr.GetDiag()
 	}
 
+	bxSession, err := meta.(conns.ClientSession).BluemixSession()
+	if err != nil {
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_logs_router_tenant", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+	}
+
+	ibmCloudLogsRoutingClient, _, err = updateClientURLWithEndpoint(ibmCloudLogsRoutingClient, d, bxSession)
+
 	listTenantsOptions := &ibmcloudlogsroutingv0.ListTenantsOptions{}
 
 	if _, ok := d.GetOk("name"); ok {
@@ -162,7 +171,7 @@ func dataSourceIBMLogsRouterTenantsRead(context context.Context, d *schema.Resou
 		listTenantsOptions.SetRegion(d.Get("region").(string))
 	}
 
-	tenantCollection, _, err := ibmCloudLogsRoutingClient.ListTenantsWithContext(context, listTenantsOptions)
+	tenantCollection, _, err := ibmCloudLogsRoutingClient.ListTenantsWithContextEndpoint(context, listTenantsOptions)
 	if err != nil {
 		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ListTenantsWithContext failed: %s", err.Error()), "(Data) ibm_logs_router_tenants", "read")
 		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())

@@ -148,10 +148,7 @@ func resourceIbmConfigAggregatorSettingsCreate(context context.Context, d *schem
 		}
 		replaceSettingsOptions.SetAdditionalScope(additionalScope)
 	}
-	fmt.Println("After Logging endpoint from datasource")
-	fmt.Println(configurationAggregatorClient.GetServiceURL())
-	settingsResponse, _, err := configurationAggregatorClient.ReplaceSettingsWithContext(context, replaceSettingsOptions)
-	fmt.Println(settingsResponse)
+	_, _, err = configurationAggregatorClient.ReplaceSettings(replaceSettingsOptions)
 	if err != nil {
 		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ReplaceSettingsWithContext failed: %s", err.Error()), "ibm_config_aggregator_settings", "create")
 		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
@@ -180,10 +177,6 @@ func resourceIbmConfigAggregatorSettingsRead(context context.Context, d *schema.
 		return diag.FromErr(err)
 	}
 	settingsResponse, response, err := configurationAggregatorClient.GetSettingsWithContext(context, getSettingsOptions)
-	fmt.Println("^The Settings Response^")
-	fmt.Println(settingsResponse)
-	fmt.Println(response)
-	fmt.Println(err)
 	if err != nil {
 		if response != nil && response.StatusCode == 404 {
 			d.SetId("")

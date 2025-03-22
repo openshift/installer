@@ -318,6 +318,67 @@ func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) ListTenantsWithContext(ctx con
 	return
 }
 
+func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) ListTenantsWithContextEndpoint(ctx context.Context, listTenantsOptions *ListTenantsOptions) (result *TenantCollection, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listTenantsOptions, "listTenantsOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(listTenantsOptions, "listTenantsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = ibmCloudLogsRouting.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(ibmCloudLogsRouting.Service.Options.URL, `/tenants`, nil)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range listTenantsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("ibm_cloud_logs_routing", "V0", "ListTenants")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if listTenantsOptions.Name != nil {
+		builder.AddQuery("name", fmt.Sprint(*listTenantsOptions.Name))
+	}
+	builder.AddHeader("IBM-API-Version", fmt.Sprint(IBM_API_Version))
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = ibmCloudLogsRouting.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "list_tenants", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTenantCollection)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
 // CreateTenant : Create (onboard) a tenant
 // Create (onboard) a tenant.
 func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) CreateTenant(createTenantOptions *CreateTenantOptions) (result *Tenant, response *core.DetailedResponse, err error) {
@@ -357,6 +418,77 @@ func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) CreateTenantWithContext(ctx co
 		requestURL = ibmCloudLogsRouting.Service.Options.URL
 	}
 	_, err = builder.ResolveRequestURL(requestURL, `/tenants`, nil)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range createTenantOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("ibm_cloud_logs_routing", "V0", "CreateTenant")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+	builder.AddHeader("IBM-API-Version", fmt.Sprint(IBM_API_Version))
+
+	body := make(map[string]interface{})
+	if createTenantOptions.Name != nil {
+		body["name"] = createTenantOptions.Name
+	}
+	if createTenantOptions.Targets != nil {
+		body["targets"] = createTenantOptions.Targets
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = ibmCloudLogsRouting.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "create_tenant", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTenant)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) CreateTenantWithContextEndpoint(ctx context.Context, createTenantOptions *CreateTenantOptions) (result *Tenant, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createTenantOptions, "createTenantOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(createTenantOptions, "createTenantOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = ibmCloudLogsRouting.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(ibmCloudLogsRouting.Service.Options.URL, `/tenants`, nil)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
@@ -496,6 +628,67 @@ func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) GetTenantDetailWithContext(ctx
 	return
 }
 
+func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) GetTenantDetailWithContextEndpoint(ctx context.Context, getTenantDetailOptions *GetTenantDetailOptions) (result *Tenant, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getTenantDetailOptions, "getTenantDetailOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getTenantDetailOptions, "getTenantDetailOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"tenant_id": fmt.Sprint(*getTenantDetailOptions.TenantID),
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = ibmCloudLogsRouting.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(ibmCloudLogsRouting.Service.Options.URL, `/tenants/{tenant_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getTenantDetailOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("ibm_cloud_logs_routing", "V0", "GetTenantDetail")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("IBM-API-Version", fmt.Sprint(IBM_API_Version))
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = ibmCloudLogsRouting.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_tenant_detail", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTenant)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
 // DeleteTenant : Delete (offboard) a tenant
 // Delete (offboard) a tenant.
 func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) DeleteTenant(deleteTenantOptions *DeleteTenantOptions) (response *core.DetailedResponse, err error) {
@@ -517,8 +710,55 @@ func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) DeleteTenantWithContext(ctx co
 		return
 	}
 
-	if deleteTenantOptions.Region != nil {
-		ibmCloudLogsRouting.SetServiceRegion(*deleteTenantOptions.Region)
+	pathParamsMap := map[string]string{
+		"tenant_id": fmt.Sprint(*deleteTenantOptions.TenantID),
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = ibmCloudLogsRouting.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(ibmCloudLogsRouting.Service.Options.URL, `/tenants/{tenant_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range deleteTenantOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("ibm_cloud_logs_routing", "V0", "DeleteTenant")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("IBM-API-Version", fmt.Sprint(IBM_API_Version))
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = ibmCloudLogsRouting.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_tenant", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) DeleteTenantWithContextEndpoint(ctx context.Context, deleteTenantOptions *DeleteTenantOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteTenantOptions, "deleteTenantOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deleteTenantOptions, "deleteTenantOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
 	}
 
 	pathParamsMap := map[string]string{
@@ -528,17 +768,7 @@ func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) DeleteTenantWithContext(ctx co
 	builder := core.NewRequestBuilder(core.DELETE)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = ibmCloudLogsRouting.GetEnableGzipCompression()
-	var requestURL string
-	if deleteTenantOptions.Region != nil {
-		requestURL, err = GetServiceURLForRegion(*deleteTenantOptions.Region)
-		if err != nil {
-			err = core.SDKErrorf(err, "", "url-construct-error", common.GetComponentInfo())
-			return
-		}
-	} else {
-		requestURL = ibmCloudLogsRouting.Service.Options.URL
-	}
-	_, err = builder.ResolveRequestURL(requestURL, `/tenants/{tenant_id}`, pathParamsMap)
+	_, err = builder.ResolveRequestURL(ibmCloudLogsRouting.Service.Options.URL, `/tenants/{tenant_id}`, pathParamsMap)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
@@ -613,6 +843,77 @@ func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) UpdateTenantWithContext(ctx co
 		requestURL = ibmCloudLogsRouting.Service.Options.URL
 	}
 	_, err = builder.ResolveRequestURL(requestURL, `/tenants/{tenant_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range updateTenantOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("ibm_cloud_logs_routing", "V0", "UpdateTenant")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/merge-patch+json")
+	builder.AddHeader("IBM-API-Version", fmt.Sprint(IBM_API_Version))
+	if updateTenantOptions.IfMatch != nil {
+		builder.AddHeader("If-Match", fmt.Sprint(*updateTenantOptions.IfMatch))
+	}
+
+	_, err = builder.SetBodyContentJSON(updateTenantOptions.TenantPatch)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = ibmCloudLogsRouting.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_tenant", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTenant)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) UpdateTenantWithContextEndpoint(ctx context.Context, updateTenantOptions *UpdateTenantOptions) (result *Tenant, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updateTenantOptions, "updateTenantOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(updateTenantOptions, "updateTenantOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"tenant_id": fmt.Sprint(*updateTenantOptions.TenantID),
+	}
+
+	builder := core.NewRequestBuilder(core.PATCH)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = ibmCloudLogsRouting.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(ibmCloudLogsRouting.Service.Options.URL, `/tenants/{tenant_id}`, pathParamsMap)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
@@ -752,6 +1053,71 @@ func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) ListTenantTargetsWithContext(c
 	return
 }
 
+func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) ListTenantTargetsWithContextEndpoint(ctx context.Context, listTenantTargetsOptions *ListTenantTargetsOptions) (result *TargetTypeCollection, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listTenantTargetsOptions, "listTenantTargetsOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(listTenantTargetsOptions, "listTenantTargetsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"tenant_id": fmt.Sprint(*listTenantTargetsOptions.TenantID),
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = ibmCloudLogsRouting.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(ibmCloudLogsRouting.Service.Options.URL, `/tenants/{tenant_id}/targets`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range listTenantTargetsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("ibm_cloud_logs_routing", "V0", "ListTenantTargets")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("IBM-API-Version", fmt.Sprint(IBM_API_Version))
+
+	if listTenantTargetsOptions.Name != nil {
+		builder.AddQuery("name", fmt.Sprint(*listTenantTargetsOptions.Name))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = ibmCloudLogsRouting.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "list_tenant_targets", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTargetTypeCollection)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
 // CreateTarget : Create a target
 // Create a new target for a tenant.<br><b>Note:</b> The tenant must not already have a target of the specified type.
 // Supported target types are <b>logdna</b> (IBM Log Analysis) and <b>logs</b> (IBM Cloud Logs).
@@ -796,6 +1162,74 @@ func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) CreateTargetWithContext(ctx co
 		requestURL = ibmCloudLogsRouting.Service.Options.URL
 	}
 	_, err = builder.ResolveRequestURL(requestURL, `/tenants/{tenant_id}/targets`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range createTargetOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("ibm_cloud_logs_routing", "V0", "CreateTarget")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+	builder.AddHeader("IBM-API-Version", fmt.Sprint(IBM_API_Version))
+
+	_, err = builder.SetBodyContentJSON(createTargetOptions.TargetTypePrototype)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = ibmCloudLogsRouting.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "create_target", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTargetType)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) CreateTargetWithContextEndpoint(ctx context.Context, createTargetOptions *CreateTargetOptions) (result TargetTypeIntf, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createTargetOptions, "createTargetOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(createTargetOptions, "createTargetOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"tenant_id": fmt.Sprint(*createTargetOptions.TenantID),
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = ibmCloudLogsRouting.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(ibmCloudLogsRouting.Service.Options.URL, `/tenants/{tenant_id}/targets`, pathParamsMap)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
@@ -925,6 +1359,68 @@ func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) GetTenantTargetDetailsWithCont
 	return
 }
 
+func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) GetTenantTargetDetailsWithContextEndpoint(ctx context.Context, getTenantTargetDetailsOptions *GetTenantTargetDetailsOptions) (result TargetTypeIntf, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getTenantTargetDetailsOptions, "getTenantTargetDetailsOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getTenantTargetDetailsOptions, "getTenantTargetDetailsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"tenant_id": fmt.Sprint(*getTenantTargetDetailsOptions.TenantID),
+		"target_id": fmt.Sprint(*getTenantTargetDetailsOptions.TargetID),
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = ibmCloudLogsRouting.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(ibmCloudLogsRouting.Service.Options.URL, `/tenants/{tenant_id}/targets/{target_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getTenantTargetDetailsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("ibm_cloud_logs_routing", "V0", "GetTenantTargetDetails")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("IBM-API-Version", fmt.Sprint(IBM_API_Version))
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = ibmCloudLogsRouting.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_tenant_target_details", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTargetType)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
 // UpdateTarget : Update a target
 // Update a target.<br><b>Note:</b>A change of the target type is only supported for tenants with a single target.
 func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) UpdateTarget(updateTargetOptions *UpdateTargetOptions) (result TargetTypeIntf, response *core.DetailedResponse, err error) {
@@ -969,6 +1465,78 @@ func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) UpdateTargetWithContext(ctx co
 		requestURL = ibmCloudLogsRouting.Service.Options.URL
 	}
 	_, err = builder.ResolveRequestURL(requestURL, `/tenants/{tenant_id}/targets/{target_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range updateTargetOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("ibm_cloud_logs_routing", "V0", "UpdateTarget")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/merge-patch+json")
+	builder.AddHeader("IBM-API-Version", fmt.Sprint(IBM_API_Version))
+	if updateTargetOptions.IfMatch != nil {
+		builder.AddHeader("If-Match", fmt.Sprint(*updateTargetOptions.IfMatch))
+	}
+
+	_, err = builder.SetBodyContentJSON(updateTargetOptions.TargetTypePatch)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = ibmCloudLogsRouting.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_target", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTargetType)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) UpdateTargetWithContextEndpoint(ctx context.Context, updateTargetOptions *UpdateTargetOptions) (result TargetTypeIntf, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updateTargetOptions, "updateTargetOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(updateTargetOptions, "updateTargetOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"tenant_id": fmt.Sprint(*updateTargetOptions.TenantID),
+		"target_id": fmt.Sprint(*updateTargetOptions.TargetID),
+	}
+
+	builder := core.NewRequestBuilder(core.PATCH)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = ibmCloudLogsRouting.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(ibmCloudLogsRouting.Service.Options.URL, `/tenants/{tenant_id}/targets/{target_id}`, pathParamsMap)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
@@ -1109,6 +1677,80 @@ func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) UpdateLogsTargetWithContext(ct
 	return
 }
 
+func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) UpdateLogsTargetWithContextEndpoint(ctx context.Context, updateTargetOptions *UpdateTargetOptions) (result TargetTypeIntf, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updateTargetOptions, "updateTargetOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(updateTargetOptions, "updateTargetOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"tenant_id": fmt.Sprint(*updateTargetOptions.TenantID),
+		"target_id": fmt.Sprint(*updateTargetOptions.TargetID),
+	}
+
+	builder := core.NewRequestBuilder(core.PATCH)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = ibmCloudLogsRouting.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(ibmCloudLogsRouting.Service.Options.URL, `/tenants/{tenant_id}/targets/{target_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range updateTargetOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("ibm_cloud_logs_routing", "V0", "UpdateTarget")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/merge-patch+json")
+	builder.AddHeader("IBM-API-Version", fmt.Sprint(IBM_API_Version))
+	if updateTargetOptions.IfMatch != nil {
+		builder.AddHeader("If-Match", fmt.Sprint(*updateTargetOptions.IfMatch))
+	}
+	if params, ok := updateTargetOptions.TargetTypePatch["parameters"].(map[string]interface{}); ok {
+		delete(params, "access_credential")
+	}
+	_, err = builder.SetBodyContentJSON(updateTargetOptions.TargetTypePatch)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = ibmCloudLogsRouting.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_target", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTargetType)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
 // DeleteTarget : Delete a target
 // Delete a target.<br><b>Note:</b> The last target is not allowed to be deleted.
 func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) DeleteTarget(deleteTargetOptions *DeleteTargetOptions) (response *core.DetailedResponse, err error) {
@@ -1183,6 +1825,59 @@ func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) DeleteTargetWithContext(ctx co
 
 	return
 }
+
+func (ibmCloudLogsRouting *IBMCloudLogsRoutingV0) DeleteTargetWithContextEndpoint(ctx context.Context, deleteTargetOptions *DeleteTargetOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteTargetOptions, "deleteTargetOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deleteTargetOptions, "deleteTargetOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"tenant_id": fmt.Sprint(*deleteTargetOptions.TenantID),
+		"target_id": fmt.Sprint(*deleteTargetOptions.TargetID),
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = ibmCloudLogsRouting.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(ibmCloudLogsRouting.Service.Options.URL, `/tenants/{tenant_id}/targets/{target_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range deleteTargetOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("ibm_cloud_logs_routing", "V0", "DeleteTarget")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("IBM-API-Version", fmt.Sprint(IBM_API_Version))
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = ibmCloudLogsRouting.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_target", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
 func getServiceComponentInfo() *core.ProblemComponent {
 	return core.NewProblemComponent(DefaultServiceName, "0.0.1")
 }

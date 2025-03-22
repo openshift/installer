@@ -32,7 +32,6 @@ func DataSourceIBMPICatalogImages() *schema.Resource {
 				Type:        schema.TypeBool,
 			},
 			Arg_VTL: {
-				Deprecated:  "This field is deprecated.",
 				Description: "Set true to include VTL images. The default value is false.",
 				Optional:    true,
 				Type:        schema.TypeBool,
@@ -57,6 +56,11 @@ func DataSourceIBMPICatalogImages() *schema.Resource {
 						Attr_CreationDate: {
 							Computed:    true,
 							Description: "Date of image creation",
+							Type:        schema.TypeString,
+						},
+						Attr_CRN: {
+							Computed:    true,
+							Description: "CRN of this resource.",
 							Type:        schema.TypeString,
 						},
 						Attr_Description: {
@@ -158,6 +162,9 @@ func dataSourceIBMPICatalogImagesRead(ctx context.Context, d *schema.ResourceDat
 		}
 		if i.CreationDate != nil {
 			image[Attr_CreationDate] = i.CreationDate.String()
+		}
+		if i.Crn != "" {
+			image[Attr_CRN] = i.Crn
 		}
 		if i.Href != nil {
 			image[Attr_Href] = *i.Href

@@ -2,7 +2,7 @@
 // Licensed under the Mozilla Public License v2.0
 
 /*
- * IBM OpenAPI Terraform Generator Version: 3.90.0-5aad763d-20240506-203857
+ * IBM OpenAPI Terraform Generator Version: 3.95.2-120e65bc-20240924-152329
  */
 
 package mqcloud
@@ -34,7 +34,7 @@ func ResourceIbmMqcloudUser() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_mqcloud_user", "service_instance_guid"),
-				Description:  "The GUID that uniquely identifies the MQ on Cloud service instance.",
+				Description:  "The GUID that uniquely identifies the MQaaS service instance.",
 			},
 			"name": {
 				Type:         schema.TypeString,
@@ -165,7 +165,6 @@ func resourceIbmMqcloudUserRead(context context.Context, d *schema.ResourceData,
 		err = fmt.Errorf("Error setting service_instance_guid: %s", err)
 		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_user", "read", "set-service_instance_guid").GetDiag()
 	}
-
 	if err = d.Set("name", userDetails.Name); err != nil {
 		err = fmt.Errorf("Error setting name: %s", err)
 		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_user", "read", "set-name").GetDiag()

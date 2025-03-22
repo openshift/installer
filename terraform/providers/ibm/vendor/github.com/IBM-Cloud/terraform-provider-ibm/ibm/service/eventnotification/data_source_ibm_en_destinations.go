@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -89,7 +90,9 @@ func DataSourceIBMEnDestinations() *schema.Resource {
 func dataSourceIBMEnDestinationsRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_en_destinations", "list")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.ListDestinationsOptions{}
@@ -111,12 +114,14 @@ func dataSourceIBMEnDestinationsRead(context context.Context, d *schema.Resource
 	for {
 		options.SetOffset(offset)
 
-		result, response, err := enClient.ListDestinationsWithContext(context, options)
+		result, _, err := enClient.ListDestinationsWithContext(context, options)
 
 		destinationList = result
 
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("ListDestinationsWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ListDestinationsWithContext failed: %s", err.Error()), "(Data) ibm_en_destinations", "list")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 
 		offset = offset + limit
@@ -133,12 +138,14 @@ func dataSourceIBMEnDestinationsRead(context context.Context, d *schema.Resource
 	d.SetId(fmt.Sprintf("destinations/%s", *options.InstanceID))
 
 	if err = d.Set("total_count", flex.IntValue(destinationList.TotalCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting total_count: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting total_count: %s", err), "(Data) ibm_en_destinations", "list")
+		return tfErr.GetDiag()
 	}
 
 	if destinationList.Destinations != nil {
 		if err = d.Set("destinations", enFlattenDestinationsList(destinationList.Destinations)); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting destinations %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting destinations: %s", err), "(Data) ibm_en_destinations", "list")
+			return tfErr.GetDiag()
 		}
 	}
 

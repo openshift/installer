@@ -376,7 +376,7 @@ func DataSourceIBMIsInstanceGroupsID(d *schema.ResourceData) string {
 	return time.Now().UTC().String()
 }
 
-func DataSourceIBMIsInstanceGroupsInstanceGroupCollectionFirstToMap(model *vpcv1.InstanceGroupCollectionFirst) (map[string]interface{}, error) {
+func DataSourceIBMIsInstanceGroupsInstanceGroupCollectionFirstToMap(model *vpcv1.PageLink) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Href != nil {
 		modelMap["href"] = *model.Href

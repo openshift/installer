@@ -129,6 +129,22 @@ func FlattenIntList(list []int) []interface{} {
 	return vs
 }
 
+func ExpandInt64List(input []interface{}) []int64 {
+	vs := make([]int64, len(input))
+	for i, v := range input {
+		vs[i] = v.(int64)
+	}
+	return vs
+}
+
+func FlattenInt64List(list []int64) []interface{} {
+	vs := make([]interface{}, len(list))
+	for i, v := range list {
+		vs[i] = v
+	}
+	return vs
+}
+
 func NewStringSet(f schema.SchemaSetFunc, in []string) *schema.Set {
 	var out = make([]interface{}, len(in), len(in))
 	for i, v := range in {
@@ -985,9 +1001,86 @@ func flattenLifecycleRuleFilter(filter *s3.LifecycleRuleFilter) []interface{} {
 		return []interface{}{}
 	}
 	m := make(map[string]interface{})
+	if filter.And != nil {
+		m["and"] = flattenLifecycleRuleFilterMemberAnd(filter.And)
+
+	}
+	if filter.ObjectSizeGreaterThan != nil && int(aws.Int64Value(filter.ObjectSizeGreaterThan)) > 0 {
+
+		m["object_size_greater_than"] = int(aws.Int64Value(filter.ObjectSizeGreaterThan))
+
+	}
+	if filter.ObjectSizeLessThan != nil && int(aws.Int64Value(filter.ObjectSizeLessThan)) > 0 {
+
+		m["object_size_less_than"] = int(aws.Int64Value(filter.ObjectSizeLessThan))
+
+	}
+	if filter.Tag != nil {
+		m["tag"] = flattenLifecycleRuleFilterMemberTag(filter.Tag)
+
+	}
 	if filter.Prefix != nil {
 		m["prefix"] = aws.String(*filter.Prefix)
 	}
+	return []interface{}{m}
+}
+func flattenLifecycleRuleFilterMemberAnd(andOp *s3.LifecycleRuleAndOperator) []interface{} {
+	if andOp == nil {
+		return []interface{}{}
+	}
+	m := map[string]interface{}{
+		"object_size_greater_than": andOp.ObjectSizeGreaterThan,
+		"object_size_less_than":    andOp.ObjectSizeLessThan,
+	}
+
+	if v := andOp.Prefix; v != nil {
+		m["prefix"] = aws.StringValue(v)
+	}
+
+	if v := andOp.Tags; v != nil {
+		m["tags"] = flattenMultipleTags(v)
+	}
+
+	return []interface{}{m}
+}
+
+func flattenMultipleTags(in []*s3.Tag) []map[string]interface{} {
+
+	tagSet := make([]map[string]interface{}, 0, len(in))
+	if in != nil {
+		for _, tagSetValue := range in {
+			tag := make(map[string]interface{})
+			if tagSetValue.Key != nil {
+				tag["key"] = *tagSetValue.Key
+			}
+			if tagSetValue.Value != nil {
+				tag["value"] = *tagSetValue.Value
+			}
+
+			tagSet = append(tagSet, tag)
+
+		}
+
+	}
+
+	return tagSet
+}
+
+func flattenLifecycleRuleFilterMemberTag(op *s3.Tag) []interface{} {
+	if op == nil {
+		return nil
+	}
+
+	m := make(map[string]interface{})
+
+	if v := op.Key; v != nil {
+		m["key"] = aws.StringValue(v)
+	}
+
+	if v := op.Value; v != nil {
+		m["value"] = aws.StringValue(v)
+	}
+
 	return []interface{}{m}
 }
 
@@ -995,10 +1088,13 @@ func flattenAbortIncompleteMultipartUpload(abortIncompleteMultipartUploadInput *
 	if abortIncompleteMultipartUploadInput == nil {
 		return []interface{}{}
 	}
+
 	abortIncompleteMultipartUploadMap := make(map[string]interface{})
+
 	if abortIncompleteMultipartUploadInput.DaysAfterInitiation != nil {
 		abortIncompleteMultipartUploadMap["days_after_initiation"] = int(aws.Int64Value(abortIncompleteMultipartUploadInput.DaysAfterInitiation))
 	}
+
 	return []interface{}{abortIncompleteMultipartUploadMap}
 }
 
@@ -1010,8 +1106,9 @@ func LifecylceRuleGet(lifecycleRuleInput []*s3.LifecycleRule) []map[string]inter
 			if lifecyclerule.Status != nil {
 				if *lifecyclerule.Status == "Enabled" {
 					lifecycleRuleConfig["status"] = "enable"
-				} else {
+				} else if *lifecyclerule.Status == "Disabled" {
 					lifecycleRuleConfig["status"] = "disable"
+
 				}
 			}
 			if lifecyclerule.ID != nil {
@@ -1322,6 +1419,13 @@ func PtrToBool(b bool) *bool {
 func IntValue(i64 *int64) (i int) {
 	if i64 != nil {
 		i = int(*i64)
+	}
+	return
+}
+
+func Float64Value(f32 *float32) (f float64) {
+	if f32 != nil {
+		f = float64(*f32)
 	}
 	return
 }
@@ -1850,6 +1954,120 @@ func FlattenRuleConditions(rule iampolicymanagementv1.V2PolicyRule) []map[string
 		result = append(result, condition)
 	}
 	return result
+}
+
+func FlattenAMSettingsExternalIdentityInteraction(amAccountSettings *iampolicymanagementv1.AccountSettingsAccessManagement) []map[string]interface{} {
+	identityTypes := make([]map[string]interface{}, 0)
+	if amAccountSettings.ExternalAccountIdentityInteraction != nil && amAccountSettings.ExternalAccountIdentityInteraction.IdentityTypes != nil {
+		iTypes := amAccountSettings.ExternalAccountIdentityInteraction.IdentityTypes
+		user := make([]map[string]interface{}, 0)
+		if iTypes.User != nil {
+			u := map[string]interface{}{
+				"state":                     iTypes.User.State,
+				"external_allowed_accounts": iTypes.User.ExternalAllowedAccounts,
+			}
+			user = append(user, u)
+		}
+		serviceId := make([]map[string]interface{}, 0)
+		if iTypes.ServiceID != nil {
+			sid := map[string]interface{}{
+				"state":                     iTypes.ServiceID.State,
+				"external_allowed_accounts": iTypes.ServiceID.ExternalAllowedAccounts,
+			}
+			serviceId = append(serviceId, sid)
+		}
+		service := make([]map[string]interface{}, 0)
+		if iTypes.Service != nil {
+			s := map[string]interface{}{
+				"state":                     iTypes.Service.State,
+				"external_allowed_accounts": iTypes.Service.ExternalAllowedAccounts,
+			}
+			service = append(service, s)
+		}
+		identityTypes = append(identityTypes, map[string]interface{}{
+			"user":       user,
+			"service_id": serviceId,
+			"service":    service,
+		})
+	}
+	externalIdentityInteraction := make([]map[string]interface{}, 0)
+	externalIdentityInteraction = append(externalIdentityInteraction, map[string]interface{}{
+		"identity_types": identityTypes,
+	})
+	return externalIdentityInteraction
+}
+
+func GenerateExternalAccountIdentityInteraction(d *schema.ResourceData) iampolicymanagementv1.ExternalAccountIdentityInteractionPatch {
+	interaction := getElementFromResource(d, "external_account_identity_interaction")
+	if interaction != nil {
+		identityTypes := getFirstElementFromSet(interaction["identity_types"])
+		if identityTypes != nil {
+			identityTypesPatch := iampolicymanagementv1.IdentityTypesPatch{}
+			user := getFirstElementFromSet(identityTypes["user"])
+			if user != nil {
+				state := user["state"].(string)
+				accounts := user["external_allowed_accounts"].([]interface{})
+				userPatch := iampolicymanagementv1.IdentityTypesBase{
+					State:                   &state,
+					ExternalAllowedAccounts: interfaceSliceToStringSlice(accounts),
+				}
+				identityTypesPatch.User = &userPatch
+			}
+
+			serviceId := getFirstElementFromSet(identityTypes["service_id"])
+			if serviceId != nil {
+				state := serviceId["state"].(string)
+				accounts := serviceId["external_allowed_accounts"].([]interface{})
+				serviceIdPatch := iampolicymanagementv1.IdentityTypesBase{
+					State:                   &state,
+					ExternalAllowedAccounts: interfaceSliceToStringSlice(accounts),
+				}
+				identityTypesPatch.ServiceID = &serviceIdPatch
+			}
+
+			service := getFirstElementFromSet(identityTypes["service"])
+			if service != nil {
+				state := service["state"].(string)
+				accounts := service["external_allowed_accounts"].([]interface{})
+				servicePatch := iampolicymanagementv1.IdentityTypesBase{
+					State:                   &state,
+					ExternalAllowedAccounts: interfaceSliceToStringSlice(accounts),
+				}
+				identityTypesPatch.Service = &servicePatch
+			}
+			return iampolicymanagementv1.ExternalAccountIdentityInteractionPatch{
+				IdentityTypes: &identityTypesPatch,
+			}
+		}
+	}
+	return iampolicymanagementv1.ExternalAccountIdentityInteractionPatch{}
+}
+
+func getFirstElementFromSet(elem interface{}) map[string]interface{} {
+	set, ok := elem.(*schema.Set)
+	if ok && len(set.List()) != 0 {
+		return set.List()[0].(map[string]interface{})
+	}
+	return nil
+}
+
+func getElementFromResource(d *schema.ResourceData, key string) map[string]interface{} {
+	if elem, ok := d.GetOk(key); ok {
+		return getFirstElementFromSet(elem)
+	}
+	return nil
+}
+
+func interfaceSliceToStringSlice(interfaceSlice []interface{}) []string {
+	stringSlice := make([]string, 0, len(interfaceSlice))
+	for _, element := range interfaceSlice {
+		if str, ok := element.(string); ok {
+			stringSlice = append(stringSlice, str)
+		} else {
+			stringSlice = append(stringSlice, fmt.Sprintf("%v", element))
+		}
+	}
+	return stringSlice
 }
 
 // Cloud Internet Services
@@ -2735,6 +2953,19 @@ func ApplyOnce(k, o, n string, d *schema.ResourceData) bool {
 	}
 	return true
 }
+
+func ApplyOnlyOnce(k, o, n string, d *schema.ResourceData) bool {
+	// For new resources, allow the first value to be set
+	if len(d.Id()) == 0 {
+		return false
+	}
+
+	// For existing resources, don't allow changes (keep the original value)
+	if o == "" {
+		return false
+	}
+	return true
+}
 func GetTagsUsingCRN(meta interface{}, resourceCRN string) (*schema.Set, error) {
 	// Move the API to use globalsearch API instead of globalTags API due to rate limit
 	taggingResult, err := GetGlobalTagsUsingSearchAPI(meta, resourceCRN, "", "user")
@@ -2886,6 +3117,33 @@ func ResourceTagsCustomizeDiff(diff *schema.ResourceDiff) error {
 	}
 	return nil
 }
+func ResourcePowerUserTagsCustomizeDiff(diff *schema.ResourceDiff) error {
+
+	if diff.Id() != "" && diff.HasChange("pi_user_tags") {
+		// power tags
+		o, n := diff.GetChange("pi_user_tags")
+		oldSet := o.(*schema.Set)
+		newSet := n.(*schema.Set)
+		removeInt := oldSet.Difference(newSet).List()
+		addInt := newSet.Difference(oldSet).List()
+		if v := os.Getenv("IC_ENV_TAGS"); v != "" {
+			s := strings.Split(v, ",")
+			if len(removeInt) == len(s) && len(addInt) == 0 {
+				fmt.Println("Suppresing the TAG diff ")
+				return diff.Clear("pi_user_tags")
+			}
+		}
+	}
+	return nil
+}
+func OnlyInUpdateDiff(resources []string, diff *schema.ResourceDiff) error {
+	for _, r := range resources {
+		if diff.HasChange(r) && diff.Id() == "" {
+			return fmt.Errorf("the %s can't be used at create time", r)
+		}
+	}
+	return nil
+}
 
 func ResourceValidateAccessTags(diff *schema.ResourceDiff, meta interface{}) error {
 
@@ -3023,11 +3281,11 @@ func ResourceVolumeValidate(diff *schema.ResourceDiff) error {
 		}
 	}
 
-	if profile != "custom" {
+	if profile != "custom" && profile != "sdp" {
 		if iops != 0 && diff.NewValueKnown("iops") && diff.HasChange("iops") {
-			return fmt.Errorf("VolumeError : iops is applicable for only custom volume profiles")
+			return fmt.Errorf("VolumeError : iops is applicable for only custom/sdp volume profiles")
 		}
-	} else {
+	} else if profile != "sdp" {
 		if capacity == 0 {
 			capacity = int64(100)
 		}

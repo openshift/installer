@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -84,7 +85,10 @@ func ResourceIBMEnFCMSubscription() *schema.Resource {
 func resourceIBMEnFCMSubscriptionCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_subscription", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+		// return diag.FromErr(err)
 	}
 
 	options := &en.CreateSubscriptionOptions{}
@@ -99,9 +103,12 @@ func resourceIBMEnFCMSubscriptionCreate(context context.Context, d *schema.Resou
 		options.SetDescription(d.Get("description").(string))
 	}
 
-	result, response, err := enClient.CreateSubscriptionWithContext(context, options)
+	result, _, err := enClient.CreateSubscriptionWithContext(context, options)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("CreateSubscriptionWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateSubscriptionWithContext failed: %s", err.Error()), "ibm_en_subscription", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+		// return diag.FromErr(fmt.Errorf("CreateSubscriptionWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *options.InstanceID, *result.ID))
@@ -112,14 +119,19 @@ func resourceIBMEnFCMSubscriptionCreate(context context.Context, d *schema.Resou
 func resourceIBMEnFCMSubscriptionRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_subscription", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+		// return diag.FromErr(err)
 	}
 
 	options := &en.GetSubscriptionOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_subscription", "read")
+		return tfErr.GetDiag()
+		// return diag.FromErr(err)
 	}
 
 	options.SetInstanceID(parts[0])
@@ -131,7 +143,10 @@ func resourceIBMEnFCMSubscriptionRead(context context.Context, d *schema.Resourc
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("GetSubscriptionWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetSubscriptionWithContext failed: %s", err.Error()), "ibm_en_subscription", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+		// return diag.FromErr(fmt.Errorf("GetSubscriptionWithContext failed %s\n%s", err, response))
 	}
 
 	if err = d.Set("instance_guid", options.InstanceID); err != nil {
@@ -192,14 +207,19 @@ func resourceIBMEnFCMSubscriptionRead(context context.Context, d *schema.Resourc
 func resourceIBMEnFCMSubscriptionUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_subscription", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+		// return diag.FromErr(err)
 	}
 
 	options := &en.UpdateSubscriptionOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_subscription", "update")
+		return tfErr.GetDiag()
+		// return diag.FromErr(err)
 	}
 
 	options.SetInstanceID(parts[0])
@@ -212,9 +232,12 @@ func resourceIBMEnFCMSubscriptionUpdate(context context.Context, d *schema.Resou
 			options.SetDescription(d.Get("description").(string))
 		}
 
-		_, response, err := enClient.UpdateSubscriptionWithContext(context, options)
+		_, _, err := enClient.UpdateSubscriptionWithContext(context, options)
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("UpdateSubscriptionWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateSubscriptionWithContext failed: %s", err.Error()), "ibm_en_subscription", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
+			// return diag.FromErr(fmt.Errorf("UpdateSubscriptionWithContext failed %s\n%s", err, response))
 		}
 
 		return resourceIBMEnFCMSubscriptionRead(context, d, meta)
@@ -226,14 +249,19 @@ func resourceIBMEnFCMSubscriptionUpdate(context context.Context, d *schema.Resou
 func resourceIBMEnFCMSubscriptionDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_subscription", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+		// return diag.FromErr(err)
 	}
 
 	options := &en.DeleteSubscriptionOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_subscription", "delete")
+		return tfErr.GetDiag()
+		// return diag.FromErr(err)
 	}
 
 	options.SetInstanceID(parts[0])
@@ -245,7 +273,10 @@ func resourceIBMEnFCMSubscriptionDelete(context context.Context, d *schema.Resou
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("DeleteSubscriptionWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteSubscriptionWithContext: failed: %s", err.Error()), "ibm_en_subscription", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+		// return diag.FromErr(fmt.Errorf("DeleteSubscriptionWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId("")

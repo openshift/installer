@@ -114,7 +114,7 @@ func NewMtlsV1(options *MtlsV1Options) (service *MtlsV1, err error) {
 
 	service = &MtlsV1{
 		Service: baseService,
-		Crn: options.Crn,
+		Crn:     options.Crn,
 	}
 
 	return
@@ -189,7 +189,7 @@ func (mtls *MtlsV1) ListAccessCertificatesWithContext(ctx context.Context, listA
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *mtls.Crn,
+		"crn":     *mtls.Crn,
 		"zone_id": *listAccessCertificatesOptions.ZoneID,
 	}
 
@@ -250,7 +250,7 @@ func (mtls *MtlsV1) CreateAccessCertificateWithContext(ctx context.Context, crea
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *mtls.Crn,
+		"crn":     *mtls.Crn,
 		"zone_id": *createAccessCertificateOptions.ZoneID,
 	}
 
@@ -327,7 +327,7 @@ func (mtls *MtlsV1) GetAccessCertificateWithContext(ctx context.Context, getAcce
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *mtls.Crn,
+		"crn":     *mtls.Crn,
 		"zone_id": *getAccessCertificateOptions.ZoneID,
 		"cert_id": *getAccessCertificateOptions.CertID,
 	}
@@ -389,7 +389,7 @@ func (mtls *MtlsV1) UpdateAccessCertificateWithContext(ctx context.Context, upda
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *mtls.Crn,
+		"crn":     *mtls.Crn,
 		"zone_id": *updateAccessCertificateOptions.ZoneID,
 		"cert_id": *updateAccessCertificateOptions.CertID,
 	}
@@ -464,7 +464,7 @@ func (mtls *MtlsV1) DeleteAccessCertificateWithContext(ctx context.Context, dele
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *mtls.Crn,
+		"crn":     *mtls.Crn,
 		"zone_id": *deleteAccessCertificateOptions.ZoneID,
 		"cert_id": *deleteAccessCertificateOptions.CertID,
 	}
@@ -526,7 +526,7 @@ func (mtls *MtlsV1) ListAccessApplicationsWithContext(ctx context.Context, listA
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *mtls.Crn,
+		"crn":     *mtls.Crn,
 		"zone_id": *listAccessApplicationsOptions.ZoneID,
 	}
 
@@ -587,7 +587,7 @@ func (mtls *MtlsV1) CreateAccessApplicationWithContext(ctx context.Context, crea
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *mtls.Crn,
+		"crn":     *mtls.Crn,
 		"zone_id": *createAccessApplicationOptions.ZoneID,
 	}
 
@@ -664,9 +664,9 @@ func (mtls *MtlsV1) GetAccessApplicationWithContext(ctx context.Context, getAcce
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *mtls.Crn,
+		"crn":     *mtls.Crn,
 		"zone_id": *getAccessApplicationOptions.ZoneID,
-		"app_id": *getAccessApplicationOptions.AppID,
+		"app_id":  *getAccessApplicationOptions.AppID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -726,9 +726,9 @@ func (mtls *MtlsV1) UpdateAccessApplicationWithContext(ctx context.Context, upda
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *mtls.Crn,
+		"crn":     *mtls.Crn,
 		"zone_id": *updateAccessApplicationOptions.ZoneID,
-		"app_id": *updateAccessApplicationOptions.AppID,
+		"app_id":  *updateAccessApplicationOptions.AppID,
 	}
 
 	builder := core.NewRequestBuilder(core.PUT)
@@ -804,9 +804,9 @@ func (mtls *MtlsV1) DeleteAccessApplicationWithContext(ctx context.Context, dele
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *mtls.Crn,
+		"crn":     *mtls.Crn,
 		"zone_id": *deleteAccessApplicationOptions.ZoneID,
-		"app_id": *deleteAccessApplicationOptions.AppID,
+		"app_id":  *deleteAccessApplicationOptions.AppID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -866,9 +866,9 @@ func (mtls *MtlsV1) ListAccessPoliciesWithContext(ctx context.Context, listAcces
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *mtls.Crn,
+		"crn":     *mtls.Crn,
 		"zone_id": *listAccessPoliciesOptions.ZoneID,
-		"app_id": *listAccessPoliciesOptions.AppID,
+		"app_id":  *listAccessPoliciesOptions.AppID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -928,9 +928,9 @@ func (mtls *MtlsV1) CreateAccessPolicyWithContext(ctx context.Context, createAcc
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *mtls.Crn,
+		"crn":     *mtls.Crn,
 		"zone_id": *createAccessPolicyOptions.ZoneID,
-		"app_id": *createAccessPolicyOptions.AppID,
+		"app_id":  *createAccessPolicyOptions.AppID,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -1006,9 +1006,9 @@ func (mtls *MtlsV1) GetAccessPolicyWithContext(ctx context.Context, getAccessPol
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *mtls.Crn,
-		"zone_id": *getAccessPolicyOptions.ZoneID,
-		"app_id": *getAccessPolicyOptions.AppID,
+		"crn":       *mtls.Crn,
+		"zone_id":   *getAccessPolicyOptions.ZoneID,
+		"app_id":    *getAccessPolicyOptions.AppID,
 		"policy_id": *getAccessPolicyOptions.PolicyID,
 	}
 
@@ -1069,9 +1069,9 @@ func (mtls *MtlsV1) UpdateAccessPolicyWithContext(ctx context.Context, updateAcc
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *mtls.Crn,
-		"zone_id": *updateAccessPolicyOptions.ZoneID,
-		"app_id": *updateAccessPolicyOptions.AppID,
+		"crn":       *mtls.Crn,
+		"zone_id":   *updateAccessPolicyOptions.ZoneID,
+		"app_id":    *updateAccessPolicyOptions.AppID,
 		"policy_id": *updateAccessPolicyOptions.PolicyID,
 	}
 
@@ -1148,9 +1148,9 @@ func (mtls *MtlsV1) DeleteAccessPolicyWithContext(ctx context.Context, deleteAcc
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *mtls.Crn,
-		"zone_id": *deleteAccessPolicyOptions.ZoneID,
-		"app_id": *deleteAccessPolicyOptions.AppID,
+		"crn":       *mtls.Crn,
+		"zone_id":   *deleteAccessPolicyOptions.ZoneID,
+		"app_id":    *deleteAccessPolicyOptions.AppID,
 		"policy_id": *deleteAccessPolicyOptions.PolicyID,
 	}
 
@@ -1211,7 +1211,7 @@ func (mtls *MtlsV1) GetAccessCertSettingsWithContext(ctx context.Context, getAcc
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *mtls.Crn,
+		"crn":     *mtls.Crn,
 		"zone_id": *getAccessCertSettingsOptions.ZoneID,
 	}
 
@@ -1272,7 +1272,7 @@ func (mtls *MtlsV1) UpdateAccessCertSettingsWithContext(ctx context.Context, upd
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *mtls.Crn,
+		"crn":     *mtls.Crn,
 		"zone_id": *updateAccessCertSettingsOptions.ZoneID,
 	}
 
@@ -1692,7 +1692,7 @@ const (
 func (*MtlsV1) NewCreateAccessPolicyOptions(zoneID string, appID string) *CreateAccessPolicyOptions {
 	return &CreateAccessPolicyOptions{
 		ZoneID: core.StringPtr(zoneID),
-		AppID: core.StringPtr(appID),
+		AppID:  core.StringPtr(appID),
 	}
 }
 
@@ -1765,7 +1765,7 @@ type DeleteAccessApplicationOptions struct {
 func (*MtlsV1) NewDeleteAccessApplicationOptions(zoneID string, appID string) *DeleteAccessApplicationOptions {
 	return &DeleteAccessApplicationOptions{
 		ZoneID: core.StringPtr(zoneID),
-		AppID: core.StringPtr(appID),
+		AppID:  core.StringPtr(appID),
 	}
 }
 
@@ -1860,8 +1860,8 @@ type DeleteAccessPolicyOptions struct {
 // NewDeleteAccessPolicyOptions : Instantiate DeleteAccessPolicyOptions
 func (*MtlsV1) NewDeleteAccessPolicyOptions(zoneID string, appID string, policyID string) *DeleteAccessPolicyOptions {
 	return &DeleteAccessPolicyOptions{
-		ZoneID: core.StringPtr(zoneID),
-		AppID: core.StringPtr(appID),
+		ZoneID:   core.StringPtr(zoneID),
+		AppID:    core.StringPtr(appID),
 		PolicyID: core.StringPtr(policyID),
 	}
 }
@@ -1923,7 +1923,7 @@ type GetAccessApplicationOptions struct {
 func (*MtlsV1) NewGetAccessApplicationOptions(zoneID string, appID string) *GetAccessApplicationOptions {
 	return &GetAccessApplicationOptions{
 		ZoneID: core.StringPtr(zoneID),
-		AppID: core.StringPtr(appID),
+		AppID:  core.StringPtr(appID),
 	}
 }
 
@@ -2029,8 +2029,8 @@ type GetAccessPolicyOptions struct {
 // NewGetAccessPolicyOptions : Instantiate GetAccessPolicyOptions
 func (*MtlsV1) NewGetAccessPolicyOptions(zoneID string, appID string, policyID string) *GetAccessPolicyOptions {
 	return &GetAccessPolicyOptions{
-		ZoneID: core.StringPtr(zoneID),
-		AppID: core.StringPtr(appID),
+		ZoneID:   core.StringPtr(zoneID),
+		AppID:    core.StringPtr(appID),
 		PolicyID: core.StringPtr(policyID),
 	}
 }
@@ -2131,7 +2131,7 @@ type ListAccessPoliciesOptions struct {
 func (*MtlsV1) NewListAccessPoliciesOptions(zoneID string, appID string) *ListAccessPoliciesOptions {
 	return &ListAccessPoliciesOptions{
 		ZoneID: core.StringPtr(zoneID),
-		AppID: core.StringPtr(appID),
+		AppID:  core.StringPtr(appID),
 	}
 }
 
@@ -2204,7 +2204,7 @@ type UpdateAccessApplicationOptions struct {
 func (*MtlsV1) NewUpdateAccessApplicationOptions(zoneID string, appID string) *UpdateAccessApplicationOptions {
 	return &UpdateAccessApplicationOptions{
 		ZoneID: core.StringPtr(zoneID),
-		AppID: core.StringPtr(appID),
+		AppID:  core.StringPtr(appID),
 	}
 }
 
@@ -2369,8 +2369,8 @@ const (
 // NewUpdateAccessPolicyOptions : Instantiate UpdateAccessPolicyOptions
 func (*MtlsV1) NewUpdateAccessPolicyOptions(zoneID string, appID string, policyID string) *UpdateAccessPolicyOptions {
 	return &UpdateAccessPolicyOptions{
-		ZoneID: core.StringPtr(zoneID),
-		AppID: core.StringPtr(appID),
+		ZoneID:   core.StringPtr(zoneID),
+		AppID:    core.StringPtr(appID),
 		PolicyID: core.StringPtr(policyID),
 	}
 }
@@ -2504,7 +2504,7 @@ type AccessCertSettingsInputArray struct {
 // NewAccessCertSettingsInputArray : Instantiate AccessCertSettingsInputArray (Generic Model Constructor)
 func (*MtlsV1) NewAccessCertSettingsInputArray(hostname string, clientCertificateForwarding bool) (_model *AccessCertSettingsInputArray, err error) {
 	_model = &AccessCertSettingsInputArray{
-		Hostname: core.StringPtr(hostname),
+		Hostname:                    core.StringPtr(hostname),
 		ClientCertificateForwarding: core.BoolPtr(clientCertificateForwarding),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -3167,6 +3167,7 @@ type PolicyRule struct {
 
 	CommonName *PolicyCnRuleCommonName `json:"common_name,omitempty"`
 }
+
 func (*PolicyRule) isaPolicyRule() bool {
 	return true
 }

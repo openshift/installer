@@ -229,9 +229,8 @@ func resourceIBMPrivateDNSResourceRecordCreate(d *schema.ResourceData, meta inte
 		ttl = v.(int)
 	}
 
-	createResourceRecordOptions := sess.NewCreateResourceRecordOptions(instanceID, zoneID)
+	createResourceRecordOptions := sess.NewCreateResourceRecordOptions(instanceID, zoneID, recordType)
 	createResourceRecordOptions.SetName(name)
-	createResourceRecordOptions.SetType(recordType)
 	createResourceRecordOptions.SetTTL(int64(ttl))
 
 	switch recordType {
@@ -395,7 +394,7 @@ func resourceIBMPrivateDNSResourceRecordUpdate(d *schema.ResourceData, meta inte
 	conns.IbmMutexKV.Lock(mk)
 	defer conns.IbmMutexKV.Unlock(mk)
 
-	updateResourceRecordOptions := sess.NewUpdateResourceRecordOptions(idSet[0], idSet[1], idSet[2])
+	updateResourceRecordOptions := sess.NewUpdateResourceRecordOptions(idSet[0], idSet[1], idSet[2], "", nil)
 
 	var rdata string
 

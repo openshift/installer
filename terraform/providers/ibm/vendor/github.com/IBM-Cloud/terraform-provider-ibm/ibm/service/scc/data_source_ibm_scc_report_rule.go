@@ -127,7 +127,7 @@ func dataSourceIbmSccReportRuleRead(context context.Context, d *schema.ResourceD
 		return diag.FromErr(flex.FmtErrorf("Error setting account_id: %s", err))
 	}
 
-	if err = d.Set("created_on", ruleInfo.CreatedOn); err != nil {
+	if err = d.Set("created_on", flex.DateTimeToString(ruleInfo.CreatedOn)); err != nil {
 		return diag.FromErr(flex.FmtErrorf("Error setting created_on: %s", err))
 	}
 
@@ -135,7 +135,7 @@ func dataSourceIbmSccReportRuleRead(context context.Context, d *schema.ResourceD
 		return diag.FromErr(flex.FmtErrorf("Error setting created_by: %s", err))
 	}
 
-	if err = d.Set("updated_on", ruleInfo.UpdatedOn); err != nil {
+	if err = d.Set("updated_on", flex.DateTimeToString(ruleInfo.UpdatedOn)); err != nil {
 		return diag.FromErr(flex.FmtErrorf("Error setting updated_on: %s", err))
 	}
 

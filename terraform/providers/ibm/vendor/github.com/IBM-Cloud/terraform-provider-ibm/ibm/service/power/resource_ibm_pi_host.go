@@ -7,10 +7,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -18,11 +20,17 @@ import (
 	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/go-sdk-core/v5/core"
 )
 
 func ResourceIBMPIHost() *schema.Resource {
 	return &schema.Resource{
+		CustomizeDiff: customdiff.Sequence(
+			func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+				return customizeUserTagsPIHostDiff(diff)
+			},
+		),
 		CreateContext: resourceIBMPIHostCreate,
 		ReadContext:   resourceIBMPIHostRead,
 		UpdateContext: resourceIBMPIHostUpdate,
@@ -55,20 +63,29 @@ func ResourceIBMPIHost() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						Attr_DisplayName: {
-							Type:        schema.TypeString,
-							Required:    true,
 							Description: "Name of the host chosen by the user.",
+							Required:    true,
+							Type:        schema.TypeString,
 						},
 						Attr_SysType: {
-							Type:        schema.TypeString,
+							Description: "System type.",
 							ForceNew:    true,
 							Required:    true,
-							Description: "System type.",
+							Type:        schema.TypeString,
+						},
+						Attr_UserTags: {
+							Computed:    true,
+							Description: "List of user tags attached to the resource.",
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Optional:    true,
+							Set:         schema.HashString,
+							Type:        schema.TypeSet,
 						},
 					},
 				},
+				MaxItems: 1,
 				Required: true,
-				Type:     schema.TypeSet,
+				Type:     schema.TypeList,
 			},
 			// Attributes
 			Attr_Capacity: {
@@ -119,6 +136,11 @@ func ResourceIBMPIHost() *schema.Resource {
 				},
 				Type: schema.TypeList,
 			},
+			Attr_CRN: {
+				Computed:    true,
+				Description: "The CRN of this resource.",
+				Type:        schema.TypeString,
+			},
 			Attr_DisplayName: {
 				Computed:    true,
 				Description: "Name of the host (chosen by the user).",
@@ -149,6 +171,13 @@ func ResourceIBMPIHost() *schema.Resource {
 				Description: "System type.",
 				Type:        schema.TypeString,
 			},
+			Attr_UserTags: {
+				Computed:    true,
+				Description: "List of user tags attached to the resource.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         schema.HashString,
+				Type:        schema.TypeSet,
+			},
 		},
 	}
 }
@@ -160,7 +189,7 @@ func resourceIBMPIHostCreate(ctx context.Context, d *schema.ResourceData, meta i
 	}
 	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
 	client := instance.NewIBMPIHostGroupsClient(ctx, sess, cloudInstanceID)
-	hosts := d.Get(Arg_Host).(*schema.Set).List()
+	hosts := d.Get(Arg_Host).([]interface{})
 	hostGroupID := d.Get(Arg_HostGroupID).(string)
 	body := models.HostCreate{}
 	hostBody := make([]*models.AddHost, 0, len(hosts))
@@ -169,6 +198,7 @@ func resourceIBMPIHostCreate(ctx context.Context, d *schema.ResourceData, meta i
 		hs := models.AddHost{
 			DisplayName: core.StringPtr(host[Attr_DisplayName].(string)),
 			SysType:     core.StringPtr(host[Attr_SysType].(string)),
+			UserTags:    flex.FlattenSet(host[Attr_UserTags].(*schema.Set)),
 		}
 		hostBody = append(hostBody, &hs)
 	}
@@ -186,6 +216,17 @@ func resourceIBMPIHostCreate(ctx context.Context, d *schema.ResourceData, meta i
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	host := hosts[0].(map[string]interface{})
+	tags := flex.FlattenSet(host[Attr_UserTags].(*schema.Set))
+	if hostResponse[0].Crn != "" && len(tags) > 0 {
+		oldList, newList := d.GetChange(Arg_Host + ".0." + Attr_UserTags)
+		err := flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, string(hostResponse[0].Crn), "", UserTagType)
+		if err != nil {
+			log.Printf("Error on update of pi host (%s) user_tags during creation: %s", hostResponse[0].ID, err)
+		}
+	}
+
 	return resourceIBMPIHostRead(ctx, d, meta)
 }
 
@@ -207,10 +248,24 @@ func resourceIBMPIHostRead(ctx context.Context, d *schema.ResourceData, meta int
 		}
 		return diag.FromErr(err)
 	}
+	d.Set(Arg_CloudInstanceID, cloudInstanceID)
+	hostGroupID, err := getLastPart(host.HostGroup.Href)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	d.Set(Arg_HostGroupID, hostGroupID)
 	d.Set(Attr_HostID, host.ID)
 
 	if host.Capacity != nil {
 		d.Set(Attr_Capacity, hostCapacityToMap(host.Capacity))
+	}
+	if host.Crn != "" {
+		d.Set(Attr_CRN, host.Crn)
+		tags, err := flex.GetGlobalTagsUsingCRN(meta, string(host.Crn), "", UserTagType)
+		if err != nil {
+			log.Printf("Error on get of pi host (%s) user_tags: %s", host.ID, err)
+		}
+		d.Set(Attr_UserTags, tags)
 	}
 	if host.DisplayName != "" {
 		d.Set(Attr_DisplayName, host.DisplayName)
@@ -227,6 +282,7 @@ func resourceIBMPIHostRead(ctx context.Context, d *schema.ResourceData, meta int
 	if host.SysType != "" {
 		d.Set(Attr_SysType, host.SysType)
 	}
+	d.Set(Arg_Host, flattenHostArgumentToList(d, meta))
 
 	return nil
 }
@@ -240,18 +296,36 @@ func resourceIBMPIHostUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	displayName := d.Get(Arg_Host + ".0").(map[string]interface{})[Attr_DisplayName].(string)
 	client := instance.NewIBMPIHostGroupsClient(ctx, sess, cloudInstanceID)
 	if d.HasChange(Arg_Host) {
+		oldHost, newHost := d.GetChange(Arg_Host + ".0")
 
-		hostBody := models.HostPut{
-			DisplayName: &displayName,
+		displayNameOld := oldHost.(map[string]interface{})[Attr_DisplayName].(string)
+		displayNameNew := newHost.(map[string]interface{})[Attr_DisplayName].(string)
+
+		if displayNameNew != displayNameOld {
+			hostBody := models.HostPut{
+				DisplayName: &displayNameNew,
+			}
+			_, err := client.UpdateHost(&hostBody, hostID)
+			if err != nil {
+				return diag.FromErr(err)
+			}
 		}
-		_, err := client.UpdateHost(&hostBody, hostID)
-		if err != nil {
-			return diag.FromErr(err)
+
+		if crn, ok := d.GetOk(Attr_CRN); ok {
+			userTagsOld := oldHost.(map[string]interface{})[Attr_UserTags].(*schema.Set)
+			userTagsNew := newHost.(map[string]interface{})[Attr_UserTags].(*schema.Set)
+			if !userTagsNew.Equal(userTagsOld) {
+				err = flex.UpdateGlobalTagsUsingCRN(userTagsOld, userTagsNew, meta, crn.(string), "", UserTagType)
+				if err != nil {
+					log.Printf("Error on update of pi host (%s) pi_host user_tags: %s", d.Get(Attr_HostID), err)
+				}
+			}
 		}
+
 	}
+
 	return resourceIBMPIHostRead(ctx, d, meta)
 }
 
@@ -371,4 +445,42 @@ func isIBMPIHostRefreshFunc(client *instance.IBMPIHostGroupsClient, id string) r
 		}
 		return host, State_Down, nil
 	}
+}
+
+func flattenHostArgumentToList(d *schema.ResourceData, meta interface{}) []map[string]interface{} {
+	hostListType := make([]map[string]interface{}, 0)
+	h := map[string]interface{}{}
+	if v, ok := d.GetOk(Attr_DisplayName); ok {
+		displayName := v.(string)
+		h[Attr_DisplayName] = displayName
+	}
+	if v, ok := d.GetOk(Attr_SysType); ok {
+		sysType := v.(string)
+		h[Attr_SysType] = sysType
+	}
+	if v, ok := d.GetOk(Attr_UserTags); ok {
+		tags := v
+		h[Attr_UserTags] = tags
+	}
+	hostListType = append(hostListType, h)
+	return hostListType
+}
+
+func customizeUserTagsPIHostDiff(diff *schema.ResourceDiff) error {
+	if diff.Id() != "" && diff.HasChange(Arg_Host+".0."+Attr_UserTags) {
+		o, n := diff.GetChange(Arg_Host + ".0." + Attr_UserTags)
+		oldSet := o.(*schema.Set)
+		newSet := n.(*schema.Set)
+		removeInt := oldSet.Difference(newSet).List()
+		addInt := newSet.Difference(oldSet).List()
+		if v := os.Getenv("IC_ENV_TAGS"); v != "" {
+			s := strings.Split(v, ",")
+			if len(removeInt) == len(s) && len(addInt) == 0 {
+				fmt.Println("Suppresing the TAG diff ")
+				return diff.Clear(Arg_Host + ".0." + Attr_UserTags)
+			}
+		}
+		diff.SetNewComputed(Attr_UserTags)
+	}
+	return nil
 }

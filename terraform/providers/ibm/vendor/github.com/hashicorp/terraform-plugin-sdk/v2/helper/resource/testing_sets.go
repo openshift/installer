@@ -20,7 +20,7 @@ const (
 // TestCheckTypeSetElemNestedAttrs ensures a subset map of values is stored in
 // state for the given name and key combination of attributes nested under a
 // list or set block. Use this TestCheckFunc in preference over non-set
-// variants to simplify testing code and ensure compatibility with indicies,
+// variants to simplify testing code and ensure compatibility with indices,
 // which can easily change with schema changes. State value checking is only
 // recommended for testing Computed attributes and attribute defaults.
 //
@@ -92,7 +92,7 @@ func TestCheckTypeSetElemNestedAttrs(name, attr string, values map[string]string
 // regular expressions, is stored in state for the given name and key
 // combination of attributes nested under a list or set block. Use this
 // TestCheckFunc in preference over non-set variants to simplify testing code
-// and ensure compatibility with indicies, which can easily change with schema
+// and ensure compatibility with indices, which can easily change with schema
 // changes. State value checking is only recommended for testing Computed
 // attributes and attribute defaults.
 //
@@ -171,7 +171,7 @@ func TestMatchTypeSetElemNestedAttrs(name, attr string, values map[string]*regex
 // TestCheckTypeSetElemAttr ensures a specific value is stored in state for the
 // given name and key combination under a list or set. Use this TestCheckFunc
 // in preference over non-set variants to simplify testing code and ensure
-// compatibility with indicies, which can easily change with schema changes.
+// compatibility with indices, which can easily change with schema changes.
 // State value checking is only recommended for testing Computed attributes and
 // attribute defaults.
 //

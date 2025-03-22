@@ -638,7 +638,9 @@ func SchematicsEndpointURL(region, meta interface{}) (string, bool, error) {
 func dataSourceIBMSchematicsWorkspaceRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_workspace", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if r, ok := d.GetOk("location"); ok {
 		region := r.(string)
@@ -654,8 +656,10 @@ func dataSourceIBMSchematicsWorkspaceRead(context context.Context, d *schema.Res
 
 	workspaceResponse, response, err := schematicsClient.GetWorkspaceWithContext(context, getWorkspaceOptions)
 	if err != nil {
-		log.Printf("[DEBUG] GetWorkspaceWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetWorkspaceWithContext failed %s\n%s", err, response))
+
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead GetWorkspaceWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_workspace", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(*getWorkspaceOptions.WID)
@@ -663,104 +667,156 @@ func dataSourceIBMSchematicsWorkspaceRead(context context.Context, d *schema.Res
 	if workspaceResponse.CatalogRef != nil {
 		err = d.Set("catalog_ref", dataSourceWorkspaceResponseFlattenCatalogRef(*workspaceResponse.CatalogRef))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting catalog_ref %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("created_at", flex.DateTimeToString(workspaceResponse.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting created_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("created_by", workspaceResponse.CreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting created_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("crn", workspaceResponse.Crn); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting crn: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("description", workspaceResponse.Description); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting description: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("last_health_check_at", flex.DateTimeToString(workspaceResponse.LastHealthCheckAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting last_health_check_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("location", workspaceResponse.Location); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting location: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("name", workspaceResponse.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("resource_group", workspaceResponse.ResourceGroup); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting resource_group: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if workspaceResponse.RuntimeData != nil {
 		err = d.Set("runtime_data", dataSourceWorkspaceResponseFlattenRuntimeData(workspaceResponse.RuntimeData))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting runtime_data %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
 	if workspaceResponse.SharedData != nil {
 		err = d.Set("shared_data", dataSourceWorkspaceResponseFlattenSharedData(*workspaceResponse.SharedData))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting shared_data %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("status", workspaceResponse.Status); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting status: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if workspaceResponse.TemplateData != nil {
 		templateData := dataSourceWorkspaceResponseFlattenTemplateData(workspaceResponse.TemplateData)
 
 		if err = d.Set("template_env_settings", templateData[0]["env_values"]); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error reading env_values: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("template_git_folder", templateData[0]["folder"]); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error reading folder: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("template_init_state_file", templateData[0]["init_state_file"]); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error reading init_state_file: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("template_type", templateData[0]["type"]); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error reading type: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("template_uninstall_script_name", templateData[0]["uninstall_script_name"]); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error reading uninstall_script_name: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("template_values", templateData[0]["values"]); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error reading values: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		err = d.Set("template_values_metadata", dataSourceWorkspaceResponseFlattenValuesMetadata(templateData[0]["values_metadata"]))
 		if err != nil {
 			fmt.Println(fmt.Errorf("[ERROR] Error reading template_values_metadata %s", err))
 		}
 		if err = d.Set("template_inputs", templateData[0]["variablestore"]); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error reading variablestore: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("template_ref", workspaceResponse.TemplateRef); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting template_ref: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if workspaceResponse.TemplateRepo != nil {
 		templateRepoMap := dataSourceWorkspaceResponseFlattenTemplateRepo(*workspaceResponse.TemplateRepo)
 		if err = d.Set("template_git_branch", templateRepoMap[0]["branch"]); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error reading branch: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("template_git_release", templateRepoMap[0]["release"]); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error reading release: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("template_git_repo_sha_value", templateRepoMap[0]["repo_sha_value"]); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error reading repo_sha_value: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("template_git_repo_url", templateRepoMap[0]["repo_url"]); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error reading repo_url: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("template_git_url", templateRepoMap[0]["url"]); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error reading url: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("template_git_has_uploadedgitrepotar", templateRepoMap[0]["has_uploadedgitrepotar"]); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error reading has_uploadedgitrepotar: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	/*if err = d.Set("type", workspaceResponse.Type); err != nil {
@@ -768,54 +824,80 @@ func dataSourceIBMSchematicsWorkspaceRead(context context.Context, d *schema.Res
 	}*/
 	if workspaceResponse.UpdatedAt != nil {
 		if err = d.Set("updated_at", workspaceResponse.UpdatedAt.String()); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting updated_at: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("updated_by", workspaceResponse.UpdatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting updated_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if workspaceResponse.WorkspaceStatus != nil {
 		workspaceStatusMap := dataSourceWorkspaceResponseFlattenWorkspaceStatus(*workspaceResponse.WorkspaceStatus)
 		if err = d.Set("is_frozen", workspaceStatusMap[0]["frozen"]); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error reading frozen: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("frozen", workspaceStatusMap[0]["frozen"]); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error reading frozen: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("frozen_at", workspaceStatusMap[0]["frozen_at"]); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error reading frozen_at: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("frozen_by", workspaceStatusMap[0]["frozen_by"]); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error reading frozen_by: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("is_locked", workspaceStatusMap[0]["locked"]); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error reading locked: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("locked", workspaceStatusMap[0]["locked"]); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error reading locked: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("locked_by", workspaceStatusMap[0]["locked_by"]); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error reading locked_by: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("locked_time", workspaceStatusMap[0]["locked_time"]); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error reading locked_time: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
 	if workspaceResponse.WorkspaceStatusMsg != nil {
 		workspaceStatusMsgMap := dataSourceWorkspaceResponseFlattenWorkspaceStatusMsg(*workspaceResponse.WorkspaceStatusMsg)
 		if err = d.Set("status_code", workspaceStatusMsgMap[0]["status_code"]); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error reading status_code: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("status_msg", workspaceStatusMsgMap[0]["status_msg"]); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error reading status_msg: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed with error: %s", err), "ibm_schematics_workspace", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
 	controller, err := flex.GetBaseController(meta)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsWorkspaceRead failed: %s", err.Error()), "ibm_schematics_workspace", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	d.Set(flex.ResourceControllerURL, controller+"/schematics")
 
@@ -863,7 +945,7 @@ func dataSourceWorkspaceResponseCatalogRefToMap(catalogRefItem schematicsv1.Cata
 	if catalogRefItem.ServiceExtensions != nil {
 		serviceExtensionsByte, err := json.MarshalIndent(catalogRefItem.ServiceExtensions, "", "")
 		if err != nil {
-			log.Printf("[DEBUG] Marshelling of service extensions failed %s", err)
+
 		}
 		serviceExtensionsJSON := string(serviceExtensionsByte[:])
 		catalogRefMap["service_extensions"] = serviceExtensionsJSON

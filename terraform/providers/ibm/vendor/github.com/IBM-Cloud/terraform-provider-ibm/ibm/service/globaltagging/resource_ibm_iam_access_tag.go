@@ -6,7 +6,6 @@ package globaltagging
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
@@ -92,7 +91,7 @@ func resourceIBMIamAccessTagCreate(context context.Context, d *schema.ResourceDa
 		}
 		if len(errMap) > 0 {
 			output, _ := json.MarshalIndent(errMap, "", "    ")
-			return diag.FromErr(fmt.Errorf("Error while creating access tag(%s) : %s", tagName, string(output)))
+			return diag.FromErr(flex.FmtErrorf("Error while creating access tag(%s) : %s", tagName, string(output)))
 		}
 	}
 
@@ -153,7 +152,7 @@ func resourceIBMIamAccessTagDelete(context context.Context, d *schema.ResourceDa
 	results, resp, err := gtClient.DeleteTagWithContext(context, deleteTagOptions)
 
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Error while deleting access tag calling api (%s) : %v\n%v", tagName, err, resp))
+		return diag.FromErr(flex.FmtErrorf("Error while deleting access tag calling api (%s) : %v\n%v", tagName, err, resp))
 	}
 	if results != nil {
 		errMap := make([]globaltaggingv1.DeleteTagResultsItem, 0)
@@ -164,7 +163,7 @@ func resourceIBMIamAccessTagDelete(context context.Context, d *schema.ResourceDa
 		}
 		if len(errMap) > 0 {
 			output, _ := json.MarshalIndent(errMap, "", "    ")
-			return diag.FromErr(fmt.Errorf("Error while deleting access tag in results (%s) : %s", tagName, string(output)))
+			return diag.FromErr(flex.FmtErrorf("Error while deleting access tag in results (%s) : %s", tagName, string(output)))
 		}
 	}
 

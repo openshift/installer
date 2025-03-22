@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -66,7 +67,9 @@ func DataSourceIBMEnIntegrations() *schema.Resource {
 func dataSourceIBMEnIntegrationsRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_en_integrations", "list")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.ListIntegrationsOptions{}
@@ -88,12 +91,14 @@ func dataSourceIBMEnIntegrationsRead(context context.Context, d *schema.Resource
 	for {
 		options.SetOffset(offset)
 
-		result, response, err := enClient.ListIntegrationsWithContext(context, options)
+		result, _, err := enClient.ListIntegrationsWithContext(context, options)
 
 		integrationList = result
 
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("ListIntegrationsWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ListIntegrationsWithContext failed: %s", err.Error()), "(Data) ibm_en_integrations", "list")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 
 		offset = offset + limit
@@ -110,12 +115,14 @@ func dataSourceIBMEnIntegrationsRead(context context.Context, d *schema.Resource
 	d.SetId(fmt.Sprintf("integrations/%s", *options.InstanceID))
 
 	if err = d.Set("total_count", flex.IntValue(integrationList.TotalCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting total_count: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting total_count: %s", err), "(Data) ibm_en_integrations", "list")
+		return tfErr.GetDiag()
 	}
 
 	if integrationList.Integrations != nil {
 		if err = d.Set("integrations", enFlattenIntegrationsList(integrationList.Integrations)); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting integrations %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting integrations: %s", err), "(Data) ibm_en_integrations", "list")
+			return tfErr.GetDiag()
 		}
 	}
 

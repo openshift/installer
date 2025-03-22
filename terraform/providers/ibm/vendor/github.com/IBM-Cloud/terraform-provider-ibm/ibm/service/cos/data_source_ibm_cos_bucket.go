@@ -600,8 +600,68 @@ func DataSourceIBMCosBucket() *schema.Resource {
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"prefix": {
-										Type:     schema.TypeString,
+										Type:     schema.TypeString, // check if prefix empty is eccepted and if filter empty is accepted
 										Computed: true,
+									},
+									"object_size_greater_than": {
+										Type:     schema.TypeInt,
+										Computed: true,
+									},
+									"object_size_less_than": {
+										Type:     schema.TypeInt,
+										Computed: true,
+									},
+									"tag": {
+										Type:     schema.TypeList,
+										Computed: true,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"key": {
+													Type:     schema.TypeString,
+													Computed: true,
+												},
+												"value": {
+													Type:     schema.TypeString,
+													Computed: true,
+												},
+											},
+										},
+									},
+									"and": {
+										Type:     schema.TypeList,
+										Computed: true,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"object_size_greater_than": {
+													Type:     schema.TypeInt,
+													Computed: true,
+												},
+												"object_size_less_than": {
+													Type:     schema.TypeInt,
+													Computed: true,
+												},
+												"prefix": {
+													Type:     schema.TypeString,
+													Computed: true,
+												},
+												"tags": {
+													Type:     schema.TypeList,
+													Computed: true,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"key": {
+																Type:     schema.TypeString,
+																Computed: true,
+															},
+															"value": {
+																Type:     schema.TypeString,
+																Computed: true,
+															},
+														},
+													},
+												},
+											},
+										},
 									},
 								},
 							},

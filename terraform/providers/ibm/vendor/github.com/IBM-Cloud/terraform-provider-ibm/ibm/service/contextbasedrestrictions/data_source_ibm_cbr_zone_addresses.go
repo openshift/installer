@@ -6,10 +6,13 @@ package contextbasedrestrictions
 import (
 	"context"
 	"fmt"
+	"log"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/platform-services-go-sdk/contextbasedrestrictionsv1"
 )
 
@@ -88,43 +91,47 @@ func DataSourceIBMCbrZoneAddresses() *schema.Resource {
 func dataSourceIBMCbrZoneAddressesRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	contextBasedRestrictionsClient, err := meta.(conns.ClientSession).ContextBasedRestrictionsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_cbr_zone_addresses", "read", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	zoneAddressesId := d.Get("zone_addresses_id").(string)
 	zoneId, addressesId := decomposeZoneAddressesId(zoneAddressesId)
 
 	if zoneId == "" || addressesId == "" {
-		return diag.Errorf("zone_addresses_id %s not found", zoneAddressesId)
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("zone_addresses_id %s not found", zoneAddressesId), "(Data) ibm_cbr_zone_addresses", "read", "zone_addresses_id-not-found").GetDiag()
 	}
 
 	var zone *contextbasedrestrictionsv1.Zone
 	var found bool
 	zone, _, found, err = getZone(contextBasedRestrictionsClient, context, zoneId)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("%s", err.Error()), "(Data) ibm_cbr_zone_addresses", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if !found {
-		return diag.Errorf("zone_addresses_id %s not found", zoneAddressesId)
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("zone not found by zone_id %s", zoneId), "(Data) ibm_cbr_zone_addresses", "read", "zone-not-found-from-getZone").GetDiag()
 	}
 
 	var addresses []map[string]interface{}
-	addresses, err = dataSourceDecodeAddressList(zone.Addresses, addressesId)
+	addresses, err = DataSourceDecodeAddressList(zone.Addresses, addressesId)
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_cbr_zone_addresses", "read", "DataSourceDecodeAddressList").GetDiag()
 	}
 	if len(addresses) == 0 {
-		return diag.Errorf("zone_addresses_id %s not found", zoneAddressesId)
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("zone_addresses_id %s not found", zoneAddressesId), "(Data) ibm_cbr_zone_addresses", "read", "zone_addresses_id-not-found").GetDiag()
 	}
 
 	d.SetId(zoneAddressesId)
 
 	if err = d.Set("zone_id", zoneId); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting zone_id: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting zone_id: %s", err), "(Data) ibm_cbr_zone_addresses", "read", "set-zone_id").GetDiag()
 	}
 
 	if err = d.Set("addresses", addresses); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting addresses %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting addresses %s", err), "(Data) ibm_cbr_zone_addresses", "read", "set-addresses").GetDiag()
 	}
 
 	return nil

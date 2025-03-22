@@ -231,12 +231,6 @@ func dataSourceIbmSccReportResourcesID(d *schema.ResourceData) string {
 	return time.Now().UTC().String()
 }
 
-func dataSourceIbmSccReportResourcesPageHRefToMap(model *securityandcompliancecenterapiv3.PageHRef) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	modelMap["href"] = model.Href
-	return modelMap, nil
-}
-
 func dataSourceIbmSccReportResourcesResourceToMap(model *securityandcompliancecenterapiv3.Resource) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ReportID != nil {

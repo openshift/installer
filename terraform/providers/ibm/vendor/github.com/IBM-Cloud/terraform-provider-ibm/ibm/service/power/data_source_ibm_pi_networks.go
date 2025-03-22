@@ -37,7 +37,8 @@ func DataSourceIBMPINetworks() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						Attr_AccessConfig: {
 							Computed:    true,
-							Description: "The network communication configuration option of the network (for satellite locations only).",
+							Deprecated:  "This field is deprecated please use peer_id instead.",
+							Description: "The network communication configuration option of the network (for on-prem locations only). Use `peer_id` instead.",
 							Type:        schema.TypeString,
 						},
 						Attr_CRN: {
@@ -68,6 +69,11 @@ func DataSourceIBMPINetworks() *schema.Resource {
 						Attr_NetworkID: {
 							Computed:    true,
 							Description: "The unique identifier of a network.",
+							Type:        schema.TypeString,
+						},
+						Attr_PeerID: {
+							Computed:    true,
+							Description: "Network Peer ID.",
 							Type:        schema.TypeString,
 						},
 						Attr_Type: {
@@ -126,6 +132,7 @@ func flattenNetworks(list []*models.NetworkReference, meta interface{}) []map[st
 			Attr_MTU:          i.Mtu,
 			Attr_Name:         *i.Name,
 			Attr_NetworkID:    *i.NetworkID,
+			Attr_PeerID:       i.PeerID,
 			Attr_Type:         *i.Type,
 			Attr_VLanID:       *i.VlanID,
 		}

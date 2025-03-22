@@ -1,8 +1,8 @@
-// Copyright IBM Corp. 2024 All Rights Reserved.
+// Copyright IBM Corp. 2025 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 /*
- * IBM OpenAPI Terraform Generator Version: 3.94.1-71478489-20240820-161623
+ * IBM OpenAPI Terraform Generator Version: 3.99.1-daeb6e46-20250131-173156
  */
 
 package partnercentersell
@@ -75,16 +75,6 @@ func ResourceIbmOnboardingRegistration() *schema.Resource {
 				Optional:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_onboarding_registration", "provider_access_group"),
 				Description:  "The onboarding access group for your team.",
-			},
-			"account_dra_id": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The ID of the IBM Digital Platform Reseller Agreement.",
-			},
-			"account_dpa_id": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The ID of the IBM Digital Provider Agreement.",
 			},
 			"created_at": &schema.Schema{
 				Type:        schema.TypeString,
@@ -229,18 +219,6 @@ func resourceIbmOnboardingRegistrationRead(context context.Context, d *schema.Re
 			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_onboarding_registration", "read", "set-provider_access_group").GetDiag()
 		}
 	}
-	if !core.IsNil(registration.AccountDraID) {
-		if err = d.Set("account_dra_id", registration.AccountDraID); err != nil {
-			err = fmt.Errorf("Error setting account_dra_id: %s", err)
-			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_onboarding_registration", "read", "set-account_dra_id").GetDiag()
-		}
-	}
-	if !core.IsNil(registration.AccountDpaID) {
-		if err = d.Set("account_dpa_id", registration.AccountDpaID); err != nil {
-			err = fmt.Errorf("Error setting account_dpa_id: %s", err)
-			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_onboarding_registration", "read", "set-account_dpa_id").GetDiag()
-		}
-	}
 	if !core.IsNil(registration.CreatedAt) {
 		if err = d.Set("created_at", registration.CreatedAt); err != nil {
 			err = fmt.Errorf("Error setting created_at: %s", err)
@@ -358,18 +336,26 @@ func ResourceIbmOnboardingRegistrationRegistrationPatchAsPatch(patchVals *partne
 	path = "company_name"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["company_name"] = nil
+	} else if !exists {
+		delete(patch, "company_name")
 	}
 	path = "primary_contact"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["primary_contact"] = nil
+	} else if !exists {
+		delete(patch, "primary_contact")
 	}
 	path = "default_private_catalog_id"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["default_private_catalog_id"] = nil
+	} else if !exists {
+		delete(patch, "default_private_catalog_id")
 	}
 	path = "provider_access_group"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["provider_access_group"] = nil
+	} else if !exists {
+		delete(patch, "provider_access_group")
 	}
 
 	return patch

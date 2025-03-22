@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2023.
+ * (C) Copyright IBM Corp. 2024.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.67.0-df2073a1-20230222-221157
+ * IBM OpenAPI SDK Code Generator Version: 3.94.1-71478489-20240820-161623
  */
 
 // Package dnssvcsv1 : Operations and models for the DnsSvcsV1 service
@@ -65,22 +65,26 @@ func NewDnsSvcsV1UsingExternalConfig(options *DnsSvcsV1Options) (dnsSvcs *DnsSvc
 	if options.Authenticator == nil {
 		options.Authenticator, err = core.GetAuthenticatorFromEnvironment(options.ServiceName)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "env-auth-error", common.GetComponentInfo())
 			return
 		}
 	}
 
 	dnsSvcs, err = NewDnsSvcsV1(options)
+	err = core.RepurposeSDKProblem(err, "new-client-error")
 	if err != nil {
 		return
 	}
 
 	err = dnsSvcs.Service.ConfigureService(options.ServiceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client-config-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = dnsSvcs.Service.SetServiceURL(options.URL)
+		err = core.RepurposeSDKProblem(err, "url-set-error")
 	}
 	return
 }
@@ -94,12 +98,14 @@ func NewDnsSvcsV1(options *DnsSvcsV1Options) (service *DnsSvcsV1, err error) {
 
 	baseService, err := core.NewBaseService(serviceOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "new-base-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = baseService.SetServiceURL(options.URL)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "set-url-error", common.GetComponentInfo())
 			return
 		}
 	}
@@ -113,7 +119,7 @@ func NewDnsSvcsV1(options *DnsSvcsV1Options) (service *DnsSvcsV1, err error) {
 
 // GetServiceURLForRegion returns the service URL to be used for the specified region
 func GetServiceURLForRegion(region string) (string, error) {
-	return "", fmt.Errorf("service does not support regional URLs")
+	return "", core.SDKErrorf(nil, "service does not support regional URLs", "no-regional-support", common.GetComponentInfo())
 }
 
 // Clone makes a copy of "dnsSvcs" suitable for processing requests.
@@ -128,7 +134,11 @@ func (dnsSvcs *DnsSvcsV1) Clone() *DnsSvcsV1 {
 
 // SetServiceURL sets the service URL
 func (dnsSvcs *DnsSvcsV1) SetServiceURL(url string) error {
-	return dnsSvcs.Service.SetServiceURL(url)
+	err := dnsSvcs.Service.SetServiceURL(url)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-set-error", common.GetComponentInfo())
+	}
+	return err
 }
 
 // GetServiceURL returns the service URL
@@ -165,17 +175,21 @@ func (dnsSvcs *DnsSvcsV1) DisableRetries() {
 // ListDnszones : List DNS zones
 // List the DNS zones for a given service instance.
 func (dnsSvcs *DnsSvcsV1) ListDnszones(listDnszonesOptions *ListDnszonesOptions) (result *ListDnszones, response *core.DetailedResponse, err error) {
-	return dnsSvcs.ListDnszonesWithContext(context.Background(), listDnszonesOptions)
+	result, response, err = dnsSvcs.ListDnszonesWithContext(context.Background(), listDnszonesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListDnszonesWithContext is an alternate form of the ListDnszones method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) ListDnszonesWithContext(ctx context.Context, listDnszonesOptions *ListDnszonesOptions) (result *ListDnszones, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listDnszonesOptions, "listDnszonesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listDnszonesOptions, "listDnszonesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -188,6 +202,7 @@ func (dnsSvcs *DnsSvcsV1) ListDnszonesWithContext(ctx context.Context, listDnszo
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/dnszones`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -216,17 +231,21 @@ func (dnsSvcs *DnsSvcsV1) ListDnszonesWithContext(ctx context.Context, listDnszo
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_dnszones", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListDnszones)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -238,17 +257,21 @@ func (dnsSvcs *DnsSvcsV1) ListDnszonesWithContext(ctx context.Context, listDnszo
 // CreateDnszone : Create DNS zone
 // Create a DNS zone for a given service instance.
 func (dnsSvcs *DnsSvcsV1) CreateDnszone(createDnszoneOptions *CreateDnszoneOptions) (result *Dnszone, response *core.DetailedResponse, err error) {
-	return dnsSvcs.CreateDnszoneWithContext(context.Background(), createDnszoneOptions)
+	result, response, err = dnsSvcs.CreateDnszoneWithContext(context.Background(), createDnszoneOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateDnszoneWithContext is an alternate form of the CreateDnszone method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) CreateDnszoneWithContext(ctx context.Context, createDnszoneOptions *CreateDnszoneOptions) (result *Dnszone, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createDnszoneOptions, "createDnszoneOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createDnszoneOptions, "createDnszoneOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -261,6 +284,7 @@ func (dnsSvcs *DnsSvcsV1) CreateDnszoneWithContext(ctx context.Context, createDn
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/dnszones`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -290,22 +314,27 @@ func (dnsSvcs *DnsSvcsV1) CreateDnszoneWithContext(ctx context.Context, createDn
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_dnszone", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDnszone)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -317,23 +346,27 @@ func (dnsSvcs *DnsSvcsV1) CreateDnszoneWithContext(ctx context.Context, createDn
 // DeleteDnszone : Delete DNS zone
 // Delete a DNS zone.
 func (dnsSvcs *DnsSvcsV1) DeleteDnszone(deleteDnszoneOptions *DeleteDnszoneOptions) (response *core.DetailedResponse, err error) {
-	return dnsSvcs.DeleteDnszoneWithContext(context.Background(), deleteDnszoneOptions)
+	response, err = dnsSvcs.DeleteDnszoneWithContext(context.Background(), deleteDnszoneOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteDnszoneWithContext is an alternate form of the DeleteDnszone method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) DeleteDnszoneWithContext(ctx context.Context, deleteDnszoneOptions *DeleteDnszoneOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteDnszoneOptions, "deleteDnszoneOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteDnszoneOptions, "deleteDnszoneOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *deleteDnszoneOptions.InstanceID,
-		"dnszone_id": *deleteDnszoneOptions.DnszoneID,
+		"dnszone_id":  *deleteDnszoneOptions.DnszoneID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -341,6 +374,7 @@ func (dnsSvcs *DnsSvcsV1) DeleteDnszoneWithContext(ctx context.Context, deleteDn
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/dnszones/{dnszone_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -358,10 +392,16 @@ func (dnsSvcs *DnsSvcsV1) DeleteDnszoneWithContext(ctx context.Context, deleteDn
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = dnsSvcs.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_dnszone", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -369,23 +409,27 @@ func (dnsSvcs *DnsSvcsV1) DeleteDnszoneWithContext(ctx context.Context, deleteDn
 // GetDnszone : Get DNS zone
 // Get details of a DNS zone.
 func (dnsSvcs *DnsSvcsV1) GetDnszone(getDnszoneOptions *GetDnszoneOptions) (result *Dnszone, response *core.DetailedResponse, err error) {
-	return dnsSvcs.GetDnszoneWithContext(context.Background(), getDnszoneOptions)
+	result, response, err = dnsSvcs.GetDnszoneWithContext(context.Background(), getDnszoneOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetDnszoneWithContext is an alternate form of the GetDnszone method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) GetDnszoneWithContext(ctx context.Context, getDnszoneOptions *GetDnszoneOptions) (result *Dnszone, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getDnszoneOptions, "getDnszoneOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getDnszoneOptions, "getDnszoneOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *getDnszoneOptions.InstanceID,
-		"dnszone_id": *getDnszoneOptions.DnszoneID,
+		"dnszone_id":  *getDnszoneOptions.DnszoneID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -393,6 +437,7 @@ func (dnsSvcs *DnsSvcsV1) GetDnszoneWithContext(ctx context.Context, getDnszoneO
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/dnszones/{dnszone_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -411,17 +456,21 @@ func (dnsSvcs *DnsSvcsV1) GetDnszoneWithContext(ctx context.Context, getDnszoneO
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_dnszone", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDnszone)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -433,23 +482,27 @@ func (dnsSvcs *DnsSvcsV1) GetDnszoneWithContext(ctx context.Context, getDnszoneO
 // UpdateDnszone : Update DNS zone
 // Update the properties of a DNS zone.
 func (dnsSvcs *DnsSvcsV1) UpdateDnszone(updateDnszoneOptions *UpdateDnszoneOptions) (result *Dnszone, response *core.DetailedResponse, err error) {
-	return dnsSvcs.UpdateDnszoneWithContext(context.Background(), updateDnszoneOptions)
+	result, response, err = dnsSvcs.UpdateDnszoneWithContext(context.Background(), updateDnszoneOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateDnszoneWithContext is an alternate form of the UpdateDnszone method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) UpdateDnszoneWithContext(ctx context.Context, updateDnszoneOptions *UpdateDnszoneOptions) (result *Dnszone, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateDnszoneOptions, "updateDnszoneOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateDnszoneOptions, "updateDnszoneOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *updateDnszoneOptions.InstanceID,
-		"dnszone_id": *updateDnszoneOptions.DnszoneID,
+		"dnszone_id":  *updateDnszoneOptions.DnszoneID,
 	}
 
 	builder := core.NewRequestBuilder(core.PATCH)
@@ -457,6 +510,7 @@ func (dnsSvcs *DnsSvcsV1) UpdateDnszoneWithContext(ctx context.Context, updateDn
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/dnszones/{dnszone_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -483,22 +537,27 @@ func (dnsSvcs *DnsSvcsV1) UpdateDnszoneWithContext(ctx context.Context, updateDn
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_dnszone", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDnszone)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -510,23 +569,27 @@ func (dnsSvcs *DnsSvcsV1) UpdateDnszoneWithContext(ctx context.Context, updateDn
 // ListResourceRecords : List resource records
 // List the Resource Records for a given DNS zone.
 func (dnsSvcs *DnsSvcsV1) ListResourceRecords(listResourceRecordsOptions *ListResourceRecordsOptions) (result *ListResourceRecords, response *core.DetailedResponse, err error) {
-	return dnsSvcs.ListResourceRecordsWithContext(context.Background(), listResourceRecordsOptions)
+	result, response, err = dnsSvcs.ListResourceRecordsWithContext(context.Background(), listResourceRecordsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListResourceRecordsWithContext is an alternate form of the ListResourceRecords method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) ListResourceRecordsWithContext(ctx context.Context, listResourceRecordsOptions *ListResourceRecordsOptions) (result *ListResourceRecords, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listResourceRecordsOptions, "listResourceRecordsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listResourceRecordsOptions, "listResourceRecordsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *listResourceRecordsOptions.InstanceID,
-		"dnszone_id": *listResourceRecordsOptions.DnszoneID,
+		"dnszone_id":  *listResourceRecordsOptions.DnszoneID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -534,6 +597,7 @@ func (dnsSvcs *DnsSvcsV1) ListResourceRecordsWithContext(ctx context.Context, li
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/dnszones/{dnszone_id}/resource_records`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -565,17 +629,21 @@ func (dnsSvcs *DnsSvcsV1) ListResourceRecordsWithContext(ctx context.Context, li
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_resource_records", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListResourceRecords)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -587,23 +655,27 @@ func (dnsSvcs *DnsSvcsV1) ListResourceRecordsWithContext(ctx context.Context, li
 // CreateResourceRecord : Create resource record
 // Create a resource record for a given DNS zone.
 func (dnsSvcs *DnsSvcsV1) CreateResourceRecord(createResourceRecordOptions *CreateResourceRecordOptions) (result *ResourceRecord, response *core.DetailedResponse, err error) {
-	return dnsSvcs.CreateResourceRecordWithContext(context.Background(), createResourceRecordOptions)
+	result, response, err = dnsSvcs.CreateResourceRecordWithContext(context.Background(), createResourceRecordOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateResourceRecordWithContext is an alternate form of the CreateResourceRecord method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) CreateResourceRecordWithContext(ctx context.Context, createResourceRecordOptions *CreateResourceRecordOptions) (result *ResourceRecord, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createResourceRecordOptions, "createResourceRecordOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createResourceRecordOptions, "createResourceRecordOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *createResourceRecordOptions.InstanceID,
-		"dnszone_id": *createResourceRecordOptions.DnszoneID,
+		"dnszone_id":  *createResourceRecordOptions.DnszoneID,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -611,6 +683,7 @@ func (dnsSvcs *DnsSvcsV1) CreateResourceRecordWithContext(ctx context.Context, c
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/dnszones/{dnszone_id}/resource_records`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -629,11 +702,11 @@ func (dnsSvcs *DnsSvcsV1) CreateResourceRecordWithContext(ctx context.Context, c
 	}
 
 	body := make(map[string]interface{})
-	if createResourceRecordOptions.Name != nil {
-		body["name"] = createResourceRecordOptions.Name
-	}
 	if createResourceRecordOptions.Type != nil {
 		body["type"] = createResourceRecordOptions.Type
+	}
+	if createResourceRecordOptions.Name != nil {
+		body["name"] = createResourceRecordOptions.Name
 	}
 	if createResourceRecordOptions.Rdata != nil {
 		body["rdata"] = createResourceRecordOptions.Rdata
@@ -649,22 +722,27 @@ func (dnsSvcs *DnsSvcsV1) CreateResourceRecordWithContext(ctx context.Context, c
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_resource_record", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceRecord)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -676,24 +754,28 @@ func (dnsSvcs *DnsSvcsV1) CreateResourceRecordWithContext(ctx context.Context, c
 // DeleteResourceRecord : Delete resource record
 // Delete a resource record.
 func (dnsSvcs *DnsSvcsV1) DeleteResourceRecord(deleteResourceRecordOptions *DeleteResourceRecordOptions) (response *core.DetailedResponse, err error) {
-	return dnsSvcs.DeleteResourceRecordWithContext(context.Background(), deleteResourceRecordOptions)
+	response, err = dnsSvcs.DeleteResourceRecordWithContext(context.Background(), deleteResourceRecordOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteResourceRecordWithContext is an alternate form of the DeleteResourceRecord method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) DeleteResourceRecordWithContext(ctx context.Context, deleteResourceRecordOptions *DeleteResourceRecordOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteResourceRecordOptions, "deleteResourceRecordOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteResourceRecordOptions, "deleteResourceRecordOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *deleteResourceRecordOptions.InstanceID,
-		"dnszone_id": *deleteResourceRecordOptions.DnszoneID,
-		"record_id": *deleteResourceRecordOptions.RecordID,
+		"dnszone_id":  *deleteResourceRecordOptions.DnszoneID,
+		"record_id":   *deleteResourceRecordOptions.RecordID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -701,6 +783,7 @@ func (dnsSvcs *DnsSvcsV1) DeleteResourceRecordWithContext(ctx context.Context, d
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/dnszones/{dnszone_id}/resource_records/{record_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -718,10 +801,16 @@ func (dnsSvcs *DnsSvcsV1) DeleteResourceRecordWithContext(ctx context.Context, d
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = dnsSvcs.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_resource_record", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -729,24 +818,28 @@ func (dnsSvcs *DnsSvcsV1) DeleteResourceRecordWithContext(ctx context.Context, d
 // GetResourceRecord : Get resource record
 // Get details of a resource record.
 func (dnsSvcs *DnsSvcsV1) GetResourceRecord(getResourceRecordOptions *GetResourceRecordOptions) (result *ResourceRecord, response *core.DetailedResponse, err error) {
-	return dnsSvcs.GetResourceRecordWithContext(context.Background(), getResourceRecordOptions)
+	result, response, err = dnsSvcs.GetResourceRecordWithContext(context.Background(), getResourceRecordOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetResourceRecordWithContext is an alternate form of the GetResourceRecord method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) GetResourceRecordWithContext(ctx context.Context, getResourceRecordOptions *GetResourceRecordOptions) (result *ResourceRecord, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getResourceRecordOptions, "getResourceRecordOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getResourceRecordOptions, "getResourceRecordOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *getResourceRecordOptions.InstanceID,
-		"dnszone_id": *getResourceRecordOptions.DnszoneID,
-		"record_id": *getResourceRecordOptions.RecordID,
+		"dnszone_id":  *getResourceRecordOptions.DnszoneID,
+		"record_id":   *getResourceRecordOptions.RecordID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -754,6 +847,7 @@ func (dnsSvcs *DnsSvcsV1) GetResourceRecordWithContext(ctx context.Context, getR
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/dnszones/{dnszone_id}/resource_records/{record_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -772,17 +866,21 @@ func (dnsSvcs *DnsSvcsV1) GetResourceRecordWithContext(ctx context.Context, getR
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_resource_record", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceRecord)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -794,24 +892,28 @@ func (dnsSvcs *DnsSvcsV1) GetResourceRecordWithContext(ctx context.Context, getR
 // UpdateResourceRecord : Update resource record
 // Update the properties of a resource record.
 func (dnsSvcs *DnsSvcsV1) UpdateResourceRecord(updateResourceRecordOptions *UpdateResourceRecordOptions) (result *ResourceRecord, response *core.DetailedResponse, err error) {
-	return dnsSvcs.UpdateResourceRecordWithContext(context.Background(), updateResourceRecordOptions)
+	result, response, err = dnsSvcs.UpdateResourceRecordWithContext(context.Background(), updateResourceRecordOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateResourceRecordWithContext is an alternate form of the UpdateResourceRecord method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) UpdateResourceRecordWithContext(ctx context.Context, updateResourceRecordOptions *UpdateResourceRecordOptions) (result *ResourceRecord, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateResourceRecordOptions, "updateResourceRecordOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateResourceRecordOptions, "updateResourceRecordOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *updateResourceRecordOptions.InstanceID,
-		"dnszone_id": *updateResourceRecordOptions.DnszoneID,
-		"record_id": *updateResourceRecordOptions.RecordID,
+		"dnszone_id":  *updateResourceRecordOptions.DnszoneID,
+		"record_id":   *updateResourceRecordOptions.RecordID,
 	}
 
 	builder := core.NewRequestBuilder(core.PUT)
@@ -819,6 +921,7 @@ func (dnsSvcs *DnsSvcsV1) UpdateResourceRecordWithContext(ctx context.Context, u
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/dnszones/{dnszone_id}/resource_records/{record_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -854,22 +957,27 @@ func (dnsSvcs *DnsSvcsV1) UpdateResourceRecordWithContext(ctx context.Context, u
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_resource_record", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceRecord)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -881,23 +989,27 @@ func (dnsSvcs *DnsSvcsV1) UpdateResourceRecordWithContext(ctx context.Context, u
 // ExportResourceRecords : Export resource records to a zone file
 // Export resource records to a zone file.
 func (dnsSvcs *DnsSvcsV1) ExportResourceRecords(exportResourceRecordsOptions *ExportResourceRecordsOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	return dnsSvcs.ExportResourceRecordsWithContext(context.Background(), exportResourceRecordsOptions)
+	result, response, err = dnsSvcs.ExportResourceRecordsWithContext(context.Background(), exportResourceRecordsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ExportResourceRecordsWithContext is an alternate form of the ExportResourceRecords method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) ExportResourceRecordsWithContext(ctx context.Context, exportResourceRecordsOptions *ExportResourceRecordsOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(exportResourceRecordsOptions, "exportResourceRecordsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(exportResourceRecordsOptions, "exportResourceRecordsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *exportResourceRecordsOptions.InstanceID,
-		"dnszone_id": *exportResourceRecordsOptions.DnszoneID,
+		"dnszone_id":  *exportResourceRecordsOptions.DnszoneID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -905,6 +1017,7 @@ func (dnsSvcs *DnsSvcsV1) ExportResourceRecordsWithContext(ctx context.Context, 
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/dnszones/{dnszone_id}/export_resource_records`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -923,10 +1036,16 @@ func (dnsSvcs *DnsSvcsV1) ExportResourceRecordsWithContext(ctx context.Context, 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = dnsSvcs.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "export_resource_records", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -934,27 +1053,31 @@ func (dnsSvcs *DnsSvcsV1) ExportResourceRecordsWithContext(ctx context.Context, 
 // ImportResourceRecords : Import resource records from a zone file
 // Import resource records from a zone file. The maximum size of a zone file is 8MB.
 func (dnsSvcs *DnsSvcsV1) ImportResourceRecords(importResourceRecordsOptions *ImportResourceRecordsOptions) (result *ImportResourceRecordsResp, response *core.DetailedResponse, err error) {
-	return dnsSvcs.ImportResourceRecordsWithContext(context.Background(), importResourceRecordsOptions)
+	result, response, err = dnsSvcs.ImportResourceRecordsWithContext(context.Background(), importResourceRecordsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ImportResourceRecordsWithContext is an alternate form of the ImportResourceRecords method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) ImportResourceRecordsWithContext(ctx context.Context, importResourceRecordsOptions *ImportResourceRecordsOptions) (result *ImportResourceRecordsResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(importResourceRecordsOptions, "importResourceRecordsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(importResourceRecordsOptions, "importResourceRecordsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
-	if (importResourceRecordsOptions.File == nil) {
-		err = fmt.Errorf("file must be supplied")
+	if importResourceRecordsOptions.File == nil {
+		err = core.SDKErrorf(nil, "file must be supplied", "condition-not-met", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *importResourceRecordsOptions.InstanceID,
-		"dnszone_id": *importResourceRecordsOptions.DnszoneID,
+		"dnszone_id":  *importResourceRecordsOptions.DnszoneID,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -962,6 +1085,7 @@ func (dnsSvcs *DnsSvcsV1) ImportResourceRecordsWithContext(ctx context.Context, 
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/dnszones/{dnszone_id}/import_resource_records`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -985,17 +1109,21 @@ func (dnsSvcs *DnsSvcsV1) ImportResourceRecordsWithContext(ctx context.Context, 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "import_resource_records", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalImportResourceRecordsResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1007,23 +1135,27 @@ func (dnsSvcs *DnsSvcsV1) ImportResourceRecordsWithContext(ctx context.Context, 
 // ListPermittedNetworks : List permitted networks
 // List the permitted networks for a given DNS zone.
 func (dnsSvcs *DnsSvcsV1) ListPermittedNetworks(listPermittedNetworksOptions *ListPermittedNetworksOptions) (result *ListPermittedNetworks, response *core.DetailedResponse, err error) {
-	return dnsSvcs.ListPermittedNetworksWithContext(context.Background(), listPermittedNetworksOptions)
+	result, response, err = dnsSvcs.ListPermittedNetworksWithContext(context.Background(), listPermittedNetworksOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListPermittedNetworksWithContext is an alternate form of the ListPermittedNetworks method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) ListPermittedNetworksWithContext(ctx context.Context, listPermittedNetworksOptions *ListPermittedNetworksOptions) (result *ListPermittedNetworks, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listPermittedNetworksOptions, "listPermittedNetworksOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listPermittedNetworksOptions, "listPermittedNetworksOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *listPermittedNetworksOptions.InstanceID,
-		"dnszone_id": *listPermittedNetworksOptions.DnszoneID,
+		"dnszone_id":  *listPermittedNetworksOptions.DnszoneID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -1031,6 +1163,7 @@ func (dnsSvcs *DnsSvcsV1) ListPermittedNetworksWithContext(ctx context.Context, 
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/dnszones/{dnszone_id}/permitted_networks`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1053,17 +1186,21 @@ func (dnsSvcs *DnsSvcsV1) ListPermittedNetworksWithContext(ctx context.Context, 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_permitted_networks", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListPermittedNetworks)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1075,23 +1212,27 @@ func (dnsSvcs *DnsSvcsV1) ListPermittedNetworksWithContext(ctx context.Context, 
 // CreatePermittedNetwork : Create permitted network
 // Create a permitted network for a given DNS zone.
 func (dnsSvcs *DnsSvcsV1) CreatePermittedNetwork(createPermittedNetworkOptions *CreatePermittedNetworkOptions) (result *PermittedNetwork, response *core.DetailedResponse, err error) {
-	return dnsSvcs.CreatePermittedNetworkWithContext(context.Background(), createPermittedNetworkOptions)
+	result, response, err = dnsSvcs.CreatePermittedNetworkWithContext(context.Background(), createPermittedNetworkOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreatePermittedNetworkWithContext is an alternate form of the CreatePermittedNetwork method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) CreatePermittedNetworkWithContext(ctx context.Context, createPermittedNetworkOptions *CreatePermittedNetworkOptions) (result *PermittedNetwork, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createPermittedNetworkOptions, "createPermittedNetworkOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createPermittedNetworkOptions, "createPermittedNetworkOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *createPermittedNetworkOptions.InstanceID,
-		"dnszone_id": *createPermittedNetworkOptions.DnszoneID,
+		"dnszone_id":  *createPermittedNetworkOptions.DnszoneID,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -1099,6 +1240,7 @@ func (dnsSvcs *DnsSvcsV1) CreatePermittedNetworkWithContext(ctx context.Context,
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/dnszones/{dnszone_id}/permitted_networks`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1129,22 +1271,27 @@ func (dnsSvcs *DnsSvcsV1) CreatePermittedNetworkWithContext(ctx context.Context,
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_permitted_network", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPermittedNetwork)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1156,23 +1303,27 @@ func (dnsSvcs *DnsSvcsV1) CreatePermittedNetworkWithContext(ctx context.Context,
 // DeletePermittedNetwork : Remove permitted network
 // Remove a permitted network.
 func (dnsSvcs *DnsSvcsV1) DeletePermittedNetwork(deletePermittedNetworkOptions *DeletePermittedNetworkOptions) (result *PermittedNetwork, response *core.DetailedResponse, err error) {
-	return dnsSvcs.DeletePermittedNetworkWithContext(context.Background(), deletePermittedNetworkOptions)
+	result, response, err = dnsSvcs.DeletePermittedNetworkWithContext(context.Background(), deletePermittedNetworkOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeletePermittedNetworkWithContext is an alternate form of the DeletePermittedNetwork method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) DeletePermittedNetworkWithContext(ctx context.Context, deletePermittedNetworkOptions *DeletePermittedNetworkOptions) (result *PermittedNetwork, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deletePermittedNetworkOptions, "deletePermittedNetworkOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deletePermittedNetworkOptions, "deletePermittedNetworkOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id": *deletePermittedNetworkOptions.InstanceID,
-		"dnszone_id": *deletePermittedNetworkOptions.DnszoneID,
+		"instance_id":          *deletePermittedNetworkOptions.InstanceID,
+		"dnszone_id":           *deletePermittedNetworkOptions.DnszoneID,
 		"permitted_network_id": *deletePermittedNetworkOptions.PermittedNetworkID,
 	}
 
@@ -1181,6 +1332,7 @@ func (dnsSvcs *DnsSvcsV1) DeletePermittedNetworkWithContext(ctx context.Context,
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/dnszones/{dnszone_id}/permitted_networks/{permitted_network_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1199,17 +1351,21 @@ func (dnsSvcs *DnsSvcsV1) DeletePermittedNetworkWithContext(ctx context.Context,
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_permitted_network", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPermittedNetwork)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1221,23 +1377,27 @@ func (dnsSvcs *DnsSvcsV1) DeletePermittedNetworkWithContext(ctx context.Context,
 // GetPermittedNetwork : Get permitted network
 // Get details of a permitted network.
 func (dnsSvcs *DnsSvcsV1) GetPermittedNetwork(getPermittedNetworkOptions *GetPermittedNetworkOptions) (result *PermittedNetwork, response *core.DetailedResponse, err error) {
-	return dnsSvcs.GetPermittedNetworkWithContext(context.Background(), getPermittedNetworkOptions)
+	result, response, err = dnsSvcs.GetPermittedNetworkWithContext(context.Background(), getPermittedNetworkOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetPermittedNetworkWithContext is an alternate form of the GetPermittedNetwork method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) GetPermittedNetworkWithContext(ctx context.Context, getPermittedNetworkOptions *GetPermittedNetworkOptions) (result *PermittedNetwork, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getPermittedNetworkOptions, "getPermittedNetworkOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getPermittedNetworkOptions, "getPermittedNetworkOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id": *getPermittedNetworkOptions.InstanceID,
-		"dnszone_id": *getPermittedNetworkOptions.DnszoneID,
+		"instance_id":          *getPermittedNetworkOptions.InstanceID,
+		"dnszone_id":           *getPermittedNetworkOptions.DnszoneID,
 		"permitted_network_id": *getPermittedNetworkOptions.PermittedNetworkID,
 	}
 
@@ -1246,6 +1406,7 @@ func (dnsSvcs *DnsSvcsV1) GetPermittedNetworkWithContext(ctx context.Context, ge
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/dnszones/{dnszone_id}/permitted_networks/{permitted_network_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1264,17 +1425,21 @@ func (dnsSvcs *DnsSvcsV1) GetPermittedNetworkWithContext(ctx context.Context, ge
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_permitted_network", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPermittedNetwork)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1286,23 +1451,27 @@ func (dnsSvcs *DnsSvcsV1) GetPermittedNetworkWithContext(ctx context.Context, ge
 // ListLoadBalancers : List load balancers
 // List the Global Load Balancers for a given DNS zone.
 func (dnsSvcs *DnsSvcsV1) ListLoadBalancers(listLoadBalancersOptions *ListLoadBalancersOptions) (result *ListLoadBalancers, response *core.DetailedResponse, err error) {
-	return dnsSvcs.ListLoadBalancersWithContext(context.Background(), listLoadBalancersOptions)
+	result, response, err = dnsSvcs.ListLoadBalancersWithContext(context.Background(), listLoadBalancersOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListLoadBalancersWithContext is an alternate form of the ListLoadBalancers method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) ListLoadBalancersWithContext(ctx context.Context, listLoadBalancersOptions *ListLoadBalancersOptions) (result *ListLoadBalancers, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listLoadBalancersOptions, "listLoadBalancersOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listLoadBalancersOptions, "listLoadBalancersOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *listLoadBalancersOptions.InstanceID,
-		"dnszone_id": *listLoadBalancersOptions.DnszoneID,
+		"dnszone_id":  *listLoadBalancersOptions.DnszoneID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -1310,6 +1479,7 @@ func (dnsSvcs *DnsSvcsV1) ListLoadBalancersWithContext(ctx context.Context, list
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/dnszones/{dnszone_id}/load_balancers`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1335,17 +1505,21 @@ func (dnsSvcs *DnsSvcsV1) ListLoadBalancersWithContext(ctx context.Context, list
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_load_balancers", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListLoadBalancers)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1357,23 +1531,27 @@ func (dnsSvcs *DnsSvcsV1) ListLoadBalancersWithContext(ctx context.Context, list
 // CreateLoadBalancer : Create load balancer
 // Create a load balancer for a given DNS zone.
 func (dnsSvcs *DnsSvcsV1) CreateLoadBalancer(createLoadBalancerOptions *CreateLoadBalancerOptions) (result *LoadBalancer, response *core.DetailedResponse, err error) {
-	return dnsSvcs.CreateLoadBalancerWithContext(context.Background(), createLoadBalancerOptions)
+	result, response, err = dnsSvcs.CreateLoadBalancerWithContext(context.Background(), createLoadBalancerOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateLoadBalancerWithContext is an alternate form of the CreateLoadBalancer method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) CreateLoadBalancerWithContext(ctx context.Context, createLoadBalancerOptions *CreateLoadBalancerOptions) (result *LoadBalancer, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createLoadBalancerOptions, "createLoadBalancerOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createLoadBalancerOptions, "createLoadBalancerOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *createLoadBalancerOptions.InstanceID,
-		"dnszone_id": *createLoadBalancerOptions.DnszoneID,
+		"dnszone_id":  *createLoadBalancerOptions.DnszoneID,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -1381,6 +1559,7 @@ func (dnsSvcs *DnsSvcsV1) CreateLoadBalancerWithContext(ctx context.Context, cre
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/dnszones/{dnszone_id}/load_balancers`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1402,6 +1581,12 @@ func (dnsSvcs *DnsSvcsV1) CreateLoadBalancerWithContext(ctx context.Context, cre
 	if createLoadBalancerOptions.Name != nil {
 		body["name"] = createLoadBalancerOptions.Name
 	}
+	if createLoadBalancerOptions.FallbackPool != nil {
+		body["fallback_pool"] = createLoadBalancerOptions.FallbackPool
+	}
+	if createLoadBalancerOptions.DefaultPools != nil {
+		body["default_pools"] = createLoadBalancerOptions.DefaultPools
+	}
 	if createLoadBalancerOptions.Description != nil {
 		body["description"] = createLoadBalancerOptions.Description
 	}
@@ -1411,33 +1596,32 @@ func (dnsSvcs *DnsSvcsV1) CreateLoadBalancerWithContext(ctx context.Context, cre
 	if createLoadBalancerOptions.TTL != nil {
 		body["ttl"] = createLoadBalancerOptions.TTL
 	}
-	if createLoadBalancerOptions.FallbackPool != nil {
-		body["fallback_pool"] = createLoadBalancerOptions.FallbackPool
-	}
-	if createLoadBalancerOptions.DefaultPools != nil {
-		body["default_pools"] = createLoadBalancerOptions.DefaultPools
-	}
 	if createLoadBalancerOptions.AzPools != nil {
 		body["az_pools"] = createLoadBalancerOptions.AzPools
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_load_balancer", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalLoadBalancer)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1449,24 +1633,28 @@ func (dnsSvcs *DnsSvcsV1) CreateLoadBalancerWithContext(ctx context.Context, cre
 // DeleteLoadBalancer : Delete load balancer
 // Delete a load balancer.
 func (dnsSvcs *DnsSvcsV1) DeleteLoadBalancer(deleteLoadBalancerOptions *DeleteLoadBalancerOptions) (response *core.DetailedResponse, err error) {
-	return dnsSvcs.DeleteLoadBalancerWithContext(context.Background(), deleteLoadBalancerOptions)
+	response, err = dnsSvcs.DeleteLoadBalancerWithContext(context.Background(), deleteLoadBalancerOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteLoadBalancerWithContext is an alternate form of the DeleteLoadBalancer method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) DeleteLoadBalancerWithContext(ctx context.Context, deleteLoadBalancerOptions *DeleteLoadBalancerOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteLoadBalancerOptions, "deleteLoadBalancerOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteLoadBalancerOptions, "deleteLoadBalancerOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *deleteLoadBalancerOptions.InstanceID,
-		"dnszone_id": *deleteLoadBalancerOptions.DnszoneID,
-		"lb_id": *deleteLoadBalancerOptions.LbID,
+		"dnszone_id":  *deleteLoadBalancerOptions.DnszoneID,
+		"lb_id":       *deleteLoadBalancerOptions.LbID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -1474,6 +1662,7 @@ func (dnsSvcs *DnsSvcsV1) DeleteLoadBalancerWithContext(ctx context.Context, del
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/dnszones/{dnszone_id}/load_balancers/{lb_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1491,10 +1680,16 @@ func (dnsSvcs *DnsSvcsV1) DeleteLoadBalancerWithContext(ctx context.Context, del
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = dnsSvcs.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_load_balancer", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -1502,24 +1697,28 @@ func (dnsSvcs *DnsSvcsV1) DeleteLoadBalancerWithContext(ctx context.Context, del
 // GetLoadBalancer : Get load balancer
 // Get details of a load balancer.
 func (dnsSvcs *DnsSvcsV1) GetLoadBalancer(getLoadBalancerOptions *GetLoadBalancerOptions) (result *LoadBalancer, response *core.DetailedResponse, err error) {
-	return dnsSvcs.GetLoadBalancerWithContext(context.Background(), getLoadBalancerOptions)
+	result, response, err = dnsSvcs.GetLoadBalancerWithContext(context.Background(), getLoadBalancerOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetLoadBalancerWithContext is an alternate form of the GetLoadBalancer method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) GetLoadBalancerWithContext(ctx context.Context, getLoadBalancerOptions *GetLoadBalancerOptions) (result *LoadBalancer, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getLoadBalancerOptions, "getLoadBalancerOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getLoadBalancerOptions, "getLoadBalancerOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *getLoadBalancerOptions.InstanceID,
-		"dnszone_id": *getLoadBalancerOptions.DnszoneID,
-		"lb_id": *getLoadBalancerOptions.LbID,
+		"dnszone_id":  *getLoadBalancerOptions.DnszoneID,
+		"lb_id":       *getLoadBalancerOptions.LbID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -1527,6 +1726,7 @@ func (dnsSvcs *DnsSvcsV1) GetLoadBalancerWithContext(ctx context.Context, getLoa
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/dnszones/{dnszone_id}/load_balancers/{lb_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1545,17 +1745,21 @@ func (dnsSvcs *DnsSvcsV1) GetLoadBalancerWithContext(ctx context.Context, getLoa
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_load_balancer", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalLoadBalancer)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1567,24 +1771,28 @@ func (dnsSvcs *DnsSvcsV1) GetLoadBalancerWithContext(ctx context.Context, getLoa
 // UpdateLoadBalancer : Update load balancer
 // Update the properties of a load balancer.
 func (dnsSvcs *DnsSvcsV1) UpdateLoadBalancer(updateLoadBalancerOptions *UpdateLoadBalancerOptions) (result *LoadBalancer, response *core.DetailedResponse, err error) {
-	return dnsSvcs.UpdateLoadBalancerWithContext(context.Background(), updateLoadBalancerOptions)
+	result, response, err = dnsSvcs.UpdateLoadBalancerWithContext(context.Background(), updateLoadBalancerOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateLoadBalancerWithContext is an alternate form of the UpdateLoadBalancer method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) UpdateLoadBalancerWithContext(ctx context.Context, updateLoadBalancerOptions *UpdateLoadBalancerOptions) (result *LoadBalancer, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateLoadBalancerOptions, "updateLoadBalancerOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateLoadBalancerOptions, "updateLoadBalancerOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *updateLoadBalancerOptions.InstanceID,
-		"dnszone_id": *updateLoadBalancerOptions.DnszoneID,
-		"lb_id": *updateLoadBalancerOptions.LbID,
+		"dnszone_id":  *updateLoadBalancerOptions.DnszoneID,
+		"lb_id":       *updateLoadBalancerOptions.LbID,
 	}
 
 	builder := core.NewRequestBuilder(core.PUT)
@@ -1592,6 +1800,7 @@ func (dnsSvcs *DnsSvcsV1) UpdateLoadBalancerWithContext(ctx context.Context, upd
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/dnszones/{dnszone_id}/load_balancers/{lb_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1633,22 +1842,27 @@ func (dnsSvcs *DnsSvcsV1) UpdateLoadBalancerWithContext(ctx context.Context, upd
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_load_balancer", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalLoadBalancer)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1660,17 +1874,21 @@ func (dnsSvcs *DnsSvcsV1) UpdateLoadBalancerWithContext(ctx context.Context, upd
 // ListPools : List load balancer pools
 // List the load balancer pools.
 func (dnsSvcs *DnsSvcsV1) ListPools(listPoolsOptions *ListPoolsOptions) (result *ListPools, response *core.DetailedResponse, err error) {
-	return dnsSvcs.ListPoolsWithContext(context.Background(), listPoolsOptions)
+	result, response, err = dnsSvcs.ListPoolsWithContext(context.Background(), listPoolsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListPoolsWithContext is an alternate form of the ListPools method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) ListPoolsWithContext(ctx context.Context, listPoolsOptions *ListPoolsOptions) (result *ListPools, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listPoolsOptions, "listPoolsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listPoolsOptions, "listPoolsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1683,6 +1901,7 @@ func (dnsSvcs *DnsSvcsV1) ListPoolsWithContext(ctx context.Context, listPoolsOpt
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/pools`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1708,17 +1927,21 @@ func (dnsSvcs *DnsSvcsV1) ListPoolsWithContext(ctx context.Context, listPoolsOpt
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_pools", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListPools)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1730,17 +1953,21 @@ func (dnsSvcs *DnsSvcsV1) ListPoolsWithContext(ctx context.Context, listPoolsOpt
 // CreatePool : Create load balancer pool
 // Create a load balancer pool.
 func (dnsSvcs *DnsSvcsV1) CreatePool(createPoolOptions *CreatePoolOptions) (result *Pool, response *core.DetailedResponse, err error) {
-	return dnsSvcs.CreatePoolWithContext(context.Background(), createPoolOptions)
+	result, response, err = dnsSvcs.CreatePoolWithContext(context.Background(), createPoolOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreatePoolWithContext is an alternate form of the CreatePool method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) CreatePoolWithContext(ctx context.Context, createPoolOptions *CreatePoolOptions) (result *Pool, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createPoolOptions, "createPoolOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createPoolOptions, "createPoolOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1753,6 +1980,7 @@ func (dnsSvcs *DnsSvcsV1) CreatePoolWithContext(ctx context.Context, createPoolO
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/pools`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1774,6 +2002,9 @@ func (dnsSvcs *DnsSvcsV1) CreatePoolWithContext(ctx context.Context, createPoolO
 	if createPoolOptions.Name != nil {
 		body["name"] = createPoolOptions.Name
 	}
+	if createPoolOptions.Origins != nil {
+		body["origins"] = createPoolOptions.Origins
+	}
 	if createPoolOptions.Description != nil {
 		body["description"] = createPoolOptions.Description
 	}
@@ -1782,9 +2013,6 @@ func (dnsSvcs *DnsSvcsV1) CreatePoolWithContext(ctx context.Context, createPoolO
 	}
 	if createPoolOptions.HealthyOriginsThreshold != nil {
 		body["healthy_origins_threshold"] = createPoolOptions.HealthyOriginsThreshold
-	}
-	if createPoolOptions.Origins != nil {
-		body["origins"] = createPoolOptions.Origins
 	}
 	if createPoolOptions.Monitor != nil {
 		body["monitor"] = createPoolOptions.Monitor
@@ -1800,22 +2028,27 @@ func (dnsSvcs *DnsSvcsV1) CreatePoolWithContext(ctx context.Context, createPoolO
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_pool", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPool)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1827,23 +2060,27 @@ func (dnsSvcs *DnsSvcsV1) CreatePoolWithContext(ctx context.Context, createPoolO
 // DeletePool : Delete load balancer pool
 // Delete a load balancer pool.
 func (dnsSvcs *DnsSvcsV1) DeletePool(deletePoolOptions *DeletePoolOptions) (response *core.DetailedResponse, err error) {
-	return dnsSvcs.DeletePoolWithContext(context.Background(), deletePoolOptions)
+	response, err = dnsSvcs.DeletePoolWithContext(context.Background(), deletePoolOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeletePoolWithContext is an alternate form of the DeletePool method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) DeletePoolWithContext(ctx context.Context, deletePoolOptions *DeletePoolOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deletePoolOptions, "deletePoolOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deletePoolOptions, "deletePoolOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *deletePoolOptions.InstanceID,
-		"pool_id": *deletePoolOptions.PoolID,
+		"pool_id":     *deletePoolOptions.PoolID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -1851,6 +2088,7 @@ func (dnsSvcs *DnsSvcsV1) DeletePoolWithContext(ctx context.Context, deletePoolO
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/pools/{pool_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1868,10 +2106,16 @@ func (dnsSvcs *DnsSvcsV1) DeletePoolWithContext(ctx context.Context, deletePoolO
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = dnsSvcs.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_pool", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -1879,23 +2123,27 @@ func (dnsSvcs *DnsSvcsV1) DeletePoolWithContext(ctx context.Context, deletePoolO
 // GetPool : Get load balancer pool
 // Get details of a load balancer pool.
 func (dnsSvcs *DnsSvcsV1) GetPool(getPoolOptions *GetPoolOptions) (result *Pool, response *core.DetailedResponse, err error) {
-	return dnsSvcs.GetPoolWithContext(context.Background(), getPoolOptions)
+	result, response, err = dnsSvcs.GetPoolWithContext(context.Background(), getPoolOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetPoolWithContext is an alternate form of the GetPool method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) GetPoolWithContext(ctx context.Context, getPoolOptions *GetPoolOptions) (result *Pool, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getPoolOptions, "getPoolOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getPoolOptions, "getPoolOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *getPoolOptions.InstanceID,
-		"pool_id": *getPoolOptions.PoolID,
+		"pool_id":     *getPoolOptions.PoolID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -1903,6 +2151,7 @@ func (dnsSvcs *DnsSvcsV1) GetPoolWithContext(ctx context.Context, getPoolOptions
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/pools/{pool_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1921,17 +2170,21 @@ func (dnsSvcs *DnsSvcsV1) GetPoolWithContext(ctx context.Context, getPoolOptions
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_pool", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPool)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1943,23 +2196,27 @@ func (dnsSvcs *DnsSvcsV1) GetPoolWithContext(ctx context.Context, getPoolOptions
 // UpdatePool : Update load balancer pool
 // Update the properties of a load balancer pool.
 func (dnsSvcs *DnsSvcsV1) UpdatePool(updatePoolOptions *UpdatePoolOptions) (result *Pool, response *core.DetailedResponse, err error) {
-	return dnsSvcs.UpdatePoolWithContext(context.Background(), updatePoolOptions)
+	result, response, err = dnsSvcs.UpdatePoolWithContext(context.Background(), updatePoolOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdatePoolWithContext is an alternate form of the UpdatePool method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) UpdatePoolWithContext(ctx context.Context, updatePoolOptions *UpdatePoolOptions) (result *Pool, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updatePoolOptions, "updatePoolOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updatePoolOptions, "updatePoolOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *updatePoolOptions.InstanceID,
-		"pool_id": *updatePoolOptions.PoolID,
+		"pool_id":     *updatePoolOptions.PoolID,
 	}
 
 	builder := core.NewRequestBuilder(core.PUT)
@@ -1967,6 +2224,7 @@ func (dnsSvcs *DnsSvcsV1) UpdatePoolWithContext(ctx context.Context, updatePoolO
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/pools/{pool_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2014,22 +2272,27 @@ func (dnsSvcs *DnsSvcsV1) UpdatePoolWithContext(ctx context.Context, updatePoolO
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_pool", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPool)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2041,17 +2304,21 @@ func (dnsSvcs *DnsSvcsV1) UpdatePoolWithContext(ctx context.Context, updatePoolO
 // ListMonitors : List load balancer monitors
 // List the load balancer monitors.
 func (dnsSvcs *DnsSvcsV1) ListMonitors(listMonitorsOptions *ListMonitorsOptions) (result *ListMonitors, response *core.DetailedResponse, err error) {
-	return dnsSvcs.ListMonitorsWithContext(context.Background(), listMonitorsOptions)
+	result, response, err = dnsSvcs.ListMonitorsWithContext(context.Background(), listMonitorsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListMonitorsWithContext is an alternate form of the ListMonitors method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) ListMonitorsWithContext(ctx context.Context, listMonitorsOptions *ListMonitorsOptions) (result *ListMonitors, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listMonitorsOptions, "listMonitorsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listMonitorsOptions, "listMonitorsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2064,6 +2331,7 @@ func (dnsSvcs *DnsSvcsV1) ListMonitorsWithContext(ctx context.Context, listMonit
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/monitors`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2089,17 +2357,21 @@ func (dnsSvcs *DnsSvcsV1) ListMonitorsWithContext(ctx context.Context, listMonit
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_monitors", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListMonitors)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2111,17 +2383,21 @@ func (dnsSvcs *DnsSvcsV1) ListMonitorsWithContext(ctx context.Context, listMonit
 // CreateMonitor : Create load balancer monitor
 // Create a load balancer monitor.
 func (dnsSvcs *DnsSvcsV1) CreateMonitor(createMonitorOptions *CreateMonitorOptions) (result *Monitor, response *core.DetailedResponse, err error) {
-	return dnsSvcs.CreateMonitorWithContext(context.Background(), createMonitorOptions)
+	result, response, err = dnsSvcs.CreateMonitorWithContext(context.Background(), createMonitorOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateMonitorWithContext is an alternate form of the CreateMonitor method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) CreateMonitorWithContext(ctx context.Context, createMonitorOptions *CreateMonitorOptions) (result *Monitor, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createMonitorOptions, "createMonitorOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createMonitorOptions, "createMonitorOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2134,6 +2410,7 @@ func (dnsSvcs *DnsSvcsV1) CreateMonitorWithContext(ctx context.Context, createMo
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/monitors`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2155,11 +2432,11 @@ func (dnsSvcs *DnsSvcsV1) CreateMonitorWithContext(ctx context.Context, createMo
 	if createMonitorOptions.Name != nil {
 		body["name"] = createMonitorOptions.Name
 	}
-	if createMonitorOptions.Description != nil {
-		body["description"] = createMonitorOptions.Description
-	}
 	if createMonitorOptions.Type != nil {
 		body["type"] = createMonitorOptions.Type
+	}
+	if createMonitorOptions.Description != nil {
+		body["description"] = createMonitorOptions.Description
 	}
 	if createMonitorOptions.Port != nil {
 		body["port"] = createMonitorOptions.Port
@@ -2193,22 +2470,27 @@ func (dnsSvcs *DnsSvcsV1) CreateMonitorWithContext(ctx context.Context, createMo
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_monitor", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMonitor)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2220,23 +2502,27 @@ func (dnsSvcs *DnsSvcsV1) CreateMonitorWithContext(ctx context.Context, createMo
 // DeleteMonitor : Delete load balancer monitor
 // Delete a load balancer monitor.
 func (dnsSvcs *DnsSvcsV1) DeleteMonitor(deleteMonitorOptions *DeleteMonitorOptions) (response *core.DetailedResponse, err error) {
-	return dnsSvcs.DeleteMonitorWithContext(context.Background(), deleteMonitorOptions)
+	response, err = dnsSvcs.DeleteMonitorWithContext(context.Background(), deleteMonitorOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteMonitorWithContext is an alternate form of the DeleteMonitor method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) DeleteMonitorWithContext(ctx context.Context, deleteMonitorOptions *DeleteMonitorOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteMonitorOptions, "deleteMonitorOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteMonitorOptions, "deleteMonitorOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *deleteMonitorOptions.InstanceID,
-		"monitor_id": *deleteMonitorOptions.MonitorID,
+		"monitor_id":  *deleteMonitorOptions.MonitorID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -2244,6 +2530,7 @@ func (dnsSvcs *DnsSvcsV1) DeleteMonitorWithContext(ctx context.Context, deleteMo
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/monitors/{monitor_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2261,10 +2548,16 @@ func (dnsSvcs *DnsSvcsV1) DeleteMonitorWithContext(ctx context.Context, deleteMo
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = dnsSvcs.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_monitor", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -2272,23 +2565,27 @@ func (dnsSvcs *DnsSvcsV1) DeleteMonitorWithContext(ctx context.Context, deleteMo
 // GetMonitor : Get load balancer monitor
 // Get details of a load balancer monitor.
 func (dnsSvcs *DnsSvcsV1) GetMonitor(getMonitorOptions *GetMonitorOptions) (result *Monitor, response *core.DetailedResponse, err error) {
-	return dnsSvcs.GetMonitorWithContext(context.Background(), getMonitorOptions)
+	result, response, err = dnsSvcs.GetMonitorWithContext(context.Background(), getMonitorOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetMonitorWithContext is an alternate form of the GetMonitor method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) GetMonitorWithContext(ctx context.Context, getMonitorOptions *GetMonitorOptions) (result *Monitor, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getMonitorOptions, "getMonitorOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getMonitorOptions, "getMonitorOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *getMonitorOptions.InstanceID,
-		"monitor_id": *getMonitorOptions.MonitorID,
+		"monitor_id":  *getMonitorOptions.MonitorID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -2296,6 +2593,7 @@ func (dnsSvcs *DnsSvcsV1) GetMonitorWithContext(ctx context.Context, getMonitorO
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/monitors/{monitor_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2314,17 +2612,21 @@ func (dnsSvcs *DnsSvcsV1) GetMonitorWithContext(ctx context.Context, getMonitorO
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_monitor", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMonitor)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2336,23 +2638,27 @@ func (dnsSvcs *DnsSvcsV1) GetMonitorWithContext(ctx context.Context, getMonitorO
 // UpdateMonitor : Update load balancer monitor
 // Update the properties of a load balancer monitor.
 func (dnsSvcs *DnsSvcsV1) UpdateMonitor(updateMonitorOptions *UpdateMonitorOptions) (result *Monitor, response *core.DetailedResponse, err error) {
-	return dnsSvcs.UpdateMonitorWithContext(context.Background(), updateMonitorOptions)
+	result, response, err = dnsSvcs.UpdateMonitorWithContext(context.Background(), updateMonitorOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateMonitorWithContext is an alternate form of the UpdateMonitor method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) UpdateMonitorWithContext(ctx context.Context, updateMonitorOptions *UpdateMonitorOptions) (result *Monitor, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateMonitorOptions, "updateMonitorOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateMonitorOptions, "updateMonitorOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *updateMonitorOptions.InstanceID,
-		"monitor_id": *updateMonitorOptions.MonitorID,
+		"monitor_id":  *updateMonitorOptions.MonitorID,
 	}
 
 	builder := core.NewRequestBuilder(core.PUT)
@@ -2360,6 +2666,7 @@ func (dnsSvcs *DnsSvcsV1) UpdateMonitorWithContext(ctx context.Context, updateMo
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/monitors/{monitor_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2419,22 +2726,27 @@ func (dnsSvcs *DnsSvcsV1) UpdateMonitorWithContext(ctx context.Context, updateMo
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_monitor", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMonitor)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2446,17 +2758,21 @@ func (dnsSvcs *DnsSvcsV1) UpdateMonitorWithContext(ctx context.Context, updateMo
 // ListCustomResolvers : List custom resolvers
 // List the custom resolvers.
 func (dnsSvcs *DnsSvcsV1) ListCustomResolvers(listCustomResolversOptions *ListCustomResolversOptions) (result *CustomResolverList, response *core.DetailedResponse, err error) {
-	return dnsSvcs.ListCustomResolversWithContext(context.Background(), listCustomResolversOptions)
+	result, response, err = dnsSvcs.ListCustomResolversWithContext(context.Background(), listCustomResolversOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListCustomResolversWithContext is an alternate form of the ListCustomResolvers method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) ListCustomResolversWithContext(ctx context.Context, listCustomResolversOptions *ListCustomResolversOptions) (result *CustomResolverList, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listCustomResolversOptions, "listCustomResolversOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listCustomResolversOptions, "listCustomResolversOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2469,6 +2785,7 @@ func (dnsSvcs *DnsSvcsV1) ListCustomResolversWithContext(ctx context.Context, li
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/custom_resolvers`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2487,17 +2804,21 @@ func (dnsSvcs *DnsSvcsV1) ListCustomResolversWithContext(ctx context.Context, li
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_custom_resolvers", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCustomResolverList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2509,17 +2830,21 @@ func (dnsSvcs *DnsSvcsV1) ListCustomResolversWithContext(ctx context.Context, li
 // CreateCustomResolver : Create a custom resolver
 // Create a custom resolver.
 func (dnsSvcs *DnsSvcsV1) CreateCustomResolver(createCustomResolverOptions *CreateCustomResolverOptions) (result *CustomResolver, response *core.DetailedResponse, err error) {
-	return dnsSvcs.CreateCustomResolverWithContext(context.Background(), createCustomResolverOptions)
+	result, response, err = dnsSvcs.CreateCustomResolverWithContext(context.Background(), createCustomResolverOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateCustomResolverWithContext is an alternate form of the CreateCustomResolver method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) CreateCustomResolverWithContext(ctx context.Context, createCustomResolverOptions *CreateCustomResolverOptions) (result *CustomResolver, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createCustomResolverOptions, "createCustomResolverOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createCustomResolverOptions, "createCustomResolverOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2532,6 +2857,7 @@ func (dnsSvcs *DnsSvcsV1) CreateCustomResolverWithContext(ctx context.Context, c
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/custom_resolvers`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2559,24 +2885,32 @@ func (dnsSvcs *DnsSvcsV1) CreateCustomResolverWithContext(ctx context.Context, c
 	if createCustomResolverOptions.Locations != nil {
 		body["locations"] = createCustomResolverOptions.Locations
 	}
+	if createCustomResolverOptions.Profile != nil {
+		body["profile"] = createCustomResolverOptions.Profile
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_custom_resolver", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCustomResolver)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2588,17 +2922,21 @@ func (dnsSvcs *DnsSvcsV1) CreateCustomResolverWithContext(ctx context.Context, c
 // DeleteCustomResolver : Delete a custom resolver
 // Delete a custom resolver.
 func (dnsSvcs *DnsSvcsV1) DeleteCustomResolver(deleteCustomResolverOptions *DeleteCustomResolverOptions) (response *core.DetailedResponse, err error) {
-	return dnsSvcs.DeleteCustomResolverWithContext(context.Background(), deleteCustomResolverOptions)
+	response, err = dnsSvcs.DeleteCustomResolverWithContext(context.Background(), deleteCustomResolverOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteCustomResolverWithContext is an alternate form of the DeleteCustomResolver method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) DeleteCustomResolverWithContext(ctx context.Context, deleteCustomResolverOptions *DeleteCustomResolverOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteCustomResolverOptions, "deleteCustomResolverOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteCustomResolverOptions, "deleteCustomResolverOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2612,6 +2950,7 @@ func (dnsSvcs *DnsSvcsV1) DeleteCustomResolverWithContext(ctx context.Context, d
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/custom_resolvers/{resolver_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2629,10 +2968,16 @@ func (dnsSvcs *DnsSvcsV1) DeleteCustomResolverWithContext(ctx context.Context, d
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = dnsSvcs.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_custom_resolver", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -2640,17 +2985,21 @@ func (dnsSvcs *DnsSvcsV1) DeleteCustomResolverWithContext(ctx context.Context, d
 // GetCustomResolver : Get a custom resolver
 // Get details of a custom resolver.
 func (dnsSvcs *DnsSvcsV1) GetCustomResolver(getCustomResolverOptions *GetCustomResolverOptions) (result *CustomResolver, response *core.DetailedResponse, err error) {
-	return dnsSvcs.GetCustomResolverWithContext(context.Background(), getCustomResolverOptions)
+	result, response, err = dnsSvcs.GetCustomResolverWithContext(context.Background(), getCustomResolverOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetCustomResolverWithContext is an alternate form of the GetCustomResolver method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) GetCustomResolverWithContext(ctx context.Context, getCustomResolverOptions *GetCustomResolverOptions) (result *CustomResolver, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getCustomResolverOptions, "getCustomResolverOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getCustomResolverOptions, "getCustomResolverOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2664,6 +3013,7 @@ func (dnsSvcs *DnsSvcsV1) GetCustomResolverWithContext(ctx context.Context, getC
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/custom_resolvers/{resolver_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2682,17 +3032,21 @@ func (dnsSvcs *DnsSvcsV1) GetCustomResolverWithContext(ctx context.Context, getC
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_custom_resolver", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCustomResolver)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2704,17 +3058,21 @@ func (dnsSvcs *DnsSvcsV1) GetCustomResolverWithContext(ctx context.Context, getC
 // UpdateCustomResolver : Update a custom resolver
 // Update the properties of a custom resolver.
 func (dnsSvcs *DnsSvcsV1) UpdateCustomResolver(updateCustomResolverOptions *UpdateCustomResolverOptions) (result *CustomResolver, response *core.DetailedResponse, err error) {
-	return dnsSvcs.UpdateCustomResolverWithContext(context.Background(), updateCustomResolverOptions)
+	result, response, err = dnsSvcs.UpdateCustomResolverWithContext(context.Background(), updateCustomResolverOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateCustomResolverWithContext is an alternate form of the UpdateCustomResolver method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) UpdateCustomResolverWithContext(ctx context.Context, updateCustomResolverOptions *UpdateCustomResolverOptions) (result *CustomResolver, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateCustomResolverOptions, "updateCustomResolverOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateCustomResolverOptions, "updateCustomResolverOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2728,6 +3086,7 @@ func (dnsSvcs *DnsSvcsV1) UpdateCustomResolverWithContext(ctx context.Context, u
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/custom_resolvers/{resolver_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2755,24 +3114,35 @@ func (dnsSvcs *DnsSvcsV1) UpdateCustomResolverWithContext(ctx context.Context, u
 	if updateCustomResolverOptions.Enabled != nil {
 		body["enabled"] = updateCustomResolverOptions.Enabled
 	}
+	if updateCustomResolverOptions.Profile != nil {
+		body["profile"] = updateCustomResolverOptions.Profile
+	}
+	if updateCustomResolverOptions.AllowDisruptiveUpdates != nil {
+		body["allow_disruptive_updates"] = updateCustomResolverOptions.AllowDisruptiveUpdates
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_custom_resolver", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCustomResolver)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2781,20 +3151,24 @@ func (dnsSvcs *DnsSvcsV1) UpdateCustomResolverWithContext(ctx context.Context, u
 	return
 }
 
-// UpdateCrLocationsOrder : Update the locations order of a custom resolver
+// UpdateCrLocationsOrder : Update the locations order of a custom resolver (DEPRECATED)
 // Update the locations order of a custom resolver.
 func (dnsSvcs *DnsSvcsV1) UpdateCrLocationsOrder(updateCrLocationsOrderOptions *UpdateCrLocationsOrderOptions) (result *CustomResolver, response *core.DetailedResponse, err error) {
-	return dnsSvcs.UpdateCrLocationsOrderWithContext(context.Background(), updateCrLocationsOrderOptions)
+	result, response, err = dnsSvcs.UpdateCrLocationsOrderWithContext(context.Background(), updateCrLocationsOrderOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateCrLocationsOrderWithContext is an alternate form of the UpdateCrLocationsOrder method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) UpdateCrLocationsOrderWithContext(ctx context.Context, updateCrLocationsOrderOptions *UpdateCrLocationsOrderOptions) (result *CustomResolver, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateCrLocationsOrderOptions, "updateCrLocationsOrderOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateCrLocationsOrderOptions, "updateCrLocationsOrderOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2808,6 +3182,7 @@ func (dnsSvcs *DnsSvcsV1) UpdateCrLocationsOrderWithContext(ctx context.Context,
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/custom_resolvers/{resolver_id}/locations_order`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2831,22 +3206,27 @@ func (dnsSvcs *DnsSvcsV1) UpdateCrLocationsOrderWithContext(ctx context.Context,
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_cr_locations_order", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCustomResolver)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2858,17 +3238,21 @@ func (dnsSvcs *DnsSvcsV1) UpdateCrLocationsOrderWithContext(ctx context.Context,
 // AddCustomResolverLocation : Add custom resolver location
 // Add custom resolver location.
 func (dnsSvcs *DnsSvcsV1) AddCustomResolverLocation(addCustomResolverLocationOptions *AddCustomResolverLocationOptions) (result *Location, response *core.DetailedResponse, err error) {
-	return dnsSvcs.AddCustomResolverLocationWithContext(context.Background(), addCustomResolverLocationOptions)
+	result, response, err = dnsSvcs.AddCustomResolverLocationWithContext(context.Background(), addCustomResolverLocationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // AddCustomResolverLocationWithContext is an alternate form of the AddCustomResolverLocation method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) AddCustomResolverLocationWithContext(ctx context.Context, addCustomResolverLocationOptions *AddCustomResolverLocationOptions) (result *Location, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(addCustomResolverLocationOptions, "addCustomResolverLocationOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(addCustomResolverLocationOptions, "addCustomResolverLocationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2882,6 +3266,7 @@ func (dnsSvcs *DnsSvcsV1) AddCustomResolverLocationWithContext(ctx context.Conte
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/custom_resolvers/{resolver_id}/locations`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2908,22 +3293,27 @@ func (dnsSvcs *DnsSvcsV1) AddCustomResolverLocationWithContext(ctx context.Conte
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "add_custom_resolver_location", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalLocation)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2935,17 +3325,21 @@ func (dnsSvcs *DnsSvcsV1) AddCustomResolverLocationWithContext(ctx context.Conte
 // UpdateCustomResolverLocation : Update custom resolver location
 // Update custom resolver location.
 func (dnsSvcs *DnsSvcsV1) UpdateCustomResolverLocation(updateCustomResolverLocationOptions *UpdateCustomResolverLocationOptions) (result *Location, response *core.DetailedResponse, err error) {
-	return dnsSvcs.UpdateCustomResolverLocationWithContext(context.Background(), updateCustomResolverLocationOptions)
+	result, response, err = dnsSvcs.UpdateCustomResolverLocationWithContext(context.Background(), updateCustomResolverLocationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateCustomResolverLocationWithContext is an alternate form of the UpdateCustomResolverLocation method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) UpdateCustomResolverLocationWithContext(ctx context.Context, updateCustomResolverLocationOptions *UpdateCustomResolverLocationOptions) (result *Location, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateCustomResolverLocationOptions, "updateCustomResolverLocationOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateCustomResolverLocationOptions, "updateCustomResolverLocationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2960,6 +3354,7 @@ func (dnsSvcs *DnsSvcsV1) UpdateCustomResolverLocationWithContext(ctx context.Co
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/custom_resolvers/{resolver_id}/locations/{location_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2986,22 +3381,27 @@ func (dnsSvcs *DnsSvcsV1) UpdateCustomResolverLocationWithContext(ctx context.Co
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_custom_resolver_location", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalLocation)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3013,17 +3413,21 @@ func (dnsSvcs *DnsSvcsV1) UpdateCustomResolverLocationWithContext(ctx context.Co
 // DeleteCustomResolverLocation : Delete custom resolver location
 // Delete custom resolver location.
 func (dnsSvcs *DnsSvcsV1) DeleteCustomResolverLocation(deleteCustomResolverLocationOptions *DeleteCustomResolverLocationOptions) (response *core.DetailedResponse, err error) {
-	return dnsSvcs.DeleteCustomResolverLocationWithContext(context.Background(), deleteCustomResolverLocationOptions)
+	response, err = dnsSvcs.DeleteCustomResolverLocationWithContext(context.Background(), deleteCustomResolverLocationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteCustomResolverLocationWithContext is an alternate form of the DeleteCustomResolverLocation method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) DeleteCustomResolverLocationWithContext(ctx context.Context, deleteCustomResolverLocationOptions *DeleteCustomResolverLocationOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteCustomResolverLocationOptions, "deleteCustomResolverLocationOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteCustomResolverLocationOptions, "deleteCustomResolverLocationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3038,6 +3442,7 @@ func (dnsSvcs *DnsSvcsV1) DeleteCustomResolverLocationWithContext(ctx context.Co
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/custom_resolvers/{resolver_id}/locations/{location_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3055,10 +3460,16 @@ func (dnsSvcs *DnsSvcsV1) DeleteCustomResolverLocationWithContext(ctx context.Co
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = dnsSvcs.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_custom_resolver_location", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -3066,17 +3477,21 @@ func (dnsSvcs *DnsSvcsV1) DeleteCustomResolverLocationWithContext(ctx context.Co
 // ListForwardingRules : List forwarding rules
 // List the forwarding rules of the given custom resolver.
 func (dnsSvcs *DnsSvcsV1) ListForwardingRules(listForwardingRulesOptions *ListForwardingRulesOptions) (result *ForwardingRuleList, response *core.DetailedResponse, err error) {
-	return dnsSvcs.ListForwardingRulesWithContext(context.Background(), listForwardingRulesOptions)
+	result, response, err = dnsSvcs.ListForwardingRulesWithContext(context.Background(), listForwardingRulesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListForwardingRulesWithContext is an alternate form of the ListForwardingRules method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) ListForwardingRulesWithContext(ctx context.Context, listForwardingRulesOptions *ListForwardingRulesOptions) (result *ForwardingRuleList, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listForwardingRulesOptions, "listForwardingRulesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listForwardingRulesOptions, "listForwardingRulesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3090,6 +3505,7 @@ func (dnsSvcs *DnsSvcsV1) ListForwardingRulesWithContext(ctx context.Context, li
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/custom_resolvers/{resolver_id}/forwarding_rules`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3115,17 +3531,21 @@ func (dnsSvcs *DnsSvcsV1) ListForwardingRulesWithContext(ctx context.Context, li
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_forwarding_rules", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalForwardingRuleList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3135,19 +3555,28 @@ func (dnsSvcs *DnsSvcsV1) ListForwardingRulesWithContext(ctx context.Context, li
 }
 
 // CreateForwardingRule : Create a forwarding rule
-// Create a forwarding rule for the given custom resolver.
+// Create a forwarding rule for the given custom resolver. The maximum number limit of forwarding rules depends on the
+// custom resolver profile.
+//
+// * Essential profiles can have a maximum of 10 forwarding rules.
+// * Advanced profiles can have a maximum of 50 forwarding rules.
+// * Premier profiles can have a maximum of 100 forwarding rules.
 func (dnsSvcs *DnsSvcsV1) CreateForwardingRule(createForwardingRuleOptions *CreateForwardingRuleOptions) (result *ForwardingRule, response *core.DetailedResponse, err error) {
-	return dnsSvcs.CreateForwardingRuleWithContext(context.Background(), createForwardingRuleOptions)
+	result, response, err = dnsSvcs.CreateForwardingRuleWithContext(context.Background(), createForwardingRuleOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateForwardingRuleWithContext is an alternate form of the CreateForwardingRule method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) CreateForwardingRuleWithContext(ctx context.Context, createForwardingRuleOptions *CreateForwardingRuleOptions) (result *ForwardingRule, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createForwardingRuleOptions, "createForwardingRuleOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createForwardingRuleOptions, "createForwardingRuleOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3161,6 +3590,7 @@ func (dnsSvcs *DnsSvcsV1) CreateForwardingRuleWithContext(ctx context.Context, c
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/custom_resolvers/{resolver_id}/forwarding_rules`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3178,37 +3608,29 @@ func (dnsSvcs *DnsSvcsV1) CreateForwardingRuleWithContext(ctx context.Context, c
 		builder.AddHeader("X-Correlation-ID", fmt.Sprint(*createForwardingRuleOptions.XCorrelationID))
 	}
 
-	body := make(map[string]interface{})
-	if createForwardingRuleOptions.Description != nil {
-		body["description"] = createForwardingRuleOptions.Description
-	}
-	if createForwardingRuleOptions.Type != nil {
-		body["type"] = createForwardingRuleOptions.Type
-	}
-	if createForwardingRuleOptions.Match != nil {
-		body["match"] = createForwardingRuleOptions.Match
-	}
-	if createForwardingRuleOptions.ForwardTo != nil {
-		body["forward_to"] = createForwardingRuleOptions.ForwardTo
-	}
-	_, err = builder.SetBodyContentJSON(body)
+	_, err = builder.SetBodyContentJSON(createForwardingRuleOptions.ForwardingRuleInput)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_forwarding_rule", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalForwardingRule)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3220,24 +3642,28 @@ func (dnsSvcs *DnsSvcsV1) CreateForwardingRuleWithContext(ctx context.Context, c
 // DeleteForwardingRule : Delete a forwarding rule
 // Delete a forwarding rule on the given custom resolver.
 func (dnsSvcs *DnsSvcsV1) DeleteForwardingRule(deleteForwardingRuleOptions *DeleteForwardingRuleOptions) (response *core.DetailedResponse, err error) {
-	return dnsSvcs.DeleteForwardingRuleWithContext(context.Background(), deleteForwardingRuleOptions)
+	response, err = dnsSvcs.DeleteForwardingRuleWithContext(context.Background(), deleteForwardingRuleOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteForwardingRuleWithContext is an alternate form of the DeleteForwardingRule method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) DeleteForwardingRuleWithContext(ctx context.Context, deleteForwardingRuleOptions *DeleteForwardingRuleOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteForwardingRuleOptions, "deleteForwardingRuleOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteForwardingRuleOptions, "deleteForwardingRuleOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *deleteForwardingRuleOptions.InstanceID,
 		"resolver_id": *deleteForwardingRuleOptions.ResolverID,
-		"rule_id": *deleteForwardingRuleOptions.RuleID,
+		"rule_id":     *deleteForwardingRuleOptions.RuleID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -3245,6 +3671,7 @@ func (dnsSvcs *DnsSvcsV1) DeleteForwardingRuleWithContext(ctx context.Context, d
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/custom_resolvers/{resolver_id}/forwarding_rules/{rule_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3262,10 +3689,16 @@ func (dnsSvcs *DnsSvcsV1) DeleteForwardingRuleWithContext(ctx context.Context, d
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = dnsSvcs.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_forwarding_rule", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -3273,24 +3706,28 @@ func (dnsSvcs *DnsSvcsV1) DeleteForwardingRuleWithContext(ctx context.Context, d
 // GetForwardingRule : Get a forwarding rule
 // Get details of a forwarding rule on the given custom resolver.
 func (dnsSvcs *DnsSvcsV1) GetForwardingRule(getForwardingRuleOptions *GetForwardingRuleOptions) (result *ForwardingRule, response *core.DetailedResponse, err error) {
-	return dnsSvcs.GetForwardingRuleWithContext(context.Background(), getForwardingRuleOptions)
+	result, response, err = dnsSvcs.GetForwardingRuleWithContext(context.Background(), getForwardingRuleOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetForwardingRuleWithContext is an alternate form of the GetForwardingRule method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) GetForwardingRuleWithContext(ctx context.Context, getForwardingRuleOptions *GetForwardingRuleOptions) (result *ForwardingRule, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getForwardingRuleOptions, "getForwardingRuleOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getForwardingRuleOptions, "getForwardingRuleOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *getForwardingRuleOptions.InstanceID,
 		"resolver_id": *getForwardingRuleOptions.ResolverID,
-		"rule_id": *getForwardingRuleOptions.RuleID,
+		"rule_id":     *getForwardingRuleOptions.RuleID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -3298,6 +3735,7 @@ func (dnsSvcs *DnsSvcsV1) GetForwardingRuleWithContext(ctx context.Context, getF
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/custom_resolvers/{resolver_id}/forwarding_rules/{rule_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3316,17 +3754,21 @@ func (dnsSvcs *DnsSvcsV1) GetForwardingRuleWithContext(ctx context.Context, getF
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_forwarding_rule", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalForwardingRule)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3338,24 +3780,28 @@ func (dnsSvcs *DnsSvcsV1) GetForwardingRuleWithContext(ctx context.Context, getF
 // UpdateForwardingRule : Update a forwarding rule
 // Update the properties of a forwarding rule on the given custom resolver.
 func (dnsSvcs *DnsSvcsV1) UpdateForwardingRule(updateForwardingRuleOptions *UpdateForwardingRuleOptions) (result *ForwardingRule, response *core.DetailedResponse, err error) {
-	return dnsSvcs.UpdateForwardingRuleWithContext(context.Background(), updateForwardingRuleOptions)
+	result, response, err = dnsSvcs.UpdateForwardingRuleWithContext(context.Background(), updateForwardingRuleOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateForwardingRuleWithContext is an alternate form of the UpdateForwardingRule method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) UpdateForwardingRuleWithContext(ctx context.Context, updateForwardingRuleOptions *UpdateForwardingRuleOptions) (result *ForwardingRule, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateForwardingRuleOptions, "updateForwardingRuleOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateForwardingRuleOptions, "updateForwardingRuleOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *updateForwardingRuleOptions.InstanceID,
 		"resolver_id": *updateForwardingRuleOptions.ResolverID,
-		"rule_id": *updateForwardingRuleOptions.RuleID,
+		"rule_id":     *updateForwardingRuleOptions.RuleID,
 	}
 
 	builder := core.NewRequestBuilder(core.PATCH)
@@ -3363,6 +3809,7 @@ func (dnsSvcs *DnsSvcsV1) UpdateForwardingRuleWithContext(ctx context.Context, u
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/custom_resolvers/{resolver_id}/forwarding_rules/{rule_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3390,24 +3837,32 @@ func (dnsSvcs *DnsSvcsV1) UpdateForwardingRuleWithContext(ctx context.Context, u
 	if updateForwardingRuleOptions.ForwardTo != nil {
 		body["forward_to"] = updateForwardingRuleOptions.ForwardTo
 	}
+	if updateForwardingRuleOptions.Views != nil {
+		body["views"] = updateForwardingRuleOptions.Views
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_forwarding_rule", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalForwardingRule)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3417,19 +3872,28 @@ func (dnsSvcs *DnsSvcsV1) UpdateForwardingRuleWithContext(ctx context.Context, u
 }
 
 // CreateSecondaryZone : Create a secondary zone
-// Create a secondary zone for the custom resolver.
+// Create a secondary zone for a given custom resolver. The maximum number limit of secondary zones depends on the
+// custom resolver profile.
+//
+// * Essential profiles can have a maximum of 10 secondary zones.
+// * Advanced profiles can have a maximum of 50 secondary zones.
+// * Premier profiles can have a maximum of 100 secondary zones.
 func (dnsSvcs *DnsSvcsV1) CreateSecondaryZone(createSecondaryZoneOptions *CreateSecondaryZoneOptions) (result *SecondaryZone, response *core.DetailedResponse, err error) {
-	return dnsSvcs.CreateSecondaryZoneWithContext(context.Background(), createSecondaryZoneOptions)
+	result, response, err = dnsSvcs.CreateSecondaryZoneWithContext(context.Background(), createSecondaryZoneOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateSecondaryZoneWithContext is an alternate form of the CreateSecondaryZone method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) CreateSecondaryZoneWithContext(ctx context.Context, createSecondaryZoneOptions *CreateSecondaryZoneOptions) (result *SecondaryZone, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createSecondaryZoneOptions, "createSecondaryZoneOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createSecondaryZoneOptions, "createSecondaryZoneOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3443,6 +3907,7 @@ func (dnsSvcs *DnsSvcsV1) CreateSecondaryZoneWithContext(ctx context.Context, cr
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/custom_resolvers/{resolver_id}/secondary_zones`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3461,36 +3926,41 @@ func (dnsSvcs *DnsSvcsV1) CreateSecondaryZoneWithContext(ctx context.Context, cr
 	}
 
 	body := make(map[string]interface{})
-	if createSecondaryZoneOptions.Description != nil {
-		body["description"] = createSecondaryZoneOptions.Description
-	}
 	if createSecondaryZoneOptions.Zone != nil {
 		body["zone"] = createSecondaryZoneOptions.Zone
-	}
-	if createSecondaryZoneOptions.Enabled != nil {
-		body["enabled"] = createSecondaryZoneOptions.Enabled
 	}
 	if createSecondaryZoneOptions.TransferFrom != nil {
 		body["transfer_from"] = createSecondaryZoneOptions.TransferFrom
 	}
+	if createSecondaryZoneOptions.Description != nil {
+		body["description"] = createSecondaryZoneOptions.Description
+	}
+	if createSecondaryZoneOptions.Enabled != nil {
+		body["enabled"] = createSecondaryZoneOptions.Enabled
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_secondary_zone", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSecondaryZone)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3502,17 +3972,21 @@ func (dnsSvcs *DnsSvcsV1) CreateSecondaryZoneWithContext(ctx context.Context, cr
 // ListSecondaryZones : List secondary zones
 // List secondary zones for the custom resolver.
 func (dnsSvcs *DnsSvcsV1) ListSecondaryZones(listSecondaryZonesOptions *ListSecondaryZonesOptions) (result *SecondaryZoneList, response *core.DetailedResponse, err error) {
-	return dnsSvcs.ListSecondaryZonesWithContext(context.Background(), listSecondaryZonesOptions)
+	result, response, err = dnsSvcs.ListSecondaryZonesWithContext(context.Background(), listSecondaryZonesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListSecondaryZonesWithContext is an alternate form of the ListSecondaryZones method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) ListSecondaryZonesWithContext(ctx context.Context, listSecondaryZonesOptions *ListSecondaryZonesOptions) (result *SecondaryZoneList, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listSecondaryZonesOptions, "listSecondaryZonesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listSecondaryZonesOptions, "listSecondaryZonesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3526,6 +4000,7 @@ func (dnsSvcs *DnsSvcsV1) ListSecondaryZonesWithContext(ctx context.Context, lis
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/custom_resolvers/{resolver_id}/secondary_zones`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3551,17 +4026,21 @@ func (dnsSvcs *DnsSvcsV1) ListSecondaryZonesWithContext(ctx context.Context, lis
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_secondary_zones", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSecondaryZoneList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3573,23 +4052,27 @@ func (dnsSvcs *DnsSvcsV1) ListSecondaryZonesWithContext(ctx context.Context, lis
 // GetSecondaryZone : Get a secondary zone
 // Get details of a secondary zone for the custom resolver.
 func (dnsSvcs *DnsSvcsV1) GetSecondaryZone(getSecondaryZoneOptions *GetSecondaryZoneOptions) (result *SecondaryZone, response *core.DetailedResponse, err error) {
-	return dnsSvcs.GetSecondaryZoneWithContext(context.Background(), getSecondaryZoneOptions)
+	result, response, err = dnsSvcs.GetSecondaryZoneWithContext(context.Background(), getSecondaryZoneOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetSecondaryZoneWithContext is an alternate form of the GetSecondaryZone method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) GetSecondaryZoneWithContext(ctx context.Context, getSecondaryZoneOptions *GetSecondaryZoneOptions) (result *SecondaryZone, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getSecondaryZoneOptions, "getSecondaryZoneOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getSecondaryZoneOptions, "getSecondaryZoneOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id": *getSecondaryZoneOptions.InstanceID,
-		"resolver_id": *getSecondaryZoneOptions.ResolverID,
+		"instance_id":       *getSecondaryZoneOptions.InstanceID,
+		"resolver_id":       *getSecondaryZoneOptions.ResolverID,
 		"secondary_zone_id": *getSecondaryZoneOptions.SecondaryZoneID,
 	}
 
@@ -3598,6 +4081,7 @@ func (dnsSvcs *DnsSvcsV1) GetSecondaryZoneWithContext(ctx context.Context, getSe
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/custom_resolvers/{resolver_id}/secondary_zones/{secondary_zone_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3616,17 +4100,21 @@ func (dnsSvcs *DnsSvcsV1) GetSecondaryZoneWithContext(ctx context.Context, getSe
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_secondary_zone", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSecondaryZone)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3638,23 +4126,27 @@ func (dnsSvcs *DnsSvcsV1) GetSecondaryZoneWithContext(ctx context.Context, getSe
 // UpdateSecondaryZone : Update a secondary zone
 // Update a secondary zone for the custom resolver.
 func (dnsSvcs *DnsSvcsV1) UpdateSecondaryZone(updateSecondaryZoneOptions *UpdateSecondaryZoneOptions) (result *SecondaryZone, response *core.DetailedResponse, err error) {
-	return dnsSvcs.UpdateSecondaryZoneWithContext(context.Background(), updateSecondaryZoneOptions)
+	result, response, err = dnsSvcs.UpdateSecondaryZoneWithContext(context.Background(), updateSecondaryZoneOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateSecondaryZoneWithContext is an alternate form of the UpdateSecondaryZone method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) UpdateSecondaryZoneWithContext(ctx context.Context, updateSecondaryZoneOptions *UpdateSecondaryZoneOptions) (result *SecondaryZone, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateSecondaryZoneOptions, "updateSecondaryZoneOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateSecondaryZoneOptions, "updateSecondaryZoneOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id": *updateSecondaryZoneOptions.InstanceID,
-		"resolver_id": *updateSecondaryZoneOptions.ResolverID,
+		"instance_id":       *updateSecondaryZoneOptions.InstanceID,
+		"resolver_id":       *updateSecondaryZoneOptions.ResolverID,
 		"secondary_zone_id": *updateSecondaryZoneOptions.SecondaryZoneID,
 	}
 
@@ -3663,6 +4155,7 @@ func (dnsSvcs *DnsSvcsV1) UpdateSecondaryZoneWithContext(ctx context.Context, up
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/custom_resolvers/{resolver_id}/secondary_zones/{secondary_zone_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3692,22 +4185,27 @@ func (dnsSvcs *DnsSvcsV1) UpdateSecondaryZoneWithContext(ctx context.Context, up
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_secondary_zone", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSecondaryZone)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3719,23 +4217,27 @@ func (dnsSvcs *DnsSvcsV1) UpdateSecondaryZoneWithContext(ctx context.Context, up
 // DeleteSecondaryZone : Delete a secondary zone
 // Delete a secondary zone for the custom resolver.
 func (dnsSvcs *DnsSvcsV1) DeleteSecondaryZone(deleteSecondaryZoneOptions *DeleteSecondaryZoneOptions) (response *core.DetailedResponse, err error) {
-	return dnsSvcs.DeleteSecondaryZoneWithContext(context.Background(), deleteSecondaryZoneOptions)
+	response, err = dnsSvcs.DeleteSecondaryZoneWithContext(context.Background(), deleteSecondaryZoneOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteSecondaryZoneWithContext is an alternate form of the DeleteSecondaryZone method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) DeleteSecondaryZoneWithContext(ctx context.Context, deleteSecondaryZoneOptions *DeleteSecondaryZoneOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteSecondaryZoneOptions, "deleteSecondaryZoneOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteSecondaryZoneOptions, "deleteSecondaryZoneOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id": *deleteSecondaryZoneOptions.InstanceID,
-		"resolver_id": *deleteSecondaryZoneOptions.ResolverID,
+		"instance_id":       *deleteSecondaryZoneOptions.InstanceID,
+		"resolver_id":       *deleteSecondaryZoneOptions.ResolverID,
 		"secondary_zone_id": *deleteSecondaryZoneOptions.SecondaryZoneID,
 	}
 
@@ -3744,6 +4246,7 @@ func (dnsSvcs *DnsSvcsV1) DeleteSecondaryZoneWithContext(ctx context.Context, de
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/custom_resolvers/{resolver_id}/secondary_zones/{secondary_zone_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3761,10 +4264,16 @@ func (dnsSvcs *DnsSvcsV1) DeleteSecondaryZoneWithContext(ctx context.Context, de
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = dnsSvcs.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_secondary_zone", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -3772,17 +4281,21 @@ func (dnsSvcs *DnsSvcsV1) DeleteSecondaryZoneWithContext(ctx context.Context, de
 // ListLinkedZones : List linked zones
 // List linked zones in requestor's instance.
 func (dnsSvcs *DnsSvcsV1) ListLinkedZones(listLinkedZonesOptions *ListLinkedZonesOptions) (result *LinkedDnszonesList, response *core.DetailedResponse, err error) {
-	return dnsSvcs.ListLinkedZonesWithContext(context.Background(), listLinkedZonesOptions)
+	result, response, err = dnsSvcs.ListLinkedZonesWithContext(context.Background(), listLinkedZonesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListLinkedZonesWithContext is an alternate form of the ListLinkedZones method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) ListLinkedZonesWithContext(ctx context.Context, listLinkedZonesOptions *ListLinkedZonesOptions) (result *LinkedDnszonesList, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listLinkedZonesOptions, "listLinkedZonesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listLinkedZonesOptions, "listLinkedZonesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3795,6 +4308,7 @@ func (dnsSvcs *DnsSvcsV1) ListLinkedZonesWithContext(ctx context.Context, listLi
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/linked_dnszones`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3820,17 +4334,21 @@ func (dnsSvcs *DnsSvcsV1) ListLinkedZonesWithContext(ctx context.Context, listLi
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_linked_zones", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalLinkedDnszonesList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3842,17 +4360,21 @@ func (dnsSvcs *DnsSvcsV1) ListLinkedZonesWithContext(ctx context.Context, listLi
 // CreateLinkedZone : Create a linked zone
 // Create a linked zone.
 func (dnsSvcs *DnsSvcsV1) CreateLinkedZone(createLinkedZoneOptions *CreateLinkedZoneOptions) (result *LinkedDnszone, response *core.DetailedResponse, err error) {
-	return dnsSvcs.CreateLinkedZoneWithContext(context.Background(), createLinkedZoneOptions)
+	result, response, err = dnsSvcs.CreateLinkedZoneWithContext(context.Background(), createLinkedZoneOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateLinkedZoneWithContext is an alternate form of the CreateLinkedZone method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) CreateLinkedZoneWithContext(ctx context.Context, createLinkedZoneOptions *CreateLinkedZoneOptions) (result *LinkedDnszone, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createLinkedZoneOptions, "createLinkedZoneOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createLinkedZoneOptions, "createLinkedZoneOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3865,6 +4387,7 @@ func (dnsSvcs *DnsSvcsV1) CreateLinkedZoneWithContext(ctx context.Context, creat
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/linked_dnszones`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3897,22 +4420,27 @@ func (dnsSvcs *DnsSvcsV1) CreateLinkedZoneWithContext(ctx context.Context, creat
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_linked_zone", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalLinkedDnszone)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3924,22 +4452,26 @@ func (dnsSvcs *DnsSvcsV1) CreateLinkedZoneWithContext(ctx context.Context, creat
 // GetLinkedZone : Get a linked zone
 // Get details of a linked zone.
 func (dnsSvcs *DnsSvcsV1) GetLinkedZone(getLinkedZoneOptions *GetLinkedZoneOptions) (result *LinkedDnszone, response *core.DetailedResponse, err error) {
-	return dnsSvcs.GetLinkedZoneWithContext(context.Background(), getLinkedZoneOptions)
+	result, response, err = dnsSvcs.GetLinkedZoneWithContext(context.Background(), getLinkedZoneOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetLinkedZoneWithContext is an alternate form of the GetLinkedZone method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) GetLinkedZoneWithContext(ctx context.Context, getLinkedZoneOptions *GetLinkedZoneOptions) (result *LinkedDnszone, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getLinkedZoneOptions, "getLinkedZoneOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getLinkedZoneOptions, "getLinkedZoneOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id": *getLinkedZoneOptions.InstanceID,
+		"instance_id":       *getLinkedZoneOptions.InstanceID,
 		"linked_dnszone_id": *getLinkedZoneOptions.LinkedDnszoneID,
 	}
 
@@ -3948,6 +4480,7 @@ func (dnsSvcs *DnsSvcsV1) GetLinkedZoneWithContext(ctx context.Context, getLinke
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/linked_dnszones/{linked_dnszone_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3966,17 +4499,21 @@ func (dnsSvcs *DnsSvcsV1) GetLinkedZoneWithContext(ctx context.Context, getLinke
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_linked_zone", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalLinkedDnszone)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3988,22 +4525,26 @@ func (dnsSvcs *DnsSvcsV1) GetLinkedZoneWithContext(ctx context.Context, getLinke
 // UpdateLinkedZone : Update the properties of a linked zone
 // Update the properties of a linked zone.
 func (dnsSvcs *DnsSvcsV1) UpdateLinkedZone(updateLinkedZoneOptions *UpdateLinkedZoneOptions) (result *LinkedDnszone, response *core.DetailedResponse, err error) {
-	return dnsSvcs.UpdateLinkedZoneWithContext(context.Background(), updateLinkedZoneOptions)
+	result, response, err = dnsSvcs.UpdateLinkedZoneWithContext(context.Background(), updateLinkedZoneOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateLinkedZoneWithContext is an alternate form of the UpdateLinkedZone method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) UpdateLinkedZoneWithContext(ctx context.Context, updateLinkedZoneOptions *UpdateLinkedZoneOptions) (result *LinkedDnszone, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateLinkedZoneOptions, "updateLinkedZoneOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateLinkedZoneOptions, "updateLinkedZoneOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id": *updateLinkedZoneOptions.InstanceID,
+		"instance_id":       *updateLinkedZoneOptions.InstanceID,
 		"linked_dnszone_id": *updateLinkedZoneOptions.LinkedDnszoneID,
 	}
 
@@ -4012,6 +4553,7 @@ func (dnsSvcs *DnsSvcsV1) UpdateLinkedZoneWithContext(ctx context.Context, updat
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/linked_dnszones/{linked_dnszone_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4038,22 +4580,27 @@ func (dnsSvcs *DnsSvcsV1) UpdateLinkedZoneWithContext(ctx context.Context, updat
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_linked_zone", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalLinkedDnszone)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4065,22 +4612,26 @@ func (dnsSvcs *DnsSvcsV1) UpdateLinkedZoneWithContext(ctx context.Context, updat
 // DeleteLinkedZone : Delete a linked zone
 // Delete a linked zone.
 func (dnsSvcs *DnsSvcsV1) DeleteLinkedZone(deleteLinkedZoneOptions *DeleteLinkedZoneOptions) (response *core.DetailedResponse, err error) {
-	return dnsSvcs.DeleteLinkedZoneWithContext(context.Background(), deleteLinkedZoneOptions)
+	response, err = dnsSvcs.DeleteLinkedZoneWithContext(context.Background(), deleteLinkedZoneOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteLinkedZoneWithContext is an alternate form of the DeleteLinkedZone method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) DeleteLinkedZoneWithContext(ctx context.Context, deleteLinkedZoneOptions *DeleteLinkedZoneOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteLinkedZoneOptions, "deleteLinkedZoneOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteLinkedZoneOptions, "deleteLinkedZoneOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id": *deleteLinkedZoneOptions.InstanceID,
+		"instance_id":       *deleteLinkedZoneOptions.InstanceID,
 		"linked_dnszone_id": *deleteLinkedZoneOptions.LinkedDnszoneID,
 	}
 
@@ -4089,6 +4640,7 @@ func (dnsSvcs *DnsSvcsV1) DeleteLinkedZoneWithContext(ctx context.Context, delet
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/linked_dnszones/{linked_dnszone_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4106,10 +4658,16 @@ func (dnsSvcs *DnsSvcsV1) DeleteLinkedZoneWithContext(ctx context.Context, delet
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = dnsSvcs.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_linked_zone", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -4117,23 +4675,27 @@ func (dnsSvcs *DnsSvcsV1) DeleteLinkedZoneWithContext(ctx context.Context, delet
 // ListDnszoneAccessRequests : List Access Requests
 // List access requests in owner's instance.
 func (dnsSvcs *DnsSvcsV1) ListDnszoneAccessRequests(listDnszoneAccessRequestsOptions *ListDnszoneAccessRequestsOptions) (result *AccessRequestsList, response *core.DetailedResponse, err error) {
-	return dnsSvcs.ListDnszoneAccessRequestsWithContext(context.Background(), listDnszoneAccessRequestsOptions)
+	result, response, err = dnsSvcs.ListDnszoneAccessRequestsWithContext(context.Background(), listDnszoneAccessRequestsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListDnszoneAccessRequestsWithContext is an alternate form of the ListDnszoneAccessRequests method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) ListDnszoneAccessRequestsWithContext(ctx context.Context, listDnszoneAccessRequestsOptions *ListDnszoneAccessRequestsOptions) (result *AccessRequestsList, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listDnszoneAccessRequestsOptions, "listDnszoneAccessRequestsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listDnszoneAccessRequestsOptions, "listDnszoneAccessRequestsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *listDnszoneAccessRequestsOptions.InstanceID,
-		"dnszone_id": *listDnszoneAccessRequestsOptions.DnszoneID,
+		"dnszone_id":  *listDnszoneAccessRequestsOptions.DnszoneID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -4141,6 +4703,7 @@ func (dnsSvcs *DnsSvcsV1) ListDnszoneAccessRequestsWithContext(ctx context.Conte
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/dnszones/{dnszone_id}/access_requests`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4166,17 +4729,21 @@ func (dnsSvcs *DnsSvcsV1) ListDnszoneAccessRequestsWithContext(ctx context.Conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_dnszone_access_requests", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccessRequestsList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4188,24 +4755,28 @@ func (dnsSvcs *DnsSvcsV1) ListDnszoneAccessRequestsWithContext(ctx context.Conte
 // GetDnszoneAccessRequest : Get an access request
 // Get details of an access request.
 func (dnsSvcs *DnsSvcsV1) GetDnszoneAccessRequest(getDnszoneAccessRequestOptions *GetDnszoneAccessRequestOptions) (result *AccessRequest, response *core.DetailedResponse, err error) {
-	return dnsSvcs.GetDnszoneAccessRequestWithContext(context.Background(), getDnszoneAccessRequestOptions)
+	result, response, err = dnsSvcs.GetDnszoneAccessRequestWithContext(context.Background(), getDnszoneAccessRequestOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetDnszoneAccessRequestWithContext is an alternate form of the GetDnszoneAccessRequest method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) GetDnszoneAccessRequestWithContext(ctx context.Context, getDnszoneAccessRequestOptions *GetDnszoneAccessRequestOptions) (result *AccessRequest, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getDnszoneAccessRequestOptions, "getDnszoneAccessRequestOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getDnszoneAccessRequestOptions, "getDnszoneAccessRequestOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *getDnszoneAccessRequestOptions.InstanceID,
-		"dnszone_id": *getDnszoneAccessRequestOptions.DnszoneID,
-		"request_id": *getDnszoneAccessRequestOptions.RequestID,
+		"dnszone_id":  *getDnszoneAccessRequestOptions.DnszoneID,
+		"request_id":  *getDnszoneAccessRequestOptions.RequestID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -4213,6 +4784,7 @@ func (dnsSvcs *DnsSvcsV1) GetDnszoneAccessRequestWithContext(ctx context.Context
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/dnszones/{dnszone_id}/access_requests/{request_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4231,17 +4803,21 @@ func (dnsSvcs *DnsSvcsV1) GetDnszoneAccessRequestWithContext(ctx context.Context
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_dnszone_access_request", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccessRequest)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4253,24 +4829,28 @@ func (dnsSvcs *DnsSvcsV1) GetDnszoneAccessRequestWithContext(ctx context.Context
 // UpdateDnszoneAccessRequest : Update an access request
 // Update the state of an access request.
 func (dnsSvcs *DnsSvcsV1) UpdateDnszoneAccessRequest(updateDnszoneAccessRequestOptions *UpdateDnszoneAccessRequestOptions) (result *AccessRequest, response *core.DetailedResponse, err error) {
-	return dnsSvcs.UpdateDnszoneAccessRequestWithContext(context.Background(), updateDnszoneAccessRequestOptions)
+	result, response, err = dnsSvcs.UpdateDnszoneAccessRequestWithContext(context.Background(), updateDnszoneAccessRequestOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateDnszoneAccessRequestWithContext is an alternate form of the UpdateDnszoneAccessRequest method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) UpdateDnszoneAccessRequestWithContext(ctx context.Context, updateDnszoneAccessRequestOptions *UpdateDnszoneAccessRequestOptions) (result *AccessRequest, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateDnszoneAccessRequestOptions, "updateDnszoneAccessRequestOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateDnszoneAccessRequestOptions, "updateDnszoneAccessRequestOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *updateDnszoneAccessRequestOptions.InstanceID,
-		"dnszone_id": *updateDnszoneAccessRequestOptions.DnszoneID,
-		"request_id": *updateDnszoneAccessRequestOptions.RequestID,
+		"dnszone_id":  *updateDnszoneAccessRequestOptions.DnszoneID,
+		"request_id":  *updateDnszoneAccessRequestOptions.RequestID,
 	}
 
 	builder := core.NewRequestBuilder(core.PATCH)
@@ -4278,6 +4858,7 @@ func (dnsSvcs *DnsSvcsV1) UpdateDnszoneAccessRequestWithContext(ctx context.Cont
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/dnszones/{dnszone_id}/access_requests/{request_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4301,22 +4882,27 @@ func (dnsSvcs *DnsSvcsV1) UpdateDnszoneAccessRequestWithContext(ctx context.Cont
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_dnszone_access_request", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccessRequest)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4328,22 +4914,26 @@ func (dnsSvcs *DnsSvcsV1) UpdateDnszoneAccessRequestWithContext(ctx context.Cont
 // ListLinkedPermittedNetworks : List permitted networks
 // List the permitted networks for a linked zone.
 func (dnsSvcs *DnsSvcsV1) ListLinkedPermittedNetworks(listLinkedPermittedNetworksOptions *ListLinkedPermittedNetworksOptions) (result *ListPermittedNetworks, response *core.DetailedResponse, err error) {
-	return dnsSvcs.ListLinkedPermittedNetworksWithContext(context.Background(), listLinkedPermittedNetworksOptions)
+	result, response, err = dnsSvcs.ListLinkedPermittedNetworksWithContext(context.Background(), listLinkedPermittedNetworksOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListLinkedPermittedNetworksWithContext is an alternate form of the ListLinkedPermittedNetworks method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) ListLinkedPermittedNetworksWithContext(ctx context.Context, listLinkedPermittedNetworksOptions *ListLinkedPermittedNetworksOptions) (result *ListPermittedNetworks, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listLinkedPermittedNetworksOptions, "listLinkedPermittedNetworksOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listLinkedPermittedNetworksOptions, "listLinkedPermittedNetworksOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id": *listLinkedPermittedNetworksOptions.InstanceID,
+		"instance_id":       *listLinkedPermittedNetworksOptions.InstanceID,
 		"linked_dnszone_id": *listLinkedPermittedNetworksOptions.LinkedDnszoneID,
 	}
 
@@ -4352,6 +4942,7 @@ func (dnsSvcs *DnsSvcsV1) ListLinkedPermittedNetworksWithContext(ctx context.Con
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/linked_dnszones/{linked_dnszone_id}/permitted_networks`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4370,17 +4961,21 @@ func (dnsSvcs *DnsSvcsV1) ListLinkedPermittedNetworksWithContext(ctx context.Con
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_linked_permitted_networks", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListPermittedNetworks)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4392,22 +4987,26 @@ func (dnsSvcs *DnsSvcsV1) ListLinkedPermittedNetworksWithContext(ctx context.Con
 // CreateLzPermittedNetwork : Create a permitted network
 // Create a permitted network for a linked zone.
 func (dnsSvcs *DnsSvcsV1) CreateLzPermittedNetwork(createLzPermittedNetworkOptions *CreateLzPermittedNetworkOptions) (result *PermittedNetwork, response *core.DetailedResponse, err error) {
-	return dnsSvcs.CreateLzPermittedNetworkWithContext(context.Background(), createLzPermittedNetworkOptions)
+	result, response, err = dnsSvcs.CreateLzPermittedNetworkWithContext(context.Background(), createLzPermittedNetworkOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateLzPermittedNetworkWithContext is an alternate form of the CreateLzPermittedNetwork method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) CreateLzPermittedNetworkWithContext(ctx context.Context, createLzPermittedNetworkOptions *CreateLzPermittedNetworkOptions) (result *PermittedNetwork, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createLzPermittedNetworkOptions, "createLzPermittedNetworkOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createLzPermittedNetworkOptions, "createLzPermittedNetworkOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id": *createLzPermittedNetworkOptions.InstanceID,
+		"instance_id":       *createLzPermittedNetworkOptions.InstanceID,
 		"linked_dnszone_id": *createLzPermittedNetworkOptions.LinkedDnszoneID,
 	}
 
@@ -4416,6 +5015,7 @@ func (dnsSvcs *DnsSvcsV1) CreateLzPermittedNetworkWithContext(ctx context.Contex
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/linked_dnszones/{linked_dnszone_id}/permitted_networks`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4442,22 +5042,27 @@ func (dnsSvcs *DnsSvcsV1) CreateLzPermittedNetworkWithContext(ctx context.Contex
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_lz_permitted_network", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPermittedNetwork)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4469,23 +5074,27 @@ func (dnsSvcs *DnsSvcsV1) CreateLzPermittedNetworkWithContext(ctx context.Contex
 // DeleteLzPermittedNetwork : Remove a permitted network
 // Remove a permitted network from a linked zone.
 func (dnsSvcs *DnsSvcsV1) DeleteLzPermittedNetwork(deleteLzPermittedNetworkOptions *DeleteLzPermittedNetworkOptions) (result *PermittedNetwork, response *core.DetailedResponse, err error) {
-	return dnsSvcs.DeleteLzPermittedNetworkWithContext(context.Background(), deleteLzPermittedNetworkOptions)
+	result, response, err = dnsSvcs.DeleteLzPermittedNetworkWithContext(context.Background(), deleteLzPermittedNetworkOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteLzPermittedNetworkWithContext is an alternate form of the DeleteLzPermittedNetwork method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) DeleteLzPermittedNetworkWithContext(ctx context.Context, deleteLzPermittedNetworkOptions *DeleteLzPermittedNetworkOptions) (result *PermittedNetwork, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteLzPermittedNetworkOptions, "deleteLzPermittedNetworkOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteLzPermittedNetworkOptions, "deleteLzPermittedNetworkOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id": *deleteLzPermittedNetworkOptions.InstanceID,
-		"linked_dnszone_id": *deleteLzPermittedNetworkOptions.LinkedDnszoneID,
+		"instance_id":          *deleteLzPermittedNetworkOptions.InstanceID,
+		"linked_dnszone_id":    *deleteLzPermittedNetworkOptions.LinkedDnszoneID,
 		"permitted_network_id": *deleteLzPermittedNetworkOptions.PermittedNetworkID,
 	}
 
@@ -4494,6 +5103,7 @@ func (dnsSvcs *DnsSvcsV1) DeleteLzPermittedNetworkWithContext(ctx context.Contex
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/linked_dnszones/{linked_dnszone_id}/permitted_networks/{permitted_network_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4512,17 +5122,21 @@ func (dnsSvcs *DnsSvcsV1) DeleteLzPermittedNetworkWithContext(ctx context.Contex
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_lz_permitted_network", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPermittedNetwork)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4534,23 +5148,27 @@ func (dnsSvcs *DnsSvcsV1) DeleteLzPermittedNetworkWithContext(ctx context.Contex
 // GetLinkedPermittedNetwork : Get a permitted network
 // Get a permitted network of a linked zone.
 func (dnsSvcs *DnsSvcsV1) GetLinkedPermittedNetwork(getLinkedPermittedNetworkOptions *GetLinkedPermittedNetworkOptions) (result *PermittedNetwork, response *core.DetailedResponse, err error) {
-	return dnsSvcs.GetLinkedPermittedNetworkWithContext(context.Background(), getLinkedPermittedNetworkOptions)
+	result, response, err = dnsSvcs.GetLinkedPermittedNetworkWithContext(context.Background(), getLinkedPermittedNetworkOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetLinkedPermittedNetworkWithContext is an alternate form of the GetLinkedPermittedNetwork method which supports a Context parameter
 func (dnsSvcs *DnsSvcsV1) GetLinkedPermittedNetworkWithContext(ctx context.Context, getLinkedPermittedNetworkOptions *GetLinkedPermittedNetworkOptions) (result *PermittedNetwork, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getLinkedPermittedNetworkOptions, "getLinkedPermittedNetworkOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getLinkedPermittedNetworkOptions, "getLinkedPermittedNetworkOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id": *getLinkedPermittedNetworkOptions.InstanceID,
-		"linked_dnszone_id": *getLinkedPermittedNetworkOptions.LinkedDnszoneID,
+		"instance_id":          *getLinkedPermittedNetworkOptions.InstanceID,
+		"linked_dnszone_id":    *getLinkedPermittedNetworkOptions.LinkedDnszoneID,
 		"permitted_network_id": *getLinkedPermittedNetworkOptions.PermittedNetworkID,
 	}
 
@@ -4559,6 +5177,7 @@ func (dnsSvcs *DnsSvcsV1) GetLinkedPermittedNetworkWithContext(ctx context.Conte
 	builder.EnableGzipCompression = dnsSvcs.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(dnsSvcs.Service.Options.URL, `/instances/{instance_id}/linked_dnszones/{linked_dnszone_id}/permitted_networks/{permitted_network_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4577,23 +5196,30 @@ func (dnsSvcs *DnsSvcsV1) GetLinkedPermittedNetworkWithContext(ctx context.Conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = dnsSvcs.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_linked_permitted_network", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPermittedNetwork)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
 	}
 
 	return
+}
+func getServiceComponentInfo() *core.ProblemComponent {
+	return core.NewProblemComponent(DefaultServiceName, "1.0.0")
 }
 
 // AccessRequestRequestor : The information of requestor.
@@ -4613,14 +5239,17 @@ func UnmarshalAccessRequestRequestor(m map[string]json.RawMessage, result interf
 	obj := new(AccessRequestRequestor)
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "instance_id", &obj.InstanceID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "instance_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "linked_zone_id", &obj.LinkedZoneID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "linked_zone_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4636,7 +5265,7 @@ type AddCustomResolverLocationOptions struct {
 	ResolverID *string `json:"resolver_id" validate:"required,ne="`
 
 	// Custom resolver location, subnet CRN.
-	SubnetCrn *string `json:"subnet_crn,omitempty"`
+	SubnetCrn *string `json:"subnet_crn" validate:"required"`
 
 	// Enable/Disable custom resolver location.
 	Enabled *bool `json:"enabled,omitempty"`
@@ -4644,15 +5273,16 @@ type AddCustomResolverLocationOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewAddCustomResolverLocationOptions : Instantiate AddCustomResolverLocationOptions
-func (*DnsSvcsV1) NewAddCustomResolverLocationOptions(instanceID string, resolverID string) *AddCustomResolverLocationOptions {
+func (*DnsSvcsV1) NewAddCustomResolverLocationOptions(instanceID string, resolverID string, subnetCrn string) *AddCustomResolverLocationOptions {
 	return &AddCustomResolverLocationOptions{
 		InstanceID: core.StringPtr(instanceID),
 		ResolverID: core.StringPtr(resolverID),
+		SubnetCrn:  core.StringPtr(subnetCrn),
 	}
 }
 
@@ -4692,13 +5322,39 @@ func (options *AddCustomResolverLocationOptions) SetHeaders(param map[string]str
 	return options
 }
 
+// AzPoolsItem : AzPoolsItem struct
+type AzPoolsItem struct {
+	// Availability zone.
+	AvailabilityZone *string `json:"availability_zone,omitempty"`
+
+	// List of load balancer pools.
+	Pools []string `json:"pools,omitempty"`
+}
+
+// UnmarshalAzPoolsItem unmarshals an instance of AzPoolsItem from the specified map of raw messages.
+func UnmarshalAzPoolsItem(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AzPoolsItem)
+	err = core.UnmarshalPrimitive(m, "availability_zone", &obj.AvailabilityZone)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "availability_zone-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "pools", &obj.Pools)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "pools-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // CreateCustomResolverOptions : The CreateCustomResolver options.
 type CreateCustomResolverOptions struct {
 	// The unique identifier of a service instance.
 	InstanceID *string `json:"instance_id" validate:"required,ne="`
 
 	// Name of the custom resolver.
-	Name *string `json:"name,omitempty"`
+	Name *string `json:"name" validate:"required"`
 
 	// Descriptive text of the custom resolver.
 	Description *string `json:"description,omitempty"`
@@ -4706,17 +5362,29 @@ type CreateCustomResolverOptions struct {
 	// Locations on which the custom resolver will be running.
 	Locations []LocationInput `json:"locations,omitempty"`
 
+	// The profile name of a custom resolver.
+	Profile *string `json:"profile,omitempty"`
+
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
+// Constants associated with the CreateCustomResolverOptions.Profile property.
+// The profile name of a custom resolver.
+const (
+	CreateCustomResolverOptions_Profile_Advanced  = "advanced"
+	CreateCustomResolverOptions_Profile_Essential = "essential"
+	CreateCustomResolverOptions_Profile_Premier   = "premier"
+)
+
 // NewCreateCustomResolverOptions : Instantiate CreateCustomResolverOptions
-func (*DnsSvcsV1) NewCreateCustomResolverOptions(instanceID string) *CreateCustomResolverOptions {
+func (*DnsSvcsV1) NewCreateCustomResolverOptions(instanceID string, name string) *CreateCustomResolverOptions {
 	return &CreateCustomResolverOptions{
 		InstanceID: core.StringPtr(instanceID),
+		Name:       core.StringPtr(name),
 	}
 }
 
@@ -4744,6 +5412,12 @@ func (_options *CreateCustomResolverOptions) SetLocations(locations []LocationIn
 	return _options
 }
 
+// SetProfile : Allow user to set Profile
+func (_options *CreateCustomResolverOptions) SetProfile(profile string) *CreateCustomResolverOptions {
+	_options.Profile = core.StringPtr(profile)
+	return _options
+}
+
 // SetXCorrelationID : Allow user to set XCorrelationID
 func (_options *CreateCustomResolverOptions) SetXCorrelationID(xCorrelationID string) *CreateCustomResolverOptions {
 	_options.XCorrelationID = core.StringPtr(xCorrelationID)
@@ -4762,7 +5436,7 @@ type CreateDnszoneOptions struct {
 	InstanceID *string `json:"instance_id" validate:"required,ne="`
 
 	// Name of DNS zone.
-	Name *string `json:"name,omitempty"`
+	Name *string `json:"name" validate:"required"`
 
 	// The text describing the purpose of a DNS zone.
 	Description *string `json:"description,omitempty"`
@@ -4773,14 +5447,15 @@ type CreateDnszoneOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewCreateDnszoneOptions : Instantiate CreateDnszoneOptions
-func (*DnsSvcsV1) NewCreateDnszoneOptions(instanceID string) *CreateDnszoneOptions {
+func (*DnsSvcsV1) NewCreateDnszoneOptions(instanceID string, name string) *CreateDnszoneOptions {
 	return &CreateDnszoneOptions{
 		InstanceID: core.StringPtr(instanceID),
+		Name:       core.StringPtr(name),
 	}
 }
 
@@ -4828,36 +5503,22 @@ type CreateForwardingRuleOptions struct {
 	// The unique identifier of a custom resolver.
 	ResolverID *string `json:"resolver_id" validate:"required,ne="`
 
-	// Descriptive text of the forwarding rule.
-	Description *string `json:"description,omitempty"`
-
-	// Type of the forwarding rule.
-	Type *string `json:"type,omitempty"`
-
-	// The matching zone or hostname.
-	Match *string `json:"match,omitempty"`
-
-	// The upstream DNS servers will be forwarded to.
-	ForwardTo []string `json:"forward_to,omitempty"`
+	// Create a forwarding rule.
+	ForwardingRuleInput ForwardingRuleInputIntf `json:"forwarding_rule_input" validate:"required"`
 
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
-// Constants associated with the CreateForwardingRuleOptions.Type property.
-// Type of the forwarding rule.
-const (
-	CreateForwardingRuleOptions_Type_Zone = "zone"
-)
-
 // NewCreateForwardingRuleOptions : Instantiate CreateForwardingRuleOptions
-func (*DnsSvcsV1) NewCreateForwardingRuleOptions(instanceID string, resolverID string) *CreateForwardingRuleOptions {
+func (*DnsSvcsV1) NewCreateForwardingRuleOptions(instanceID string, resolverID string, forwardingRuleInput ForwardingRuleInputIntf) *CreateForwardingRuleOptions {
 	return &CreateForwardingRuleOptions{
-		InstanceID: core.StringPtr(instanceID),
-		ResolverID: core.StringPtr(resolverID),
+		InstanceID:          core.StringPtr(instanceID),
+		ResolverID:          core.StringPtr(resolverID),
+		ForwardingRuleInput: forwardingRuleInput,
 	}
 }
 
@@ -4873,27 +5534,9 @@ func (_options *CreateForwardingRuleOptions) SetResolverID(resolverID string) *C
 	return _options
 }
 
-// SetDescription : Allow user to set Description
-func (_options *CreateForwardingRuleOptions) SetDescription(description string) *CreateForwardingRuleOptions {
-	_options.Description = core.StringPtr(description)
-	return _options
-}
-
-// SetType : Allow user to set Type
-func (_options *CreateForwardingRuleOptions) SetType(typeVar string) *CreateForwardingRuleOptions {
-	_options.Type = core.StringPtr(typeVar)
-	return _options
-}
-
-// SetMatch : Allow user to set Match
-func (_options *CreateForwardingRuleOptions) SetMatch(match string) *CreateForwardingRuleOptions {
-	_options.Match = core.StringPtr(match)
-	return _options
-}
-
-// SetForwardTo : Allow user to set ForwardTo
-func (_options *CreateForwardingRuleOptions) SetForwardTo(forwardTo []string) *CreateForwardingRuleOptions {
-	_options.ForwardTo = forwardTo
+// SetForwardingRuleInput : Allow user to set ForwardingRuleInput
+func (_options *CreateForwardingRuleOptions) SetForwardingRuleInput(forwardingRuleInput ForwardingRuleInputIntf) *CreateForwardingRuleOptions {
+	_options.ForwardingRuleInput = forwardingRuleInput
 	return _options
 }
 
@@ -4915,10 +5558,10 @@ type CreateLinkedZoneOptions struct {
 	InstanceID *string `json:"instance_id" validate:"required,ne="`
 
 	// Owner's instance ID.
-	OwnerInstanceID *string `json:"owner_instance_id,omitempty"`
+	OwnerInstanceID *string `json:"owner_instance_id" validate:"required"`
 
 	// Owner's DNS zone ID.
-	OwnerZoneID *string `json:"owner_zone_id,omitempty"`
+	OwnerZoneID *string `json:"owner_zone_id" validate:"required"`
 
 	// Descriptive text of the linked zone.
 	Description *string `json:"description,omitempty"`
@@ -4929,14 +5572,16 @@ type CreateLinkedZoneOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewCreateLinkedZoneOptions : Instantiate CreateLinkedZoneOptions
-func (*DnsSvcsV1) NewCreateLinkedZoneOptions(instanceID string) *CreateLinkedZoneOptions {
+func (*DnsSvcsV1) NewCreateLinkedZoneOptions(instanceID string, ownerInstanceID string, ownerZoneID string) *CreateLinkedZoneOptions {
 	return &CreateLinkedZoneOptions{
-		InstanceID: core.StringPtr(instanceID),
+		InstanceID:      core.StringPtr(instanceID),
+		OwnerInstanceID: core.StringPtr(ownerInstanceID),
+		OwnerZoneID:     core.StringPtr(ownerZoneID),
 	}
 }
 
@@ -4991,7 +5636,14 @@ type CreateLoadBalancerOptions struct {
 	DnszoneID *string `json:"dnszone_id" validate:"required,ne="`
 
 	// Name of the load balancer.
-	Name *string `json:"name,omitempty"`
+	Name *string `json:"name" validate:"required"`
+
+	// The pool ID to use when all other pools are detected as unhealthy.
+	FallbackPool *string `json:"fallback_pool" validate:"required"`
+
+	// A list of pool IDs ordered by their failover priority. Pools defined here are used by default, or when region_pools
+	// are not configured for a given region.
+	DefaultPools []string `json:"default_pools" validate:"required"`
 
 	// Descriptive text of the load balancer.
 	Description *string `json:"description,omitempty"`
@@ -5002,28 +5654,24 @@ type CreateLoadBalancerOptions struct {
 	// Time to live in second.
 	TTL *int64 `json:"ttl,omitempty"`
 
-	// The pool ID to use when all other pools are detected as unhealthy.
-	FallbackPool *string `json:"fallback_pool,omitempty"`
-
-	// A list of pool IDs ordered by their failover priority. Pools defined here are used by default, or when region_pools
-	// are not configured for a given region.
-	DefaultPools []string `json:"default_pools,omitempty"`
-
 	// Map availability zones to pool IDs.
-	AzPools []LoadBalancerAzPoolsItem `json:"az_pools,omitempty"`
+	AzPools []AzPoolsItem `json:"az_pools,omitempty"`
 
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewCreateLoadBalancerOptions : Instantiate CreateLoadBalancerOptions
-func (*DnsSvcsV1) NewCreateLoadBalancerOptions(instanceID string, dnszoneID string) *CreateLoadBalancerOptions {
+func (*DnsSvcsV1) NewCreateLoadBalancerOptions(instanceID string, dnszoneID string, name string, fallbackPool string, defaultPools []string) *CreateLoadBalancerOptions {
 	return &CreateLoadBalancerOptions{
-		InstanceID: core.StringPtr(instanceID),
-		DnszoneID: core.StringPtr(dnszoneID),
+		InstanceID:   core.StringPtr(instanceID),
+		DnszoneID:    core.StringPtr(dnszoneID),
+		Name:         core.StringPtr(name),
+		FallbackPool: core.StringPtr(fallbackPool),
+		DefaultPools: defaultPools,
 	}
 }
 
@@ -5045,6 +5693,18 @@ func (_options *CreateLoadBalancerOptions) SetName(name string) *CreateLoadBalan
 	return _options
 }
 
+// SetFallbackPool : Allow user to set FallbackPool
+func (_options *CreateLoadBalancerOptions) SetFallbackPool(fallbackPool string) *CreateLoadBalancerOptions {
+	_options.FallbackPool = core.StringPtr(fallbackPool)
+	return _options
+}
+
+// SetDefaultPools : Allow user to set DefaultPools
+func (_options *CreateLoadBalancerOptions) SetDefaultPools(defaultPools []string) *CreateLoadBalancerOptions {
+	_options.DefaultPools = defaultPools
+	return _options
+}
+
 // SetDescription : Allow user to set Description
 func (_options *CreateLoadBalancerOptions) SetDescription(description string) *CreateLoadBalancerOptions {
 	_options.Description = core.StringPtr(description)
@@ -5063,20 +5723,8 @@ func (_options *CreateLoadBalancerOptions) SetTTL(ttl int64) *CreateLoadBalancer
 	return _options
 }
 
-// SetFallbackPool : Allow user to set FallbackPool
-func (_options *CreateLoadBalancerOptions) SetFallbackPool(fallbackPool string) *CreateLoadBalancerOptions {
-	_options.FallbackPool = core.StringPtr(fallbackPool)
-	return _options
-}
-
-// SetDefaultPools : Allow user to set DefaultPools
-func (_options *CreateLoadBalancerOptions) SetDefaultPools(defaultPools []string) *CreateLoadBalancerOptions {
-	_options.DefaultPools = defaultPools
-	return _options
-}
-
 // SetAzPools : Allow user to set AzPools
-func (_options *CreateLoadBalancerOptions) SetAzPools(azPools []LoadBalancerAzPoolsItem) *CreateLoadBalancerOptions {
+func (_options *CreateLoadBalancerOptions) SetAzPools(azPools []AzPoolsItem) *CreateLoadBalancerOptions {
 	_options.AzPools = azPools
 	return _options
 }
@@ -5102,15 +5750,15 @@ type CreateLzPermittedNetworkOptions struct {
 	LinkedDnszoneID *string `json:"linked_dnszone_id" validate:"required,ne="`
 
 	// The type of a permitted network.
-	Type *string `json:"type,omitempty"`
+	Type *string `json:"type" validate:"required"`
 
 	// Permitted network data for VPC.
-	PermittedNetwork *PermittedNetworkVpc `json:"permitted_network,omitempty"`
+	PermittedNetwork *PermittedNetworkVpc `json:"permitted_network" validate:"required"`
 
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5121,10 +5769,12 @@ const (
 )
 
 // NewCreateLzPermittedNetworkOptions : Instantiate CreateLzPermittedNetworkOptions
-func (*DnsSvcsV1) NewCreateLzPermittedNetworkOptions(instanceID string, linkedDnszoneID string) *CreateLzPermittedNetworkOptions {
+func (*DnsSvcsV1) NewCreateLzPermittedNetworkOptions(instanceID string, linkedDnszoneID string, typeVar string, permittedNetwork *PermittedNetworkVpc) *CreateLzPermittedNetworkOptions {
 	return &CreateLzPermittedNetworkOptions{
-		InstanceID: core.StringPtr(instanceID),
-		LinkedDnszoneID: core.StringPtr(linkedDnszoneID),
+		InstanceID:       core.StringPtr(instanceID),
+		LinkedDnszoneID:  core.StringPtr(linkedDnszoneID),
+		Type:             core.StringPtr(typeVar),
+		PermittedNetwork: permittedNetwork,
 	}
 }
 
@@ -5170,13 +5820,13 @@ type CreateMonitorOptions struct {
 	InstanceID *string `json:"instance_id" validate:"required,ne="`
 
 	// The name of the load balancer monitor.
-	Name *string `json:"name,omitempty"`
+	Name *string `json:"name" validate:"required"`
+
+	// The protocol to use for the health check. Currently supported protocols are 'HTTP','HTTPS' and 'TCP'.
+	Type *string `json:"type" validate:"required"`
 
 	// Descriptive text of the load balancer monitor.
 	Description *string `json:"description,omitempty"`
-
-	// The protocol to use for the health check. Currently supported protocols are 'HTTP','HTTPS' and 'TCP'.
-	Type *string `json:"type,omitempty"`
 
 	// Port number to connect to for the health check. Required for TCP checks. HTTP and HTTPS checks should only define
 	// the port when using a non-standard port (HTTP: default 80, HTTPS: default 443).
@@ -5217,29 +5867,31 @@ type CreateMonitorOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // Constants associated with the CreateMonitorOptions.Type property.
 // The protocol to use for the health check. Currently supported protocols are 'HTTP','HTTPS' and 'TCP'.
 const (
-	CreateMonitorOptions_Type_Http = "HTTP"
+	CreateMonitorOptions_Type_Http  = "HTTP"
 	CreateMonitorOptions_Type_Https = "HTTPS"
-	CreateMonitorOptions_Type_Tcp = "TCP"
+	CreateMonitorOptions_Type_Tcp   = "TCP"
 )
 
 // Constants associated with the CreateMonitorOptions.Method property.
 // The method to use for the health check applicable to HTTP/HTTPS based checks, the default value is 'GET'.
 const (
-	CreateMonitorOptions_Method_Get = "GET"
+	CreateMonitorOptions_Method_Get  = "GET"
 	CreateMonitorOptions_Method_Head = "HEAD"
 )
 
 // NewCreateMonitorOptions : Instantiate CreateMonitorOptions
-func (*DnsSvcsV1) NewCreateMonitorOptions(instanceID string) *CreateMonitorOptions {
+func (*DnsSvcsV1) NewCreateMonitorOptions(instanceID string, name string, typeVar string) *CreateMonitorOptions {
 	return &CreateMonitorOptions{
 		InstanceID: core.StringPtr(instanceID),
+		Name:       core.StringPtr(name),
+		Type:       core.StringPtr(typeVar),
 	}
 }
 
@@ -5255,15 +5907,15 @@ func (_options *CreateMonitorOptions) SetName(name string) *CreateMonitorOptions
 	return _options
 }
 
-// SetDescription : Allow user to set Description
-func (_options *CreateMonitorOptions) SetDescription(description string) *CreateMonitorOptions {
-	_options.Description = core.StringPtr(description)
-	return _options
-}
-
 // SetType : Allow user to set Type
 func (_options *CreateMonitorOptions) SetType(typeVar string) *CreateMonitorOptions {
 	_options.Type = core.StringPtr(typeVar)
+	return _options
+}
+
+// SetDescription : Allow user to set Description
+func (_options *CreateMonitorOptions) SetDescription(description string) *CreateMonitorOptions {
+	_options.Description = core.StringPtr(description)
 	return _options
 }
 
@@ -5348,10 +6000,10 @@ type CreatePermittedNetworkOptions struct {
 	DnszoneID *string `json:"dnszone_id" validate:"required,ne="`
 
 	// The type of a permitted network.
-	Type *string `json:"type,omitempty"`
+	Type *string `json:"type" validate:"required"`
 
 	// Permitted network data for VPC.
-	PermittedNetwork *PermittedNetworkVpc `json:"permitted_network,omitempty"`
+	PermittedNetwork *PermittedNetworkVpc `json:"permitted_network" validate:"required"`
 
 	// The account identifiers of the owner zone and linked zones in the format of "?account=account1,account2,account3".
 	// Maximum 5 accounts are allowed.
@@ -5360,7 +6012,7 @@ type CreatePermittedNetworkOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5371,10 +6023,12 @@ const (
 )
 
 // NewCreatePermittedNetworkOptions : Instantiate CreatePermittedNetworkOptions
-func (*DnsSvcsV1) NewCreatePermittedNetworkOptions(instanceID string, dnszoneID string) *CreatePermittedNetworkOptions {
+func (*DnsSvcsV1) NewCreatePermittedNetworkOptions(instanceID string, dnszoneID string, typeVar string, permittedNetwork *PermittedNetworkVpc) *CreatePermittedNetworkOptions {
 	return &CreatePermittedNetworkOptions{
-		InstanceID: core.StringPtr(instanceID),
-		DnszoneID: core.StringPtr(dnszoneID),
+		InstanceID:       core.StringPtr(instanceID),
+		DnszoneID:        core.StringPtr(dnszoneID),
+		Type:             core.StringPtr(typeVar),
+		PermittedNetwork: permittedNetwork,
 	}
 }
 
@@ -5426,7 +6080,11 @@ type CreatePoolOptions struct {
 	InstanceID *string `json:"instance_id" validate:"required,ne="`
 
 	// Name of the load balancer pool.
-	Name *string `json:"name,omitempty"`
+	Name *string `json:"name" validate:"required"`
+
+	// The list of origins within this pool. Traffic directed at this pool is balanced across all currently healthy
+	// origins, provided the pool itself is healthy.
+	Origins []OriginInput `json:"origins" validate:"required"`
 
 	// Descriptive text of the load balancer pool.
 	Description *string `json:"description,omitempty"`
@@ -5437,10 +6095,6 @@ type CreatePoolOptions struct {
 	// The minimum number of origins that must be healthy for this pool to serve traffic. If the number of healthy origins
 	// falls below this number, the pool will be marked unhealthy and we will failover to the next available pool.
 	HealthyOriginsThreshold *int64 `json:"healthy_origins_threshold,omitempty"`
-
-	// The list of origins within this pool. Traffic directed at this pool is balanced across all currently healthy
-	// origins, provided the pool itself is healthy.
-	Origins []OriginInput `json:"origins,omitempty"`
 
 	// The ID of the load balancer monitor to be associated to this pool.
 	Monitor *string `json:"monitor,omitempty"`
@@ -5457,25 +6111,27 @@ type CreatePoolOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // Constants associated with the CreatePoolOptions.HealthcheckRegion property.
 // Health check region of VSIs.
 const (
-	CreatePoolOptions_HealthcheckRegion_AuSyd = "au-syd"
-	CreatePoolOptions_HealthcheckRegion_EuDu = "eu-du"
-	CreatePoolOptions_HealthcheckRegion_EuGb = "eu-gb"
-	CreatePoolOptions_HealthcheckRegion_JpTok = "jp-tok"
-	CreatePoolOptions_HealthcheckRegion_UsEast = "us-east"
+	CreatePoolOptions_HealthcheckRegion_AuSyd   = "au-syd"
+	CreatePoolOptions_HealthcheckRegion_EuDu    = "eu-du"
+	CreatePoolOptions_HealthcheckRegion_EuGb    = "eu-gb"
+	CreatePoolOptions_HealthcheckRegion_JpTok   = "jp-tok"
+	CreatePoolOptions_HealthcheckRegion_UsEast  = "us-east"
 	CreatePoolOptions_HealthcheckRegion_UsSouth = "us-south"
 )
 
 // NewCreatePoolOptions : Instantiate CreatePoolOptions
-func (*DnsSvcsV1) NewCreatePoolOptions(instanceID string) *CreatePoolOptions {
+func (*DnsSvcsV1) NewCreatePoolOptions(instanceID string, name string, origins []OriginInput) *CreatePoolOptions {
 	return &CreatePoolOptions{
 		InstanceID: core.StringPtr(instanceID),
+		Name:       core.StringPtr(name),
+		Origins:    origins,
 	}
 }
 
@@ -5488,6 +6144,12 @@ func (_options *CreatePoolOptions) SetInstanceID(instanceID string) *CreatePoolO
 // SetName : Allow user to set Name
 func (_options *CreatePoolOptions) SetName(name string) *CreatePoolOptions {
 	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetOrigins : Allow user to set Origins
+func (_options *CreatePoolOptions) SetOrigins(origins []OriginInput) *CreatePoolOptions {
+	_options.Origins = origins
 	return _options
 }
 
@@ -5506,12 +6168,6 @@ func (_options *CreatePoolOptions) SetEnabled(enabled bool) *CreatePoolOptions {
 // SetHealthyOriginsThreshold : Allow user to set HealthyOriginsThreshold
 func (_options *CreatePoolOptions) SetHealthyOriginsThreshold(healthyOriginsThreshold int64) *CreatePoolOptions {
 	_options.HealthyOriginsThreshold = core.Int64Ptr(healthyOriginsThreshold)
-	return _options
-}
-
-// SetOrigins : Allow user to set Origins
-func (_options *CreatePoolOptions) SetOrigins(origins []OriginInput) *CreatePoolOptions {
-	_options.Origins = origins
 	return _options
 }
 
@@ -5559,11 +6215,11 @@ type CreateResourceRecordOptions struct {
 	// The unique identifier of a DNS zone.
 	DnszoneID *string `json:"dnszone_id" validate:"required,ne="`
 
+	// Type of the resource record.
+	Type *string `json:"type" validate:"required"`
+
 	// Name of the resource record.
 	Name *string `json:"name,omitempty"`
-
-	// Type of the resource record.
-	Type *string `json:"type,omitempty"`
 
 	// Content of the resource record.
 	Rdata ResourceRecordInputRdataIntf `json:"rdata,omitempty"`
@@ -5580,27 +6236,28 @@ type CreateResourceRecordOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // Constants associated with the CreateResourceRecordOptions.Type property.
 // Type of the resource record.
 const (
-	CreateResourceRecordOptions_Type_A = "A"
-	CreateResourceRecordOptions_Type_Aaaa = "AAAA"
+	CreateResourceRecordOptions_Type_A     = "A"
+	CreateResourceRecordOptions_Type_Aaaa  = "AAAA"
 	CreateResourceRecordOptions_Type_Cname = "CNAME"
-	CreateResourceRecordOptions_Type_Mx = "MX"
-	CreateResourceRecordOptions_Type_Ptr = "PTR"
-	CreateResourceRecordOptions_Type_Srv = "SRV"
-	CreateResourceRecordOptions_Type_Txt = "TXT"
+	CreateResourceRecordOptions_Type_Mx    = "MX"
+	CreateResourceRecordOptions_Type_Ptr   = "PTR"
+	CreateResourceRecordOptions_Type_Srv   = "SRV"
+	CreateResourceRecordOptions_Type_Txt   = "TXT"
 )
 
 // NewCreateResourceRecordOptions : Instantiate CreateResourceRecordOptions
-func (*DnsSvcsV1) NewCreateResourceRecordOptions(instanceID string, dnszoneID string) *CreateResourceRecordOptions {
+func (*DnsSvcsV1) NewCreateResourceRecordOptions(instanceID string, dnszoneID string, typeVar string) *CreateResourceRecordOptions {
 	return &CreateResourceRecordOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID: core.StringPtr(dnszoneID),
+		DnszoneID:  core.StringPtr(dnszoneID),
+		Type:       core.StringPtr(typeVar),
 	}
 }
 
@@ -5616,15 +6273,15 @@ func (_options *CreateResourceRecordOptions) SetDnszoneID(dnszoneID string) *Cre
 	return _options
 }
 
-// SetName : Allow user to set Name
-func (_options *CreateResourceRecordOptions) SetName(name string) *CreateResourceRecordOptions {
-	_options.Name = core.StringPtr(name)
-	return _options
-}
-
 // SetType : Allow user to set Type
 func (_options *CreateResourceRecordOptions) SetType(typeVar string) *CreateResourceRecordOptions {
 	_options.Type = core.StringPtr(typeVar)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *CreateResourceRecordOptions) SetName(name string) *CreateResourceRecordOptions {
+	_options.Name = core.StringPtr(name)
 	return _options
 }
 
@@ -5672,30 +6329,32 @@ type CreateSecondaryZoneOptions struct {
 	// The unique identifier of a custom resolver.
 	ResolverID *string `json:"resolver_id" validate:"required,ne="`
 
+	// zone name.
+	Zone *string `json:"zone" validate:"required"`
+
+	// The addresses of DNS servers where the secondary zone data should be transferred from.
+	TransferFrom []string `json:"transfer_from" validate:"required"`
+
 	// Descriptive text of the secondary zone.
 	Description *string `json:"description,omitempty"`
-
-	// zone name.
-	Zone *string `json:"zone,omitempty"`
 
 	// Enable/Disable the secondary zone.
 	Enabled *bool `json:"enabled,omitempty"`
 
-	// The addresses of DNS servers where the secondary zone data should be transferred from.
-	TransferFrom []string `json:"transfer_from,omitempty"`
-
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewCreateSecondaryZoneOptions : Instantiate CreateSecondaryZoneOptions
-func (*DnsSvcsV1) NewCreateSecondaryZoneOptions(instanceID string, resolverID string) *CreateSecondaryZoneOptions {
+func (*DnsSvcsV1) NewCreateSecondaryZoneOptions(instanceID string, resolverID string, zone string, transferFrom []string) *CreateSecondaryZoneOptions {
 	return &CreateSecondaryZoneOptions{
-		InstanceID: core.StringPtr(instanceID),
-		ResolverID: core.StringPtr(resolverID),
+		InstanceID:   core.StringPtr(instanceID),
+		ResolverID:   core.StringPtr(resolverID),
+		Zone:         core.StringPtr(zone),
+		TransferFrom: transferFrom,
 	}
 }
 
@@ -5711,27 +6370,27 @@ func (_options *CreateSecondaryZoneOptions) SetResolverID(resolverID string) *Cr
 	return _options
 }
 
-// SetDescription : Allow user to set Description
-func (_options *CreateSecondaryZoneOptions) SetDescription(description string) *CreateSecondaryZoneOptions {
-	_options.Description = core.StringPtr(description)
-	return _options
-}
-
 // SetZone : Allow user to set Zone
 func (_options *CreateSecondaryZoneOptions) SetZone(zone string) *CreateSecondaryZoneOptions {
 	_options.Zone = core.StringPtr(zone)
 	return _options
 }
 
-// SetEnabled : Allow user to set Enabled
-func (_options *CreateSecondaryZoneOptions) SetEnabled(enabled bool) *CreateSecondaryZoneOptions {
-	_options.Enabled = core.BoolPtr(enabled)
-	return _options
-}
-
 // SetTransferFrom : Allow user to set TransferFrom
 func (_options *CreateSecondaryZoneOptions) SetTransferFrom(transferFrom []string) *CreateSecondaryZoneOptions {
 	_options.TransferFrom = transferFrom
+	return _options
+}
+
+// SetDescription : Allow user to set Description
+func (_options *CreateSecondaryZoneOptions) SetDescription(description string) *CreateSecondaryZoneOptions {
+	_options.Description = core.StringPtr(description)
+	return _options
+}
+
+// SetEnabled : Allow user to set Enabled
+func (_options *CreateSecondaryZoneOptions) SetEnabled(enabled bool) *CreateSecondaryZoneOptions {
+	_options.Enabled = core.BoolPtr(enabled)
 	return _options
 }
 
@@ -5761,7 +6420,7 @@ type DeleteCustomResolverLocationOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5815,7 +6474,7 @@ type DeleteCustomResolverOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5862,7 +6521,7 @@ type DeleteDnszoneOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5870,7 +6529,7 @@ type DeleteDnszoneOptions struct {
 func (*DnsSvcsV1) NewDeleteDnszoneOptions(instanceID string, dnszoneID string) *DeleteDnszoneOptions {
 	return &DeleteDnszoneOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID: core.StringPtr(dnszoneID),
+		DnszoneID:  core.StringPtr(dnszoneID),
 	}
 }
 
@@ -5912,7 +6571,7 @@ type DeleteForwardingRuleOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5921,7 +6580,7 @@ func (*DnsSvcsV1) NewDeleteForwardingRuleOptions(instanceID string, resolverID s
 	return &DeleteForwardingRuleOptions{
 		InstanceID: core.StringPtr(instanceID),
 		ResolverID: core.StringPtr(resolverID),
-		RuleID: core.StringPtr(ruleID),
+		RuleID:     core.StringPtr(ruleID),
 	}
 }
 
@@ -5966,14 +6625,14 @@ type DeleteLinkedZoneOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewDeleteLinkedZoneOptions : Instantiate DeleteLinkedZoneOptions
 func (*DnsSvcsV1) NewDeleteLinkedZoneOptions(instanceID string, linkedDnszoneID string) *DeleteLinkedZoneOptions {
 	return &DeleteLinkedZoneOptions{
-		InstanceID: core.StringPtr(instanceID),
+		InstanceID:      core.StringPtr(instanceID),
 		LinkedDnszoneID: core.StringPtr(linkedDnszoneID),
 	}
 }
@@ -6016,7 +6675,7 @@ type DeleteLoadBalancerOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6024,8 +6683,8 @@ type DeleteLoadBalancerOptions struct {
 func (*DnsSvcsV1) NewDeleteLoadBalancerOptions(instanceID string, dnszoneID string, lbID string) *DeleteLoadBalancerOptions {
 	return &DeleteLoadBalancerOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID: core.StringPtr(dnszoneID),
-		LbID: core.StringPtr(lbID),
+		DnszoneID:  core.StringPtr(dnszoneID),
+		LbID:       core.StringPtr(lbID),
 	}
 }
 
@@ -6073,15 +6732,15 @@ type DeleteLzPermittedNetworkOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewDeleteLzPermittedNetworkOptions : Instantiate DeleteLzPermittedNetworkOptions
 func (*DnsSvcsV1) NewDeleteLzPermittedNetworkOptions(instanceID string, linkedDnszoneID string, permittedNetworkID string) *DeleteLzPermittedNetworkOptions {
 	return &DeleteLzPermittedNetworkOptions{
-		InstanceID: core.StringPtr(instanceID),
-		LinkedDnszoneID: core.StringPtr(linkedDnszoneID),
+		InstanceID:         core.StringPtr(instanceID),
+		LinkedDnszoneID:    core.StringPtr(linkedDnszoneID),
 		PermittedNetworkID: core.StringPtr(permittedNetworkID),
 	}
 }
@@ -6127,7 +6786,7 @@ type DeleteMonitorOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6135,7 +6794,7 @@ type DeleteMonitorOptions struct {
 func (*DnsSvcsV1) NewDeleteMonitorOptions(instanceID string, monitorID string) *DeleteMonitorOptions {
 	return &DeleteMonitorOptions{
 		InstanceID: core.StringPtr(instanceID),
-		MonitorID: core.StringPtr(monitorID),
+		MonitorID:  core.StringPtr(monitorID),
 	}
 }
 
@@ -6177,15 +6836,15 @@ type DeletePermittedNetworkOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewDeletePermittedNetworkOptions : Instantiate DeletePermittedNetworkOptions
 func (*DnsSvcsV1) NewDeletePermittedNetworkOptions(instanceID string, dnszoneID string, permittedNetworkID string) *DeletePermittedNetworkOptions {
 	return &DeletePermittedNetworkOptions{
-		InstanceID: core.StringPtr(instanceID),
-		DnszoneID: core.StringPtr(dnszoneID),
+		InstanceID:         core.StringPtr(instanceID),
+		DnszoneID:          core.StringPtr(dnszoneID),
 		PermittedNetworkID: core.StringPtr(permittedNetworkID),
 	}
 }
@@ -6231,7 +6890,7 @@ type DeletePoolOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6239,7 +6898,7 @@ type DeletePoolOptions struct {
 func (*DnsSvcsV1) NewDeletePoolOptions(instanceID string, poolID string) *DeletePoolOptions {
 	return &DeletePoolOptions{
 		InstanceID: core.StringPtr(instanceID),
-		PoolID: core.StringPtr(poolID),
+		PoolID:     core.StringPtr(poolID),
 	}
 }
 
@@ -6281,7 +6940,7 @@ type DeleteResourceRecordOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6289,8 +6948,8 @@ type DeleteResourceRecordOptions struct {
 func (*DnsSvcsV1) NewDeleteResourceRecordOptions(instanceID string, dnszoneID string, recordID string) *DeleteResourceRecordOptions {
 	return &DeleteResourceRecordOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID: core.StringPtr(dnszoneID),
-		RecordID: core.StringPtr(recordID),
+		DnszoneID:  core.StringPtr(dnszoneID),
+		RecordID:   core.StringPtr(recordID),
 	}
 }
 
@@ -6338,15 +6997,15 @@ type DeleteSecondaryZoneOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewDeleteSecondaryZoneOptions : Instantiate DeleteSecondaryZoneOptions
 func (*DnsSvcsV1) NewDeleteSecondaryZoneOptions(instanceID string, resolverID string, secondaryZoneID string) *DeleteSecondaryZoneOptions {
 	return &DeleteSecondaryZoneOptions{
-		InstanceID: core.StringPtr(instanceID),
-		ResolverID: core.StringPtr(resolverID),
+		InstanceID:      core.StringPtr(instanceID),
+		ResolverID:      core.StringPtr(resolverID),
 		SecondaryZoneID: core.StringPtr(secondaryZoneID),
 	}
 }
@@ -6392,7 +7051,7 @@ type ExportResourceRecordsOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6400,7 +7059,7 @@ type ExportResourceRecordsOptions struct {
 func (*DnsSvcsV1) NewExportResourceRecordsOptions(instanceID string, dnszoneID string) *ExportResourceRecordsOptions {
 	return &ExportResourceRecordsOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID: core.StringPtr(dnszoneID),
+		DnszoneID:  core.StringPtr(dnszoneID),
 	}
 }
 
@@ -6439,7 +7098,7 @@ type GetCustomResolverOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6489,7 +7148,7 @@ type GetDnszoneAccessRequestOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6497,8 +7156,8 @@ type GetDnszoneAccessRequestOptions struct {
 func (*DnsSvcsV1) NewGetDnszoneAccessRequestOptions(instanceID string, dnszoneID string, requestID string) *GetDnszoneAccessRequestOptions {
 	return &GetDnszoneAccessRequestOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID: core.StringPtr(dnszoneID),
-		RequestID: core.StringPtr(requestID),
+		DnszoneID:  core.StringPtr(dnszoneID),
+		RequestID:  core.StringPtr(requestID),
 	}
 }
 
@@ -6543,7 +7202,7 @@ type GetDnszoneOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6551,7 +7210,7 @@ type GetDnszoneOptions struct {
 func (*DnsSvcsV1) NewGetDnszoneOptions(instanceID string, dnszoneID string) *GetDnszoneOptions {
 	return &GetDnszoneOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID: core.StringPtr(dnszoneID),
+		DnszoneID:  core.StringPtr(dnszoneID),
 	}
 }
 
@@ -6593,7 +7252,7 @@ type GetForwardingRuleOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6602,7 +7261,7 @@ func (*DnsSvcsV1) NewGetForwardingRuleOptions(instanceID string, resolverID stri
 	return &GetForwardingRuleOptions{
 		InstanceID: core.StringPtr(instanceID),
 		ResolverID: core.StringPtr(resolverID),
-		RuleID: core.StringPtr(ruleID),
+		RuleID:     core.StringPtr(ruleID),
 	}
 }
 
@@ -6650,15 +7309,15 @@ type GetLinkedPermittedNetworkOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewGetLinkedPermittedNetworkOptions : Instantiate GetLinkedPermittedNetworkOptions
 func (*DnsSvcsV1) NewGetLinkedPermittedNetworkOptions(instanceID string, linkedDnszoneID string, permittedNetworkID string) *GetLinkedPermittedNetworkOptions {
 	return &GetLinkedPermittedNetworkOptions{
-		InstanceID: core.StringPtr(instanceID),
-		LinkedDnszoneID: core.StringPtr(linkedDnszoneID),
+		InstanceID:         core.StringPtr(instanceID),
+		LinkedDnszoneID:    core.StringPtr(linkedDnszoneID),
 		PermittedNetworkID: core.StringPtr(permittedNetworkID),
 	}
 }
@@ -6704,14 +7363,14 @@ type GetLinkedZoneOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewGetLinkedZoneOptions : Instantiate GetLinkedZoneOptions
 func (*DnsSvcsV1) NewGetLinkedZoneOptions(instanceID string, linkedDnszoneID string) *GetLinkedZoneOptions {
 	return &GetLinkedZoneOptions{
-		InstanceID: core.StringPtr(instanceID),
+		InstanceID:      core.StringPtr(instanceID),
 		LinkedDnszoneID: core.StringPtr(linkedDnszoneID),
 	}
 }
@@ -6754,7 +7413,7 @@ type GetLoadBalancerOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6762,8 +7421,8 @@ type GetLoadBalancerOptions struct {
 func (*DnsSvcsV1) NewGetLoadBalancerOptions(instanceID string, dnszoneID string, lbID string) *GetLoadBalancerOptions {
 	return &GetLoadBalancerOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID: core.StringPtr(dnszoneID),
-		LbID: core.StringPtr(lbID),
+		DnszoneID:  core.StringPtr(dnszoneID),
+		LbID:       core.StringPtr(lbID),
 	}
 }
 
@@ -6808,7 +7467,7 @@ type GetMonitorOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6816,7 +7475,7 @@ type GetMonitorOptions struct {
 func (*DnsSvcsV1) NewGetMonitorOptions(instanceID string, monitorID string) *GetMonitorOptions {
 	return &GetMonitorOptions{
 		InstanceID: core.StringPtr(instanceID),
-		MonitorID: core.StringPtr(monitorID),
+		MonitorID:  core.StringPtr(monitorID),
 	}
 }
 
@@ -6858,15 +7517,15 @@ type GetPermittedNetworkOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewGetPermittedNetworkOptions : Instantiate GetPermittedNetworkOptions
 func (*DnsSvcsV1) NewGetPermittedNetworkOptions(instanceID string, dnszoneID string, permittedNetworkID string) *GetPermittedNetworkOptions {
 	return &GetPermittedNetworkOptions{
-		InstanceID: core.StringPtr(instanceID),
-		DnszoneID: core.StringPtr(dnszoneID),
+		InstanceID:         core.StringPtr(instanceID),
+		DnszoneID:          core.StringPtr(dnszoneID),
 		PermittedNetworkID: core.StringPtr(permittedNetworkID),
 	}
 }
@@ -6912,7 +7571,7 @@ type GetPoolOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6920,7 +7579,7 @@ type GetPoolOptions struct {
 func (*DnsSvcsV1) NewGetPoolOptions(instanceID string, poolID string) *GetPoolOptions {
 	return &GetPoolOptions{
 		InstanceID: core.StringPtr(instanceID),
-		PoolID: core.StringPtr(poolID),
+		PoolID:     core.StringPtr(poolID),
 	}
 }
 
@@ -6962,7 +7621,7 @@ type GetResourceRecordOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6970,8 +7629,8 @@ type GetResourceRecordOptions struct {
 func (*DnsSvcsV1) NewGetResourceRecordOptions(instanceID string, dnszoneID string, recordID string) *GetResourceRecordOptions {
 	return &GetResourceRecordOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID: core.StringPtr(dnszoneID),
-		RecordID: core.StringPtr(recordID),
+		DnszoneID:  core.StringPtr(dnszoneID),
+		RecordID:   core.StringPtr(recordID),
 	}
 }
 
@@ -7019,15 +7678,15 @@ type GetSecondaryZoneOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewGetSecondaryZoneOptions : Instantiate GetSecondaryZoneOptions
 func (*DnsSvcsV1) NewGetSecondaryZoneOptions(instanceID string, resolverID string, secondaryZoneID string) *GetSecondaryZoneOptions {
 	return &GetSecondaryZoneOptions{
-		InstanceID: core.StringPtr(instanceID),
-		ResolverID: core.StringPtr(resolverID),
+		InstanceID:      core.StringPtr(instanceID),
+		ResolverID:      core.StringPtr(resolverID),
 		SecondaryZoneID: core.StringPtr(secondaryZoneID),
 	}
 }
@@ -7079,7 +7738,7 @@ type ImportResourceRecordsOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7087,7 +7746,7 @@ type ImportResourceRecordsOptions struct {
 func (*DnsSvcsV1) NewImportResourceRecordsOptions(instanceID string, dnszoneID string) *ImportResourceRecordsOptions {
 	return &ImportResourceRecordsOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID: core.StringPtr(dnszoneID),
+		DnszoneID:  core.StringPtr(dnszoneID),
 	}
 }
 
@@ -7141,10 +7800,12 @@ func UnmarshalLinkedDnszoneLinkedTo(m map[string]json.RawMessage, result interfa
 	obj := new(LinkedDnszoneLinkedTo)
 	err = core.UnmarshalPrimitive(m, "instance_crn", &obj.InstanceCrn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "instance_crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "zone_id", &obj.ZoneID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "zone_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7159,7 +7820,7 @@ type ListCustomResolversOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7205,7 +7866,7 @@ type ListDnszoneAccessRequestsOptions struct {
 	// Specify maximum resources might be returned.
 	Limit *int64 `json:"limit,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7213,7 +7874,7 @@ type ListDnszoneAccessRequestsOptions struct {
 func (*DnsSvcsV1) NewListDnszoneAccessRequestsOptions(instanceID string, dnszoneID string) *ListDnszoneAccessRequestsOptions {
 	return &ListDnszoneAccessRequestsOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID: core.StringPtr(dnszoneID),
+		DnszoneID:  core.StringPtr(dnszoneID),
 	}
 }
 
@@ -7270,7 +7931,7 @@ type ListDnszonesOptions struct {
 	// Specify the VPC ID.
 	VpcID *string `json:"vpc_id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7334,7 +7995,7 @@ type ListForwardingRulesOptions struct {
 	// Specify maximum resources might be returned.
 	Limit *int64 `json:"limit,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7393,14 +8054,14 @@ type ListLinkedPermittedNetworksOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewListLinkedPermittedNetworksOptions : Instantiate ListLinkedPermittedNetworksOptions
 func (*DnsSvcsV1) NewListLinkedPermittedNetworksOptions(instanceID string, linkedDnszoneID string) *ListLinkedPermittedNetworksOptions {
 	return &ListLinkedPermittedNetworksOptions{
-		InstanceID: core.StringPtr(instanceID),
+		InstanceID:      core.StringPtr(instanceID),
 		LinkedDnszoneID: core.StringPtr(linkedDnszoneID),
 	}
 }
@@ -7443,7 +8104,7 @@ type ListLinkedZonesOptions struct {
 	// Specify maximum resources might be returned.
 	Limit *int64 `json:"limit,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7501,7 +8162,7 @@ type ListLoadBalancersOptions struct {
 	// Specify maximum resources might be returned.
 	Limit *int64 `json:"limit,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7509,7 +8170,7 @@ type ListLoadBalancersOptions struct {
 func (*DnsSvcsV1) NewListLoadBalancersOptions(instanceID string, dnszoneID string) *ListLoadBalancersOptions {
 	return &ListLoadBalancersOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID: core.StringPtr(dnszoneID),
+		DnszoneID:  core.StringPtr(dnszoneID),
 	}
 }
 
@@ -7563,7 +8224,7 @@ type ListMonitorsOptions struct {
 	// Specify maximum resources might be returned.
 	Limit *int64 `json:"limit,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7619,7 +8280,7 @@ type ListPermittedNetworksOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7627,7 +8288,7 @@ type ListPermittedNetworksOptions struct {
 func (*DnsSvcsV1) NewListPermittedNetworksOptions(instanceID string, dnszoneID string) *ListPermittedNetworksOptions {
 	return &ListPermittedNetworksOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID: core.StringPtr(dnszoneID),
+		DnszoneID:  core.StringPtr(dnszoneID),
 	}
 }
 
@@ -7675,7 +8336,7 @@ type ListPoolsOptions struct {
 	// Specify maximum resources might be returned.
 	Limit *int64 `json:"limit,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7739,7 +8400,7 @@ type ListResourceRecordsOptions struct {
 	// Specify the name of resource record to query.
 	Name *string `json:"name,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7747,7 +8408,7 @@ type ListResourceRecordsOptions struct {
 func (*DnsSvcsV1) NewListResourceRecordsOptions(instanceID string, dnszoneID string) *ListResourceRecordsOptions {
 	return &ListResourceRecordsOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID: core.StringPtr(dnszoneID),
+		DnszoneID:  core.StringPtr(dnszoneID),
 	}
 }
 
@@ -7816,7 +8477,7 @@ type ListSecondaryZonesOptions struct {
 	// Specify maximum resources might be returned.
 	Limit *int64 `json:"limit,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7864,30 +8525,6 @@ func (options *ListSecondaryZonesOptions) SetHeaders(param map[string]string) *L
 	return options
 }
 
-// LoadBalancerAzPoolsItem : LoadBalancerAzPoolsItem struct
-type LoadBalancerAzPoolsItem struct {
-	// Availability zone.
-	AvailabilityZone *string `json:"availability_zone,omitempty"`
-
-	// List of load balancer pools.
-	Pools []string `json:"pools,omitempty"`
-}
-
-// UnmarshalLoadBalancerAzPoolsItem unmarshals an instance of LoadBalancerAzPoolsItem from the specified map of raw messages.
-func UnmarshalLoadBalancerAzPoolsItem(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(LoadBalancerAzPoolsItem)
-	err = core.UnmarshalPrimitive(m, "availability_zone", &obj.AvailabilityZone)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "pools", &obj.Pools)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // PoolHealthcheckVsisItem : PoolHealthcheckVsisItem struct
 type PoolHealthcheckVsisItem struct {
 	// Health check VSI subnet CRN.
@@ -7908,18 +8545,22 @@ func UnmarshalPoolHealthcheckVsisItem(m map[string]json.RawMessage, result inter
 	obj := new(PoolHealthcheckVsisItem)
 	err = core.UnmarshalPrimitive(m, "subnet", &obj.Subnet)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subnet-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ipv4_address", &obj.Ipv4Address)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ipv4_address-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ipv4_cidr_block", &obj.Ipv4CidrBlock)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ipv4_cidr_block-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "vpc", &obj.Vpc)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7940,10 +8581,12 @@ func UnmarshalRecordsImportErrorModelError(m map[string]json.RawMessage, result 
 	obj := new(RecordsImportErrorModelError)
 	err = core.UnmarshalPrimitive(m, "code", &obj.Code)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "code-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7990,6 +8633,7 @@ type ResourceRecordInputRdata struct {
 	// Hostname of the relevant A or AAAA record.
 	Ptrdname *string `json:"ptrdname,omitempty"`
 }
+
 func (*ResourceRecordInputRdata) isaResourceRecordInputRdata() bool {
 	return true
 }
@@ -8003,42 +8647,52 @@ func UnmarshalResourceRecordInputRdata(m map[string]json.RawMessage, result inte
 	obj := new(ResourceRecordInputRdata)
 	err = core.UnmarshalPrimitive(m, "ip", &obj.Ip)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ip-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cname", &obj.Cname)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cname-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "exchange", &obj.Exchange)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "exchange-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "preference", &obj.Preference)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "preference-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "port", &obj.Port)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "port-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "priority", &obj.Priority)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "priority-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target", &obj.Target)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "weight", &obj.Weight)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "weight-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "text", &obj.Text)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "text-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ptrdname", &obj.Ptrdname)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ptrdname-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8085,6 +8739,7 @@ type ResourceRecordUpdateInputRdata struct {
 	// Hostname of the relevant A or AAAA record.
 	Ptrdname *string `json:"ptrdname,omitempty"`
 }
+
 func (*ResourceRecordUpdateInputRdata) isaResourceRecordUpdateInputRdata() bool {
 	return true
 }
@@ -8098,42 +8753,52 @@ func UnmarshalResourceRecordUpdateInputRdata(m map[string]json.RawMessage, resul
 	obj := new(ResourceRecordUpdateInputRdata)
 	err = core.UnmarshalPrimitive(m, "ip", &obj.Ip)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ip-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cname", &obj.Cname)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cname-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "exchange", &obj.Exchange)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "exchange-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "preference", &obj.Preference)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "preference-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "port", &obj.Port)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "port-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "priority", &obj.Priority)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "priority-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target", &obj.Target)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "weight", &obj.Weight)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "weight-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "text", &obj.Text)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "text-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ptrdname", &obj.Ptrdname)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ptrdname-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8149,20 +8814,21 @@ type UpdateCrLocationsOrderOptions struct {
 	ResolverID *string `json:"resolver_id" validate:"required,ne="`
 
 	// Array of custom resolver location ID.
-	Locations []string `json:"locations,omitempty"`
+	Locations []string `json:"locations" validate:"required"`
 
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewUpdateCrLocationsOrderOptions : Instantiate UpdateCrLocationsOrderOptions
-func (*DnsSvcsV1) NewUpdateCrLocationsOrderOptions(instanceID string, resolverID string) *UpdateCrLocationsOrderOptions {
+func (*DnsSvcsV1) NewUpdateCrLocationsOrderOptions(instanceID string, resolverID string, locations []string) *UpdateCrLocationsOrderOptions {
 	return &UpdateCrLocationsOrderOptions{
 		InstanceID: core.StringPtr(instanceID),
 		ResolverID: core.StringPtr(resolverID),
+		Locations:  locations,
 	}
 }
 
@@ -8216,7 +8882,7 @@ type UpdateCustomResolverLocationOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8288,12 +8954,26 @@ type UpdateCustomResolverOptions struct {
 	// Whether the custom resolver is enabled.
 	Enabled *bool `json:"enabled,omitempty"`
 
+	// The profile name of a custom resolver.
+	Profile *string `json:"profile,omitempty"`
+
+	// Whether a disruptive update is allowed for the custom resolver.
+	AllowDisruptiveUpdates *bool `json:"allow_disruptive_updates,omitempty"`
+
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
+
+// Constants associated with the UpdateCustomResolverOptions.Profile property.
+// The profile name of a custom resolver.
+const (
+	UpdateCustomResolverOptions_Profile_Advanced  = "advanced"
+	UpdateCustomResolverOptions_Profile_Essential = "essential"
+	UpdateCustomResolverOptions_Profile_Premier   = "premier"
+)
 
 // NewUpdateCustomResolverOptions : Instantiate UpdateCustomResolverOptions
 func (*DnsSvcsV1) NewUpdateCustomResolverOptions(instanceID string, resolverID string) *UpdateCustomResolverOptions {
@@ -8333,6 +9013,18 @@ func (_options *UpdateCustomResolverOptions) SetEnabled(enabled bool) *UpdateCus
 	return _options
 }
 
+// SetProfile : Allow user to set Profile
+func (_options *UpdateCustomResolverOptions) SetProfile(profile string) *UpdateCustomResolverOptions {
+	_options.Profile = core.StringPtr(profile)
+	return _options
+}
+
+// SetAllowDisruptiveUpdates : Allow user to set AllowDisruptiveUpdates
+func (_options *UpdateCustomResolverOptions) SetAllowDisruptiveUpdates(allowDisruptiveUpdates bool) *UpdateCustomResolverOptions {
+	_options.AllowDisruptiveUpdates = core.BoolPtr(allowDisruptiveUpdates)
+	return _options
+}
+
 // SetXCorrelationID : Allow user to set XCorrelationID
 func (_options *UpdateCustomResolverOptions) SetXCorrelationID(xCorrelationID string) *UpdateCustomResolverOptions {
 	_options.XCorrelationID = core.StringPtr(xCorrelationID)
@@ -8357,12 +9049,12 @@ type UpdateDnszoneAccessRequestOptions struct {
 	RequestID *string `json:"request_id" validate:"required,ne="`
 
 	// The action applies to the access request.
-	Action *string `json:"action,omitempty"`
+	Action *string `json:"action" validate:"required"`
 
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8370,16 +9062,17 @@ type UpdateDnszoneAccessRequestOptions struct {
 // The action applies to the access request.
 const (
 	UpdateDnszoneAccessRequestOptions_Action_Approve = "APPROVE"
-	UpdateDnszoneAccessRequestOptions_Action_Reject = "REJECT"
-	UpdateDnszoneAccessRequestOptions_Action_Revoke = "REVOKE"
+	UpdateDnszoneAccessRequestOptions_Action_Reject  = "REJECT"
+	UpdateDnszoneAccessRequestOptions_Action_Revoke  = "REVOKE"
 )
 
 // NewUpdateDnszoneAccessRequestOptions : Instantiate UpdateDnszoneAccessRequestOptions
-func (*DnsSvcsV1) NewUpdateDnszoneAccessRequestOptions(instanceID string, dnszoneID string, requestID string) *UpdateDnszoneAccessRequestOptions {
+func (*DnsSvcsV1) NewUpdateDnszoneAccessRequestOptions(instanceID string, dnszoneID string, requestID string, action string) *UpdateDnszoneAccessRequestOptions {
 	return &UpdateDnszoneAccessRequestOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID: core.StringPtr(dnszoneID),
-		RequestID: core.StringPtr(requestID),
+		DnszoneID:  core.StringPtr(dnszoneID),
+		RequestID:  core.StringPtr(requestID),
+		Action:     core.StringPtr(action),
 	}
 }
 
@@ -8436,7 +9129,7 @@ type UpdateDnszoneOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8444,7 +9137,7 @@ type UpdateDnszoneOptions struct {
 func (*DnsSvcsV1) NewUpdateDnszoneOptions(instanceID string, dnszoneID string) *UpdateDnszoneOptions {
 	return &UpdateDnszoneOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID: core.StringPtr(dnszoneID),
+		DnszoneID:  core.StringPtr(dnszoneID),
 	}
 }
 
@@ -8498,16 +9191,20 @@ type UpdateForwardingRuleOptions struct {
 	// Descriptive text of the forwarding rule.
 	Description *string `json:"description,omitempty"`
 
-	// The matching zone or hostname.
+	// The matching zone or hostname. For the default forwarding rule, the match must always be the wildcard '*', and can
+	// not be changed.
 	Match *string `json:"match,omitempty"`
 
-	// The upstream DNS servers will be forwarded to.
+	// The upstream DNS servers that the DNS queries will be forwarded to.
 	ForwardTo []string `json:"forward_to,omitempty"`
+
+	// An array of views.
+	Views []ViewConfig `json:"views,omitempty"`
 
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8516,7 +9213,7 @@ func (*DnsSvcsV1) NewUpdateForwardingRuleOptions(instanceID string, resolverID s
 	return &UpdateForwardingRuleOptions{
 		InstanceID: core.StringPtr(instanceID),
 		ResolverID: core.StringPtr(resolverID),
-		RuleID: core.StringPtr(ruleID),
+		RuleID:     core.StringPtr(ruleID),
 	}
 }
 
@@ -8556,6 +9253,12 @@ func (_options *UpdateForwardingRuleOptions) SetForwardTo(forwardTo []string) *U
 	return _options
 }
 
+// SetViews : Allow user to set Views
+func (_options *UpdateForwardingRuleOptions) SetViews(views []ViewConfig) *UpdateForwardingRuleOptions {
+	_options.Views = views
+	return _options
+}
+
 // SetXCorrelationID : Allow user to set XCorrelationID
 func (_options *UpdateForwardingRuleOptions) SetXCorrelationID(xCorrelationID string) *UpdateForwardingRuleOptions {
 	_options.XCorrelationID = core.StringPtr(xCorrelationID)
@@ -8585,14 +9288,14 @@ type UpdateLinkedZoneOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewUpdateLinkedZoneOptions : Instantiate UpdateLinkedZoneOptions
 func (*DnsSvcsV1) NewUpdateLinkedZoneOptions(instanceID string, linkedDnszoneID string) *UpdateLinkedZoneOptions {
 	return &UpdateLinkedZoneOptions{
-		InstanceID: core.StringPtr(instanceID),
+		InstanceID:      core.StringPtr(instanceID),
 		LinkedDnszoneID: core.StringPtr(linkedDnszoneID),
 	}
 }
@@ -8664,12 +9367,12 @@ type UpdateLoadBalancerOptions struct {
 	DefaultPools []string `json:"default_pools,omitempty"`
 
 	// Map availability zones to pool IDs.
-	AzPools []LoadBalancerAzPoolsItem `json:"az_pools,omitempty"`
+	AzPools []AzPoolsItem `json:"az_pools,omitempty"`
 
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8677,8 +9380,8 @@ type UpdateLoadBalancerOptions struct {
 func (*DnsSvcsV1) NewUpdateLoadBalancerOptions(instanceID string, dnszoneID string, lbID string) *UpdateLoadBalancerOptions {
 	return &UpdateLoadBalancerOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID: core.StringPtr(dnszoneID),
-		LbID: core.StringPtr(lbID),
+		DnszoneID:  core.StringPtr(dnszoneID),
+		LbID:       core.StringPtr(lbID),
 	}
 }
 
@@ -8737,7 +9440,7 @@ func (_options *UpdateLoadBalancerOptions) SetDefaultPools(defaultPools []string
 }
 
 // SetAzPools : Allow user to set AzPools
-func (_options *UpdateLoadBalancerOptions) SetAzPools(azPools []LoadBalancerAzPoolsItem) *UpdateLoadBalancerOptions {
+func (_options *UpdateLoadBalancerOptions) SetAzPools(azPools []AzPoolsItem) *UpdateLoadBalancerOptions {
 	_options.AzPools = azPools
 	return _options
 }
@@ -8811,22 +9514,22 @@ type UpdateMonitorOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // Constants associated with the UpdateMonitorOptions.Type property.
 // The protocol to use for the health check. Currently supported protocols are 'HTTP','HTTPS' and 'TCP'.
 const (
-	UpdateMonitorOptions_Type_Http = "HTTP"
+	UpdateMonitorOptions_Type_Http  = "HTTP"
 	UpdateMonitorOptions_Type_Https = "HTTPS"
-	UpdateMonitorOptions_Type_Tcp = "TCP"
+	UpdateMonitorOptions_Type_Tcp   = "TCP"
 )
 
 // Constants associated with the UpdateMonitorOptions.Method property.
 // The method to use for the health check applicable to HTTP/HTTPS based checks, the default value is 'GET'.
 const (
-	UpdateMonitorOptions_Method_Get = "GET"
+	UpdateMonitorOptions_Method_Get  = "GET"
 	UpdateMonitorOptions_Method_Head = "HEAD"
 )
 
@@ -8834,7 +9537,7 @@ const (
 func (*DnsSvcsV1) NewUpdateMonitorOptions(instanceID string, monitorID string) *UpdateMonitorOptions {
 	return &UpdateMonitorOptions{
 		InstanceID: core.StringPtr(instanceID),
-		MonitorID: core.StringPtr(monitorID),
+		MonitorID:  core.StringPtr(monitorID),
 	}
 }
 
@@ -8980,18 +9683,18 @@ type UpdatePoolOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // Constants associated with the UpdatePoolOptions.HealthcheckRegion property.
 // Health check region of VSIs.
 const (
-	UpdatePoolOptions_HealthcheckRegion_AuSyd = "au-syd"
-	UpdatePoolOptions_HealthcheckRegion_EuDu = "eu-du"
-	UpdatePoolOptions_HealthcheckRegion_EuGb = "eu-gb"
-	UpdatePoolOptions_HealthcheckRegion_JpTok = "jp-tok"
-	UpdatePoolOptions_HealthcheckRegion_UsEast = "us-east"
+	UpdatePoolOptions_HealthcheckRegion_AuSyd   = "au-syd"
+	UpdatePoolOptions_HealthcheckRegion_EuDu    = "eu-du"
+	UpdatePoolOptions_HealthcheckRegion_EuGb    = "eu-gb"
+	UpdatePoolOptions_HealthcheckRegion_JpTok   = "jp-tok"
+	UpdatePoolOptions_HealthcheckRegion_UsEast  = "us-east"
 	UpdatePoolOptions_HealthcheckRegion_UsSouth = "us-south"
 )
 
@@ -8999,7 +9702,7 @@ const (
 func (*DnsSvcsV1) NewUpdatePoolOptions(instanceID string, poolID string) *UpdatePoolOptions {
 	return &UpdatePoolOptions{
 		InstanceID: core.StringPtr(instanceID),
-		PoolID: core.StringPtr(poolID),
+		PoolID:     core.StringPtr(poolID),
 	}
 }
 
@@ -9093,10 +9796,10 @@ type UpdateResourceRecordOptions struct {
 	RecordID *string `json:"record_id" validate:"required,ne="`
 
 	// Name of the resource record.
-	Name *string `json:"name,omitempty"`
+	Name *string `json:"name" validate:"required"`
 
 	// Content of the resource record.
-	Rdata ResourceRecordUpdateInputRdataIntf `json:"rdata,omitempty"`
+	Rdata ResourceRecordUpdateInputRdataIntf `json:"rdata" validate:"required"`
 
 	// Time to live in second.
 	TTL *int64 `json:"ttl,omitempty"`
@@ -9110,16 +9813,18 @@ type UpdateResourceRecordOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewUpdateResourceRecordOptions : Instantiate UpdateResourceRecordOptions
-func (*DnsSvcsV1) NewUpdateResourceRecordOptions(instanceID string, dnszoneID string, recordID string) *UpdateResourceRecordOptions {
+func (*DnsSvcsV1) NewUpdateResourceRecordOptions(instanceID string, dnszoneID string, recordID string, name string, rdata ResourceRecordUpdateInputRdataIntf) *UpdateResourceRecordOptions {
 	return &UpdateResourceRecordOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID: core.StringPtr(dnszoneID),
-		RecordID: core.StringPtr(recordID),
+		DnszoneID:  core.StringPtr(dnszoneID),
+		RecordID:   core.StringPtr(recordID),
+		Name:       core.StringPtr(name),
+		Rdata:      rdata,
 	}
 }
 
@@ -9206,15 +9911,15 @@ type UpdateSecondaryZoneOptions struct {
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewUpdateSecondaryZoneOptions : Instantiate UpdateSecondaryZoneOptions
 func (*DnsSvcsV1) NewUpdateSecondaryZoneOptions(instanceID string, resolverID string, secondaryZoneID string) *UpdateSecondaryZoneOptions {
 	return &UpdateSecondaryZoneOptions{
-		InstanceID: core.StringPtr(instanceID),
-		ResolverID: core.StringPtr(resolverID),
+		InstanceID:      core.StringPtr(instanceID),
+		ResolverID:      core.StringPtr(resolverID),
 		SecondaryZoneID: core.StringPtr(secondaryZoneID),
 	}
 }
@@ -9298,9 +10003,9 @@ type AccessRequest struct {
 // The state of the access request.
 const (
 	AccessRequest_State_Approved = "APPROVED"
-	AccessRequest_State_Pending = "PENDING"
+	AccessRequest_State_Pending  = "PENDING"
 	AccessRequest_State_Rejected = "REJECTED"
-	AccessRequest_State_Revoked = "REVOKED"
+	AccessRequest_State_Revoked  = "REVOKED"
 	AccessRequest_State_Timedout = "TIMEDOUT"
 )
 
@@ -9309,34 +10014,42 @@ func UnmarshalAccessRequest(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(AccessRequest)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "requestor", &obj.Requestor, UnmarshalAccessRequestRequestor)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "requestor-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "zone_id", &obj.ZoneID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "zone_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "zone_name", &obj.ZoneName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "zone_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "state", &obj.State)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pending_expires_at", &obj.PendingExpiresAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pending_expires_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_on", &obj.CreatedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_on-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9378,38 +10091,47 @@ func UnmarshalAccessRequestsList(m map[string]json.RawMessage, result interface{
 	obj := new(AccessRequestsList)
 	err = core.UnmarshalModel(m, "access_requests", &obj.AccessRequests, UnmarshalAccessRequest)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "access_requests-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "count", &obj.Count)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9422,15 +10144,45 @@ func (resp *AccessRequestsList) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
+}
+
+// ActiveDelta : When `state` is `updating`, the current values of properties that are being updated.
+type ActiveDelta struct {
+	// The profile name of a custom resolver.
+	Profile *string `json:"profile,omitempty"`
+}
+
+// Constants associated with the ActiveDelta.Profile property.
+// The profile name of a custom resolver.
+const (
+	ActiveDelta_Profile_Advanced  = "advanced"
+	ActiveDelta_Profile_Essential = "essential"
+	ActiveDelta_Profile_Premier   = "premier"
+)
+
+// UnmarshalActiveDelta unmarshals an instance of ActiveDelta from the specified map of raw messages.
+func UnmarshalActiveDelta(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ActiveDelta)
+	err = core.UnmarshalPrimitive(m, "profile", &obj.Profile)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "profile-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
 }
 
 // CustomResolver : custom resolver details.
@@ -9453,10 +10205,19 @@ type CustomResolver struct {
 	// Locations on which the custom resolver will be running.
 	Locations []Location `json:"locations,omitempty"`
 
-	// the time when a custom resolver is created, RFC3339 format.
+	// The profile name of a custom resolver.
+	Profile *string `json:"profile,omitempty"`
+
+	// Whether a disruptive update is allowed for the custom resolver.
+	AllowDisruptiveUpdates *bool `json:"allow_disruptive_updates,omitempty"`
+
+	// The lifecycle of a custom resolver.
+	Lifecycle *Lifecycle `json:"lifecycle,omitempty"`
+
+	// The time when a custom resolver is created, in RFC3339 format.
 	CreatedOn *strfmt.DateTime `json:"created_on,omitempty"`
 
-	// the recent time when a custom resolver is modified, RFC3339 format.
+	// The recent time when a custom resolver is modified, in RFC3339 format.
 	ModifiedOn *strfmt.DateTime `json:"modified_on,omitempty"`
 }
 
@@ -9465,7 +10226,15 @@ type CustomResolver struct {
 const (
 	CustomResolver_Health_Critical = "CRITICAL"
 	CustomResolver_Health_Degraded = "DEGRADED"
-	CustomResolver_Health_Healthy = "HEALTHY"
+	CustomResolver_Health_Healthy  = "HEALTHY"
+)
+
+// Constants associated with the CustomResolver.Profile property.
+// The profile name of a custom resolver.
+const (
+	CustomResolver_Profile_Advanced  = "advanced"
+	CustomResolver_Profile_Essential = "essential"
+	CustomResolver_Profile_Premier   = "premier"
 )
 
 // UnmarshalCustomResolver unmarshals an instance of CustomResolver from the specified map of raw messages.
@@ -9473,34 +10242,57 @@ func UnmarshalCustomResolver(m map[string]json.RawMessage, result interface{}) (
 	obj := new(CustomResolver)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "health", &obj.Health)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "health-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "locations", &obj.Locations, UnmarshalLocation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "locations-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "profile", &obj.Profile)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "profile-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "allow_disruptive_updates", &obj.AllowDisruptiveUpdates)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "allow_disruptive_updates-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "lifecycle", &obj.Lifecycle, UnmarshalLifecycle)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "lifecycle-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_on", &obj.CreatedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_on-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9518,6 +10310,7 @@ func UnmarshalCustomResolverList(m map[string]json.RawMessage, result interface{
 	obj := new(CustomResolverList)
 	err = core.UnmarshalModel(m, "custom_resolvers", &obj.CustomResolvers, UnmarshalCustomResolver)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "custom_resolvers-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9554,10 +10347,10 @@ type Dnszone struct {
 // Constants associated with the Dnszone.State property.
 // State of DNS zone.
 const (
-	Dnszone_State_Active = "active"
-	Dnszone_State_Deleted = "deleted"
-	Dnszone_State_Disabled = "disabled"
-	Dnszone_State_PendingDelete = "pending_delete"
+	Dnszone_State_Active            = "active"
+	Dnszone_State_Deleted           = "deleted"
+	Dnszone_State_Disabled          = "disabled"
+	Dnszone_State_PendingDelete     = "pending_delete"
 	Dnszone_State_PendingNetworkAdd = "pending_network_add"
 )
 
@@ -9566,34 +10359,42 @@ func UnmarshalDnszone(m map[string]json.RawMessage, result interface{}) (err err
 	obj := new(Dnszone)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_on", &obj.CreatedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_on-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "instance_id", &obj.InstanceID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "instance_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "state", &obj.State)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "label", &obj.Label)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "label-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9614,13 +10415,16 @@ type ForwardingRule struct {
 	// The matching zone or hostname.
 	Match *string `json:"match,omitempty"`
 
-	// The upstream DNS servers will be forwarded to.
+	// The upstream DNS servers that the DNS queries will be forwarded to.
 	ForwardTo []string `json:"forward_to,omitempty"`
 
-	// the time when a forwarding rule is created, RFC3339 format.
+	// An array of views.
+	Views []ViewConfig `json:"views,omitempty"`
+
+	// The time when a forwarding rule is created, in RFC3339 format.
 	CreatedOn *strfmt.DateTime `json:"created_on,omitempty"`
 
-	// the recent time when a forwarding rule is modified, RFC3339 format.
+	// The recent time when a forwarding rule is modified, in RFC3339 format.
 	ModifiedOn *strfmt.DateTime `json:"modified_on,omitempty"`
 }
 
@@ -9628,7 +10432,7 @@ type ForwardingRule struct {
 // Type of the forwarding rule.
 const (
 	ForwardingRule_Type_Default = "default"
-	ForwardingRule_Type_Zone = "zone"
+	ForwardingRule_Type_Zone    = "zone"
 )
 
 // UnmarshalForwardingRule unmarshals an instance of ForwardingRule from the specified map of raw messages.
@@ -9636,30 +10440,110 @@ func UnmarshalForwardingRule(m map[string]json.RawMessage, result interface{}) (
 	obj := new(ForwardingRule)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "match", &obj.Match)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "match-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "forward_to", &obj.ForwardTo)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "forward_to-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "views", &obj.Views, UnmarshalViewConfig)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "views-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_on", &obj.CreatedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_on-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ForwardingRuleInput : forwarding rule details.
+// Models which "extend" this model:
+// - ForwardingRuleInputForwardingRuleBoth
+// - ForwardingRuleInputForwardingRuleOnlyView
+// - ForwardingRuleInputForwardingRuleOnlyForward
+type ForwardingRuleInput struct {
+	// Descriptive text of the forwarding rule.
+	Description *string `json:"description,omitempty"`
+
+	// Type of the forwarding rule.
+	Type *string `json:"type" validate:"required"`
+
+	// The matching zone or hostname.
+	Match *string `json:"match" validate:"required"`
+
+	// The upstream DNS servers that the DNS queries will be forwarded to.
+	ForwardTo []string `json:"forward_to,omitempty"`
+
+	// An array of views.
+	Views []ViewConfig `json:"views,omitempty"`
+}
+
+// Constants associated with the ForwardingRuleInput.Type property.
+// Type of the forwarding rule.
+const (
+	ForwardingRuleInput_Type_Zone = "zone"
+)
+
+func (*ForwardingRuleInput) isaForwardingRuleInput() bool {
+	return true
+}
+
+type ForwardingRuleInputIntf interface {
+	isaForwardingRuleInput() bool
+}
+
+// UnmarshalForwardingRuleInput unmarshals an instance of ForwardingRuleInput from the specified map of raw messages.
+func UnmarshalForwardingRuleInput(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ForwardingRuleInput)
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "match", &obj.Match)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "match-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "forward_to", &obj.ForwardTo)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "forward_to-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "views", &obj.Views, UnmarshalViewConfig)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "views-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9701,38 +10585,47 @@ func UnmarshalForwardingRuleList(m map[string]json.RawMessage, result interface{
 	obj := new(ForwardingRuleList)
 	err = core.UnmarshalModel(m, "forwarding_rules", &obj.ForwardingRules, UnmarshalForwardingRule)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "forwarding_rules-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "count", &obj.Count)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9745,12 +10638,16 @@ func (resp *ForwardingRuleList) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
@@ -9768,10 +10665,13 @@ type HealthcheckHeader struct {
 // NewHealthcheckHeader : Instantiate HealthcheckHeader (Generic Model Constructor)
 func (*DnsSvcsV1) NewHealthcheckHeader(name string, value []string) (_model *HealthcheckHeader, err error) {
 	_model = &HealthcheckHeader{
-		Name: core.StringPtr(name),
+		Name:  core.StringPtr(name),
 		Value: value,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -9780,10 +10680,12 @@ func UnmarshalHealthcheckHeader(m map[string]json.RawMessage, result interface{}
 	obj := new(HealthcheckHeader)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9819,30 +10721,120 @@ func UnmarshalImportResourceRecordsResp(m map[string]json.RawMessage, result int
 	obj := new(ImportResourceRecordsResp)
 	err = core.UnmarshalPrimitive(m, "total_records_parsed", &obj.TotalRecordsParsed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_records_parsed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "records_added", &obj.RecordsAdded)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "records_added-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "records_failed", &obj.RecordsFailed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "records_failed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "records_added_by_type", &obj.RecordsAddedByType, UnmarshalRecordStatsByType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "records_added_by_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "records_failed_by_type", &obj.RecordsFailedByType, UnmarshalRecordStatsByType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "records_failed_by_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "messages", &obj.Messages, UnmarshalRecordsImportMessageModel)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "errors", &obj.Errors, UnmarshalRecordsImportErrorModel)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Lifecycle : The lifecycle of a custom resolver.
+type Lifecycle struct {
+	// The lifecycle state of a custom resolver.
+	State *string `json:"state" validate:"required"`
+
+	// When `state` is `updating`, the current values of properties that are being updated.
+	ActiveDelta *ActiveDelta `json:"active_delta,omitempty"`
+
+	// The reasons why a lifecycle state is not stable.
+	Reasons []LifecycleReason `json:"reasons" validate:"required"`
+}
+
+// Constants associated with the Lifecycle.State property.
+// The lifecycle state of a custom resolver.
+const (
+	Lifecycle_State_Failed   = "failed"
+	Lifecycle_State_Pending  = "pending"
+	Lifecycle_State_Stable   = "stable"
+	Lifecycle_State_Updating = "updating"
+)
+
+// UnmarshalLifecycle unmarshals an instance of Lifecycle from the specified map of raw messages.
+func UnmarshalLifecycle(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Lifecycle)
+	err = core.UnmarshalPrimitive(m, "state", &obj.State)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "active_delta", &obj.ActiveDelta, UnmarshalActiveDelta)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "active_delta-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "reasons", &obj.Reasons, UnmarshalLifecycleReason)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "reasons-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// LifecycleReason : LifecycleReason struct
+type LifecycleReason struct {
+	// A reason code for a lifecycle state that is not stable.
+	Code *string `json:"code,omitempty"`
+
+	// An explanation of the reason for this lifecycle state.
+	Message *string `json:"message,omitempty"`
+
+	// Link to documentation about the reason for this lifecycle state.
+	MoreInfo *string `json:"more_info,omitempty"`
+}
+
+// Constants associated with the LifecycleReason.Code property.
+// A reason code for a lifecycle state that is not stable.
+const (
+	LifecycleReason_Code_InternalError = "internal_error"
+)
+
+// UnmarshalLifecycleReason unmarshals an instance of LifecycleReason from the specified map of raw messages.
+func UnmarshalLifecycleReason(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(LifecycleReason)
+	err = core.UnmarshalPrimitive(m, "code", &obj.Code)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "code-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9885,11 +10877,11 @@ type LinkedDnszone struct {
 // Constants associated with the LinkedDnszone.State property.
 // The state of linked zone.
 const (
-	LinkedDnszone_State_Active = "ACTIVE"
-	LinkedDnszone_State_ApprovalRejected = "APPROVAL_REJECTED"
-	LinkedDnszone_State_ApprovalRevoked = "APPROVAL_REVOKED"
-	LinkedDnszone_State_ApprovalTimedout = "APPROVAL_TIMEDOUT"
-	LinkedDnszone_State_PendingApproval = "PENDING_APPROVAL"
+	LinkedDnszone_State_Active            = "ACTIVE"
+	LinkedDnszone_State_ApprovalRejected  = "APPROVAL_REJECTED"
+	LinkedDnszone_State_ApprovalRevoked   = "APPROVAL_REVOKED"
+	LinkedDnszone_State_ApprovalTimedout  = "APPROVAL_TIMEDOUT"
+	LinkedDnszone_State_PendingApproval   = "PENDING_APPROVAL"
 	LinkedDnszone_State_PendingNetworkAdd = "PENDING_NETWORK_ADD"
 )
 
@@ -9898,42 +10890,52 @@ func UnmarshalLinkedDnszone(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(LinkedDnszone)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "instance_id", &obj.InstanceID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "instance_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "linked_to", &obj.LinkedTo, UnmarshalLinkedDnszoneLinkedTo)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "linked_to-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "state", &obj.State)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "label", &obj.Label)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "label-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "approval_required_before", &obj.ApprovalRequiredBefore)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "approval_required_before-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_on", &obj.CreatedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_on-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9975,38 +10977,47 @@ func UnmarshalLinkedDnszonesList(m map[string]json.RawMessage, result interface{
 	obj := new(LinkedDnszonesList)
 	err = core.UnmarshalModel(m, "linked_dnszones", &obj.LinkedDnszones, UnmarshalLinkedDnszone)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "linked_dnszones-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "count", &obj.Count)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10019,12 +11030,16 @@ func (resp *LinkedDnszonesList) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
@@ -10065,38 +11080,47 @@ func UnmarshalListDnszones(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(ListDnszones)
 	err = core.UnmarshalModel(m, "dnszones", &obj.Dnszones, UnmarshalDnszone)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "dnszones-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "count", &obj.Count)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10109,12 +11133,16 @@ func (resp *ListDnszones) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
@@ -10155,38 +11183,47 @@ func UnmarshalListLoadBalancers(m map[string]json.RawMessage, result interface{}
 	obj := new(ListLoadBalancers)
 	err = core.UnmarshalModel(m, "load_balancers", &obj.LoadBalancers, UnmarshalLoadBalancer)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "load_balancers-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "count", &obj.Count)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10199,12 +11236,16 @@ func (resp *ListLoadBalancers) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
@@ -10245,38 +11286,47 @@ func UnmarshalListMonitors(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(ListMonitors)
 	err = core.UnmarshalModel(m, "monitors", &obj.Monitors, UnmarshalMonitor)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "monitors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "count", &obj.Count)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10289,12 +11339,16 @@ func (resp *ListMonitors) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
@@ -10311,6 +11365,7 @@ func UnmarshalListPermittedNetworks(m map[string]json.RawMessage, result interfa
 	obj := new(ListPermittedNetworks)
 	err = core.UnmarshalModel(m, "permitted_networks", &obj.PermittedNetworks, UnmarshalPermittedNetwork)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "permitted_networks-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10352,38 +11407,47 @@ func UnmarshalListPools(m map[string]json.RawMessage, result interface{}) (err e
 	obj := new(ListPools)
 	err = core.UnmarshalModel(m, "pools", &obj.Pools, UnmarshalPool)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pools-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "count", &obj.Count)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10396,12 +11460,16 @@ func (resp *ListPools) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
@@ -10442,38 +11510,47 @@ func UnmarshalListResourceRecords(m map[string]json.RawMessage, result interface
 	obj := new(ListResourceRecords)
 	err = core.UnmarshalModel(m, "resource_records", &obj.ResourceRecords, UnmarshalResourceRecord)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_records-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "count", &obj.Count)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10486,12 +11563,16 @@ func (resp *ListResourceRecords) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
@@ -10525,7 +11606,7 @@ type LoadBalancer struct {
 	DefaultPools []string `json:"default_pools,omitempty"`
 
 	// Map availability zones to pool IDs.
-	AzPools []LoadBalancerAzPoolsItem `json:"az_pools,omitempty"`
+	AzPools []AzPoolsItem `json:"az_pools,omitempty"`
 
 	// The time when a load balancer is created.
 	CreatedOn *strfmt.DateTime `json:"created_on,omitempty"`
@@ -10539,7 +11620,7 @@ type LoadBalancer struct {
 const (
 	LoadBalancer_Health_Critical = "CRITICAL"
 	LoadBalancer_Health_Degraded = "DEGRADED"
-	LoadBalancer_Health_Healthy = "HEALTHY"
+	LoadBalancer_Health_Healthy  = "HEALTHY"
 )
 
 // UnmarshalLoadBalancer unmarshals an instance of LoadBalancer from the specified map of raw messages.
@@ -10547,46 +11628,57 @@ func UnmarshalLoadBalancer(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(LoadBalancer)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ttl", &obj.TTL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ttl-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "health", &obj.Health)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "health-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "fallback_pool", &obj.FallbackPool)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "fallback_pool-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "default_pools", &obj.DefaultPools)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "default_pools-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "az_pools", &obj.AzPools, UnmarshalLoadBalancerAzPoolsItem)
+	err = core.UnmarshalModel(m, "az_pools", &obj.AzPools, UnmarshalAzPoolsItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "az_pools-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_on", &obj.CreatedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_on-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10616,22 +11708,27 @@ func UnmarshalLocation(m map[string]json.RawMessage, result interface{}) (err er
 	obj := new(Location)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "subnet_crn", &obj.SubnetCrn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subnet_crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "healthy", &obj.Healthy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "healthy-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "dns_server_ip", &obj.DnsServerIp)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "dns_server_ip-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10653,6 +11750,9 @@ func (*DnsSvcsV1) NewLocationInput(subnetCrn string) (_model *LocationInput, err
 		SubnetCrn: core.StringPtr(subnetCrn),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -10661,10 +11761,12 @@ func UnmarshalLocationInput(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(LocationInput)
 	err = core.UnmarshalPrimitive(m, "subnet_crn", &obj.SubnetCrn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subnet_crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enabled-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10731,7 +11833,7 @@ type Monitor struct {
 // Constants associated with the Monitor.Method property.
 // The method to use for the health check applicable to HTTP/HTTPS based checks, the default value is 'GET'.
 const (
-	Monitor_Method_Get = "GET"
+	Monitor_Method_Get  = "GET"
 	Monitor_Method_Head = "HEAD"
 )
 
@@ -10740,66 +11842,82 @@ func UnmarshalMonitor(m map[string]json.RawMessage, result interface{}) (err err
 	obj := new(Monitor)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "port", &obj.Port)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "port-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "interval", &obj.Interval)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "interval-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "retries", &obj.Retries)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "retries-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "timeout", &obj.Timeout)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "timeout-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "method", &obj.Method)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "method-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "path", &obj.Path)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "path-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "headers", &obj.HeadersVar, UnmarshalHealthcheckHeader)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "headers-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "allow_insecure", &obj.AllowInsecure)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "allow_insecure-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "expected_codes", &obj.ExpectedCodes)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "expected_codes-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "expected_body", &obj.ExpectedBody)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "expected_body-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_on", &obj.CreatedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_on-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10832,26 +11950,32 @@ func UnmarshalOrigin(m map[string]json.RawMessage, result interface{}) (err erro
 	obj := new(Origin)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "address", &obj.Address)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "address-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "health", &obj.Health)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "health-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "health_failure_reason", &obj.HealthFailureReason)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "health_failure_reason-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10878,18 +12002,22 @@ func UnmarshalOriginInput(m map[string]json.RawMessage, result interface{}) (err
 	obj := new(OriginInput)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "address", &obj.Address)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "address-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enabled-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10907,6 +12035,7 @@ func UnmarshalPaginationRef(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(PaginationRef)
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10946,7 +12075,7 @@ const (
 // Constants associated with the PermittedNetwork.State property.
 // The state of a permitted network.
 const (
-	PermittedNetwork_State_Active = "ACTIVE"
+	PermittedNetwork_State_Active            = "ACTIVE"
 	PermittedNetwork_State_RemovalInProgress = "REMOVAL_IN_PROGRESS"
 )
 
@@ -10955,30 +12084,37 @@ func UnmarshalPermittedNetwork(m map[string]json.RawMessage, result interface{})
 	obj := new(PermittedNetwork)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_on", &obj.CreatedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_on-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "permitted_network", &obj.PermittedNetwork, UnmarshalPermittedNetworkVpc)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "permitted_network-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "state", &obj.State)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "linked_zone_id", &obj.LinkedZoneID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "linked_zone_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10997,6 +12133,9 @@ func (*DnsSvcsV1) NewPermittedNetworkVpc(vpcCrn string) (_model *PermittedNetwor
 		VpcCrn: core.StringPtr(vpcCrn),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -11005,6 +12144,7 @@ func UnmarshalPermittedNetworkVpc(m map[string]json.RawMessage, result interface
 	obj := new(PermittedNetworkVpc)
 	err = core.UnmarshalPrimitive(m, "vpc_crn", &obj.VpcCrn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "vpc_crn-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -11063,17 +12203,17 @@ type Pool struct {
 const (
 	Pool_Health_Critical = "CRITICAL"
 	Pool_Health_Degraded = "DEGRADED"
-	Pool_Health_Healthy = "HEALTHY"
+	Pool_Health_Healthy  = "HEALTHY"
 )
 
 // Constants associated with the Pool.HealthcheckRegion property.
 // Health check region of VSIs.
 const (
-	Pool_HealthcheckRegion_AuSyd = "au-syd"
-	Pool_HealthcheckRegion_EuDu = "eu-du"
-	Pool_HealthcheckRegion_EuGb = "eu-gb"
-	Pool_HealthcheckRegion_JpTok = "jp-tok"
-	Pool_HealthcheckRegion_UsEast = "us-east"
+	Pool_HealthcheckRegion_AuSyd   = "au-syd"
+	Pool_HealthcheckRegion_EuDu    = "eu-du"
+	Pool_HealthcheckRegion_EuGb    = "eu-gb"
+	Pool_HealthcheckRegion_JpTok   = "jp-tok"
+	Pool_HealthcheckRegion_UsEast  = "us-east"
 	Pool_HealthcheckRegion_UsSouth = "us-south"
 )
 
@@ -11082,58 +12222,72 @@ func UnmarshalPool(m map[string]json.RawMessage, result interface{}) (err error)
 	obj := new(Pool)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "healthy_origins_threshold", &obj.HealthyOriginsThreshold)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "healthy_origins_threshold-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "origins", &obj.Origins, UnmarshalOrigin)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "origins-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "monitor", &obj.Monitor)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "monitor-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "notification_channel", &obj.NotificationChannel)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "notification_channel-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "health", &obj.Health)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "health-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "healthcheck_region", &obj.HealthcheckRegion)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "healthcheck_region-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "healthcheck_subnets", &obj.HealthcheckSubnets)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "healthcheck_subnets-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "healthcheck_vsis", &obj.HealthcheckVsis, UnmarshalPoolHealthcheckVsisItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "healthcheck_vsis-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_on", &obj.CreatedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_on-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -11169,30 +12323,37 @@ func UnmarshalRecordStatsByType(m map[string]json.RawMessage, result interface{}
 	obj := new(RecordStatsByType)
 	err = core.UnmarshalPrimitive(m, "A", &obj.A)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "A-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "AAAA", &obj.AAAA)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "AAAA-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "CNAME", &obj.CNAME)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "CNAME-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "SRV", &obj.SRV)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "SRV-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "TXT", &obj.TXT)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "TXT-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "MX", &obj.MX)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "MX-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "PTR", &obj.PTR)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "PTR-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -11213,10 +12374,12 @@ func UnmarshalRecordsImportErrorModel(m map[string]json.RawMessage, result inter
 	obj := new(RecordsImportErrorModel)
 	err = core.UnmarshalPrimitive(m, "resource_record", &obj.ResourceRecord)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_record-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "error", &obj.Error, UnmarshalRecordsImportErrorModelError)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "error-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -11237,10 +12400,12 @@ func UnmarshalRecordsImportMessageModel(m map[string]json.RawMessage, result int
 	obj := new(RecordsImportMessageModel)
 	err = core.UnmarshalPrimitive(m, "code", &obj.Code)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "code-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -11280,13 +12445,13 @@ type ResourceRecord struct {
 // Constants associated with the ResourceRecord.Type property.
 // Type of the resource record.
 const (
-	ResourceRecord_Type_A = "A"
-	ResourceRecord_Type_Aaaa = "AAAA"
+	ResourceRecord_Type_A     = "A"
+	ResourceRecord_Type_Aaaa  = "AAAA"
 	ResourceRecord_Type_Cname = "CNAME"
-	ResourceRecord_Type_Mx = "MX"
-	ResourceRecord_Type_Ptr = "PTR"
-	ResourceRecord_Type_Srv = "SRV"
-	ResourceRecord_Type_Txt = "TXT"
+	ResourceRecord_Type_Mx    = "MX"
+	ResourceRecord_Type_Ptr   = "PTR"
+	ResourceRecord_Type_Srv   = "SRV"
+	ResourceRecord_Type_Txt   = "TXT"
 )
 
 // UnmarshalResourceRecord unmarshals an instance of ResourceRecord from the specified map of raw messages.
@@ -11294,38 +12459,47 @@ func UnmarshalResourceRecord(m map[string]json.RawMessage, result interface{}) (
 	obj := new(ResourceRecord)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_on", &obj.CreatedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_on-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ttl", &obj.TTL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ttl-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "rdata", &obj.Rdata)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rdata-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "service", &obj.Service)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "service-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "protocol", &obj.Protocol)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "protocol-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -11361,30 +12535,37 @@ func UnmarshalSecondaryZone(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(SecondaryZone)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "zone", &obj.Zone)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "zone-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "transfer_from", &obj.TransferFrom)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "transfer_from-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_on", &obj.CreatedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_on-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -11426,38 +12607,47 @@ func UnmarshalSecondaryZoneList(m map[string]json.RawMessage, result interface{}
 	obj := new(SecondaryZoneList)
 	err = core.UnmarshalModel(m, "secondary_zones", &obj.SecondaryZones, UnmarshalSecondaryZone)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "secondary_zones-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "count", &obj.Count)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPaginationRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -11470,15 +12660,98 @@ func (resp *SecondaryZoneList) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
+}
+
+// ViewConfig : View configuration describes the DNS forwarding policy such that DNS queries matching an expression should be
+// forwarded to the target DNS servers.
+type ViewConfig struct {
+	// The view name, which must be unique in a forwarding rule.
+	Name *string `json:"name" validate:"required"`
+
+	// Descriptive text of the view.
+	Description *string `json:"description,omitempty"`
+
+	// The custom resolver will only apply the rule to the incoming DNS queries if the expression evaluates to true. The
+	// expression follows
+	// [Common Expression Language](https://github.com/google/cel-spec/blob/master/doc/langdef.md), but does not support
+	// CEL build-in functions and macros. Currently, the expression only supports the following custom functions, variables
+	// and operators:
+	//
+	// - Functions:
+	//   - `ipInRange(ip, cidr)`: Return boolean value indicating whether
+	//   the `ip` address is in the `cidr` range.
+	//
+	// - Variables:
+	//   - `source`: Client information for the DNS query.
+	//     - `ip`: The client's IP address.
+	//
+	// - Operators:
+	//   - `||`: Logical OR
+	//   - `&&`: Logical AND
+	//   - `!`: Logical NOT
+	//   - `==`: Logical Equals
+	//   - `!=`: Logical NotEquals
+	//   - `?:`: Conditional
+	//
+	// The supported Common Expression Language features can change without advanced notification.
+	Expression *string `json:"expression" validate:"required"`
+
+	// The target DNS servers that the matching DNS queries are forwarded to.
+	ForwardTo []string `json:"forward_to" validate:"required"`
+}
+
+// NewViewConfig : Instantiate ViewConfig (Generic Model Constructor)
+func (*DnsSvcsV1) NewViewConfig(name string, expression string, forwardTo []string) (_model *ViewConfig, err error) {
+	_model = &ViewConfig{
+		Name:       core.StringPtr(name),
+		Expression: core.StringPtr(expression),
+		ForwardTo:  forwardTo,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalViewConfig unmarshals an instance of ViewConfig from the specified map of raw messages.
+func UnmarshalViewConfig(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ViewConfig)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "expression", &obj.Expression)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "expression-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "forward_to", &obj.ForwardTo)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "forward_to-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
 }
 
 // ResourceRecordInputRdataRdataARecord : The content of type-A resource record.
@@ -11494,6 +12767,9 @@ func (*DnsSvcsV1) NewResourceRecordInputRdataRdataARecord(ip string) (_model *Re
 		Ip: core.StringPtr(ip),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -11506,6 +12782,7 @@ func UnmarshalResourceRecordInputRdataRdataARecord(m map[string]json.RawMessage,
 	obj := new(ResourceRecordInputRdataRdataARecord)
 	err = core.UnmarshalPrimitive(m, "ip", &obj.Ip)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ip-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -11525,6 +12802,9 @@ func (*DnsSvcsV1) NewResourceRecordInputRdataRdataAaaaRecord(ip string) (_model 
 		Ip: core.StringPtr(ip),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -11537,6 +12817,7 @@ func UnmarshalResourceRecordInputRdataRdataAaaaRecord(m map[string]json.RawMessa
 	obj := new(ResourceRecordInputRdataRdataAaaaRecord)
 	err = core.UnmarshalPrimitive(m, "ip", &obj.Ip)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ip-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -11556,6 +12837,9 @@ func (*DnsSvcsV1) NewResourceRecordInputRdataRdataCnameRecord(cname string) (_mo
 		Cname: core.StringPtr(cname),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -11568,6 +12852,7 @@ func UnmarshalResourceRecordInputRdataRdataCnameRecord(m map[string]json.RawMess
 	obj := new(ResourceRecordInputRdataRdataCnameRecord)
 	err = core.UnmarshalPrimitive(m, "cname", &obj.Cname)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cname-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -11587,10 +12872,13 @@ type ResourceRecordInputRdataRdataMxRecord struct {
 // NewResourceRecordInputRdataRdataMxRecord : Instantiate ResourceRecordInputRdataRdataMxRecord (Generic Model Constructor)
 func (*DnsSvcsV1) NewResourceRecordInputRdataRdataMxRecord(exchange string, preference int64) (_model *ResourceRecordInputRdataRdataMxRecord, err error) {
 	_model = &ResourceRecordInputRdataRdataMxRecord{
-		Exchange: core.StringPtr(exchange),
+		Exchange:   core.StringPtr(exchange),
 		Preference: core.Int64Ptr(preference),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -11603,10 +12891,12 @@ func UnmarshalResourceRecordInputRdataRdataMxRecord(m map[string]json.RawMessage
 	obj := new(ResourceRecordInputRdataRdataMxRecord)
 	err = core.UnmarshalPrimitive(m, "exchange", &obj.Exchange)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "exchange-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "preference", &obj.Preference)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "preference-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -11626,6 +12916,9 @@ func (*DnsSvcsV1) NewResourceRecordInputRdataRdataPtrRecord(ptrdname string) (_m
 		Ptrdname: core.StringPtr(ptrdname),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -11638,6 +12931,7 @@ func UnmarshalResourceRecordInputRdataRdataPtrRecord(m map[string]json.RawMessag
 	obj := new(ResourceRecordInputRdataRdataPtrRecord)
 	err = core.UnmarshalPrimitive(m, "ptrdname", &obj.Ptrdname)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ptrdname-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -11663,12 +12957,15 @@ type ResourceRecordInputRdataRdataSrvRecord struct {
 // NewResourceRecordInputRdataRdataSrvRecord : Instantiate ResourceRecordInputRdataRdataSrvRecord (Generic Model Constructor)
 func (*DnsSvcsV1) NewResourceRecordInputRdataRdataSrvRecord(port int64, priority int64, target string, weight int64) (_model *ResourceRecordInputRdataRdataSrvRecord, err error) {
 	_model = &ResourceRecordInputRdataRdataSrvRecord{
-		Port: core.Int64Ptr(port),
+		Port:     core.Int64Ptr(port),
 		Priority: core.Int64Ptr(priority),
-		Target: core.StringPtr(target),
-		Weight: core.Int64Ptr(weight),
+		Target:   core.StringPtr(target),
+		Weight:   core.Int64Ptr(weight),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -11681,18 +12978,22 @@ func UnmarshalResourceRecordInputRdataRdataSrvRecord(m map[string]json.RawMessag
 	obj := new(ResourceRecordInputRdataRdataSrvRecord)
 	err = core.UnmarshalPrimitive(m, "port", &obj.Port)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "port-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "priority", &obj.Priority)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "priority-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target", &obj.Target)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "weight", &obj.Weight)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "weight-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -11712,6 +13013,9 @@ func (*DnsSvcsV1) NewResourceRecordInputRdataRdataTxtRecord(text string) (_model
 		Text: core.StringPtr(text),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -11724,6 +13028,7 @@ func UnmarshalResourceRecordInputRdataRdataTxtRecord(m map[string]json.RawMessag
 	obj := new(ResourceRecordInputRdataRdataTxtRecord)
 	err = core.UnmarshalPrimitive(m, "text", &obj.Text)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "text-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -11743,6 +13048,9 @@ func (*DnsSvcsV1) NewResourceRecordUpdateInputRdataRdataARecord(ip string) (_mod
 		Ip: core.StringPtr(ip),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -11755,6 +13063,7 @@ func UnmarshalResourceRecordUpdateInputRdataRdataARecord(m map[string]json.RawMe
 	obj := new(ResourceRecordUpdateInputRdataRdataARecord)
 	err = core.UnmarshalPrimitive(m, "ip", &obj.Ip)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ip-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -11774,6 +13083,9 @@ func (*DnsSvcsV1) NewResourceRecordUpdateInputRdataRdataAaaaRecord(ip string) (_
 		Ip: core.StringPtr(ip),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -11786,6 +13098,7 @@ func UnmarshalResourceRecordUpdateInputRdataRdataAaaaRecord(m map[string]json.Ra
 	obj := new(ResourceRecordUpdateInputRdataRdataAaaaRecord)
 	err = core.UnmarshalPrimitive(m, "ip", &obj.Ip)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ip-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -11805,6 +13118,9 @@ func (*DnsSvcsV1) NewResourceRecordUpdateInputRdataRdataCnameRecord(cname string
 		Cname: core.StringPtr(cname),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -11817,6 +13133,7 @@ func UnmarshalResourceRecordUpdateInputRdataRdataCnameRecord(m map[string]json.R
 	obj := new(ResourceRecordUpdateInputRdataRdataCnameRecord)
 	err = core.UnmarshalPrimitive(m, "cname", &obj.Cname)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cname-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -11836,10 +13153,13 @@ type ResourceRecordUpdateInputRdataRdataMxRecord struct {
 // NewResourceRecordUpdateInputRdataRdataMxRecord : Instantiate ResourceRecordUpdateInputRdataRdataMxRecord (Generic Model Constructor)
 func (*DnsSvcsV1) NewResourceRecordUpdateInputRdataRdataMxRecord(exchange string, preference int64) (_model *ResourceRecordUpdateInputRdataRdataMxRecord, err error) {
 	_model = &ResourceRecordUpdateInputRdataRdataMxRecord{
-		Exchange: core.StringPtr(exchange),
+		Exchange:   core.StringPtr(exchange),
 		Preference: core.Int64Ptr(preference),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -11852,10 +13172,12 @@ func UnmarshalResourceRecordUpdateInputRdataRdataMxRecord(m map[string]json.RawM
 	obj := new(ResourceRecordUpdateInputRdataRdataMxRecord)
 	err = core.UnmarshalPrimitive(m, "exchange", &obj.Exchange)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "exchange-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "preference", &obj.Preference)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "preference-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -11875,6 +13197,9 @@ func (*DnsSvcsV1) NewResourceRecordUpdateInputRdataRdataPtrRecord(ptrdname strin
 		Ptrdname: core.StringPtr(ptrdname),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -11887,6 +13212,7 @@ func UnmarshalResourceRecordUpdateInputRdataRdataPtrRecord(m map[string]json.Raw
 	obj := new(ResourceRecordUpdateInputRdataRdataPtrRecord)
 	err = core.UnmarshalPrimitive(m, "ptrdname", &obj.Ptrdname)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ptrdname-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -11912,12 +13238,15 @@ type ResourceRecordUpdateInputRdataRdataSrvRecord struct {
 // NewResourceRecordUpdateInputRdataRdataSrvRecord : Instantiate ResourceRecordUpdateInputRdataRdataSrvRecord (Generic Model Constructor)
 func (*DnsSvcsV1) NewResourceRecordUpdateInputRdataRdataSrvRecord(port int64, priority int64, target string, weight int64) (_model *ResourceRecordUpdateInputRdataRdataSrvRecord, err error) {
 	_model = &ResourceRecordUpdateInputRdataRdataSrvRecord{
-		Port: core.Int64Ptr(port),
+		Port:     core.Int64Ptr(port),
 		Priority: core.Int64Ptr(priority),
-		Target: core.StringPtr(target),
-		Weight: core.Int64Ptr(weight),
+		Target:   core.StringPtr(target),
+		Weight:   core.Int64Ptr(weight),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -11930,18 +13259,22 @@ func UnmarshalResourceRecordUpdateInputRdataRdataSrvRecord(m map[string]json.Raw
 	obj := new(ResourceRecordUpdateInputRdataRdataSrvRecord)
 	err = core.UnmarshalPrimitive(m, "port", &obj.Port)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "port-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "priority", &obj.Priority)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "priority-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target", &obj.Target)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "weight", &obj.Weight)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "weight-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -11961,6 +13294,9 @@ func (*DnsSvcsV1) NewResourceRecordUpdateInputRdataRdataTxtRecord(text string) (
 		Text: core.StringPtr(text),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -11973,19 +13309,228 @@ func UnmarshalResourceRecordUpdateInputRdataRdataTxtRecord(m map[string]json.Raw
 	obj := new(ResourceRecordUpdateInputRdataRdataTxtRecord)
 	err = core.UnmarshalPrimitive(m, "text", &obj.Text)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "text-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-//
+// ForwardingRuleInputForwardingRuleBoth : Forwarding rule with both forward_to and views.
+// This model "extends" ForwardingRuleInput
+type ForwardingRuleInputForwardingRuleBoth struct {
+	// Descriptive text of the forwarding rule.
+	Description *string `json:"description,omitempty"`
+
+	// Type of the forwarding rule.
+	Type *string `json:"type" validate:"required"`
+
+	// The matching zone or hostname.
+	Match *string `json:"match" validate:"required"`
+
+	// The upstream DNS servers that the DNS queries will be forwarded to.
+	ForwardTo []string `json:"forward_to" validate:"required"`
+
+	// An array of views.
+	Views []ViewConfig `json:"views" validate:"required"`
+}
+
+// Constants associated with the ForwardingRuleInputForwardingRuleBoth.Type property.
+// Type of the forwarding rule.
+const (
+	ForwardingRuleInputForwardingRuleBoth_Type_Zone = "zone"
+)
+
+// NewForwardingRuleInputForwardingRuleBoth : Instantiate ForwardingRuleInputForwardingRuleBoth (Generic Model Constructor)
+func (*DnsSvcsV1) NewForwardingRuleInputForwardingRuleBoth(typeVar string, match string, forwardTo []string, views []ViewConfig) (_model *ForwardingRuleInputForwardingRuleBoth, err error) {
+	_model = &ForwardingRuleInputForwardingRuleBoth{
+		Type:      core.StringPtr(typeVar),
+		Match:     core.StringPtr(match),
+		ForwardTo: forwardTo,
+		Views:     views,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*ForwardingRuleInputForwardingRuleBoth) isaForwardingRuleInput() bool {
+	return true
+}
+
+// UnmarshalForwardingRuleInputForwardingRuleBoth unmarshals an instance of ForwardingRuleInputForwardingRuleBoth from the specified map of raw messages.
+func UnmarshalForwardingRuleInputForwardingRuleBoth(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ForwardingRuleInputForwardingRuleBoth)
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "match", &obj.Match)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "match-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "forward_to", &obj.ForwardTo)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "forward_to-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "views", &obj.Views, UnmarshalViewConfig)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "views-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ForwardingRuleInputForwardingRuleOnlyForward : Forwarding rule without views.
+// This model "extends" ForwardingRuleInput
+type ForwardingRuleInputForwardingRuleOnlyForward struct {
+	// Descriptive text of the forwarding rule.
+	Description *string `json:"description,omitempty"`
+
+	// Type of the forwarding rule.
+	Type *string `json:"type" validate:"required"`
+
+	// The matching zone or hostname.
+	Match *string `json:"match" validate:"required"`
+
+	// The upstream DNS servers that the DNS queries will be forwarded to.
+	ForwardTo []string `json:"forward_to" validate:"required"`
+}
+
+// Constants associated with the ForwardingRuleInputForwardingRuleOnlyForward.Type property.
+// Type of the forwarding rule.
+const (
+	ForwardingRuleInputForwardingRuleOnlyForward_Type_Zone = "zone"
+)
+
+// NewForwardingRuleInputForwardingRuleOnlyForward : Instantiate ForwardingRuleInputForwardingRuleOnlyForward (Generic Model Constructor)
+func (*DnsSvcsV1) NewForwardingRuleInputForwardingRuleOnlyForward(typeVar string, match string, forwardTo []string) (_model *ForwardingRuleInputForwardingRuleOnlyForward, err error) {
+	_model = &ForwardingRuleInputForwardingRuleOnlyForward{
+		Type:      core.StringPtr(typeVar),
+		Match:     core.StringPtr(match),
+		ForwardTo: forwardTo,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*ForwardingRuleInputForwardingRuleOnlyForward) isaForwardingRuleInput() bool {
+	return true
+}
+
+// UnmarshalForwardingRuleInputForwardingRuleOnlyForward unmarshals an instance of ForwardingRuleInputForwardingRuleOnlyForward from the specified map of raw messages.
+func UnmarshalForwardingRuleInputForwardingRuleOnlyForward(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ForwardingRuleInputForwardingRuleOnlyForward)
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "match", &obj.Match)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "match-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "forward_to", &obj.ForwardTo)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "forward_to-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ForwardingRuleInputForwardingRuleOnlyView : Forwarding rule with only views.
+// This model "extends" ForwardingRuleInput
+type ForwardingRuleInputForwardingRuleOnlyView struct {
+	// Descriptive text of the forwarding rule.
+	Description *string `json:"description,omitempty"`
+
+	// Type of the forwarding rule.
+	Type *string `json:"type" validate:"required"`
+
+	// The matching zone or hostname.
+	Match *string `json:"match" validate:"required"`
+
+	// An array of views.
+	Views []ViewConfig `json:"views" validate:"required"`
+}
+
+// Constants associated with the ForwardingRuleInputForwardingRuleOnlyView.Type property.
+// Type of the forwarding rule.
+const (
+	ForwardingRuleInputForwardingRuleOnlyView_Type_Zone = "zone"
+)
+
+// NewForwardingRuleInputForwardingRuleOnlyView : Instantiate ForwardingRuleInputForwardingRuleOnlyView (Generic Model Constructor)
+func (*DnsSvcsV1) NewForwardingRuleInputForwardingRuleOnlyView(typeVar string, match string, views []ViewConfig) (_model *ForwardingRuleInputForwardingRuleOnlyView, err error) {
+	_model = &ForwardingRuleInputForwardingRuleOnlyView{
+		Type:  core.StringPtr(typeVar),
+		Match: core.StringPtr(match),
+		Views: views,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*ForwardingRuleInputForwardingRuleOnlyView) isaForwardingRuleInput() bool {
+	return true
+}
+
+// UnmarshalForwardingRuleInputForwardingRuleOnlyView unmarshals an instance of ForwardingRuleInputForwardingRuleOnlyView from the specified map of raw messages.
+func UnmarshalForwardingRuleInputForwardingRuleOnlyView(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ForwardingRuleInputForwardingRuleOnlyView)
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "match", &obj.Match)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "match-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "views", &obj.Views, UnmarshalViewConfig)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "views-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // DnszonesPager can be used to simplify the use of the "ListDnszones" method.
-//
 type DnszonesPager struct {
-	hasNext bool
-	options *ListDnszonesOptions
-	client  *DnsSvcsV1
+	hasNext     bool
+	options     *ListDnszonesOptions
+	client      *DnsSvcsV1
 	pageContext struct {
 		next *int64
 	}
@@ -11994,7 +13539,7 @@ type DnszonesPager struct {
 // NewDnszonesPager returns a new DnszonesPager instance.
 func (dnsSvcs *DnsSvcsV1) NewDnszonesPager(options *ListDnszonesOptions) (pager *DnszonesPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -12022,6 +13567,7 @@ func (pager *DnszonesPager) GetNextWithContext(ctx context.Context) (page []Dnsz
 
 	result, _, err := pager.client.ListDnszonesWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -12030,7 +13576,8 @@ func (pager *DnszonesPager) GetNextWithContext(ctx context.Context) (page []Dnsz
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -12049,6 +13596,7 @@ func (pager *DnszonesPager) GetAllWithContext(ctx context.Context) (allItems []D
 		var nextPage []Dnszone
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -12058,21 +13606,23 @@ func (pager *DnszonesPager) GetAllWithContext(ctx context.Context) (allItems []D
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *DnszonesPager) GetNext() (page []Dnszone, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *DnszonesPager) GetAll() (allItems []Dnszone, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
-//
 // ResourceRecordsPager can be used to simplify the use of the "ListResourceRecords" method.
-//
 type ResourceRecordsPager struct {
-	hasNext bool
-	options *ListResourceRecordsOptions
-	client  *DnsSvcsV1
+	hasNext     bool
+	options     *ListResourceRecordsOptions
+	client      *DnsSvcsV1
 	pageContext struct {
 		next *int64
 	}
@@ -12081,7 +13631,7 @@ type ResourceRecordsPager struct {
 // NewResourceRecordsPager returns a new ResourceRecordsPager instance.
 func (dnsSvcs *DnsSvcsV1) NewResourceRecordsPager(options *ListResourceRecordsOptions) (pager *ResourceRecordsPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -12109,6 +13659,7 @@ func (pager *ResourceRecordsPager) GetNextWithContext(ctx context.Context) (page
 
 	result, _, err := pager.client.ListResourceRecordsWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -12117,7 +13668,8 @@ func (pager *ResourceRecordsPager) GetNextWithContext(ctx context.Context) (page
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -12136,6 +13688,7 @@ func (pager *ResourceRecordsPager) GetAllWithContext(ctx context.Context) (allIt
 		var nextPage []ResourceRecord
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -12145,21 +13698,23 @@ func (pager *ResourceRecordsPager) GetAllWithContext(ctx context.Context) (allIt
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *ResourceRecordsPager) GetNext() (page []ResourceRecord, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *ResourceRecordsPager) GetAll() (allItems []ResourceRecord, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
-//
 // LoadBalancersPager can be used to simplify the use of the "ListLoadBalancers" method.
-//
 type LoadBalancersPager struct {
-	hasNext bool
-	options *ListLoadBalancersOptions
-	client  *DnsSvcsV1
+	hasNext     bool
+	options     *ListLoadBalancersOptions
+	client      *DnsSvcsV1
 	pageContext struct {
 		next *int64
 	}
@@ -12168,7 +13723,7 @@ type LoadBalancersPager struct {
 // NewLoadBalancersPager returns a new LoadBalancersPager instance.
 func (dnsSvcs *DnsSvcsV1) NewLoadBalancersPager(options *ListLoadBalancersOptions) (pager *LoadBalancersPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -12196,6 +13751,7 @@ func (pager *LoadBalancersPager) GetNextWithContext(ctx context.Context) (page [
 
 	result, _, err := pager.client.ListLoadBalancersWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -12204,7 +13760,8 @@ func (pager *LoadBalancersPager) GetNextWithContext(ctx context.Context) (page [
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -12223,6 +13780,7 @@ func (pager *LoadBalancersPager) GetAllWithContext(ctx context.Context) (allItem
 		var nextPage []LoadBalancer
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -12232,21 +13790,23 @@ func (pager *LoadBalancersPager) GetAllWithContext(ctx context.Context) (allItem
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *LoadBalancersPager) GetNext() (page []LoadBalancer, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *LoadBalancersPager) GetAll() (allItems []LoadBalancer, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
-//
 // PoolsPager can be used to simplify the use of the "ListPools" method.
-//
 type PoolsPager struct {
-	hasNext bool
-	options *ListPoolsOptions
-	client  *DnsSvcsV1
+	hasNext     bool
+	options     *ListPoolsOptions
+	client      *DnsSvcsV1
 	pageContext struct {
 		next *int64
 	}
@@ -12255,7 +13815,7 @@ type PoolsPager struct {
 // NewPoolsPager returns a new PoolsPager instance.
 func (dnsSvcs *DnsSvcsV1) NewPoolsPager(options *ListPoolsOptions) (pager *PoolsPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -12283,6 +13843,7 @@ func (pager *PoolsPager) GetNextWithContext(ctx context.Context) (page []Pool, e
 
 	result, _, err := pager.client.ListPoolsWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -12291,7 +13852,8 @@ func (pager *PoolsPager) GetNextWithContext(ctx context.Context) (page []Pool, e
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -12310,6 +13872,7 @@ func (pager *PoolsPager) GetAllWithContext(ctx context.Context) (allItems []Pool
 		var nextPage []Pool
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -12319,21 +13882,23 @@ func (pager *PoolsPager) GetAllWithContext(ctx context.Context) (allItems []Pool
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *PoolsPager) GetNext() (page []Pool, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *PoolsPager) GetAll() (allItems []Pool, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
-//
 // MonitorsPager can be used to simplify the use of the "ListMonitors" method.
-//
 type MonitorsPager struct {
-	hasNext bool
-	options *ListMonitorsOptions
-	client  *DnsSvcsV1
+	hasNext     bool
+	options     *ListMonitorsOptions
+	client      *DnsSvcsV1
 	pageContext struct {
 		next *int64
 	}
@@ -12342,7 +13907,7 @@ type MonitorsPager struct {
 // NewMonitorsPager returns a new MonitorsPager instance.
 func (dnsSvcs *DnsSvcsV1) NewMonitorsPager(options *ListMonitorsOptions) (pager *MonitorsPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -12370,6 +13935,7 @@ func (pager *MonitorsPager) GetNextWithContext(ctx context.Context) (page []Moni
 
 	result, _, err := pager.client.ListMonitorsWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -12378,7 +13944,8 @@ func (pager *MonitorsPager) GetNextWithContext(ctx context.Context) (page []Moni
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -12397,6 +13964,7 @@ func (pager *MonitorsPager) GetAllWithContext(ctx context.Context) (allItems []M
 		var nextPage []Monitor
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -12406,21 +13974,23 @@ func (pager *MonitorsPager) GetAllWithContext(ctx context.Context) (allItems []M
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *MonitorsPager) GetNext() (page []Monitor, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *MonitorsPager) GetAll() (allItems []Monitor, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
-//
 // ForwardingRulesPager can be used to simplify the use of the "ListForwardingRules" method.
-//
 type ForwardingRulesPager struct {
-	hasNext bool
-	options *ListForwardingRulesOptions
-	client  *DnsSvcsV1
+	hasNext     bool
+	options     *ListForwardingRulesOptions
+	client      *DnsSvcsV1
 	pageContext struct {
 		next *int64
 	}
@@ -12429,7 +13999,7 @@ type ForwardingRulesPager struct {
 // NewForwardingRulesPager returns a new ForwardingRulesPager instance.
 func (dnsSvcs *DnsSvcsV1) NewForwardingRulesPager(options *ListForwardingRulesOptions) (pager *ForwardingRulesPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -12457,6 +14027,7 @@ func (pager *ForwardingRulesPager) GetNextWithContext(ctx context.Context) (page
 
 	result, _, err := pager.client.ListForwardingRulesWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -12465,7 +14036,8 @@ func (pager *ForwardingRulesPager) GetNextWithContext(ctx context.Context) (page
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -12484,6 +14056,7 @@ func (pager *ForwardingRulesPager) GetAllWithContext(ctx context.Context) (allIt
 		var nextPage []ForwardingRule
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -12493,21 +14066,23 @@ func (pager *ForwardingRulesPager) GetAllWithContext(ctx context.Context) (allIt
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *ForwardingRulesPager) GetNext() (page []ForwardingRule, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *ForwardingRulesPager) GetAll() (allItems []ForwardingRule, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
-//
 // SecondaryZonesPager can be used to simplify the use of the "ListSecondaryZones" method.
-//
 type SecondaryZonesPager struct {
-	hasNext bool
-	options *ListSecondaryZonesOptions
-	client  *DnsSvcsV1
+	hasNext     bool
+	options     *ListSecondaryZonesOptions
+	client      *DnsSvcsV1
 	pageContext struct {
 		next *int64
 	}
@@ -12516,7 +14091,7 @@ type SecondaryZonesPager struct {
 // NewSecondaryZonesPager returns a new SecondaryZonesPager instance.
 func (dnsSvcs *DnsSvcsV1) NewSecondaryZonesPager(options *ListSecondaryZonesOptions) (pager *SecondaryZonesPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -12544,6 +14119,7 @@ func (pager *SecondaryZonesPager) GetNextWithContext(ctx context.Context) (page 
 
 	result, _, err := pager.client.ListSecondaryZonesWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -12552,7 +14128,8 @@ func (pager *SecondaryZonesPager) GetNextWithContext(ctx context.Context) (page 
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -12571,6 +14148,7 @@ func (pager *SecondaryZonesPager) GetAllWithContext(ctx context.Context) (allIte
 		var nextPage []SecondaryZone
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -12580,21 +14158,23 @@ func (pager *SecondaryZonesPager) GetAllWithContext(ctx context.Context) (allIte
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *SecondaryZonesPager) GetNext() (page []SecondaryZone, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *SecondaryZonesPager) GetAll() (allItems []SecondaryZone, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
-//
 // LinkedZonesPager can be used to simplify the use of the "ListLinkedZones" method.
-//
 type LinkedZonesPager struct {
-	hasNext bool
-	options *ListLinkedZonesOptions
-	client  *DnsSvcsV1
+	hasNext     bool
+	options     *ListLinkedZonesOptions
+	client      *DnsSvcsV1
 	pageContext struct {
 		next *int64
 	}
@@ -12603,7 +14183,7 @@ type LinkedZonesPager struct {
 // NewLinkedZonesPager returns a new LinkedZonesPager instance.
 func (dnsSvcs *DnsSvcsV1) NewLinkedZonesPager(options *ListLinkedZonesOptions) (pager *LinkedZonesPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -12631,6 +14211,7 @@ func (pager *LinkedZonesPager) GetNextWithContext(ctx context.Context) (page []L
 
 	result, _, err := pager.client.ListLinkedZonesWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -12639,7 +14220,8 @@ func (pager *LinkedZonesPager) GetNextWithContext(ctx context.Context) (page []L
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -12658,6 +14240,7 @@ func (pager *LinkedZonesPager) GetAllWithContext(ctx context.Context) (allItems 
 		var nextPage []LinkedDnszone
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -12667,21 +14250,23 @@ func (pager *LinkedZonesPager) GetAllWithContext(ctx context.Context) (allItems 
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *LinkedZonesPager) GetNext() (page []LinkedDnszone, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *LinkedZonesPager) GetAll() (allItems []LinkedDnszone, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
-//
 // DnszoneAccessRequestsPager can be used to simplify the use of the "ListDnszoneAccessRequests" method.
-//
 type DnszoneAccessRequestsPager struct {
-	hasNext bool
-	options *ListDnszoneAccessRequestsOptions
-	client  *DnsSvcsV1
+	hasNext     bool
+	options     *ListDnszoneAccessRequestsOptions
+	client      *DnsSvcsV1
 	pageContext struct {
 		next *int64
 	}
@@ -12690,7 +14275,7 @@ type DnszoneAccessRequestsPager struct {
 // NewDnszoneAccessRequestsPager returns a new DnszoneAccessRequestsPager instance.
 func (dnsSvcs *DnsSvcsV1) NewDnszoneAccessRequestsPager(options *ListDnszoneAccessRequestsOptions) (pager *DnszoneAccessRequestsPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -12718,6 +14303,7 @@ func (pager *DnszoneAccessRequestsPager) GetNextWithContext(ctx context.Context)
 
 	result, _, err := pager.client.ListDnszoneAccessRequestsWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -12726,7 +14312,8 @@ func (pager *DnszoneAccessRequestsPager) GetNextWithContext(ctx context.Context)
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -12745,6 +14332,7 @@ func (pager *DnszoneAccessRequestsPager) GetAllWithContext(ctx context.Context) 
 		var nextPage []AccessRequest
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -12754,10 +14342,14 @@ func (pager *DnszoneAccessRequestsPager) GetAllWithContext(ctx context.Context) 
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *DnszoneAccessRequestsPager) GetNext() (page []AccessRequest, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *DnszoneAccessRequestsPager) GetAll() (allItems []AccessRequest, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }

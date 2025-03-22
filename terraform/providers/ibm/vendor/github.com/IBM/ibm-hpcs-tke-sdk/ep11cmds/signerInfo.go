@@ -1,5 +1,5 @@
 //
-// Copyright 2021 IBM Inc. All rights reserved
+// Copyright contributors to the ibm-hpcs-tke-sdk project
 // SPDX-License-Identifier: Apache2.0
 //
 
@@ -7,6 +7,7 @@
 //
 // Date          Initials        Description
 // 04/09/2021    CLH             Adapt for TKE SDK
+// 11/11/2022    CLH             T444610 - Support 4770 crypto modules
 
 package ep11cmds
 
@@ -51,7 +52,6 @@ var OID_sha256 = []byte{
 var OID_sha512 = []byte{
 	0x06, 0x09, 0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x03,
 }
-
 //#E@T372621CLH
 
 /** Object identifier for signature algorithm: rsaEncryption */
@@ -64,9 +64,17 @@ var OID_ecdsaWithSHA512 = []byte{
 	0x06, 0x08, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x04, 0x03, 0x04,
 }
 
+//#B@T444610CLH
+/** Object identifier for signature algorithm: dilithium-r2-8-7 */
+var OID_dilithium_r2_8_7 = []byte {
+    0x06, 0x0B, 0x2B, 0x06, 0x01, 0x04, 0x01, 0x02, 0x82, 0x0B, 0x01, 0x08, 0x07,
+};
+//#E@T444610CLH
+
 /*----------------------------------------------------------------------------*/
 /* Signs the input data using a set of signature keys.  A set of concatenated */
-/* ASN.1 sequences, one for each signature key, is returned.                  */
+/* SignerInfo structures is returned, one for each signature key.  Each       */
+/* SignerInfo structure is an ASN.1 sequence.                                 */
 /*                                                                            */
 /* Inputs:                                                                    */
 /* []byte dataToSign -- the data to be signed                                 */
@@ -75,7 +83,8 @@ var OID_ecdsaWithSHA512 = []byte{
 /* []string sigkeyTokens -- authentication tokens for the signature keys      */
 /*                                                                            */
 /* Outputs:                                                                   */
-/* []byte -- a set of concatenated ASN.1 structures, one for each signature   */
+/* []byte -- a set of concatenated SignerInfo structures, one for each        */
+/*     signature                                                              */
 /* error -- reports any error encountered                                     */
 /*----------------------------------------------------------------------------*/
 func CreateSignerInfo(dataToSign []byte, sigkeys []string,
@@ -136,8 +145,8 @@ func CreateSignerInfo(dataToSign []byte, sigkeys []string,
 }
 
 /*----------------------------------------------------------------------------*/
-/* Creates a set of ASN.1 OCTET STRINGS to be made into an ASN.1 sequence     */
-/* that forms the SignerInfo for data signed by a P521 EC signature key.      */
+/* Creates a set of ASN.1 elements to be made into an ASN.1 sequence that     */
+/* forms the SignerInfo for data signed by a P521 EC signature key.           */
 /*                                                                            */
 /* Inputs:                                                                    */
 /* []byte dataToSign -- the data to be signed                                 */
@@ -146,8 +155,8 @@ func CreateSignerInfo(dataToSign []byte, sigkeys []string,
 /* string sigkeyToken -- authentication token for the signature key           */
 /*                                                                            */
 /* Outputs:                                                                   */
-/* [][]byte -- a set of ASN.1 OCTET STRINGS that will form SignerInfo         */
-/*     containing an EC signature                                             */
+/* [][]byte -- a set of ASN.1 elements that will form SignerInfo containing   */
+/*     an EC signature                                                        */
 /* error -- reports any error encountered                                     */
 /*----------------------------------------------------------------------------*/
 func CreateP521ECSignerInfoFields(dataToSign []byte, sigkey string,
@@ -183,8 +192,8 @@ func CreateP521ECSignerInfoFields(dataToSign []byte, sigkey string,
 }
 
 /*----------------------------------------------------------------------------*/
-/* Creates a set of ASN.1 OCTET STRINGS to be made into an ASN.1 sequence     */
-/* that forms the SignerInfo for data signed by a 2048-bit RSA signature key. */
+/* Creates a set of ASN.1 elements to be made into an ASN.1 sequence that     */
+/* forms the SignerInfo for data signed by a 2048-bit RSA signature key.      */
 /*                                                                            */
 /* Inputs:                                                                    */
 /* []byte dataToSign -- the data to be signed                                 */
@@ -193,8 +202,8 @@ func CreateP521ECSignerInfoFields(dataToSign []byte, sigkey string,
 /* string sigkeyToken -- authentication token for the signature key           */
 /*                                                                            */
 /* Outputs:                                                                   */
-/* [][]byte -- a set of ASN.1 OCTET STRINGS that will form SignerInfo         */
-/*     containing an RSA signature                                            */
+/* [][]byte -- a set of ASN.1 elements that will form SignerInfo containing   */
+/*     an RSA signature                                                       */
 /* error -- reports any error encountered                                     */
 /*----------------------------------------------------------------------------*/
 func Create2048RSASignerInfoFields(dataToSign []byte, sigkey string,
@@ -229,119 +238,152 @@ func Create2048RSASignerInfoFields(dataToSign []byte, sigkey string,
 	return signerInfoFields, nil
 }
 
+//#B@T444610CLH
 /*----------------------------------------------------------------------------*/
-/* Isolates the individual fields of the SignerInfo returned in an            */
-/* xcpAdminRsp.                                                               */
+/* Checks the contents of the OCTET STRING for the signature field in an      */
+/* xcpAdminRsp and looks for SignerInfo for an ECC signature.  If found,      */
+/* returns the SignerInfo for the ECC signature.  If not found, returns an    */
+/* error.                                                                     */
 /*                                                                            */
-/* SignerInfo is an ASN.1 sequence but the sequence elements are not all      */
-/* octet strings.  asn1.Decode returns with an error when given SignerInfo    */
-/* to process.  This function can be called instead of asn1.Decode.           */
+/* On the CEX5 and CEX6, the signature field contains a single SignerInfo     */
+/* ASN.1 structure with an ECC signature.  On the CEX8, the signature field   */
+/* may contain one or two SignerInfo ASN.1 structures.  An ECC signature may  */
+/* be returned, or a Dilithium signature, or both.  Each domain can           */
+/* independently configure what OA signatures are returned.                   */
+/*                                                                            */
+/* The SignerInfo returned by an EP11 crypto module contains elements with an */
+/* ASN.1 type not supported by the encoding/asn1 or github.com/Logicalis/asn1 */
+/* packages, so those packages cannot be used to parse the SignerInfo.        */
 /*                                                                            */
 /* Inputs:                                                                    */
-/* signerInfoBytes -- the ASN.1 SignerInfo sequence to process                */
+/* signerInfoBytes -- the contents of the OCTET STRING for signature in the   */
+/*     xcpAdminRsp being processed.  This is expected to hold one or two      */
+/*     SignerInfo ASN.1 structures.                                           */
 /*                                                                            */
 /* Outputs:                                                                   */
-/* SignerInfo -- structure with entries for each of the SignerInfo fields     */
-/* error -- identifies any errors found parsing the input sequence            */
+/* SignerInfo -- contains the ECC signature and other fields from the ECC     */
+/*     SignerInfo                                                             */
+/* error -- reports if no ECC SignerInfo was found or if the SignerInfo       */
+/*     could not be parsed, otherwise nil                                     */
 /*----------------------------------------------------------------------------*/
-func DecodeSignerInfo(signerInfoBytes []byte) (SignerInfo, error) {
+func GetECCSignerInfo(signerInfoBytes []byte) (SignerInfo, error) {
 
 	var signerInfo SignerInfo
-	if signerInfoBytes[0] != common.ASN1_SEQUENCE_TAG {
-		return signerInfo, errors.New("Invalid SignerInfo, missing SEQUENCE tag")
+	for offset := 0; offset < len(signerInfoBytes); {
+		
+		if signerInfoBytes[offset] != common.ASN1_SEQUENCE_TAG {
+			return signerInfo, errors.New("Invalid SignerInfo, missing SEQUENCE tag")
+		}
+		offset++
+		seqlen, err := common.Asn1GetLength(signerInfoBytes, offset)
+		if err != nil {
+			return signerInfo, err
+		}
+		offset, err := common.Asn1SkipLength(signerInfoBytes, offset)
+		if len(signerInfoBytes) < offset + seqlen {
+			return signerInfo, errors.New("Invalid SignerInfo, invalid SEQUENCE length")
+		}
+	
+		// Process the Version field
+		if signerInfoBytes[offset] != common.ASN1_INTEGER_TAG {
+			return signerInfo, errors.New("Invalid SignerInfo, missing INTEGER tag")
+		}
+		offset++
+		if signerInfoBytes[offset] != 0x01 {
+			return signerInfo, errors.New("Invalid SignerInfo, unexpected Version length")
+		}
+		offset++
+		signerInfo.Version = int(signerInfoBytes[offset])
+		
+		// Process the Subject Key Identifier field
+		offset++
+		if signerInfoBytes[offset] != common.ASN1_CONTEXT_SPECIFIC_TAG {
+			return signerInfo, errors.New("Invalid SignerInfo, missing CONTEXT_SPECIFIC tag")
+		}
+		offset++
+		if signerInfoBytes[offset] != 0x20 {
+			return signerInfo, errors.New("Invalid SignerInfo, unexpected SubjectKeyID length")
+		}
+		offset++
+		signerInfo.SubjectKeyID = signerInfoBytes[offset : offset + 32]
+		offset = offset + 32
+		
+		// Process the DigestAlgorithmID field
+		oidBytes, err := common.Asn1GetSequenceBytes(signerInfoBytes, offset)
+		if oidBytes[0] != common.ASN1_OID_TAG {
+			return signerInfo, errors.New("Expected OID tag not found")
+		}
+		oidLength, err := common.Asn1GetLength(oidBytes, 1)
+		if err != nil {
+			return signerInfo, err
+		}
+		newOffset, err := common.Asn1SkipLength(oidBytes, 1)
+		signerInfo.DigestAlgorithmID = oidBytes[0 : newOffset + oidLength]
+		offset, err = common.Asn1SkipSequence(signerInfoBytes, offset)
+		if err != nil {
+			return signerInfo, err
+		}
+		
+		// Process the SignatureAlgorithmID field
+		oidBytes, err = common.Asn1GetSequenceBytes(signerInfoBytes, offset)
+		if oidBytes[0] != common.ASN1_OID_TAG {
+			return signerInfo, errors.New("Expected OID tag not found")
+		}
+		oidLength, err = common.Asn1GetLength(oidBytes, 1)
+		if err != nil {
+			return signerInfo, err
+		}
+		newOffset, err = common.Asn1SkipLength(oidBytes, 1)
+		signerInfo.SignatureAlgorithmID = oidBytes[0 : newOffset + oidLength]
+		offset, err = common.Asn1SkipSequence(signerInfoBytes, offset)
+		if err != nil {
+			return signerInfo, err
+		}
+	
+		// Process the Signature field
+		signatureBytes, err := common.Asn1GetOctetStringBytes(signerInfoBytes, offset)
+		if err != nil {
+			return signerInfo, err
+		}
+		signerInfo.Signature = signatureBytes
+	
+		if common.ByteSlicesAreEqual(signerInfo.SignatureAlgorithmID, OID_ecdsaWithSHA512) {
+			// SignerInfo contains an ECC signature
+			// The ECC signature returned by an EP11 crypto module is an
+			// ASN.1 sequence of two INTEGERs, R and S.
+			
+			bytes, err := common.Asn1GetSequenceBytes(signatureBytes, 0)
+			if err != nil {
+				return signerInfo, err
+			}
+			rBytes, err := common.Asn1GetIntegerBytes(bytes, 0)
+			if err != nil {
+				return signerInfo, err
+			}
+			signerInfo.SignatureR = rBytes
+			offset, err = common.Asn1SkipInteger(bytes, 0)
+			if err != nil {
+				return signerInfo, err
+			}
+			sBytes, err := common.Asn1GetIntegerBytes(bytes, offset)
+			if err != nil {
+				return signerInfo, err
+			}
+			signerInfo.SignatureS = sBytes
+			
+			return signerInfo, nil
+			
+		} else {
+			// SignerInfo does not contain an ECC signature
+			// Look for another SignerInfo
+			offset, err = common.Asn1SkipOctetString(signerInfoBytes, offset)
+			if err != nil {
+				return signerInfo, err
+			}
+		}
 	}
-	seqlen, err := common.Asn1GetLength(signerInfoBytes, 1)
-	if err != nil {
-		return signerInfo, err
-	}
-	offset, err := common.Asn1SkipLength(signerInfoBytes, 1)
-	if len(signerInfoBytes) != offset+seqlen {
-		return signerInfo, errors.New("Invalid SignerInfo, invalid SEQUENCE length")
-	}
-
-	// Process the Version field
-	if signerInfoBytes[offset] != common.ASN1_INTEGER_TAG {
-		return signerInfo, errors.New("Invalid SignerInfo, missing INTEGER tag")
-	}
-	offset++
-	if signerInfoBytes[offset] != 0x01 {
-		return signerInfo, errors.New("Invalid SignerInfo, unexpected Version length")
-	}
-	offset++
-	signerInfo.Version = int(signerInfoBytes[offset])
-
-	// Process the Subject Key Identifier field
-	offset++
-	if signerInfoBytes[offset] != common.ASN1_CONTEXT_SPECIFIC_TAG {
-		return signerInfo, errors.New("Invalid SignerInfo, missing CONTEXT_SPECIFIC tag")
-	}
-	offset++
-	if signerInfoBytes[offset] != 0x20 {
-		return signerInfo, errors.New("Invalid SignerInfo, unexpected SubjectKeyID length")
-	}
-	offset++
-	signerInfo.SubjectKeyID = signerInfoBytes[offset : offset+32]
-	offset = offset + 32
-
-	// Process the DigestAlgorithmID field
-	oidBytes, err := common.Asn1GetSequenceBytes(signerInfoBytes, offset)
-	if oidBytes[0] != common.ASN1_OID_TAG {
-		return signerInfo, errors.New("Expected OID tag not found")
-	}
-	oidLength, err := common.Asn1GetLength(oidBytes, 1)
-	if err != nil {
-		return signerInfo, err
-	}
-	newOffset, err := common.Asn1SkipLength(oidBytes, 1)
-	signerInfo.DigestAlgorithmID = oidBytes[0 : newOffset+oidLength]
-	offset, err = common.Asn1SkipSequence(signerInfoBytes, offset)
-	if err != nil {
-		return signerInfo, err
-	}
-
-	// Process the SignatureAlgorithmID field
-	oidBytes, err = common.Asn1GetSequenceBytes(signerInfoBytes, offset)
-	if oidBytes[0] != common.ASN1_OID_TAG {
-		return signerInfo, errors.New("Expected OID tag not found")
-	}
-	oidLength, err = common.Asn1GetLength(oidBytes, 1)
-	if err != nil {
-		return signerInfo, err
-	}
-	newOffset, err = common.Asn1SkipLength(oidBytes, 1)
-	signerInfo.SignatureAlgorithmID = oidBytes[0 : newOffset+oidLength]
-	offset, err = common.Asn1SkipSequence(signerInfoBytes, offset)
-	if err != nil {
-		return signerInfo, err
-	}
-
-	// Process the Signature field
-	signatureBytes, err := common.Asn1GetOctetStringBytes(signerInfoBytes, offset)
-	if err != nil {
-		return signerInfo, err
-	}
-	signerInfo.Signature = signatureBytes
-
-	// The signature returned by an EP11 crypto module is an ASN.1 sequence
-	// of two INTEGERs, R and S.
-	bytes, err := common.Asn1GetSequenceBytes(signatureBytes, 0)
-	if err != nil {
-		return signerInfo, err
-	}
-	rBytes, err := common.Asn1GetIntegerBytes(bytes, 0)
-	if err != nil {
-		return signerInfo, err
-	}
-	signerInfo.SignatureR = rBytes
-	offset, err = common.Asn1SkipInteger(bytes, 0)
-	if err != nil {
-		return signerInfo, err
-	}
-	sBytes, err := common.Asn1GetIntegerBytes(bytes, offset)
-	if err != nil {
-		return signerInfo, err
-	}
-	signerInfo.SignatureS = sBytes
-
-	return signerInfo, nil
+	
+	// No more signerInfoBytes to process, report an error
+	return signerInfo, errors.New("Invalid response, ECC OA signature not found")
 }
+//#E@T444610CLH

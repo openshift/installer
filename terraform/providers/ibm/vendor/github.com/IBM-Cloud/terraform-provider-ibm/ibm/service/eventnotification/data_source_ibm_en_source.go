@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -57,7 +58,9 @@ func DataSourceIBMEnSource() *schema.Resource {
 func dataSourceIBMEnSourceRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_en_source", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.GetSourceOptions{}
@@ -65,29 +68,35 @@ func dataSourceIBMEnSourceRead(context context.Context, d *schema.ResourceData, 
 	options.SetInstanceID(d.Get("instance_guid").(string))
 	options.SetID(d.Get("source_id").(string))
 
-	result, response, err := enClient.GetSourceWithContext(context, options)
+	result, _, err := enClient.GetSourceWithContext(context, options)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("GetSource failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetTemplateWithContext failed: %s", err.Error()), "(Data) ibm_en_source", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *options.InstanceID, *options.ID))
 
 	if err = d.Set("name", result.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "(Data) ibm_en_source", "read")
+		return tfErr.GetDiag()
 	}
 
 	if result.Description != nil {
 		if err = d.Set("description", result.Description); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting description: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting description: %s", err), "(Data) ibm_en_source", "read")
+			return tfErr.GetDiag()
 		}
 	}
 
 	if err = d.Set("enabled", result.Enabled); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting enabled flag: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting enabled flag: %s", err), "(Data) ibm_en_source", "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("updated_at", flex.DateTimeToString(result.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting updated_at: %s", err), "(Data) ibm_en_source", "read")
+		return tfErr.GetDiag()
 	}
 
 	return nil

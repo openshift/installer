@@ -145,15 +145,19 @@ func DataSourceIbmSchematicsPolicies() *schema.Resource {
 func dataSourceIbmSchematicsPoliciesRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsPoliciesRead schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_policies", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	listPolicyOptions := &schematicsv1.ListPolicyOptions{}
 
 	policyList, response, err := schematicsClient.ListPolicyWithContext(context, listPolicyOptions)
 	if err != nil {
-		log.Printf("[DEBUG] ListPolicyWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("ListPolicyWithContext failed %s\n%s", err, response))
+
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsPoliciesRead ListPolicyWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_policies", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	// Use the provided filter argument and construct a new list with only the requested resource(s)
@@ -178,8 +182,10 @@ func dataSourceIbmSchematicsPoliciesRead(context context.Context, d *schema.Reso
 
 	if suppliedFilter {
 		if len(policyList.Policies) == 0 {
-			log.Printf("[DEBUG] no Policies found with policyKind %s\n", policyKind)
-			// return diag.FromErr(fmt.Errorf("no Policies found with policyKind %s", policyKind))
+
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsPoliciesRead failed with error: %s", err), "ibm_schematics_policies", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		d.SetId(policyKind)
 	} else {
@@ -187,15 +193,21 @@ func dataSourceIbmSchematicsPoliciesRead(context context.Context, d *schema.Reso
 	}
 
 	if err = d.Set("total_count", flex.IntValue(policyList.TotalCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting total_count: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsPoliciesRead failed with error: %s", err), "ibm_schematics_policies", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("limit", flex.IntValue(policyList.Limit)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting limit: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsPoliciesRead failed with error: %s", err), "ibm_schematics_policies", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("offset", flex.IntValue(policyList.Offset)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting offset: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsPoliciesRead failed with error: %s", err), "ibm_schematics_policies", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	policies := []map[string]interface{}{}
@@ -203,13 +215,17 @@ func dataSourceIbmSchematicsPoliciesRead(context context.Context, d *schema.Reso
 		for _, modelItem := range policyList.Policies {
 			modelMap, err := dataSourceIbmSchematicsPoliciesPolicyLiteToMap(&modelItem)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsPoliciesRead failed: %s", err.Error()), "ibm_schematics_policies", "read")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			policies = append(policies, modelMap)
 		}
 	}
 	if err = d.Set("policies", policies); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting policies %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsPoliciesRead failed with error: %s", err), "ibm_schematics_policies", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	return nil

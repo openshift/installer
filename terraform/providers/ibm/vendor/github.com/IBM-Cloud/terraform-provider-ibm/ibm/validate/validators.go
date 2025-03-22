@@ -183,9 +183,9 @@ func validateAppPort(v interface{}, k string) (ws []string, errors []error) {
 }
 func ValidateLBListenerPolicyPriority(v interface{}, k string) (ws []string, errors []error) {
 	interval := v.(int)
-	if interval < 1 || interval > 10 {
+	if interval < 1 {
 		errors = append(errors, fmt.Errorf(
-			"%q must be between 1 and 10",
+			"%q must be greater than 0",
 			k))
 	}
 	return

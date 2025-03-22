@@ -1,5 +1,5 @@
 //
-// Copyright 2021 IBM Inc. All rights reserved
+// Copyright contributors to the ibm-hpcs-tke-sdk project
 // SPDX-License-Identifier: Apache2.0
 //
 
@@ -8,6 +8,7 @@
 // Date          Initials        Description
 // 05/12/2021    CLH             Initial version
 // 07/23/2021    CLH             Report original error when verifying OA cert chain
+// 11/11/2022    CLH             T444610 - Support 4770 crypto modules
 
 package tkesdk
 
@@ -79,8 +80,20 @@ func getDomains(authToken string, urlStart string, cryptoInstance string) ([]com
 				return domains, err
 			}
 			mapLocationOACert[partialLocation] = certbytes
-			if certbytes[0] == 0x45 {
-				// Handle OA certificate for the CEX6P
+			//#B@T444610CLH
+			if len(certbytes) == ep11cmds.CEX8_OA_CERTIFICATE_LENGTH ||
+			   len(certbytes) == ep11cmds.CEX8_MB_CERTIFICATE_LENGTH {
+				// Handle OA certificate for the CEX8P
+				var cert ep11cmds.OA3CertificateX
+				err = cert.Init(certbytes)
+				if err != nil {
+					return domains, err
+				}
+				mapLocationPublicKey[partialLocation] =
+					hex.EncodeToString(cert.SpkiPublicKey)
+			} else if certbytes[0] == 0x45 {
+			//#E@T444610CLH	
+				// Handle OA certificate for the CEX6P or CEX7P
 				var cert ep11cmds.OA2CertificateX
 				err = cert.Init(certbytes)
 				if err != nil {
@@ -145,8 +158,24 @@ func getDomains(authToken string, urlStart string, cryptoInstance string) ([]com
 				hsm_types[i],
 				false} // Selected -- don't care
 			certbytes := mapLocationOACert[partialLocation]
-			if certbytes[0] == 0x45 {
-				// Handle OA certificate for the CEX6P
+			//#B@T444610CLH
+			if len(certbytes) == ep11cmds.CEX8_OA_CERTIFICATE_LENGTH ||
+			   len(certbytes) == ep11cmds.CEX8_MB_CERTIFICATE_LENGTH {
+				// Handle OA certificate for the CEX8P
+				var cert ep11cmds.OA3CertificateX
+				err = cert.Init(certbytes)
+				if err != nil {
+					return domains, err
+				}
+				err = ep11cmds.VerifyOA3Certificate(authToken, urlStart, de, 0, cert)
+				if err != nil {
+					return domains, err
+				} else {
+					certChainChecked[serialNum] = true
+				}
+			} else if certbytes[0] == 0x45 {
+			//#E@T444610CLH
+				// Handle OA certificate for the CEX6P or CEX7P
 				var cert ep11cmds.OA2CertificateX
 				err = cert.Init(certbytes)
 				if err != nil {

@@ -209,7 +209,7 @@ func resourceIBMResourceTagCreate(context context.Context, d *schema.ResourceDat
 			}
 			if len(errMap) > 0 {
 				output, _ := json.MarshalIndent(errMap, "", "    ")
-				return diag.FromErr(fmt.Errorf("Error while creating tag: %s - Full response: %s", string(output), fullResponse))
+				return diag.FromErr(flex.FmtErrorf("Error while creating tag: %s - Full response: %s", string(output), fullResponse))
 			}
 		}
 		response, errored := flex.WaitForTagsAvailable(meta, resourceID, resourceType, tagType, news, d.Timeout(schema.TimeoutCreate))
@@ -249,7 +249,7 @@ func resourceIBMResourceTagRead(context context.Context, d *schema.ResourceData,
 			return tfErr.GetDiag()
 		}
 		if len(parts) < 2 {
-			return diag.FromErr(fmt.Errorf("Incorrect ID %s: Id should be a combination of resourceID/resourceType", d.Id()))
+			return diag.FromErr(flex.FmtErrorf("Incorrect ID %s: Id should be a combination of resourceID/resourceType", d.Id()))
 		}
 		rID = parts[0]
 		rType = parts[1]
@@ -265,7 +265,7 @@ func resourceIBMResourceTagRead(context context.Context, d *schema.ResourceData,
 
 	tagList, err := flex.GetGlobalTagsUsingSearchAPI(meta, rID, rType, tType)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Error getting resource tags for: %s with error : %s", rID, err))
+		return diag.FromErr(flex.FmtErrorf("Error getting resource tags for: %s with error : %s", rID, err))
 	}
 
 	d.Set(resourceID, rID)
@@ -299,7 +299,7 @@ func resourceIBMResourceTagUpdate(context context.Context, d *schema.ResourceDat
 		oldList, newList := d.GetChange(tags)
 		err := flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, rID, rType, tType)
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("Error on create of resource tags: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error on create of resource tags: %s", err))
 		}
 	}
 
@@ -330,7 +330,7 @@ func resourceIBMResourceTagDelete(context context.Context, d *schema.ResourceDat
 	if len(removeTags.List()) > 0 {
 		err := flex.UpdateGlobalTagsUsingCRN(removeTags, nil, meta, rID, rType, tType)
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("Error on deleting tags: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error on deleting tags: %s", err))
 		}
 	}
 	return nil

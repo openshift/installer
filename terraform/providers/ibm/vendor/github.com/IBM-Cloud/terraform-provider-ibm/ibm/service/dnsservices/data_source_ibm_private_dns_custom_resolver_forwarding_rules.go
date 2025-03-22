@@ -61,6 +61,36 @@ func DataSourceIBMPrivateDNSForwardingRules() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
+						pdnsCRFRViews: {
+							Type:        schema.TypeList,
+							Description: "An array of views used by forwarding rules.",
+							Computed:    true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									pdnsCRFRVName: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Unique name of the view.",
+									},
+									pdnsCRFRVDescription: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Description of the view.",
+									},
+									pdnsCRFRVExpression: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Expression of the view.",
+									},
+									pdnsCRFRVForwardTo: {
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "The upstream DNS servers that the matching DNS queries will be forwarded to.",
+										Elem:        &schema.Schema{Type: schema.TypeString},
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -84,23 +114,24 @@ func dataSourceIbmDnsCrForwardingRulesRead(context context.Context, d *schema.Re
 	}
 
 	forwardRules := make([]interface{}, 0)
-	for _, instance := range result.ForwardingRules {
+	for _, rule := range result.ForwardingRules {
 		forwardRule := map[string]interface{}{}
-		forwardRule[pdnsCRFRRuleID] = *instance.ID
-		forwardRule[pdnsCRFRDesctiption] = *instance.Description
-		forwardRule[pdnsCRFRType] = *instance.Type
-		forwardRule[pdnsCRFRMatch] = *instance.Match
-		forwardRule[pdnsCRFRForwardTo] = instance.ForwardTo
+		forwardRule[pdnsCRFRRuleID] = *rule.ID
+		forwardRule[pdnsCRFRDesctiption] = *rule.Description
+		forwardRule[pdnsCRFRType] = *rule.Type
+		forwardRule[pdnsCRFRMatch] = *rule.Match
+		forwardRule[pdnsCRFRForwardTo] = rule.ForwardTo
+		forwardRule[pdnsCRFRViews] = flattenPDNSFRViews(rule.Views)
 
 		forwardRules = append(forwardRules, forwardRule)
 	}
-	d.SetId(dataSourceIBMPrivateDNSForwardrulesID(d))
+	d.SetId(dataSourceIBMPrivateDNSForwardrulesID())
 	d.Set(pdnsInstanceID, instanceID)
 	d.Set(pdnsCRFRResolverID, resolverID)
 	d.Set(pdnsCRForwardRules, forwardRules)
 	return nil
 }
 
-func dataSourceIBMPrivateDNSForwardrulesID(d *schema.ResourceData) string {
+func dataSourceIBMPrivateDNSForwardrulesID() string {
 	return time.Now().UTC().String()
 }

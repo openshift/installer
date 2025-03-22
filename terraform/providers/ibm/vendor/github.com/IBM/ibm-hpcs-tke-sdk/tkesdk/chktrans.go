@@ -1,5 +1,5 @@
 //
-// Copyright 2021 IBM Inc. All rights reserved
+// Copyright contributors to the ibm-hpcs-tke-sdk project
 // SPDX-License-Identifier: Apache2.0
 //
 
@@ -8,6 +8,7 @@
 // Date          Initials        Description
 // 05/03/2021    CLH             Initial version
 // 07/23/2021    CLH             Change message when a signature key cannot be used
+// 01/09/2025    CLH             Compare only first 28 bytes of MK verification pattern
 
 package tkesdk
 
@@ -286,7 +287,7 @@ func internalCheckTransition(ci CommonInputs, hc HsmConfig,
 			if (hsminfo[i].HsmType == "recovery") &&
 				(hsminfo[i].CurrentMKStatus != "Empty") {
 
-				vp = hsminfo[i].CurrentMKVP
+				vp = hsminfo[i].CurrentMKVP[0:56]
 				break
 			}
 		}
@@ -297,7 +298,7 @@ func internalCheckTransition(ci CommonInputs, hc HsmConfig,
 		} else {
 			for i := 0; i < len(hsminfo); i++ {
 				if (hsminfo[i].CurrentMKStatus != "Empty") &&
-					(hsminfo[i].CurrentMKVP != vp) {
+					(hsminfo[i].CurrentMKVP[0:56] != vp) {
 
 					problems = append(problems, "Current master key "+
 						"registers are set in multiple crypto units but "+

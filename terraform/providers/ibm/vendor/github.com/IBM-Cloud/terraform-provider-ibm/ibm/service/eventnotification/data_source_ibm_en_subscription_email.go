@@ -6,8 +6,10 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -77,24 +79,6 @@ func DataSourceIBMEnEmailSubscription() *schema.Resource {
 							Computed:    true,
 							Description: "The email address username of source email address.",
 						},
-						// "invited": {
-						// 	Type:        schema.TypeList,
-						// 	Optional:    true,
-						// 	Computed:    true,
-						// 	Description: "The email id to be invited",
-						// },
-						// "subscribed": {
-						// 	Type:        schema.TypeList,
-						// 	Optional:    true,
-						// 	Computed:    true,
-						// 	Description: "The Email address which should be subscribed from smtp_ibm.",
-						// },
-						// "unsubscribed": {
-						// 	Type:        schema.TypeList,
-						// 	Optional:    true,
-						// 	Computed:    true,
-						// 	Description: "The Email address which should be unsubscribed from smtp_ibm.",
-						// },
 						"invited": {
 							Type:        schema.TypeList,
 							Computed:    true,
@@ -179,7 +163,9 @@ func DataSourceIBMEnEmailSubscription() *schema.Resource {
 func dataSourceIBMEnEmailSubscriptionRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_en_subscription_email", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getSubscriptionOptions := &en.GetSubscriptionOptions{}
@@ -187,37 +173,45 @@ func dataSourceIBMEnEmailSubscriptionRead(context context.Context, d *schema.Res
 	getSubscriptionOptions.SetInstanceID(d.Get("instance_guid").(string))
 	getSubscriptionOptions.SetID(d.Get("subscription_id").(string))
 
-	result, response, err := enClient.GetSubscriptionWithContext(context, getSubscriptionOptions)
+	result, _, err := enClient.GetSubscriptionWithContext(context, getSubscriptionOptions)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("GetSubscriptionWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetSubscriptionWithContext failed: %s", err.Error()), "(Data) ibm_en_subscription_email", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *getSubscriptionOptions.InstanceID, *getSubscriptionOptions.ID))
 
 	if err = d.Set("name", result.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "(Data) ibm_en_subscription_email", "read")
+		return tfErr.GetDiag()
 	}
 
 	if result.Description != nil {
 		if err = d.Set("description", result.Description); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting description: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting description: %s", err), "(Data) ibm_en_subscription_email", "read")
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("updated_at", result.UpdatedAt); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting updated_at: %s", err), "(Data) ibm_en_subscription_email", "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("destination_id", result.DestinationID); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting destination_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting updated_at: %s", err), "(Data) ibm_en_subscription_email", "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("topic_id", result.TopicID); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting topic_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting updated_at: %s", err), "(Data) ibm_en_subscription_email", "read")
+		return tfErr.GetDiag()
 	}
 
 	if result.Attributes != nil {
 		if err = d.Set("attributes", enEmailSubscriptionFlattenAttributes(result.Attributes)); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting attributes %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting updated_at: %s", err), "(Data) ibm_en_subscription_email", "read")
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -230,22 +224,6 @@ func enEmailSubscriptionFlattenAttributes(result en.SubscriptionAttributesIntf) 
 	attributes := result.(*en.SubscriptionAttributes)
 
 	finalMap := enEmailSubscriptionToMap(attributes)
-	// finalList = append(finalList, finalMap)
-	// invitedmap := make(map[string]interface{})
-	// if attributes.Invited != nil {
-	// 	invitedmap["invited"] = attributes.Invited
-	// }
-	// finalList = append(finalList, invitedmap)
-	// subscribedmap := make(map[string]interface{})
-	// if attributes.Subscribed != nil {
-	// 	subscribedmap["subscribed"] = attributes.Subscribed
-	// }
-	// finalList = append(finalList, subscribedmap)
-	// unsubscribedmap := make(map[string]interface{})
-	// if attributes.Unsubscribed != nil {
-	// 	unsubscribedmap["unsubscribed"] = attributes.Unsubscribed
-	// }
-	// finalList = append(finalList, unsubscribedmap)
 	finalList = append(finalList, finalMap)
 
 	return finalList

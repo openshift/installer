@@ -5,9 +5,11 @@ package power
 
 import (
 	"context"
+	"log"
 
 	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -32,6 +34,16 @@ func DataSourceIBMPIInstance() *schema.Resource {
 			},
 
 			// Attributes
+			Attr_CRN: {
+				Computed:    true,
+				Description: "The CRN of this resource.",
+				Type:        schema.TypeString,
+			},
+			Attr_DedicatedHostID: {
+				Computed:    true,
+				Description: "The dedicated host ID where the shared processor pool resides.",
+				Type:        schema.TypeString,
+			},
 			Attr_DeploymentType: {
 				Computed:    true,
 				Description: "The custom deployment type.",
@@ -128,21 +140,32 @@ func DataSourceIBMPIInstance() *schema.Resource {
 							Description: "The MAC address of the instance.",
 							Type:        schema.TypeString,
 						},
-						Attr_Macaddress: {
-							Computed:    true,
-							Deprecated:  "Deprecated, use mac_address instead",
-							Description: "The MAC address of the instance.",
-							Type:        schema.TypeString,
-						},
 						Attr_NetworkID: {
 							Computed:    true,
 							Description: "The network ID of the instance.",
+							Type:        schema.TypeString,
+						},
+						Attr_NetworkInterfaceID: {
+							Computed:    true,
+							Description: "ID of the network interface.",
 							Type:        schema.TypeString,
 						},
 						Attr_NetworkName: {
 							Computed:    true,
 							Description: "The network name of the instance.",
 							Type:        schema.TypeString,
+						},
+						Attr_NetworkSecurityGroupIDs: {
+							Computed:    true,
+							Description: "IDs of the network necurity groups that the network interface is a member of.",
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Type:        schema.TypeSet,
+						},
+						Attr_NetworkSecurityGroupsHref: {
+							Computed:    true,
+							Description: "Links to the network security groups that the network interface is a member of.",
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Type:        schema.TypeList,
 						},
 						Attr_Type: {
 							Computed:    true,
@@ -193,6 +216,11 @@ func DataSourceIBMPIInstance() *schema.Resource {
 				Description: "The status of the instance.",
 				Type:        schema.TypeString,
 			},
+			Attr_StorageConnection: {
+				Computed:    true,
+				Description: "The storage connection type.",
+				Type:        schema.TypeString,
+			},
 			Attr_StoragePool: {
 				Computed:    true,
 				Description: "The storage Pool where server is deployed.",
@@ -208,10 +236,36 @@ func DataSourceIBMPIInstance() *schema.Resource {
 				Description: "The storage type where server is deployed.",
 				Type:        schema.TypeString,
 			},
+			Attr_UserTags: {
+				Computed:    true,
+				Description: "List of user tags attached to the resource.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         schema.HashString,
+				Type:        schema.TypeSet,
+			},
 			Attr_VirtualCoresAssigned: {
 				Computed:    true,
 				Description: "The virtual cores that are assigned to the instance.",
 				Type:        schema.TypeInt,
+			},
+			Attr_VirtualSerialNumber: {
+				Computed:    true,
+				Description: "Virtual Serial Number information",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						Attr_Description: {
+							Computed:    true,
+							Description: "Description of the Virtual Serial Number",
+							Type:        schema.TypeString,
+						},
+						Attr_Serial: {
+							Computed:    true,
+							Description: "Virtual serial number.",
+							Type:        schema.TypeString,
+						},
+					},
+				},
+				Type: schema.TypeList,
 			},
 			Attr_Volumes: {
 				Computed:    true,
@@ -239,6 +293,15 @@ func dataSourceIBMPIInstancesRead(ctx context.Context, d *schema.ResourceData, m
 
 	pvminstanceid := *powervmdata.PvmInstanceID
 	d.SetId(pvminstanceid)
+	if powervmdata.Crn != "" {
+		d.Set(Attr_CRN, powervmdata.Crn)
+		tags, err := flex.GetGlobalTagsUsingCRN(meta, string(powervmdata.Crn), "", UserTagType)
+		if err != nil {
+			log.Printf("Error on get of pi instance (%s) user_tags: %s", *powervmdata.PvmInstanceID, err)
+		}
+		d.Set(Attr_UserTags, tags)
+	}
+	d.Set(Attr_DedicatedHostID, powervmdata.DedicatedHostID)
 	d.Set(Attr_DeploymentType, powervmdata.DeploymentType)
 	d.Set(Attr_LicenseRepositoryCapacity, powervmdata.LicenseRepositoryCapacity)
 	d.Set(Attr_MaxMem, powervmdata.Maxmem)
@@ -256,6 +319,7 @@ func dataSourceIBMPIInstancesRead(ctx context.Context, d *schema.ResourceData, m
 	d.Set(Attr_SharedProcessorPool, powervmdata.SharedProcessorPool)
 	d.Set(Attr_SharedProcessorPoolID, powervmdata.SharedProcessorPoolID)
 	d.Set(Attr_Status, powervmdata.Status)
+	d.Set(Attr_StorageConnection, powervmdata.StorageConnection)
 	d.Set(Attr_StorageType, powervmdata.StorageType)
 	d.Set(Attr_StoragePool, powervmdata.StoragePool)
 	d.Set(Attr_StoragePoolAffinity, powervmdata.StoragePoolAffinity)
@@ -282,6 +346,9 @@ func dataSourceIBMPIInstancesRead(ctx context.Context, d *schema.ResourceData, m
 	}
 	if powervmdata.Fault != nil {
 		d.Set(Attr_Fault, flattenPvmInstanceFault(powervmdata.Fault))
+	}
+	if powervmdata.VirtualSerialNumber != nil {
+		d.Set(Attr_VirtualSerialNumber, flattenVirtualSerialNumberToList(powervmdata.VirtualSerialNumber))
 	}
 
 	return nil

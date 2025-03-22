@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.89.0-f33c767b-20240410-144451
+ * IBM OpenAPI SDK Code Generator Version: 3.96.0-d6dec9d7-20241008-212902
  */
 
 // Package usagereportsv4 : Operations and models for the UsageReportsV4 service
@@ -1445,7 +1445,7 @@ type CreateReportsSnapshotConfigOptions struct {
 	// "new".
 	Versioning *string `json:"versioning,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -1533,7 +1533,7 @@ type DeleteReportsSnapshotConfigOptions struct {
 	// Account ID for which the billing report snapshot is configured.
 	AccountID *string `json:"account_id" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -1606,7 +1606,7 @@ type GetAccountSummaryOptions struct {
 	// The billing month for which the usage report is requested.  Format is yyyy-mm.
 	Billingmonth *string `json:"billingmonth" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -1650,7 +1650,7 @@ type GetAccountUsageOptions struct {
 	// Prioritize the names returned in the order of the specified languages. Language will default to English.
 	AcceptLanguage *string `json:"Accept-Language,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -1709,7 +1709,7 @@ type GetOrgUsageOptions struct {
 	// Prioritize the names returned in the order of the specified languages. Language will default to English.
 	AcceptLanguage *string `json:"Accept-Language,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -1763,7 +1763,7 @@ type GetReportsSnapshotConfigOptions struct {
 	// Account ID for which the billing report snapshot is configured.
 	AccountID *string `json:"account_id" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -1806,7 +1806,7 @@ type GetReportsSnapshotOptions struct {
 	// The offset from which the records must be fetched. Offset information is included in the response.
 	Start *string `json:"_start,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -1877,7 +1877,7 @@ type GetResourceGroupUsageOptions struct {
 	// Prioritize the names returned in the order of the specified languages. Language will default to English.
 	AcceptLanguage *string `json:"Accept-Language,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -1967,7 +1967,7 @@ type GetResourceUsageAccountOptions struct {
 	// Region in which the resource instance is provisioned.
 	Region *string `json:"region,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -2101,7 +2101,7 @@ type GetResourceUsageOrgOptions struct {
 	// Region in which the resource instance is provisioned.
 	Region *string `json:"region,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -2230,7 +2230,7 @@ type GetResourceUsageResourceGroupOptions struct {
 	// Region in which the resource instance is provisioned.
 	Region *string `json:"region,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -2792,6 +2792,9 @@ type Offer struct {
 	// The date from which the offer is valid.
 	ValidFrom *strfmt.DateTime `json:"valid_from" validate:"required"`
 
+	// The offer's creator's email id.
+	CreatedByEmailID *string `json:"created_by_email_id" validate:"required"`
+
 	// The date until the offer is valid.
 	ExpiresOn *strfmt.DateTime `json:"expires_on" validate:"required"`
 
@@ -2820,6 +2823,11 @@ func UnmarshalOffer(m map[string]json.RawMessage, result interface{}) (err error
 	err = core.UnmarshalPrimitive(m, "valid_from", &obj.ValidFrom)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "valid_from-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_by_email_id", &obj.CreatedByEmailID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by_email_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "expires_on", &obj.ExpiresOn)
@@ -4170,7 +4178,7 @@ type UpdateReportsSnapshotConfigOptions struct {
 	// A new version of report is created or the existing report version is overwritten with every update.
 	Versioning *string `json:"versioning,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4274,7 +4282,7 @@ type ValidateReportsSnapshotConfigOptions struct {
 	// "new".
 	Versioning *string `json:"versioning,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 

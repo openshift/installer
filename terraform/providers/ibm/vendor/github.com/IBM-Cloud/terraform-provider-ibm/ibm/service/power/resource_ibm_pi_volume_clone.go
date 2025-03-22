@@ -52,6 +52,14 @@ func ResourceIBMPIVolumeClone() *schema.Resource {
 				Optional:    true,
 				Type:        schema.TypeBool,
 			},
+			Arg_UserTags: {
+				Description: "The user tags attached to this resource.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				ForceNew:    true,
+				Optional:    true,
+				Set:         schema.HashString,
+				Type:        schema.TypeSet,
+			},
 			Arg_VolumeCloneName: {
 				Description:  "The base name of the newly cloned volume(s).",
 				ForceNew:     true,
@@ -133,6 +141,10 @@ func resourceIBMPIVolumeCloneCreate(ctx context.Context, d *schema.ResourceData,
 
 	if !d.GetRawConfig().GetAttr(Arg_ReplicationEnabled).IsNull() {
 		body.TargetReplicationEnabled = flex.PtrToBool(d.Get(Arg_ReplicationEnabled).(bool))
+	}
+
+	if v, ok := d.GetOk(Arg_UserTags); ok {
+		body.UserTags = flex.FlattenSet(v.(*schema.Set))
 	}
 
 	client := instance.NewIBMPICloneVolumeClient(ctx, sess, cloudInstanceID)

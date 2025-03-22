@@ -2,7 +2,7 @@
 // Licensed under the Mozilla Public License v2.0
 
 /*
- * IBM OpenAPI Terraform Generator Version: 3.90.0-5aad763d-20240506-203857
+ * IBM OpenAPI Terraform Generator Version: 3.95.2-120e65bc-20240924-152329
  */
 
 package mqcloud
@@ -29,7 +29,7 @@ func DataSourceIbmMqcloudQueueManagerOptions() *schema.Resource {
 			"service_instance_guid": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The GUID that uniquely identifies the MQ on Cloud service instance.",
+				Description: "The GUID that uniquely identifies the MQaaS service instance.",
 			},
 			"locations": {
 				Type:        schema.TypeList,
@@ -108,6 +108,7 @@ func dataSourceIbmMqcloudQueueManagerOptionsRead(context context.Context, d *sch
 	if err = d.Set("sizes", configurationOptions.Sizes); err != nil {
 		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting sizes: %s", err), "(Data) ibm_mqcloud_queue_manager_options", "read", "set-sizes").GetDiag()
 	}
+
 	return nil
 }
 

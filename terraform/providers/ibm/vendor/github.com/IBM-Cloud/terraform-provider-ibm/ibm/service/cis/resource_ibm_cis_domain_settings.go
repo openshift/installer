@@ -71,6 +71,7 @@ const (
 	cisDomainSettingsChallengeTTLValidatorID    = "challenge_ttl"
 	cisDomainSettingsMaxUploadValidatorID       = "max_upload"
 	cisDomainSettingsCipherValidatorID          = "cipher"
+	cisDomainSettingsProxyReadTimeout           = "proxy_read_timeout"
 )
 
 func ResourceIBMCISSettings() *schema.Resource {
@@ -368,6 +369,15 @@ func ResourceIBMCISSettings() *schema.Resource {
 				ValidateFunc: validate.InvokeValidator(
 					ibmCISDomainSettings,
 					cisDomainSettingsOriginPostQuantumEncryption),
+			},
+			cisDomainSettingsProxyReadTimeout: {
+				Type:        schema.TypeInt,
+				Description: "Update proxy read timeout setting",
+				Optional:    true,
+				Computed:    true,
+				ValidateFunc: validate.InvokeValidator(
+					ibmCISDomainSettings,
+					cisDomainSettingsProxyReadTimeout),
 			},
 			cisDomainSettingsMinify: {
 				Type:        schema.TypeList,
@@ -762,6 +772,14 @@ func ResourceIBMCISDomainSettingValidator() *validate.ResourceValidator {
 			Type:                       validate.TypeString,
 			Required:                   true,
 			AllowedValues:              quantumEncryption})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 cisDomainSettingsProxyReadTimeout,
+			ValidateFunctionIdentifier: validate.IntBetween,
+			Type:                       validate.TypeInt,
+			Optional:                   true,
+			MinValue:                   "1",
+			MaxValue:                   "6000"})
 	ibmCISDomainSettingResourceValidator := validate.ResourceValidator{
 		ResourceName: ibmCISDomainSettings,
 		Schema:       validateSchema}
@@ -802,6 +820,7 @@ var settingsList = []string{
 	cisDomainSettingsCipher,
 	cisDomainSettingsOriginMaxHTTPVersion,
 	cisDomainSettingsOriginPostQuantumEncryption,
+	cisDomainSettingsProxyReadTimeout,
 }
 
 func resourceCISSettingsUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -1066,6 +1085,14 @@ func resourceCISSettingsUpdate(d *schema.ResourceData, meta interface{}) error {
 					opt := cisClient.NewUpdateOriginPostQuantumEncryptionOptions()
 					opt.SetValue(v.(string))
 					_, resp, err = cisClient.UpdateOriginPostQuantumEncryption(opt)
+				}
+			}
+		case cisDomainSettingsProxyReadTimeout:
+			if d.HasChange(item) {
+				if v, ok := d.GetOk(item); ok {
+					opt := cisClient.NewUpdateProxyReadTimeoutOptions()
+					opt.SetValue(float64(v.(int)))
+					_, resp, err = cisClient.UpdateProxyReadTimeout(opt)
 				}
 			}
 		case cisDomainSettingsMinify:
@@ -1421,6 +1448,7 @@ func resourceCISSettingsRead(d *schema.ResourceData, meta interface{}) error {
 			}
 			settingResponse = resp
 			settingErr = err
+
 		case cisDomainSettingsOriginPostQuantumEncryption:
 			opt := cisClient.NewGetOriginPostQuantumEncryptionOptions()
 			result, resp, err := cisClient.GetOriginPostQuantumEncryption(opt)
@@ -1430,6 +1458,14 @@ func resourceCISSettingsRead(d *schema.ResourceData, meta interface{}) error {
 			settingResponse = resp
 			settingErr = err
 
+		case cisDomainSettingsProxyReadTimeout:
+			opt := cisClient.NewGetProxyReadTimeoutOptions()
+			result, resp, err := cisClient.GetProxyReadTimeout(opt)
+			if err == nil {
+				d.Set(cisDomainSettingsProxyReadTimeout, result.Result.Value)
+			}
+			settingResponse = resp
+			settingErr = err
 		case cisDomainSettingsMinify:
 			opt := cisClient.NewGetMinifyOptions()
 			result, resp, err := cisClient.GetMinify(opt)

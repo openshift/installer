@@ -341,7 +341,7 @@ func dataSourceReservationCollectionReservationsToMap(reservationsItem vpcv1.Res
 	if reservationsItem.Profile != nil {
 		profileList := []map[string]interface{}{}
 		profile := reservationsItem.Profile
-		profileMap := dataSourceReservationCollectionReservationsProfileToMap(*profile)
+		profileMap := dataSourceReservationCollectionReservationsProfileToMap(profile)
 		profileList = append(profileList, profileMap)
 		reservationsMap["profile"] = profileList
 	}
@@ -370,17 +370,23 @@ func dataSourceReservationCollectionReservationsToMap(reservationsItem vpcv1.Res
 	return reservationsMap
 }
 
-func dataSourceReservationCollectionReservationsProfileToMap(profileItem vpcv1.ReservationProfile) (profileMap map[string]interface{}) {
-	profileMap = map[string]interface{}{}
-
-	if profileItem.Href != nil {
-		profileMap["href"] = profileItem.Href
+func dataSourceReservationCollectionReservationsProfileToMap(profileItem vpcv1.ReservationProfileIntf) (profileMap map[string]interface{}) {
+	if profileItem == nil {
+		return
 	}
-	if profileItem.Name != nil {
-		profileMap["name"] = profileItem.Name
+	var profile *vpcv1.ReservationProfile
+	if profile = profileItem.(*vpcv1.ReservationProfile); profile == nil {
+		return
 	}
-	if profileItem.ResourceType != nil {
-		profileMap["resource_type"] = profileItem.ResourceType
+	profileMap = make(map[string]interface{})
+	if profile.Href != nil {
+		profileMap["href"] = profile.Href
+	}
+	if profile.Name != nil {
+		profileMap["name"] = profile.Name
+	}
+	if profile.ResourceType != nil {
+		profileMap["resource_type"] = profile.ResourceType
 	}
 	return profileMap
 }

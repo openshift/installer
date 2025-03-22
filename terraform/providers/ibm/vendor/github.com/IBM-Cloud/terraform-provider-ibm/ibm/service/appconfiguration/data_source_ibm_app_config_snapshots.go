@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strconv"
 
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/IBM/appconfiguration-go-admin-sdk/appconfigurationv1"
@@ -152,37 +153,37 @@ func dataSourceIbmAppConfigSnapshotsRead(d *schema.ResourceData, meta interface{
 
 	appconfigClient, err := getAppConfigClient(meta, guid)
 	if err != nil {
-		return fmt.Errorf("getAppConfigClient failed %s", err)
+		return flex.FmtErrorf("getAppConfigClient failed %s", err)
 	}
 
 	options := &appconfigurationv1.ListSnapshotsOptions{}
 
-	if _, ok := d.GetOk("collection_id"); ok {
+	if _, ok := GetFieldExists(d, "collection_id"); ok {
 		options.SetCollectionID(d.Get("collection_id").(string))
 	}
-	if _, ok := d.GetOk("environment_id"); ok {
+	if _, ok := GetFieldExists(d, "environment_id"); ok {
 		options.SetEnvironmentID(d.Get("environment_id").(string))
 	}
-	if _, ok := d.GetOk("search"); ok {
+	if _, ok := GetFieldExists(d, "search"); ok {
 		options.SetSearch(d.Get("search").(string))
 	}
-	if _, ok := d.GetOk("sort"); ok {
+	if _, ok := GetFieldExists(d, "sort"); ok {
 		options.SetSort(d.Get("sort").(string))
 	}
 
-	var shapshotsList *appconfigurationv1.SnapshotsList
+	var shapshotsList *appconfigurationv1.GitConfigList
 	var offset int64
 	var limit int64 = 10
 	var isLimit bool
 
-	finalList := []appconfigurationv1.SnapshotResponseGetApi{}
+	finalList := []appconfigurationv1.GitConfig{}
 
-	if _, ok := d.GetOk("limit"); ok {
+	if _, ok := GetFieldExists(d, "limit"); ok {
 		isLimit = true
 		limit = int64(d.Get("limit").(int))
 	}
 	options.SetLimit(limit)
-	if _, ok := d.GetOk("offset"); ok {
+	if _, ok := GetFieldExists(d, "offset"); ok {
 		offset = int64(d.Get("offset").(int))
 	}
 
@@ -191,42 +192,42 @@ func dataSourceIbmAppConfigSnapshotsRead(d *schema.ResourceData, meta interface{
 		result, response, err := appconfigClient.ListSnapshots(options)
 		shapshotsList = result
 		if err != nil {
-			return fmt.Errorf("ListSnapshots failed %s\n%s", err, response)
+			return flex.FmtErrorf("ListSnapshots failed %s\n%s", err, response)
 		}
 		if isLimit {
 			offset = 0
 		} else {
 			offset = dataSourceSnapshotsListGetNext(result.Next)
 		}
-		finalList = append(finalList, result.Snapshot...)
+		finalList = append(finalList, result.GitConfig...)
 		if offset == 0 {
 			break
 		}
 	}
 
-	shapshotsList.Snapshot = finalList
+	shapshotsList.GitConfig = finalList
 
 	d.SetId(fmt.Sprintf("%s", guid))
 
-	if shapshotsList.Snapshot != nil {
-		err = d.Set("git_config", dataSourceFeaturesListFlattenSnapshots(shapshotsList.Snapshot))
+	if shapshotsList.GitConfig != nil {
+		err = d.Set("git_config", dataSourceFeaturesListFlattenSnapshots(shapshotsList.GitConfig))
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error setting git_config %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting git_config %s", err)
 		}
 	}
 	if shapshotsList.TotalCount != nil {
 		if err = d.Set("total_count", shapshotsList.TotalCount); err != nil {
-			return fmt.Errorf("[ERROR] Error setting total_count: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting total_count: %s", err)
 		}
 	}
 	if shapshotsList.Limit != nil {
 		if err = d.Set("limit", shapshotsList.Limit); err != nil {
-			return fmt.Errorf("[ERROR] Error setting limit: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting limit: %s", err)
 		}
 	}
 	if shapshotsList.Offset != nil {
 		if err = d.Set("offset", shapshotsList.Offset); err != nil {
-			return fmt.Errorf("[ERROR] Error setting offset: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting offset: %s", err)
 		}
 	}
 
@@ -259,14 +260,14 @@ func dataSourceSnapshotsListGetNext(next interface{}) int64 {
 	return convertedVal
 }
 
-func dataSourceFeaturesListFlattenSnapshots(result []appconfigurationv1.SnapshotResponseGetApi) (snapshots []map[string]interface{}) {
+func dataSourceFeaturesListFlattenSnapshots(result []appconfigurationv1.GitConfig) (snapshots []map[string]interface{}) {
 	for _, snapshotsItem := range result {
 		snapshots = append(snapshots, dataSourceSnapshotsListSnapshotsToMap(snapshotsItem))
 	}
 	return snapshots
 }
 
-func dataSourceSnapshotsListSnapshotsToMap(snapshotsItem appconfigurationv1.SnapshotResponseGetApi) (snapshotsMap map[string]interface{}) {
+func dataSourceSnapshotsListSnapshotsToMap(snapshotsItem appconfigurationv1.GitConfig) (snapshotsMap map[string]interface{}) {
 	snapshotsMap = map[string]interface{}{}
 
 	if snapshotsItem.GitConfigName != nil {

@@ -2,7 +2,7 @@
 // Licensed under the Mozilla Public License v2.0
 
 /*
- * IBM OpenAPI Terraform Generator Version: 3.90.0-5aad763d-20240506-203857
+ * IBM OpenAPI Terraform Generator Version: 3.95.2-120e65bc-20240924-152329
  */
 
 package mqcloud
@@ -39,7 +39,7 @@ func ResourceIbmMqcloudKeystoreCertificate() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_mqcloud_keystore_certificate", "service_instance_guid"),
-				Description:  "The GUID that uniquely identifies the MQ on Cloud service instance.",
+				Description:  "The GUID that uniquely identifies the MQaaS service instance.",
 			},
 			"queue_manager_id": {
 				Type:         schema.TypeString,
@@ -143,6 +143,7 @@ func ResourceIbmMqcloudKeystoreCertificate() *schema.Resource {
 												"name": {
 													Type:        schema.TypeString,
 													Optional:    true,
+													Computed:    true,
 													Description: "The name of the channel.",
 												},
 											},
@@ -521,7 +522,7 @@ func ResourceIbmMqcloudKeystoreCertificateChannelsDetailsToMap(model *mqcloudv1.
 	channels := []map[string]interface{}{}
 	for _, channelsItem := range model.Channels {
 		channelsItem := channelsItem
-		channelsItemMap, err := ResourceIbmMqcloudKeystoreCertificateChannelDetailsToMap(&channelsItem)
+		channelsItemMap, err := ResourceIbmMqcloudKeystoreCertificateChannelDetailsToMap(&channelsItem) // #nosec G601
 		if err != nil {
 			return modelMap, err
 		}

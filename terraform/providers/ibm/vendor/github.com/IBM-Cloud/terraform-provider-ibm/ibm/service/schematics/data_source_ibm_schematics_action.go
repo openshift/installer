@@ -947,7 +947,9 @@ func DataSourceIBMSchematicsAction() *schema.Resource {
 func dataSourceIBMSchematicsActionRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if r, ok := d.GetOk("location"); ok {
 		region := r.(string)
@@ -962,139 +964,201 @@ func dataSourceIBMSchematicsActionRead(context context.Context, d *schema.Resour
 
 	action, response, err := schematicsClient.GetActionWithContext(context, getActionOptions)
 	if err != nil {
-		log.Printf("[DEBUG] GetActionWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetActionWithContext failed %s\n%s", err, response))
+
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead GetActionWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(*getActionOptions.ActionID)
 	if err = d.Set("name", action.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("description", action.Description); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting description: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("location", action.Location); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting location: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("resource_group", action.ResourceGroup); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting resource_group: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if action.UserState != nil {
 		err = d.Set("user_state", dataSourceActionFlattenUserState(*action.UserState))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting user_state %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("source_readme_url", action.SourceReadmeURL); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting source_readme_url: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if action.Source != nil {
 		err = d.Set("source", dataSourceActionFlattenSource(*action.Source))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting source %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("source_type", action.SourceType); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting source_type: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("command_parameter", action.CommandParameter); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting command_parameter: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("inventory", action.Inventory); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting inventory: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if action.Credentials != nil {
 		err = d.Set("credentials", dataSourceActionFlattenCredentials(action.Credentials))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting credentials %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
 	if action.Bastion != nil {
 		err = d.Set("bastion", dataSourceActionFlattenBastion(*action.Bastion))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting bastion %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
 	if action.BastionCredential != nil {
 		err = d.Set("bastion_credential", dataSourceActionFlattenBastionCredential(*action.BastionCredential))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting bastion_credential %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("targets_ini", action.TargetsIni); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting targets_ini: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if action.Inputs != nil {
 		err = d.Set("action_inputs", dataSourceActionFlattenInputs(action.Inputs))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting action_inputs %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
 	if action.Outputs != nil {
 		err = d.Set("action_outputs", dataSourceActionFlattenOutputs(action.Outputs))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting action_outputs %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
 	if action.Settings != nil {
 		err = d.Set("settings", dataSourceActionFlattenSettings(action.Settings))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting settings %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("id", action.ID); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("crn", action.Crn); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting crn: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("account", action.Account); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting account: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("source_created_at", flex.DateTimeToString(action.SourceCreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting source_created_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("source_created_by", action.SourceCreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting source_created_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("source_updated_at", flex.DateTimeToString(action.SourceUpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting source_updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("source_updated_by", action.SourceUpdatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting source_updated_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("created_at", flex.DateTimeToString(action.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting created_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("created_by", action.CreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting created_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("updated_at", flex.DateTimeToString(action.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("updated_by", action.UpdatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting updated_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if action.State != nil {
 		err = d.Set("state", dataSourceActionFlattenState(*action.State))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting state %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
 	if action.SysLock != nil {
 		err = d.Set("sys_lock", dataSourceActionFlattenSysLock(*action.SysLock))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting sys_lock %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsActionRead failed with error: %s", err), "ibm_schematics_action", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 

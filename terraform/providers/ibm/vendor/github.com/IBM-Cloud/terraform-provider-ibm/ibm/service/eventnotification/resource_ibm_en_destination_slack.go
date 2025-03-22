@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -113,7 +114,10 @@ func ResourceIBMEnSlackDestination() *schema.Resource {
 func resourceIBMEnSlackDestinationCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_slack", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+		// return diag.FromErr(err)
 	}
 
 	options := &en.CreateDestinationOptions{}
@@ -132,9 +136,12 @@ func resourceIBMEnSlackDestinationCreate(context context.Context, d *schema.Reso
 		options.SetConfig(&config)
 	}
 
-	result, response, err := enClient.CreateDestinationWithContext(context, options)
+	result, _, err := enClient.CreateDestinationWithContext(context, options)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("CreateDestinationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateDestinationWithContext failed: %s", err.Error()), "ibm_en_destination_slack", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+		// return diag.FromErr(fmt.Errorf("CreateDestinationWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *options.InstanceID, *result.ID))
@@ -145,14 +152,19 @@ func resourceIBMEnSlackDestinationCreate(context context.Context, d *schema.Reso
 func resourceIBMEnSlackDestinationRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_slack", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+		// return diag.FromErr(err)
 	}
 
 	options := &en.GetDestinationOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_slack", "read")
+		return tfErr.GetDiag()
+		// return diag.FromErr(err)
 	}
 
 	options.SetInstanceID(parts[0])
@@ -164,7 +176,10 @@ func resourceIBMEnSlackDestinationRead(context context.Context, d *schema.Resour
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("GetDestinationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetDestinationWithContext failed: %s", err.Error()), "ibm_en_destination_slack", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+		// return diag.FromErr(fmt.Errorf("GetDestinationWithContext failed %s\n%s", err, response))
 	}
 
 	if err = d.Set("instance_guid", options.InstanceID); err != nil {
@@ -217,14 +232,19 @@ func resourceIBMEnSlackDestinationRead(context context.Context, d *schema.Resour
 func resourceIBMEnSlackDestinationUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_slack", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+		// return diag.FromErr(err)
 	}
 
 	options := &en.UpdateDestinationOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_slack", "update")
+		return tfErr.GetDiag()
+		// return diag.FromErr(err)
 	}
 
 	options.SetInstanceID(parts[0])
@@ -246,9 +266,12 @@ func resourceIBMEnSlackDestinationUpdate(context context.Context, d *schema.Reso
 			config := SlackdestinationConfigMapToDestinationConfig(d.Get("config.0.params.0").(map[string]interface{}), destinationtype)
 			options.SetConfig(&config)
 		}
-		_, response, err := enClient.UpdateDestinationWithContext(context, options)
+		_, _, err := enClient.UpdateDestinationWithContext(context, options)
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("UpdateDestinationWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateDestinationWithContext failed: %s", err.Error()), "ibm_en_destination_slack", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
+			// return diag.FromErr(fmt.Errorf("UpdateDestinationWithContext failed %s\n%s", err, response))
 		}
 
 		return resourceIBMEnSlackDestinationRead(context, d, meta)
@@ -260,14 +283,19 @@ func resourceIBMEnSlackDestinationUpdate(context context.Context, d *schema.Reso
 func resourceIBMEnSlackDestinationDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_slack", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+		// return diag.FromErr(err)
 	}
 
 	options := &en.DeleteDestinationOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_slack", "delete")
+		return tfErr.GetDiag()
+		// return diag.FromErr(err)
 	}
 
 	options.SetInstanceID(parts[0])
@@ -279,7 +307,10 @@ func resourceIBMEnSlackDestinationDelete(context context.Context, d *schema.Reso
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("DeleteDestinationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteDestinationWithContext failed: %s", err.Error()), "ibm_en_destination_slack", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+		// return diag.FromErr(fmt.Errorf("DeleteDestinationWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId("")

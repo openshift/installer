@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -62,7 +63,9 @@ func ResourceIBMEnSource() *schema.Resource {
 func resourceIBMEnSourceCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_source", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.CreateSourcesOptions{}
@@ -76,9 +79,11 @@ func resourceIBMEnSourceCreate(context context.Context, d *schema.ResourceData, 
 
 	options.SetEnabled(d.Get("enabled").(bool))
 
-	result, response, err := enClient.CreateSourcesWithContext(context, options)
+	result, _, err := enClient.CreateSourcesWithContext(context, options)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("CreateSourcesWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateSourcesWithContext failed: %s", err.Error()), "ibm_en_source", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *options.InstanceID, *result.ID))
@@ -89,14 +94,17 @@ func resourceIBMEnSourceCreate(context context.Context, d *schema.ResourceData, 
 func resourceIBMEnSourceRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_source", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.GetSourceOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_source", "read")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
@@ -108,7 +116,9 @@ func resourceIBMEnSourceRead(context context.Context, d *schema.ResourceData, me
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("GetSourceWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetSourceWithContext failed: %s", err.Error()), "ibm_en_source", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("instance_guid", options.InstanceID); err != nil {
@@ -141,14 +151,17 @@ func resourceIBMEnSourceRead(context context.Context, d *schema.ResourceData, me
 func resourceIBMEnSourceUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_source", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.UpdateSourceOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_source", "update")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
@@ -163,9 +176,11 @@ func resourceIBMEnSourceUpdate(context context.Context, d *schema.ResourceData, 
 
 		options.SetEnabled(d.Get("enabled").(bool))
 
-		_, response, err := enClient.UpdateSourceWithContext(context, options)
+		_, _, err := enClient.UpdateSourceWithContext(context, options)
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("UpdateSourceWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateSourceWithContext failed: %s", err.Error()), "ibm_en_source", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 
 		return resourceIBMEnSourceRead(context, d, meta)
@@ -177,14 +192,17 @@ func resourceIBMEnSourceUpdate(context context.Context, d *schema.ResourceData, 
 func resourceIBMEnSourceDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_source", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.DeleteSourceOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_source", "delete")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
@@ -196,7 +214,9 @@ func resourceIBMEnSourceDelete(context context.Context, d *schema.ResourceData, 
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("DeleteSourceWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteSourceWithContext: failed: %s", err.Error()), "ibm_en_source", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")

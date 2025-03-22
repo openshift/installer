@@ -5,6 +5,7 @@ package power
 
 import (
 	"context"
+	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 )
 
 func DataSourceIBMPIHost() *schema.Resource {
@@ -84,6 +86,11 @@ func DataSourceIBMPIHost() *schema.Resource {
 				},
 				Type: schema.TypeList,
 			},
+			Attr_CRN: {
+				Computed:    true,
+				Description: "The CRN of this resource.",
+				Type:        schema.TypeString,
+			},
 			Attr_DisplayName: {
 				Computed:    true,
 				Description: "Name of the host (chosen by the user).",
@@ -93,6 +100,11 @@ func DataSourceIBMPIHost() *schema.Resource {
 				Computed:    true,
 				Description: "Link to host group resource.",
 				Type:        schema.TypeMap,
+			},
+			Attr_HostReference: {
+				Computed:    true,
+				Description: "Current physical ID of the host.",
+				Type:        schema.TypeInt,
 			},
 			Attr_State: {
 				Computed:    true,
@@ -108,6 +120,13 @@ func DataSourceIBMPIHost() *schema.Resource {
 				Computed:    true,
 				Description: "System type.",
 				Type:        schema.TypeString,
+			},
+			Attr_UserTags: {
+				Computed:    true,
+				Description: "List of user tags attached to the resource.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         schema.HashString,
+				Type:        schema.TypeSet,
 			},
 		},
 	}
@@ -131,11 +150,22 @@ func dataSourceIBMPIHostRead(ctx context.Context, d *schema.ResourceData, meta i
 	if host.Capacity != nil {
 		d.Set(Attr_Capacity, hostCapacityToMap(host.Capacity))
 	}
+	if host.Crn != "" {
+		d.Set(Attr_CRN, host.Crn)
+		tags, err := flex.GetGlobalTagsUsingCRN(meta, string(host.Crn), "", UserTagType)
+		if err != nil {
+			log.Printf("Error on get of pi host (%s) user_tags: %s", hostID, err)
+		}
+		d.Set(Attr_UserTags, tags)
+	}
 	if host.DisplayName != "" {
 		d.Set(Attr_DisplayName, host.DisplayName)
 	}
 	if host.HostGroup != nil {
 		d.Set(Attr_HostGroup, hostGroupToMap(host.HostGroup))
+	}
+	if host.HostReference != 0 {
+		d.Set(Attr_HostReference, host.HostReference)
 	}
 	if host.State != "" {
 		d.Set(Attr_State, host.State)

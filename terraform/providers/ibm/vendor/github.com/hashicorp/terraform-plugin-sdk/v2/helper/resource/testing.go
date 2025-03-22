@@ -15,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/mitchellh/go-testing-interface"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
@@ -29,7 +28,7 @@ import (
 )
 
 // flagSweep is a flag available when running tests on the command line. It
-// contains a comma seperated list of regions to for the sweeper functions to
+// contains a comma separated list of regions to for the sweeper functions to
 // run in.  This flag bypasses the normal Test path and instead runs functions designed to
 // clean up any leaked resources a testing environment could have created. It is
 // a best effort attempt, and relies on Provider authors to implement "Sweeper"
@@ -50,7 +49,7 @@ import (
 
 var flagSweep = flag.String("sweep", "", "List of Regions to run available Sweepers")
 var flagSweepAllowFailures = flag.Bool("sweep-allow-failures", false, "Enable to allow Sweeper Tests to continue after failures")
-var flagSweepRun = flag.String("sweep-run", "", "Comma seperated list of Sweeper Tests to run")
+var flagSweepRun = flag.String("sweep-run", "", "Comma separated list of Sweeper Tests to run")
 var sweeperFuncs map[string]*Sweeper
 
 // SweeperFunc is a signature for a function that acts as a sweeper. It
@@ -104,7 +103,7 @@ func AddTestSweepers(name string, s *Sweeper) {
 // Sweeper flags added to the "go test" command:
 //
 //	-sweep: Comma-separated list of locations/regions to run available sweepers.
-//	-sweep-allow-failues: Enable to allow other sweepers to run after failures.
+//	-sweep-allow-failures: Enable to allow other sweepers to run after failures.
 //	-sweep-run: Comma-separated list of resource type sweepers to run. Defaults
 //	        to all sweepers.
 //
@@ -184,7 +183,7 @@ func runSweepers(regions []string, sweepers map[string]*Sweeper, allowFailures b
 	return sweeperRunList, nil
 }
 
-// filterSweepers takes a comma seperated string listing the names of sweepers
+// filterSweepers takes a comma separated string listing the names of sweepers
 // to be ran, and returns a filtered set from the list of all of sweepers to
 // run based on the names given.
 func filterSweepers(f string, source map[string]*Sweeper) map[string]*Sweeper {
@@ -231,7 +230,7 @@ func filterSweeperWithDependencies(name string, source map[string]*Sweeper) map[
 	return result
 }
 
-// runSweeperWithRegion recieves a sweeper and a region, and recursively calls
+// runSweeperWithRegion receives a sweeper and a region, and recursively calls
 // itself with that region for every dependency found for that sweeper. If there
 // are no dependencies, invoke the contained sweeper fun with the region, and
 // add the success/fail status to the sweeperRunList.
@@ -813,7 +812,7 @@ func testResource(c TestStep, state *terraform.State) (*terraform.ResourceState,
 // into smaller pieces more easily.
 //
 // ComposeTestCheckFunc returns immediately on the first TestCheckFunc error.
-// To aggregrate all errors, use ComposeAggregateTestCheckFunc instead.
+// To aggregate all errors, use ComposeAggregateTestCheckFunc instead.
 func ComposeTestCheckFunc(fs ...TestCheckFunc) TestCheckFunc {
 	return func(s *terraform.State) error {
 		for i, f := range fs {
@@ -832,19 +831,19 @@ func ComposeTestCheckFunc(fs ...TestCheckFunc) TestCheckFunc {
 // As a user testing their provider, this lets you decompose your checks
 // into smaller pieces more easily.
 //
-// Unlike ComposeTestCheckFunc, ComposeAggergateTestCheckFunc runs _all_ of the
+// Unlike ComposeTestCheckFunc, ComposeAggregateTestCheckFunc runs _all_ of the
 // TestCheckFuncs and aggregates failures.
 func ComposeAggregateTestCheckFunc(fs ...TestCheckFunc) TestCheckFunc {
 	return func(s *terraform.State) error {
-		var result *multierror.Error
+		var result []error
 
 		for i, f := range fs {
 			if err := f(s); err != nil {
-				result = multierror.Append(result, fmt.Errorf("Check %d/%d error: %s", i+1, len(fs), err))
+				result = append(result, fmt.Errorf("Check %d/%d error: %w", i+1, len(fs), err))
 			}
 		}
 
-		return result.ErrorOrNil()
+		return errors.Join(result...)
 	}
 }
 

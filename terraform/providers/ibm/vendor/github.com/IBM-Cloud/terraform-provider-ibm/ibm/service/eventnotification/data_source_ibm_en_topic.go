@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -81,6 +82,30 @@ func DataSourceIBMEnTopic() *schema.Resource {
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "Notification filter.",
+									},
+									"event_schedule_filter": {
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "Event schedule filter attributes.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"starts_at": {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "event schedule start time.",
+												},
+												"ends_at": {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "event schedule end time.",
+												},
+												"expression": {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "cron schedule expression.",
+												},
+											},
+										},
 									},
 									"updated_at": {
 										Type:        schema.TypeString,
@@ -159,7 +184,9 @@ func DataSourceIBMEnTopic() *schema.Resource {
 func dataSourceIBMEnTopicRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_en_topic", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.GetTopicOptions{}
@@ -167,10 +194,12 @@ func dataSourceIBMEnTopicRead(context context.Context, d *schema.ResourceData, m
 	options.SetInstanceID(d.Get("instance_guid").(string))
 	options.SetID(d.Get("topic_id").(string))
 
-	result, response, err := enClient.GetTopicWithContext(context, options)
+	result, _, err := enClient.GetTopicWithContext(context, options)
 
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("GetTopicWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetTopicWithContext failed: %s", err.Error()), "(Data) ibm_en_topic", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *options.InstanceID, *options.ID))
@@ -178,100 +207,128 @@ func dataSourceIBMEnTopicRead(context context.Context, d *schema.ResourceData, m
 	d.Set("topic_id", options.ID)
 
 	if err = d.Set("name", result.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "(Data) ibm_en_topic", "read")
+		return tfErr.GetDiag()
 	}
 
 	if result.Description != nil {
 		if err = d.Set("description", result.Description); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting description: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting description: %s", err), "(Data) ibm_en_topic", "read")
+			return tfErr.GetDiag()
 		}
 	}
 
 	if err = d.Set("updated_at", result.UpdatedAt); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting updated_at: %s", err), "(Data) ibm_en_topic", "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("source_count", flex.IntValue(result.SourceCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting source_count: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting source_count: %s", err), "(Data) ibm_en_topic", "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("subscription_count", flex.IntValue(result.SubscriptionCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting subscription_count: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting subscription_count: %s", err), "(Data) ibm_en_topic", "read")
+		return tfErr.GetDiag()
 	}
 
-	// if result.Sources != nil {
-	// 	err = d.Set("sources", dataSourceTopicFlattenSources(result.Sources))
-	// 	if err != nil {
-	// 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting sources %s", err))
-	// 	}
-	// }
+	if result.Sources != nil {
+		err = d.Set("sources", dataSourceTopicFlattenSources(result.Sources))
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("[ERROR] Error setting sources %s", err))
+		}
+	}
 
 	if result.Subscriptions != nil {
 		err = d.Set("subscriptions", enFlattenSubscriptions(result.Subscriptions))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting subscriptions %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting subscriptions: %s", err), "(Data) ibm_en_topic", "read")
+			return tfErr.GetDiag()
 		}
 	}
 
 	return nil
 }
 
-// func dataSourceTopicFlattenSources(result []en.TopicSourcesItem) (sources []map[string]interface{}) {
-// 	sources = []map[string]interface{}{}
+func dataSourceTopicFlattenSources(result []en.SourcesListItems) (sources []map[string]interface{}) {
+	sources = []map[string]interface{}{}
 
-// 	for _, sourcesItem := range result {
-// 		sources = append(sources, dataSourceTopicSourcesToMap(sourcesItem))
-// 	}
+	for _, sourcesItem := range result {
+		sources = append(sources, dataSourceTopicSourcesToMap(sourcesItem))
+	}
 
-// 	return sources
-// }
+	return sources
+}
 
-// func dataSourceTopicSourcesToMap(sourcesItem en.TopicSourcesItem) (sourcesMap map[string]interface{}) {
-// 	sourcesMap = map[string]interface{}{}
+func dataSourceTopicSourcesToMap(sourcesItem en.SourcesListItems) (sourcesMap map[string]interface{}) {
+	sourcesMap = map[string]interface{}{}
 
-// 	if sourcesItem.ID != nil {
-// 		sourcesMap["id"] = sourcesItem.ID
-// 	}
-// 	if sourcesItem.Name != nil {
-// 		sourcesMap["name"] = sourcesItem.Name
-// 	}
+	if sourcesItem.ID != nil {
+		sourcesMap["id"] = sourcesItem.ID
+	}
+	if sourcesItem.Name != nil {
+		sourcesMap["name"] = sourcesItem.Name
+	}
 
-// 	if sourcesItem.Rules != nil {
-// 		rulesList := []map[string]interface{}{}
-// 		for _, rulesItem := range sourcesItem.Rules {
-// 			rulesList = append(rulesList, enRulesToMap(rulesItem))
-// 		}
-// 		sourcesMap["rules"] = rulesList
-// 	}
+	if sourcesItem.Rules != nil {
+		rulesList := []map[string]interface{}{}
+		for _, rulesItem := range sourcesItem.Rules {
+			rulesList = append(rulesList, enRulesToMap(rulesItem))
+		}
+		sourcesMap["rules"] = rulesList
+	}
 
-// 	return sourcesMap
-// }
+	return sourcesMap
+}
 
-// func enRulesToMap(rulesItem en.RulesGet) (rulesMap map[string]interface{}) {
-// 	rulesMap = map[string]interface{}{}
+func enRulesToMap(rulesItem en.RulesGet) (rulesMap map[string]interface{}) {
+	rulesMap = map[string]interface{}{}
 
-// 	if rulesItem.ID != nil {
-// 		rulesMap["id"] = rulesItem.ID
-// 	}
+	if rulesItem.ID != nil {
+		rulesMap["id"] = rulesItem.ID
+	}
 
-// 	if rulesItem.Enabled != nil {
-// 		rulesMap["enabled"] = rulesItem.Enabled
-// 	}
+	if rulesItem.Enabled != nil {
+		rulesMap["enabled"] = rulesItem.Enabled
+	}
 
-// 	if rulesItem.EventTypeFilter != nil {
-// 		rulesMap["event_type_filter"] = rulesItem.EventTypeFilter
-// 	}
+	if rulesItem.EventTypeFilter != nil {
+		rulesMap["event_type_filter"] = rulesItem.EventTypeFilter
+	}
 
-// 	if rulesItem.NotificationFilter != nil {
-// 		rulesMap["notification_filter"] = rulesItem.NotificationFilter
-// 	}
+	if rulesItem.NotificationFilter != nil {
+		rulesMap["notification_filter"] = rulesItem.NotificationFilter
+	}
 
-// 	if rulesItem.UpdatedAt != nil {
-// 		rulesMap["updated_at"] = rulesItem.UpdatedAt
-// 	}
+	if rulesItem.EventScheduleFilter != nil {
+		eventScheduleFilterMap, err := dataSourceIBMEnTopicsEventScheduleFilterAttributesToMap(rulesItem.EventScheduleFilter)
+		if err != nil {
+			return rulesMap
+		}
+		rulesMap["event_schedule_filter"] = []map[string]interface{}{eventScheduleFilterMap}
+	}
 
-// 	return rulesMap
-// }
+	if rulesItem.UpdatedAt != nil {
+		rulesMap["updated_at"] = rulesItem.UpdatedAt
+	}
+
+	return rulesMap
+}
+
+func dataSourceIBMEnTopicsEventScheduleFilterAttributesToMap(model *en.EventScheduleFilterAttributes) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.StartsAt != nil {
+		modelMap["starts_at"] = model.StartsAt.String()
+	}
+	if model.EndsAt != nil {
+		modelMap["ends_at"] = model.EndsAt.String()
+	}
+	if model.Expression != nil {
+		modelMap["expression"] = model.Expression
+	}
+	return modelMap, nil
+}
 
 func enFlattenSubscriptions(subscriptionList []en.SubscriptionListItem) (subscriptions []map[string]interface{}) {
 	subscriptions = []map[string]interface{}{}
@@ -299,7 +356,7 @@ func enSubscriptionsToMap(subscription en.SubscriptionListItem) (subscriptionsMa
 	}
 
 	if subscription.UpdatedAt != nil {
-		subscriptionsMap["updated_at"] = subscription.UpdatedAt
+		subscriptionsMap["updated_at"] = subscription.UpdatedAt.String()
 	}
 
 	if subscription.DestinationType != nil {

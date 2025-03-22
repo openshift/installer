@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -66,6 +67,54 @@ func DataSourceIBMEnCustomEmailDestination() *schema.Resource {
 										Computed:    true,
 										Description: "The custom doamin",
 									},
+									"dkim": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "The DKIM attributes.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"public_key": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "dkim public key.",
+												},
+												"selector": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "dkim selector.",
+												},
+												"verification": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "dkim verification.",
+												},
+											},
+										},
+									},
+									"spf": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "The SPF attributes.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"txt_name": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "spf text name.",
+												},
+												"txt_value": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "spf text value.",
+												},
+												"verification": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "spf verification.",
+												},
+											},
+										},
+									},
 								},
 							},
 						},
@@ -97,7 +146,9 @@ func DataSourceIBMEnCustomEmailDestination() *schema.Resource {
 func dataSourceIBMEnCustomEmailDestinationRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_en_destination_custom_email", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.GetDestinationOptions{}
@@ -105,51 +156,61 @@ func dataSourceIBMEnCustomEmailDestinationRead(context context.Context, d *schem
 	options.SetInstanceID(d.Get("instance_guid").(string))
 	options.SetID(d.Get("destination_id").(string))
 
-	result, response, err := enClient.GetDestinationWithContext(context, options)
+	result, _, err := enClient.GetDestinationWithContext(context, options)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("GetDestination failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetDestinationWithContext failed: %s", err.Error()), "(Data) ibm_en_destination_custom_email", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *options.InstanceID, *options.ID))
 
 	if err = d.Set("name", result.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "(Data) ibm_en_destination_custom_email", "read")
+		return tfErr.GetDiag()
 	}
 
 	if result.Description != nil {
 		if err = d.Set("description", result.Description); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting description: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting description: %s", err), "(Data) ibm_en_destination_custom_email", "read")
+			return tfErr.GetDiag()
 		}
 	}
 
 	if err = d.Set("type", result.Type); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting type: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting type: %s", err), "(Data) ibm_en_destination_custom_email", "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("collect_failed_events", result.CollectFailedEvents); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting CollectFailedEvents: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting CollectFailedEvents: %s", err), "(Data) ibm_en_destination_custom_email", "read")
+		return tfErr.GetDiag()
 	}
 
 	if result.Config != nil {
-		err = d.Set("config", enSlackDestinationFlattenConfig(*result.Config))
+		err = d.Set("config", enCustomEmailDestinationFlattenConfig(*result.Config))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting config %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting config: %s", err), "(Data) ibm_en_destination_custom_email", "read")
+			return tfErr.GetDiag()
 		}
 	}
 
 	if result.SubscriptionNames != nil {
 		err = d.Set("subscription_names", result.SubscriptionNames)
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting subscription_names %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting subscription_names: %s", err), "(Data) ibm_en_destination_custom_email", "read")
+			return tfErr.GetDiag()
 		}
 	}
 
 	if err = d.Set("updated_at", flex.DateTimeToString(result.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting updated_at: %s", err), "(Data) ibm_en_destination_custom_email", "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("subscription_count", flex.IntValue(result.SubscriptionCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting subscription_count: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting subscription_count: %s", err), "(Data) ibm_en_destination_custom_email", "read")
+		return tfErr.GetDiag()
 	}
 
 	return nil
@@ -181,9 +242,52 @@ func enCustomEmailDestinationConfigParamsToMap(paramsItem en.DestinationConfigOn
 
 	params := paramsItem.(*en.DestinationConfigOneOf)
 
-	if params.URL != nil {
+	if params.Domain != nil {
 		paramsMap["domain"] = params.Domain
 	}
 
+	if params.Dkim != nil {
+		dkimMap, err := dataSourceIBMEnDestinationDkimAttributesToMap(params.Dkim)
+		if err != nil {
+			return paramsMap
+		}
+		paramsMap["dkim"] = []map[string]interface{}{dkimMap}
+	}
+	if params.Spf != nil {
+		spfMap, err := dataSourceIBMEnDestinationSpfAttributesToMap(params.Spf)
+		if err != nil {
+			return paramsMap
+		}
+		paramsMap["spf"] = []map[string]interface{}{spfMap}
+	}
+
 	return paramsMap
+}
+
+func dataSourceIBMEnDestinationDkimAttributesToMap(model *en.DkimAttributes) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.PublicKey != nil {
+		modelMap["public_key"] = model.PublicKey
+	}
+	if model.Selector != nil {
+		modelMap["selector"] = model.Selector
+	}
+	if model.Verification != nil {
+		modelMap["verification"] = model.Verification
+	}
+	return modelMap, nil
+}
+
+func dataSourceIBMEnDestinationSpfAttributesToMap(model *en.SpfAttributes) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.TxtName != nil {
+		modelMap["txt_name"] = model.TxtName
+	}
+	if model.TxtValue != nil {
+		modelMap["txt_value"] = model.TxtValue
+	}
+	if model.Verification != nil {
+		modelMap["verification"] = model.Verification
+	}
+	return modelMap, nil
 }

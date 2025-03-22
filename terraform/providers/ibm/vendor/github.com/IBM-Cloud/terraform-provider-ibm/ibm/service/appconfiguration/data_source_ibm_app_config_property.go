@@ -3,7 +3,9 @@ package appconfiguration
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/IBM/appconfiguration-go-admin-sdk/appconfigurationv1"
@@ -58,6 +60,11 @@ func DataSourceIBMAppConfigProperty() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Tags associated with the property.",
+			},
+			"format": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Format of the feature (TEXT, JSON, YAML) and it is a required attribute when `type` is `STRING`. It is not required for `BOOLEAN` and `NUMERIC` types. This property is populated in the response body of `POST, PUT and GET` calls if the type `STRING` is used and not populated for `BOOLEAN` and `NUMERIC` types.",
 			},
 			"segment_rules": {
 				Type:        schema.TypeList,
@@ -143,7 +150,7 @@ func dataSourceIbmAppConfigPropertyRead(d *schema.ResourceData, meta interface{}
 
 	appconfigClient, err := getAppConfigClient(meta, guid)
 	if err != nil {
-		return fmt.Errorf("getAppConfigClient failed %s", err)
+		return flex.FmtErrorf("getAppConfigClient failed %s", err)
 	}
 
 	options := &appconfigurationv1.GetPropertyOptions{}
@@ -151,31 +158,32 @@ func dataSourceIbmAppConfigPropertyRead(d *schema.ResourceData, meta interface{}
 	options.SetEnvironmentID(d.Get("environment_id").(string))
 	options.SetPropertyID(d.Get("property_id").(string))
 
-	if _, ok := d.GetOk("include"); ok {
-		options.SetInclude(d.Get("include").(string))
+	if _, ok := GetFieldExists(d, "include"); ok {
+		dataString := d.Get("include").(string)
+		options.SetInclude(strings.Split(dataString, ","))
 	}
 
 	property, response, err := appconfigClient.GetProperty(options)
 
 	if err != nil {
-		return fmt.Errorf("GetProperty failed %s\n%s", err, response)
+		return flex.FmtErrorf("GetProperty failed %s\n%s", err, response)
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s/%s", guid, *options.EnvironmentID, *property.PropertyID))
 
 	if property.Name != nil {
 		if err = d.Set("name", property.Name); err != nil {
-			return fmt.Errorf("error setting name: %s", err)
+			return flex.FmtErrorf("error setting name: %s", err)
 		}
 	}
 	if property.Description != nil {
 		if err = d.Set("description", property.Description); err != nil {
-			return fmt.Errorf("error setting description: %s", err)
+			return flex.FmtErrorf("error setting description: %s", err)
 		}
 	}
 	if property.Type != nil {
 		if err = d.Set("type", property.Type); err != nil {
-			return fmt.Errorf("error setting type: %s", err)
+			return flex.FmtErrorf("error setting type: %s", err)
 		}
 	}
 	if property.Value != nil {
@@ -191,39 +199,44 @@ func dataSourceIbmAppConfigPropertyRead(d *schema.ResourceData, meta interface{}
 	}
 	if property.Tags != nil {
 		if err = d.Set("tags", property.Tags); err != nil {
-			return fmt.Errorf("error setting tags: %s", err)
+			return flex.FmtErrorf("error setting tags: %s", err)
+		}
+	}
+	if property.Format != nil {
+		if err = d.Set("format", property.Format); err != nil {
+			return flex.FmtErrorf("error setting format: %s", err)
 		}
 	}
 	if property.SegmentRules != nil {
 		err = d.Set("segment_rules", dataSourcePropertyFlattenSegmentRules(property.SegmentRules))
 		if err != nil {
-			return fmt.Errorf("error setting segment_rules %s", err)
+			return flex.FmtErrorf("error setting segment_rules %s", err)
 		}
 	}
 	if property.SegmentExists != nil {
 		if err = d.Set("segment_exists", property.SegmentExists); err != nil {
-			return fmt.Errorf("error setting segment_exists: %s", err)
+			return flex.FmtErrorf("error setting segment_exists: %s", err)
 		}
 	}
 	if property.Collections != nil {
 		err = d.Set("collections", dataSourcePropertyFlattenCollections(property.Collections))
 		if err != nil {
-			return fmt.Errorf("error setting collections %s", err)
+			return flex.FmtErrorf("error setting collections %s", err)
 		}
 	}
 	if property.CreatedTime != nil {
 		if err = d.Set("created_time", property.CreatedTime.String()); err != nil {
-			return fmt.Errorf("error setting created_time: %s", err)
+			return flex.FmtErrorf("error setting created_time: %s", err)
 		}
 	}
 	if property.UpdatedTime != nil {
 		if err = d.Set("updated_time", property.UpdatedTime.String()); err != nil {
-			return fmt.Errorf("error setting updated_time: %s", err)
+			return flex.FmtErrorf("error setting updated_time: %s", err)
 		}
 	}
 	if property.Href != nil {
 		if err = d.Set("href", property.Href); err != nil {
-			return fmt.Errorf("error setting href: %s", err)
+			return flex.FmtErrorf("error setting href: %s", err)
 		}
 	}
 	return nil

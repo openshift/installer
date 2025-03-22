@@ -9,7 +9,7 @@ The Program includes some or all of the following that IBM obtained under the Ap
 * github.com/IBM/cloud-databases-go-sdk
 * github.com/IBM/cloudant-go-sdk
 * github.com/IBM/container-registry-go-sdk
-* github.com/IBM/continuous-delivery-go-sdk 
+* github.com/IBM/continuous-delivery-go-sdk/v2 
 * github.com/IBM/event-notifications-go-admin-sdk
 * github.com/IBM/eventstreams-go-sdk
 * github.com/IBM/go-sdk-core/v5

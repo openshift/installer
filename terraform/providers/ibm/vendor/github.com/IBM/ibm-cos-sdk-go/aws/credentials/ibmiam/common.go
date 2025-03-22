@@ -125,14 +125,9 @@ func (p *Provider) Retrieve() (credentials.Value, error) {
 		var returnErr error
 		if p.logLevel.Matches(aws.LogDebug) {
 			p.logger.Log(debugLog, ibmiamProviderLog, p.providerName, "ERROR ON GET", err)
-			returnErr = awserr.New("TokenManagerRetrieveError", "error retrieving the token", err)
-		} else {
-			returnErr = awserr.New("TokenManagerRetrieveError", "error retrieving the token", nil)
 		}
+		returnErr = awserr.New("TokenManagerRetrieveError", "error retrieving the token", err)
 		return credentials.Value{}, returnErr
-	}
-	if p.logLevel.Matches(aws.LogDebug) {
-		p.logger.Log(debugLog, ibmiamProviderLog, p.providerName, "GET TOKEN", tokenValue)
 	}
 
 	return credentials.Value{Token: *tokenValue, ProviderName: p.providerName, ProviderType: p.providerType,

@@ -188,15 +188,19 @@ func DataSourceIbmSchematicsAgents() *schema.Resource {
 func dataSourceIbmSchematicsAgentsRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsAgentsRead schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_agents", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	listAgentOptions := &schematicsv1.ListAgentOptions{}
 
 	agentList, response, err := schematicsClient.ListAgentWithContext(context, listAgentOptions)
 	if err != nil {
-		log.Printf("[DEBUG] ListAgentWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("ListAgentWithContext failed %s\n%s", err, response))
+
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsAgentsRead ListAgentWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_agents", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	// Use the provided filter argument and construct a new list with only the requested resource(s)
@@ -219,8 +223,10 @@ func dataSourceIbmSchematicsAgentsRead(context context.Context, d *schema.Resour
 
 	if suppliedFilter {
 		if len(agentList.Agents) == 0 {
-			log.Printf("[DEBUG] no Agents found with name %s\n", name)
-			// return diag.FromErr(fmt.Errorf("no Agents found with name %s", name))
+
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsAgentsRead failed with error: %s", err), "ibm_schematics_agents", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		d.SetId(name)
 	} else {
@@ -228,15 +234,21 @@ func dataSourceIbmSchematicsAgentsRead(context context.Context, d *schema.Resour
 	}
 
 	if err = d.Set("total_count", flex.IntValue(agentList.TotalCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting total_count: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsAgentsRead failed with error: %s", err), "ibm_schematics_agents", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("limit", flex.IntValue(agentList.Limit)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting limit: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsAgentsRead failed with error: %s", err), "ibm_schematics_agents", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("offset", flex.IntValue(agentList.Offset)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting offset: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsAgentsRead failed with error: %s", err), "ibm_schematics_agents", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	agents := []map[string]interface{}{}
@@ -244,13 +256,17 @@ func dataSourceIbmSchematicsAgentsRead(context context.Context, d *schema.Resour
 		for _, modelItem := range agentList.Agents {
 			modelMap, err := dataSourceIbmSchematicsAgentsAgentToMap(&modelItem)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsAgentsRead failed: %s", err.Error()), "ibm_schematics_agents", "read")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			agents = append(agents, modelMap)
 		}
 	}
 	if err = d.Set("agents", agents); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting agents %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsAgentsRead failed with error: %s", err), "ibm_schematics_agents", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	return nil

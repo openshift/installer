@@ -1,5 +1,9 @@
-// Copyright IBM Corp. 2023 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
+
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.96.0-d6dec9d7-20241008-212902
+ */
 
 package cdtoolchain
 
@@ -13,7 +17,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
-	"github.com/IBM/continuous-delivery-go-sdk/cdtoolchainv2"
+	"github.com/IBM/continuous-delivery-go-sdk/v2/cdtoolchainv2"
 )
 
 func DataSourceIBMCdToolchain() *schema.Resource {
@@ -94,20 +98,23 @@ func DataSourceIBMCdToolchain() *schema.Resource {
 func dataSourceIBMCdToolchainRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_cd_toolchain", "read", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getToolchainByIDOptions := &cdtoolchainv2.GetToolchainByIDOptions{}
 
 	getToolchainByIDOptions.SetToolchainID(d.Get("toolchain_id").(string))
 
-	toolchain, response, err := cdToolchainClient.GetToolchainByIDWithContext(context, getToolchainByIDOptions)
+	toolchain, _, err := cdToolchainClient.GetToolchainByIDWithContext(context, getToolchainByIDOptions)
 	if err != nil {
-		log.Printf("[DEBUG] GetToolchainByIDWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetToolchainByIDWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetToolchainByIDWithContext failed: %s", err.Error()), "(Data) ibm_cd_toolchain", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
-	d.SetId(fmt.Sprintf("%s", *getToolchainByIDOptions.ToolchainID))
+	d.SetId(*getToolchainByIDOptions.ToolchainID)
 
 	tags, err := flex.GetTagsUsingCRN(meta, *toolchain.CRN)
 	if err != nil {
@@ -117,47 +124,47 @@ func dataSourceIBMCdToolchainRead(context context.Context, d *schema.ResourceDat
 	d.Set("tags", tags)
 
 	if err = d.Set("name", toolchain.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "(Data) ibm_cd_toolchain", "read", "set-name").GetDiag()
 	}
 
 	if err = d.Set("description", toolchain.Description); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting description: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting description: %s", err), "(Data) ibm_cd_toolchain", "read", "set-description").GetDiag()
 	}
 
 	if err = d.Set("account_id", toolchain.AccountID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting account_id: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting account_id: %s", err), "(Data) ibm_cd_toolchain", "read", "set-account_id").GetDiag()
 	}
 
 	if err = d.Set("location", toolchain.Location); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting location: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting location: %s", err), "(Data) ibm_cd_toolchain", "read", "set-location").GetDiag()
 	}
 
 	if err = d.Set("resource_group_id", toolchain.ResourceGroupID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting resource_group_id: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting resource_group_id: %s", err), "(Data) ibm_cd_toolchain", "read", "set-resource_group_id").GetDiag()
 	}
 
 	if err = d.Set("crn", toolchain.CRN); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting crn: %s", err), "(Data) ibm_cd_toolchain", "read", "set-crn").GetDiag()
 	}
 
 	if err = d.Set("href", toolchain.Href); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting href: %s", err), "(Data) ibm_cd_toolchain", "read", "set-href").GetDiag()
 	}
 
 	if err = d.Set("ui_href", toolchain.UIHref); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting ui_href: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting ui_href: %s", err), "(Data) ibm_cd_toolchain", "read", "set-ui_href").GetDiag()
 	}
 
 	if err = d.Set("created_at", flex.DateTimeToString(toolchain.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting created_at: %s", err), "(Data) ibm_cd_toolchain", "read", "set-created_at").GetDiag()
 	}
 
 	if err = d.Set("updated_at", flex.DateTimeToString(toolchain.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting updated_at: %s", err), "(Data) ibm_cd_toolchain", "read", "set-updated_at").GetDiag()
 	}
 
 	if err = d.Set("created_by", toolchain.CreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_by: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting created_by: %s", err), "(Data) ibm_cd_toolchain", "read", "set-created_by").GetDiag()
 	}
 
 	return nil

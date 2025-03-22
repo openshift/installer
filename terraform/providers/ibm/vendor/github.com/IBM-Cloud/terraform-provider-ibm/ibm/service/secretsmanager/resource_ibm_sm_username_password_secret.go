@@ -65,12 +65,12 @@ func ResourceIbmSmUsernamePasswordSecret() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 				ForceNew:    true,
-				Description: "A v4 UUID identifier, or `default` secret group.",
+				Description: "A UUID identifier, or `default` secret group.",
 			},
 			"secret_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "A v4 UUID identifier.",
+				Description: "A UUID identifier.",
 			},
 			"secret_type": &schema.Schema{
 				Type:        schema.TypeString,

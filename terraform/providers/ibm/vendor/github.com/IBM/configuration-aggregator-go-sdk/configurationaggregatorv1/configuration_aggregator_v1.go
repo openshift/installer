@@ -239,6 +239,18 @@ func (configurationAggregator *ConfigurationAggregatorV1) ListConfigsWithContext
 	if listConfigsOptions.Start != nil {
 		builder.AddQuery("start", fmt.Sprint(*listConfigsOptions.Start))
 	}
+	if listConfigsOptions.SubAccount != nil {
+		builder.AddQuery("sub_account", fmt.Sprint(*listConfigsOptions.SubAccount))
+	}
+	if listConfigsOptions.AccessTags != nil {
+		builder.AddQuery("access_tags", fmt.Sprint(*listConfigsOptions.AccessTags))
+	}
+	if listConfigsOptions.UserTags != nil {
+		builder.AddQuery("user_tags", fmt.Sprint(*listConfigsOptions.UserTags))
+	}
+	if listConfigsOptions.ServiceTags != nil {
+		builder.AddQuery("service_tags", fmt.Sprint(*listConfigsOptions.ServiceTags))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
@@ -265,8 +277,8 @@ func (configurationAggregator *ConfigurationAggregatorV1) ListConfigsWithContext
 	return
 }
 
-// ReplaceSettings : Update the settings for Configuration Aggregator
-// Update the settings for resource collection as part of the Configuration Aggregator feature.
+// ReplaceSettings : Replace the settings for Configuration Aggregator
+// Replace the settings for resource collection as part of the Configuration Aggregator feature.
 func (configurationAggregator *ConfigurationAggregatorV1) ReplaceSettings(replaceSettingsOptions *ReplaceSettingsOptions) (result *SettingsResponse, response *core.DetailedResponse, err error) {
 	result, response, err = configurationAggregator.ReplaceSettingsWithContext(context.Background(), replaceSettingsOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -499,8 +511,17 @@ type About struct {
 	// Location of the resource specified.
 	Location *string `json:"location" validate:"required"`
 
-	// Tags associated with the resource.
-	Tags *Tags `json:"tags,omitempty"`
+	// Access tags specified by the user for the resource. For more information, see
+	// https://cloud.ibm.com/docs/account?topic=account-tag&interface=ui#tag-types.
+	AccessTags []string `json:"access_tags,omitempty"`
+
+	// User tags specified by the user for the resource. For more information, see
+	// https://cloud.ibm.com/docs/account?topic=account-tag&interface=ui#tag-types.
+	UserTags []string `json:"user_tags,omitempty"`
+
+	// Tags attached to resources or service IDs by an authorized user in the account. For more information, see
+	// https://cloud.ibm.com/docs/account?topic=account-tag&interface=ui#tag-types.
+	ServiceTags []string `json:"service_tags,omitempty"`
 }
 
 // UnmarshalAbout unmarshals an instance of About from the specified map of raw messages.
@@ -546,9 +567,19 @@ func UnmarshalAbout(m map[string]json.RawMessage, result interface{}) (err error
 		err = core.SDKErrorf(err, "", "location-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "tags", &obj.Tags, UnmarshalTags)
+	err = core.UnmarshalPrimitive(m, "access_tags", &obj.AccessTags)
 	if err != nil {
-		err = core.SDKErrorf(err, "", "tags-error", common.GetComponentInfo())
+		err = core.SDKErrorf(err, "", "access_tags-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "user_tags", &obj.UserTags)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "user_tags-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "service_tags", &obj.ServiceTags)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "service_tags-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -738,6 +769,18 @@ type ListConfigsOptions struct {
 	// The start string to fetch the resource.
 	Start *string `json:"start,omitempty"`
 
+	// Filter the resource configurations from the specified sub-account in an enterprise hierarchy.
+	SubAccount *string `json:"sub_account,omitempty"`
+
+	// Filter the resource configurations attached with the specified access tags.
+	AccessTags *string `json:"access_tags,omitempty"`
+
+	// Filter the resource configurations attached with the specified user tags.
+	UserTags *string `json:"user_tags,omitempty"`
+
+	// Filter the resource configurations attached with the specified service tags.
+	ServiceTags *string `json:"service_tags,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
@@ -786,6 +829,30 @@ func (_options *ListConfigsOptions) SetLimit(limit int64) *ListConfigsOptions {
 // SetStart : Allow user to set Start
 func (_options *ListConfigsOptions) SetStart(start string) *ListConfigsOptions {
 	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetSubAccount : Allow user to set SubAccount
+func (_options *ListConfigsOptions) SetSubAccount(subAccount string) *ListConfigsOptions {
+	_options.SubAccount = core.StringPtr(subAccount)
+	return _options
+}
+
+// SetAccessTags : Allow user to set AccessTags
+func (_options *ListConfigsOptions) SetAccessTags(accessTags string) *ListConfigsOptions {
+	_options.AccessTags = core.StringPtr(accessTags)
+	return _options
+}
+
+// SetUserTags : Allow user to set UserTags
+func (_options *ListConfigsOptions) SetUserTags(userTags string) *ListConfigsOptions {
+	_options.UserTags = core.StringPtr(userTags)
+	return _options
+}
+
+// SetServiceTags : Allow user to set ServiceTags
+func (_options *ListConfigsOptions) SetServiceTags(serviceTags string) *ListConfigsOptions {
+	_options.ServiceTags = core.StringPtr(serviceTags)
 	return _options
 }
 
@@ -1089,24 +1156,6 @@ func UnmarshalStatusResponse(m map[string]json.RawMessage, result interface{}) (
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// Tags : Tags associated with the resource.
-type Tags struct {
-	// The name of the tag.
-	Tag *string `json:"tag,omitempty"`
-}
-
-// UnmarshalTags unmarshals an instance of Tags from the specified map of raw messages.
-func UnmarshalTags(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(Tags)
-	err = core.UnmarshalPrimitive(m, "tag", &obj.Tag)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "tag-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))

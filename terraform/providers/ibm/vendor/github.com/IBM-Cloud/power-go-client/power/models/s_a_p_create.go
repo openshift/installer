@@ -66,6 +66,9 @@ type SAPCreate struct {
 	// Storage Pool for server deployment; if provided then storageAffinity and storageType will be ignored; Only valid when you deploy one of the IBM supplied stock images. Storage pool for a custom image (an imported image or an image that is created from a PVMInstance capture) defaults to the storage pool the image was created in
 	StoragePool string `json:"storagePool,omitempty"`
 
+	// Indicates if all volumes attached to the server must reside in the same storage pool; Defaults to true when initially deploying a PVMInstance
+	StoragePoolAffinity *bool `json:"storagePoolAffinity,omitempty"`
+
 	// Storage type for server deployment; if storageType is not provided the storage type will default to 'tier3'.
 	StorageType string `json:"storageType,omitempty"`
 

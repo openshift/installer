@@ -1,5 +1,9 @@
-// Copyright IBM Corp. 2021 All Rights Reserved.
+// Copyright IBM Corp. 2025 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
+
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.98.0-8be2046a-20241205-162752
+ */
 
 package iamidentity
 
@@ -9,11 +13,12 @@ import (
 	"log"
 	"time"
 
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
 )
 
@@ -22,65 +27,65 @@ func DataSourceIBMIamTrustedProfileLinks() *schema.Resource {
 		ReadContext: dataSourceIBMIamTrustedProfileLinkListRead,
 
 		Schema: map[string]*schema.Schema{
-			"profile_id": {
+			"profile_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "ID of the trusted profile.",
 				ValidateFunc: validate.InvokeDataSourceValidator("ibm_iam_trusted_profile_links",
 					"profile_id"),
 			},
-			"links": {
+			"links": &schema.Schema{
 				Type:        schema.TypeList,
 				Computed:    true,
 				Description: "List of links to a trusted profile.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"id": {
+						"id": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "the unique identifier of the claim rule.",
+							Description: "the unique identifier of the link.",
 						},
-						"entity_tag": {
+						"entity_tag": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "version of the claim rule.",
+							Description: "version of the link.",
 						},
-						"created_at": {
+						"created_at": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "If set contains a date time string of the creation date in ISO format.",
 						},
-						"modified_at": {
+						"modified_at": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "If set contains a date time string of the last modification date in ISO format.",
 						},
-						"name": {
+						"name": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Optional name of the Link.",
 						},
-						"cr_type": {
+						"cr_type": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The compute resource type. Valid values are VSI, IKS_SA, ROKS_SA.",
 						},
-						"link": {
+						"link": &schema.Schema{
 							Type:     schema.TypeList,
 							Computed: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"crn": {
+									"crn": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "The CRN of the compute resource.",
 									},
-									"namespace": {
+									"namespace": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "The compute resource namespace, only required if cr_type is IKS_SA or ROKS_SA.",
 									},
-									"name": {
+									"name": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "Name of the compute resource, only required if cr_type is IKS_SA or ROKS_SA.",
@@ -113,87 +118,72 @@ func DataSourceIBMIamTrustedProfileLinksValidator() *validate.ResourceValidator 
 func dataSourceIBMIamTrustedProfileLinkListRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	iamIdentityClient, err := meta.(conns.ClientSession).IAMIdentityV1API()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_iam_trusted_profile_links", "read", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
-	listLinkOptions := &iamidentityv1.ListLinksOptions{}
+	listLinksOptions := &iamidentityv1.ListLinksOptions{}
 
-	listLinkOptions.SetProfileID(d.Get("profile_id").(string))
+	listLinksOptions.SetProfileID(d.Get("profile_id").(string))
 
-	profileLinkList, response, err := iamIdentityClient.ListLinks(listLinkOptions)
+	profileLinkList, _, err := iamIdentityClient.ListLinksWithContext(context, listLinksOptions)
 	if err != nil {
-		log.Printf("[DEBUG] ListLink failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("ListLink failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ListLinksWithContext failed: %s", err.Error()), "(Data) ibm_iam_trusted_profile_links", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
-	d.SetId(dataSourceIBMIamTrustedProfileLinkListID(d))
+	d.SetId(dataSourceIBMIamTrustedProfileLinksID(d))
 
-	if profileLinkList.Links != nil {
-		err = d.Set("links", dataSourceProfileLinkListFlattenLinks(profileLinkList.Links))
+	links := []map[string]interface{}{}
+	for _, linksItem := range profileLinkList.Links {
+		linksItemMap, err := DataSourceIBMIamTrustedProfileLinksProfileLinkToMap(&linksItem) // #nosec G601
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting links %s", err))
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_iam_trusted_profile_links", "read", "links-to-map").GetDiag()
 		}
+		links = append(links, linksItemMap)
+	}
+	if err = d.Set("links", links); err != nil {
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting links: %s", err), "(Data) ibm_iam_trusted_profile_links", "read", "set-links").GetDiag()
 	}
 
 	return nil
 }
 
-// dataSourceIBMIamTrustedProfileLinkListID returns a reasonable ID for the list.
-func dataSourceIBMIamTrustedProfileLinkListID(d *schema.ResourceData) string {
+// dataSourceIBMIamTrustedProfileLinksID returns a reasonable ID for the list.
+func dataSourceIBMIamTrustedProfileLinksID(d *schema.ResourceData) string {
 	return time.Now().UTC().String()
 }
 
-func dataSourceProfileLinkListFlattenLinks(result []iamidentityv1.ProfileLink) (links []map[string]interface{}) {
-	for _, linksItem := range result {
-		links = append(links, dataSourceProfileLinkListLinksToMap(linksItem))
+func DataSourceIBMIamTrustedProfileLinksProfileLinkToMap(model *iamidentityv1.ProfileLink) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["id"] = *model.ID
+	modelMap["entity_tag"] = *model.EntityTag
+	modelMap["created_at"] = model.CreatedAt.String()
+	modelMap["modified_at"] = model.ModifiedAt.String()
+	if model.Name != nil {
+		modelMap["name"] = *model.Name
 	}
-
-	return links
+	modelMap["cr_type"] = *model.CrType
+	linkMap, err := DataSourceIBMIamTrustedProfileLinksProfileLinkLinkToMap(model.Link)
+	if err != nil {
+		return modelMap, err
+	}
+	modelMap["link"] = []map[string]interface{}{linkMap}
+	return modelMap, nil
 }
 
-func dataSourceProfileLinkListLinksToMap(linksItem iamidentityv1.ProfileLink) (linksMap map[string]interface{}) {
-	linksMap = map[string]interface{}{}
-
-	if linksItem.ID != nil {
-		linksMap["id"] = linksItem.ID
+func DataSourceIBMIamTrustedProfileLinksProfileLinkLinkToMap(model *iamidentityv1.ProfileLinkLink) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.CRN != nil {
+		modelMap["crn"] = *model.CRN
 	}
-	if linksItem.EntityTag != nil {
-		linksMap["entity_tag"] = linksItem.EntityTag
+	if model.Namespace != nil {
+		modelMap["namespace"] = *model.Namespace
 	}
-	if linksItem.CreatedAt != nil {
-		linksMap["created_at"] = linksItem.CreatedAt.String()
+	if model.Name != nil {
+		modelMap["name"] = *model.Name
 	}
-	if linksItem.ModifiedAt != nil {
-		linksMap["modified_at"] = linksItem.ModifiedAt.String()
-	}
-	if linksItem.Name != nil {
-		linksMap["name"] = linksItem.Name
-	}
-	if linksItem.CrType != nil {
-		linksMap["cr_type"] = linksItem.CrType
-	}
-	if linksItem.Link != nil {
-		linkList := []map[string]interface{}{}
-		linkMap := dataSourceProfileLinkListLinksLinkToMap(*linksItem.Link)
-		linkList = append(linkList, linkMap)
-		linksMap["link"] = linkList
-	}
-
-	return linksMap
-}
-
-func dataSourceProfileLinkListLinksLinkToMap(linkItem iamidentityv1.ProfileLinkLink) (linkMap map[string]interface{}) {
-	linkMap = map[string]interface{}{}
-
-	if linkItem.CRN != nil {
-		linkMap["crn"] = linkItem.CRN
-	}
-	if linkItem.Namespace != nil {
-		linkMap["namespace"] = linkItem.Namespace
-	}
-	if linkItem.Name != nil {
-		linkMap["name"] = linkItem.Name
-	}
-
-	return linkMap
+	return modelMap, nil
 }

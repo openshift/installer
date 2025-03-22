@@ -1,5 +1,9 @@
-// Copyright IBM Corp. 2021 All Rights Reserved.
+// Copyright IBM Corp. 2025 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
+
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.98.0-8be2046a-20241205-162752
+ */
 
 package iamidentity
 
@@ -9,125 +13,133 @@ import (
 	"log"
 	"time"
 
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
 )
 
 func DataSourceIBMIamTrustedProfiles() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceIBMIamTrustedProfileListRead,
+		ReadContext: dataSourceIBMIamTrustedProfilesRead,
 
 		Schema: map[string]*schema.Schema{
-			"account_id": {
+			"account_id": &schema.Schema{
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				Description: "Account ID to query for trusted profiles.",
 			},
-			"name": {
-				Description: "Name of the profile",
+			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				ValidateFunc: validate.InvokeDataSourceValidator("ibm_iam_trusted_profiles",
-					"name"),
+				Description: "Name of the trusted profile to query.",
 			},
-			"include_history": {
-				Description: "Defines if the entity history is included in the response. Default is false",
+			"include_history": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
+				Default:     false,
+				Description: "Defines if the entity history is included in the response.",
 			},
-			"profiles": {
+			"profiles": &schema.Schema{
 				Type:        schema.TypeList,
 				Computed:    true,
 				Description: "List of trusted profiles.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"id": {
+						"id": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "the unique identifier of the trusted profile. Example:'Profile-94497d0d-2ac3-41bf-a993-a49d1b14627c'.",
 						},
-						"entity_tag": {
+						"entity_tag": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Version of the trusted profile details object. You need to specify this value when updating the trusted profile to avoid stale updates.",
 						},
-						"crn": {
+						"crn": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Cloud Resource Name of the item. Example Cloud Resource Name: 'crn:v1:bluemix:public:iam-identity:us-south:a/myaccount::profile:Profile-94497d0d-2ac3-41bf-a993-a49d1b14627c'.",
 						},
-						"name": {
+						"name": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Name of the trusted profile. The name is checked for uniqueness. Therefore trusted profiles with the same names can not exist in the same account.",
 						},
-						"description": {
+						"description": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The optional description of the trusted profile. The 'description' property is only available if a description was provided during a create of a trusted profile.",
 						},
-						"created_at": {
+						"created_at": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "If set contains a date time string of the creation date in ISO format.",
 						},
-						"modified_at": {
+						"modified_at": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "If set contains a date time string of the last modification date in ISO format.",
 						},
-						"iam_id": {
+						"iam_id": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The iam_id of this trusted profile.",
 						},
-						"account_id": {
+						"account_id": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "ID of the account that this trusted profile belong to.",
 						},
-						"ims_account_id": {
+						"template_id": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "ID of the IAM template that was used to create an enterprise-managed trusted profile in your account. When returned, this indicates that the trusted profile is created from and managed by a template in the root enterprise account.",
+						},
+						"assignment_id": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "ID of the assignment that was used to create an enterprise-managed trusted profile in your account. When returned, this indicates that the trusted profile is created from and managed by a template in the root enterprise account.",
+						},
+						"ims_account_id": &schema.Schema{
 							Type:        schema.TypeInt,
 							Computed:    true,
 							Description: "IMS acount ID of the trusted profile.",
 						},
-						"ims_user_id": {
+						"ims_user_id": &schema.Schema{
 							Type:        schema.TypeInt,
 							Computed:    true,
 							Description: "IMS user ID of the trusted profile.",
 						},
-						"history": {
+						"history": &schema.Schema{
 							Type:        schema.TypeList,
 							Computed:    true,
 							Description: "History of the trusted profile.",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"timestamp": {
+									"timestamp": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "Timestamp when the action was triggered.",
 									},
-									"iam_id": {
+									"iam_id": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "IAM ID of the identity which triggered the action.",
 									},
-									"iam_id_account": {
+									"iam_id_account": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "Account of the identity which triggered the action.",
 									},
-									"action": {
+									"action": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "Action of the history entry.",
 									},
-									"params": {
+									"params": &schema.Schema{
 										Type:        schema.TypeList,
 										Computed:    true,
 										Description: "Params of the history entry.",
@@ -135,7 +147,7 @@ func DataSourceIBMIamTrustedProfiles() *schema.Resource {
 											Type: schema.TypeString,
 										},
 									},
-									"message": {
+									"message": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "Message which summarizes the executed action.",
@@ -150,158 +162,103 @@ func DataSourceIBMIamTrustedProfiles() *schema.Resource {
 	}
 }
 
-func DataSourceIBMIamTrustedProfilesValidator() *validate.ResourceValidator {
-	validateSchema := make([]validate.ValidateSchema, 0)
-	validateSchema = append(validateSchema,
-		validate.ValidateSchema{
-			Identifier:                 "name",
-			ValidateFunctionIdentifier: validate.ValidateCloudData,
-			Type:                       validate.TypeString,
-			CloudDataType:              "iam",
-			CloudDataRange:             []string{"service:trusted_profile", "resolved_to:name"},
-			Optional:                   true})
-
-	iBMIamTrustedProfilesValidator := validate.ResourceValidator{ResourceName: "ibm_iam_trusted_profiles", Schema: validateSchema}
-	return &iBMIamTrustedProfilesValidator
-}
-
-func dataSourceIBMIamTrustedProfileListRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceIBMIamTrustedProfilesRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	iamIdentityClient, err := meta.(conns.ClientSession).IAMIdentityV1API()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_iam_trusted_profiles", "read", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
-	userDetails, err := meta.(conns.ClientSession).BluemixUserDetails()
+	listProfilesOptions := &iamidentityv1.ListProfilesOptions{}
+
+	listProfilesOptions.SetAccountID(d.Get("account_id").(string))
+	if _, ok := d.GetOk("name"); ok {
+		listProfilesOptions.SetName(d.Get("name").(string))
+	}
+	if _, ok := d.GetOk("include_history"); ok {
+		listProfilesOptions.SetIncludeHistory(d.Get("include_history").(bool))
+	}
+
+	trustedProfilesList, _, err := iamIdentityClient.ListProfilesWithContext(context, listProfilesOptions)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ListProfilesWithContext failed: %s", err.Error()), "(Data) ibm_iam_trusted_profiles", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
-	start := ""
-	allrecs := []iamidentityv1.TrustedProfile{}
-	accountID := userDetails.UserAccount
-	for {
-		listProfileOptions := &iamidentityv1.ListProfilesOptions{}
+	d.SetId(dataSourceIBMIamTrustedProfilesID(d))
 
-		if v, ok := d.GetOk("account_id"); ok {
-			listProfileOptions.SetAccountID(v.(string))
-		} else {
-			listProfileOptions.SetAccountID(accountID)
-		}
-
-		if v, ok := d.GetOk("name"); ok {
-			listProfileOptions.SetName(v.(string))
-		}
-
-		if v, ok := d.GetOk("include_history"); ok {
-			listProfileOptions.SetIncludeHistory(v.(bool))
-		}
-
-		listProfileOptions.SetPagesize(int64(100))
-
-		if start != "" {
-			listProfileOptions.Pagetoken = &start
-		}
-
-		trustedProfiles, response, err := iamIdentityClient.ListProfiles(listProfileOptions)
+	profiles := []map[string]interface{}{}
+	for _, profilesItem := range trustedProfilesList.Profiles {
+		profilesItemMap, err := DataSourceIBMIamTrustedProfilesTrustedProfileToMap(&profilesItem) // #nosec G601
 		if err != nil {
-			log.Printf("[DEBUG] ListProfile failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("ListProfile failed %s\n%s", err, response))
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_iam_trusted_profiles", "read", "profiles-to-map").GetDiag()
 		}
-		start = flex.GetNextIAM(trustedProfiles.Next)
-		allrecs = append(allrecs, trustedProfiles.Profiles...)
-		if start == "" {
-			break
-		}
+		profiles = append(profiles, profilesItemMap)
 	}
-
-	d.SetId(dataSourceIBMIamTrustedProfileListID(d))
-
-	d.Set("profiles", dataSourceTrustedProfilesListFlattenProfiles(allrecs))
+	if err = d.Set("profiles", profiles); err != nil {
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting profiles: %s", err), "(Data) ibm_iam_trusted_profiles", "read", "set-profiles").GetDiag()
+	}
 
 	return nil
 }
 
-// dataSourceIBMIamTrustedProfileListID returns a reasonable ID for the list.
-func dataSourceIBMIamTrustedProfileListID(d *schema.ResourceData) string {
+// dataSourceIBMIamTrustedProfilesID returns a reasonable ID for the list.
+func dataSourceIBMIamTrustedProfilesID(d *schema.ResourceData) string {
 	return time.Now().UTC().String()
 }
 
-func dataSourceTrustedProfilesListFlattenProfiles(result []iamidentityv1.TrustedProfile) (profiles []map[string]interface{}) {
-	for _, profilesItem := range result {
-		profiles = append(profiles, dataSourceTrustedProfilesListProfilesToMap(profilesItem))
+func DataSourceIBMIamTrustedProfilesTrustedProfileToMap(model *iamidentityv1.TrustedProfile) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["id"] = *model.ID
+	modelMap["entity_tag"] = *model.EntityTag
+	modelMap["crn"] = *model.CRN
+	modelMap["name"] = *model.Name
+	if model.Description != nil {
+		modelMap["description"] = *model.Description
 	}
-
-	return profiles
-}
-
-func dataSourceTrustedProfilesListProfilesToMap(profilesItem iamidentityv1.TrustedProfile) (profilesMap map[string]interface{}) {
-	profilesMap = map[string]interface{}{}
-
-	if profilesItem.ID != nil {
-		profilesMap["id"] = profilesItem.ID
+	if model.CreatedAt != nil {
+		modelMap["created_at"] = model.CreatedAt.String()
 	}
-	if profilesItem.EntityTag != nil {
-		profilesMap["entity_tag"] = profilesItem.EntityTag
+	if model.ModifiedAt != nil {
+		modelMap["modified_at"] = model.ModifiedAt.String()
 	}
-	if profilesItem.CRN != nil {
-		profilesMap["crn"] = profilesItem.CRN
+	modelMap["iam_id"] = *model.IamID
+	modelMap["account_id"] = *model.AccountID
+	if model.TemplateID != nil {
+		modelMap["template_id"] = *model.TemplateID
 	}
-	if profilesItem.Name != nil {
-		profilesMap["name"] = profilesItem.Name
+	if model.AssignmentID != nil {
+		modelMap["assignment_id"] = *model.AssignmentID
 	}
-	if profilesItem.Description != nil {
-		profilesMap["description"] = profilesItem.Description
+	if model.ImsAccountID != nil {
+		modelMap["ims_account_id"] = flex.IntValue(model.ImsAccountID)
 	}
-	if profilesItem.CreatedAt != nil {
-		profilesMap["created_at"] = profilesItem.CreatedAt.String()
+	if model.ImsUserID != nil {
+		modelMap["ims_user_id"] = flex.IntValue(model.ImsUserID)
 	}
-	if profilesItem.ModifiedAt != nil {
-		profilesMap["modified_at"] = profilesItem.ModifiedAt.String()
-	}
-	if profilesItem.IamID != nil {
-		profilesMap["iam_id"] = profilesItem.IamID
-	}
-	if profilesItem.AccountID != nil {
-		profilesMap["account_id"] = profilesItem.AccountID
-	}
-	if profilesItem.ImsAccountID != nil {
-		profilesMap["ims_account_id"] = profilesItem.ImsAccountID
-	}
-	if profilesItem.ImsUserID != nil {
-		profilesMap["ims_user_id"] = profilesItem.ImsUserID
-	}
-	if profilesItem.History != nil {
-		historyList := []map[string]interface{}{}
-		for _, historyItem := range profilesItem.History {
-			historyList = append(historyList, dataSourceTrustedProfilesListProfilesHistoryToMap(historyItem))
+	if model.History != nil {
+		history := []map[string]interface{}{}
+		for _, historyItem := range model.History {
+			historyItemMap, err := DataSourceIBMIamTrustedProfilesEnityHistoryRecordToMap(&historyItem) // #nosec G601
+			if err != nil {
+				return modelMap, err
+			}
+			history = append(history, historyItemMap)
 		}
-		profilesMap["history"] = historyList
+		modelMap["history"] = history
 	}
-
-	return profilesMap
+	return modelMap, nil
 }
 
-func dataSourceTrustedProfilesListProfilesHistoryToMap(historyItem iamidentityv1.EnityHistoryRecord) (historyMap map[string]interface{}) {
-	historyMap = map[string]interface{}{}
-
-	if historyItem.Timestamp != nil {
-		historyMap["timestamp"] = historyItem.Timestamp
-	}
-	if historyItem.IamID != nil {
-		historyMap["iam_id"] = historyItem.IamID
-	}
-	if historyItem.IamIDAccount != nil {
-		historyMap["iam_id_account"] = historyItem.IamIDAccount
-	}
-	if historyItem.Action != nil {
-		historyMap["action"] = historyItem.Action
-	}
-	if historyItem.Params != nil {
-		historyMap["params"] = historyItem.Params
-	}
-	if historyItem.Message != nil {
-		historyMap["message"] = historyItem.Message
-	}
-
-	return historyMap
+func DataSourceIBMIamTrustedProfilesEnityHistoryRecordToMap(model *iamidentityv1.EnityHistoryRecord) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["timestamp"] = *model.Timestamp
+	modelMap["iam_id"] = *model.IamID
+	modelMap["iam_id_account"] = *model.IamIDAccount
+	modelMap["action"] = *model.Action
+	modelMap["params"] = model.Params
+	modelMap["message"] = *model.Message
+	return modelMap, nil
 }

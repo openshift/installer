@@ -58,7 +58,7 @@ func ResourceIbmSmPublicCertificate() *schema.Resource {
 				ForceNew:    true,
 				Optional:    true,
 				Computed:    true,
-				Description: "A v4 UUID identifier, or `default` secret group.",
+				Description: "A UUID identifier, or `default` secret group.",
 			},
 			"labels": &schema.Schema{
 				Type:        schema.TypeList,
@@ -70,7 +70,8 @@ func ResourceIbmSmPublicCertificate() *schema.Resource {
 			"common_name": &schema.Schema{
 				Type:        schema.TypeString,
 				ForceNew:    true,
-				Required:    true,
+				Optional:    true,
+				Computed:    true,
 				Description: "The Common Name (AKA CN) represents the server name that is protected by the SSL certificate.",
 			},
 			"alt_names": &schema.Schema{
@@ -237,7 +238,7 @@ func ResourceIbmSmPublicCertificate() *schema.Resource {
 			"secret_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "A v4 UUID identifier.",
+				Description: "A UUID identifier.",
 			},
 			"locks_total": &schema.Schema{
 				Type:        schema.TypeInt,

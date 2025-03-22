@@ -5,9 +5,11 @@ package power
 
 import (
 	"context"
+	"log"
 
 	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -37,6 +39,11 @@ func DataSourceIBMPIImage() *schema.Resource {
 				Description: "The CPU architecture that the image is designed for. ",
 				Type:        schema.TypeString,
 			},
+			Attr_CRN: {
+				Computed:    true,
+				Description: "The CRN of this resource.",
+				Type:        schema.TypeString,
+			},
 			Attr_Hypervisor: {
 				Computed:    true,
 				Description: "Hypervision Type.",
@@ -47,7 +54,6 @@ func DataSourceIBMPIImage() *schema.Resource {
 				Description: "The identifier of this image type.",
 				Type:        schema.TypeString,
 			},
-			// TODO: Relabel this one "operating_system" to match catalog images
 			Attr_OperatingSystem: {
 				Computed:    true,
 				Description: "The operating system that is installed with the image.",
@@ -57,6 +63,11 @@ func DataSourceIBMPIImage() *schema.Resource {
 				Computed:    true,
 				Description: "The size of the image in megabytes.",
 				Type:        schema.TypeInt,
+			},
+			Attr_SourceChecksum: {
+				Computed:    true,
+				Description: "Checksum of the image.",
+				Type:        schema.TypeString,
 			},
 			Attr_State: {
 				Computed:    true,
@@ -72,6 +83,13 @@ func DataSourceIBMPIImage() *schema.Resource {
 				Computed:    true,
 				Description: "The storage type for this image.",
 				Type:        schema.TypeString,
+			},
+			Attr_UserTags: {
+				Computed:    true,
+				Description: "List of user tags attached to the resource.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         schema.HashString,
+				Type:        schema.TypeSet,
 			},
 		},
 	}
@@ -93,10 +111,19 @@ func dataSourceIBMPIImagesRead(ctx context.Context, d *schema.ResourceData, meta
 
 	d.SetId(*imagedata.ImageID)
 	d.Set(Attr_Architecture, imagedata.Specifications.Architecture)
+	if imagedata.Crn != "" {
+		d.Set(Attr_CRN, imagedata.Crn)
+		tags, err := flex.GetTagsUsingCRN(meta, string(imagedata.Crn))
+		if err != nil {
+			log.Printf("Error on get of pi image (%s) user_tags: %s", *imagedata.ImageID, err)
+		}
+		d.Set(Attr_UserTags, tags)
+	}
 	d.Set(Attr_Hypervisor, imagedata.Specifications.HypervisorType)
 	d.Set(Attr_ImageType, imagedata.Specifications.ImageType)
 	d.Set(Attr_OperatingSystem, imagedata.Specifications.OperatingSystem)
 	d.Set(Attr_Size, imagedata.Size)
+	d.Set(Attr_SourceChecksum, imagedata.Specifications.SourceChecksum)
 	d.Set(Attr_State, imagedata.State)
 	d.Set(Attr_StoragePool, imagedata.StoragePool)
 	d.Set(Attr_StorageType, imagedata.StorageType)

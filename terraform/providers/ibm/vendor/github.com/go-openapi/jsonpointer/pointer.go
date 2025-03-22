@@ -110,16 +110,36 @@ func SetForToken(document any, decodedToken string, value any) (any, error) {
 	return document, setSingleImpl(document, value, decodedToken, swag.DefaultJSONNameProvider)
 }
 
+func isNil(input any) bool {
+	if input == nil {
+		return true
+	}
+
+	kind := reflect.TypeOf(input).Kind()
+	switch kind { //nolint:exhaustive
+	case reflect.Ptr, reflect.Map, reflect.Slice, reflect.Chan:
+		return reflect.ValueOf(input).IsNil()
+	default:
+		return false
+	}
+}
+
 func getSingleImpl(node any, decodedToken string, nameProvider *swag.NameProvider) (any, reflect.Kind, error) {
 	rValue := reflect.Indirect(reflect.ValueOf(node))
 	kind := rValue.Kind()
+	if isNil(node) {
+		return nil, kind, fmt.Errorf("nil value has not field %q", decodedToken)
+	}
 
-	if rValue.Type().Implements(jsonPointableType) {
-		r, err := node.(JSONPointable).JSONLookup(decodedToken)
+	switch typed := node.(type) {
+	case JSONPointable:
+		r, err := typed.JSONLookup(decodedToken)
 		if err != nil {
 			return nil, kind, err
 		}
 		return r, kind, nil
+	case *any: // case of a pointer to interface, that is not resolved by reflect.Indirect
+		return getSingleImpl(*typed, decodedToken, nameProvider)
 	}
 
 	switch kind { //nolint:exhaustive
@@ -244,7 +264,7 @@ func (p *Pointer) set(node, data any, nameProvider *swag.NameProvider) error {
 	knd := reflect.ValueOf(node).Kind()
 
 	if knd != reflect.Ptr && knd != reflect.Struct && knd != reflect.Map && knd != reflect.Slice && knd != reflect.Array {
-		return fmt.Errorf("only structs, pointers, maps and slices are supported for setting values")
+		return errors.New("only structs, pointers, maps and slices are supported for setting values")
 	}
 
 	if nameProvider == nil {

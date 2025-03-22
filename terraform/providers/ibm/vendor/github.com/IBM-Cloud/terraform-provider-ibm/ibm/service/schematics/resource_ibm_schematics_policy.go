@@ -290,7 +290,9 @@ func ResourceIbmSchematicsPolicyValidator() *validate.ResourceValidator {
 func resourceIbmSchematicsPolicyCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyCreate schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_policy", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	createPolicyOptions := &schematicsv1.CreatePolicyOptions{}
@@ -313,7 +315,9 @@ func resourceIbmSchematicsPolicyCreate(context context.Context, d *schema.Resour
 	if _, ok := d.GetOk("state"); ok {
 		stateModel, err := resourceIbmSchematicsPolicyMapToUserState(d.Get("state.0").(map[string]interface{}))
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyCreate failed: %s", err.Error()), "ibm_schematics_policy", "create")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		createPolicyOptions.SetState(stateModel)
 	}
@@ -323,14 +327,18 @@ func resourceIbmSchematicsPolicyCreate(context context.Context, d *schema.Resour
 	if _, ok := d.GetOk("target"); ok {
 		targetModel, err := resourceIbmSchematicsPolicyMapToPolicyObjects(d.Get("target.0").(map[string]interface{}))
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyCreate failed: %s", err.Error()), "ibm_schematics_policy", "create")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		createPolicyOptions.SetTarget(targetModel)
 	}
 	if _, ok := d.GetOk("parameter"); ok {
 		parameterModel, err := resourceIbmSchematicsPolicyMapToPolicyParameter(d.Get("parameter.0").(map[string]interface{}))
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyCreate failed: %s", err.Error()), "ibm_schematics_policy", "create")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		createPolicyOptions.SetParameter(parameterModel)
 	}
@@ -340,7 +348,9 @@ func resourceIbmSchematicsPolicyCreate(context context.Context, d *schema.Resour
 			value := e.(map[string]interface{})
 			scopedResourcesItem, err := resourceIbmSchematicsPolicyMapToScopedResource(value)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyCreate failed: %s", err.Error()), "ibm_schematics_policy", "create")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			scopedResources = append(scopedResources, *scopedResourcesItem)
 		}
@@ -349,8 +359,10 @@ func resourceIbmSchematicsPolicyCreate(context context.Context, d *schema.Resour
 
 	policy, response, err := schematicsClient.CreatePolicyWithContext(context, createPolicyOptions)
 	if err != nil {
-		log.Printf("[DEBUG] CreatePolicyWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreatePolicyWithContext failed %s\n%s", err, response))
+
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyCreate CreatePolicyWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_policy", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(*policy.ID)
@@ -361,7 +373,9 @@ func resourceIbmSchematicsPolicyCreate(context context.Context, d *schema.Resour
 func resourceIbmSchematicsPolicyRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyRead schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_policy", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getPolicyOptions := &schematicsv1.GetPolicyOptions{}
@@ -374,55 +388,81 @@ func resourceIbmSchematicsPolicyRead(context context.Context, d *schema.Resource
 			d.SetId("")
 			return nil
 		}
-		log.Printf("[DEBUG] GetPolicyWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetPolicyWithContext failed %s\n%s", err, response))
+
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyRead GetPolicyWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_policy", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("name", policy.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyRead failed with error: %s", err), "ibm_schematics_policy", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("description", policy.Description); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting description: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyRead failed with error: %s", err), "ibm_schematics_policy", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("resource_group", policy.ResourceGroup); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting resource_group: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyRead failed with error: %s", err), "ibm_schematics_policy", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if policy.Tags != nil {
 		if err = d.Set("tags", policy.Tags); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting tags: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyRead failed with error: %s", err), "ibm_schematics_policy", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("location", policy.Location); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting location: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyRead failed with error: %s", err), "ibm_schematics_policy", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if policy.State != nil {
 		stateMap, err := resourceIbmSchematicsPolicyUserStateToMap(policy.State)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyRead failed: %s", err.Error()), "ibm_schematics_policy", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("state", []map[string]interface{}{stateMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting state: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyRead failed with error: %s", err), "ibm_schematics_policy", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("kind", policy.Kind); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting kind: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyRead failed with error: %s", err), "ibm_schematics_policy", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if policy.Target != nil {
 		targetMap, err := resourceIbmSchematicsPolicyPolicyObjectsToMap(policy.Target)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyRead failed: %s", err.Error()), "ibm_schematics_policy", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("target", []map[string]interface{}{targetMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting target: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyRead failed with error: %s", err), "ibm_schematics_policy", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if policy.Parameter != nil {
 		parameterMap, err := resourceIbmSchematicsPolicyPolicyParameterToMap(policy.Parameter)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyRead failed: %s", err.Error()), "ibm_schematics_policy", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("parameter", []map[string]interface{}{parameterMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting parameter: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyRead failed with error: %s", err), "ibm_schematics_policy", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	scopedResources := []map[string]interface{}{}
@@ -430,28 +470,42 @@ func resourceIbmSchematicsPolicyRead(context context.Context, d *schema.Resource
 		for _, scopedResourcesItem := range policy.ScopedResources {
 			scopedResourcesItemMap, err := resourceIbmSchematicsPolicyScopedResourceToMap(&scopedResourcesItem)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyRead failed: %s", err.Error()), "ibm_schematics_policy", "read")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			scopedResources = append(scopedResources, scopedResourcesItemMap)
 		}
 	}
 	if err = d.Set("scoped_resources", scopedResources); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting scoped_resources: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyRead failed with error: %s", err), "ibm_schematics_policy", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("crn", policy.Crn); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyRead failed with error: %s", err), "ibm_schematics_policy", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("account", policy.Account); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting account: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyRead failed with error: %s", err), "ibm_schematics_policy", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("created_at", flex.DateTimeToString(policy.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyRead failed with error: %s", err), "ibm_schematics_policy", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("created_by", policy.CreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyRead failed with error: %s", err), "ibm_schematics_policy", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("updated_at", flex.DateTimeToString(policy.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyRead failed with error: %s", err), "ibm_schematics_policy", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	return nil
@@ -460,7 +514,9 @@ func resourceIbmSchematicsPolicyRead(context context.Context, d *schema.Resource
 func resourceIbmSchematicsPolicyUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyUpdate schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_policy", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	updatePolicyOptions := &schematicsv1.UpdatePolicyOptions{}
@@ -488,7 +544,9 @@ func resourceIbmSchematicsPolicyUpdate(context context.Context, d *schema.Resour
 	if d.HasChange("state") {
 		state, err := resourceIbmSchematicsPolicyMapToUserState(d.Get("state.0").(map[string]interface{}))
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyUpdate failed: %s", err.Error()), "ibm_schematics_policy", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		updatePolicyOptions.SetState(state)
 		hasChange = true
@@ -500,7 +558,9 @@ func resourceIbmSchematicsPolicyUpdate(context context.Context, d *schema.Resour
 	if d.HasChange("target") {
 		target, err := resourceIbmSchematicsPolicyMapToPolicyObjects(d.Get("target.0").(map[string]interface{}))
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyUpdate failed: %s", err.Error()), "ibm_schematics_policy", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		updatePolicyOptions.SetTarget(target)
 		hasChange = true
@@ -508,7 +568,9 @@ func resourceIbmSchematicsPolicyUpdate(context context.Context, d *schema.Resour
 	if d.HasChange("parameter") {
 		parameter, err := resourceIbmSchematicsPolicyMapToPolicyParameter(d.Get("parameter.0").(map[string]interface{}))
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyUpdate failed: %s", err.Error()), "ibm_schematics_policy", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		updatePolicyOptions.SetParameter(parameter)
 		hasChange = true
@@ -521,8 +583,10 @@ func resourceIbmSchematicsPolicyUpdate(context context.Context, d *schema.Resour
 	if hasChange {
 		_, response, err := schematicsClient.UpdatePolicyWithContext(context, updatePolicyOptions)
 		if err != nil {
-			log.Printf("[DEBUG] UpdatePolicyWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("UpdatePolicyWithContext failed %s\n%s", err, response))
+
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyUpdate UpdatePolicyWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_policy", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -532,7 +596,9 @@ func resourceIbmSchematicsPolicyUpdate(context context.Context, d *schema.Resour
 func resourceIbmSchematicsPolicyDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyDelete schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_policy", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	deletePolicyOptions := &schematicsv1.DeletePolicyOptions{}
@@ -541,8 +607,10 @@ func resourceIbmSchematicsPolicyDelete(context context.Context, d *schema.Resour
 
 	response, err := schematicsClient.DeletePolicyWithContext(context, deletePolicyOptions)
 	if err != nil {
-		log.Printf("[DEBUG] DeletePolicyWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeletePolicyWithContext failed %s\n%s", err, response))
+
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsPolicyDelete DeletePolicyWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_policy", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")

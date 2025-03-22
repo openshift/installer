@@ -31,6 +31,62 @@ func DataSourceIBMISLBPool() *schema.Resource {
 				ExactlyOneOf: []string{"name", "identifier"},
 				Description:  "The pool identifier.",
 			},
+			"failsafe_policy": &schema.Schema{
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"action": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A load balancer failsafe policy action:- `forward`: Forwards requests to the `target` pool.- `fail`: Rejects requests with an HTTP `503` status code.The enumerated values for this property may[expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.",
+						},
+						"healthy_member_threshold_count": &schema.Schema{
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The healthy member count at which the failsafe policy action will be triggered. At present, this is always `0`, but may be modifiable in the future.",
+						},
+						"target": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "If `action` is `forward`, the target pool to forward to.If `action` is `fail`, this property will be absent.The targets supported by this property may[expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"deleted": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "If present, this property indicates the referenced resource has been deleted, and providessome supplementary information.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"more_info": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Link to documentation about deleted resources.",
+												},
+											},
+										},
+									},
+									"href": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The URL for this load balancer pool.",
+									},
+									"id": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The unique identifier for this load balancer pool.",
+									},
+									"name": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The name for this load balancer pool. The name is unique across all pools for the load balancer.",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 			"name": {
 				Type:         schema.TypeString,
 				Computed:     true,
@@ -256,12 +312,24 @@ func dataSourceIBMIsLbPoolRead(context context.Context, d *schema.ResourceData, 
 	if err = d.Set("algorithm", loadBalancerPool.Algorithm); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting algorithm: %s", err))
 	}
+	failsafePolicy := []map[string]interface{}{}
+	if loadBalancerPool.FailsafePolicy != nil {
+		modelMap, err := dataSourceIBMIsLbPoolLoadBalancerPoolFailsafePolicyToMap(loadBalancerPool.FailsafePolicy)
+		if err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_is_lb_pool", "read", "failsafe_policy-to-map").GetDiag()
+		}
+		failsafePolicy = append(failsafePolicy, modelMap)
+	}
+	if err = d.Set("failsafe_policy", failsafePolicy); err != nil {
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting failsafe_policy: %s", err), "(Data) ibm_is_lb_pool", "read", "set-failsafe_policy").GetDiag()
+	}
 	if err = d.Set("created_at", flex.DateTimeToString(loadBalancerPool.CreatedAt)); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
 	}
 
 	if loadBalancerPool.HealthMonitor != nil {
-		err = d.Set("health_monitor", dataSourceLoadBalancerPoolFlattenHealthMonitor(*loadBalancerPool.HealthMonitor))
+		poolHealthMonitor := loadBalancerPool.HealthMonitor.(*vpcv1.LoadBalancerPoolHealthMonitor)
+		err = d.Set("health_monitor", dataSourceLoadBalancerPoolFlattenHealthMonitor(*poolHealthMonitor))
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("Error setting health_monitor %s", err))
 		}
@@ -443,4 +511,39 @@ func dataSourceLoadBalancerPoolSessionPersistenceToMap(sessionPersistenceItem vp
 	}
 
 	return sessionPersistenceMap
+}
+
+func dataSourceIBMIsLbPoolLoadBalancerPoolFailsafePolicyToMap(model *vpcv1.LoadBalancerPoolFailsafePolicy) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["action"] = *model.Action
+	modelMap["healthy_member_threshold_count"] = flex.IntValue(model.HealthyMemberThresholdCount)
+	if model.Target != nil {
+		targetMap, err := dataSourceIBMIsLbPoolLoadBalancerPoolReferenceToMap(model.Target)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["target"] = []map[string]interface{}{targetMap}
+	}
+	return modelMap, nil
+}
+
+func dataSourceIBMIsLbPoolLoadBalancerPoolReferenceToMap(model *vpcv1.LoadBalancerPoolReference) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.Deleted != nil {
+		deletedMap, err := dataSourceIBMIsLbPoolDeletedToMap(model.Deleted)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["deleted"] = []map[string]interface{}{deletedMap}
+	}
+	modelMap["href"] = *model.Href
+	modelMap["id"] = *model.ID
+	modelMap["name"] = *model.Name
+	return modelMap, nil
+}
+
+func dataSourceIBMIsLbPoolDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["more_info"] = *model.MoreInfo
+	return modelMap, nil
 }

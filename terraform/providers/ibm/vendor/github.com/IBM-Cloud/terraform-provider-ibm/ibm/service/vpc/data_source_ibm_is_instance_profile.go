@@ -6,6 +6,7 @@ package vpc
 import (
 	"fmt"
 
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -27,6 +28,72 @@ func DataSourceIBMISInstanceProfile() *schema.Resource {
 			isInstanceProfileName: {
 				Type:     schema.TypeString,
 				Required: true,
+			},
+
+			// cluster changes
+			"cluster_network_attachment_count": &schema.Schema{
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"type": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The type for this profile field.",
+						},
+						"default": &schema.Schema{
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"values": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The permitted values for this profile field.",
+							Elem: &schema.Schema{
+								Type: schema.TypeInt,
+							},
+						},
+						"max": &schema.Schema{
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The maximum value for this profile field.",
+						},
+						"min": &schema.Schema{
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The minimum value for this profile field.",
+						},
+						"step": &schema.Schema{
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+					},
+				},
+			},
+
+			"supported_cluster_network_profiles": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The cluster network profiles that support this instance profile.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"href": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The URL for this cluster network profile.",
+						},
+						"name": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The globally unique name for this cluster network profile.",
+						},
+						"resource_type": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The resource type.",
+						},
+					},
+				},
 			},
 
 			"confidential_compute_modes": &schema.Schema{
@@ -633,11 +700,6 @@ func DataSourceIBMISInstanceProfile() *schema.Resource {
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"default": {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "The default VCPU architecture for an instance with this profile.",
-						},
 						"type": {
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -656,11 +718,6 @@ func DataSourceIBMISInstanceProfile() *schema.Resource {
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"default": &schema.Schema{
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "The default VCPU manufacturer for an instance with this profile.",
-						},
 						"type": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -764,6 +821,29 @@ func instanceProfileGet(d *schema.ResourceData, meta interface{}, name string) e
 	}
 	if profile.Status != nil {
 		d.Set("status", profile.Status)
+	}
+
+	// cluster changes
+	clusterNetworkAttachmentCount := []map[string]interface{}{}
+	clusterNetworkAttachmentCountMap, err := DataSourceIBMIsInstanceProfileInstanceProfileClusterNetworkAttachmentCountToMap(profile.ClusterNetworkAttachmentCount)
+	if err != nil {
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_is_instance_profile", "read", "cluster_network_attachment_count-to-map")
+	}
+	clusterNetworkAttachmentCount = append(clusterNetworkAttachmentCount, clusterNetworkAttachmentCountMap)
+	if err = d.Set("cluster_network_attachment_count", clusterNetworkAttachmentCount); err != nil {
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting cluster_network_attachment_count: %s", err), "(Data) ibm_is_instance_profile", "read", "set-cluster_network_attachment_count")
+	}
+
+	supportedClusterNetworkProfiles := []map[string]interface{}{}
+	for _, supportedClusterNetworkProfilesItem := range profile.SupportedClusterNetworkProfiles {
+		supportedClusterNetworkProfilesItemMap, err := DataSourceIBMIsInstanceProfileClusterNetworkProfileReferenceToMap(&supportedClusterNetworkProfilesItem) // #nosec G601
+		if err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_is_instance_profile", "read", "supported_cluster_network_profiles-to-map")
+		}
+		supportedClusterNetworkProfiles = append(supportedClusterNetworkProfiles, supportedClusterNetworkProfilesItemMap)
+	}
+	if err = d.Set("supported_cluster_network_profiles", supportedClusterNetworkProfiles); err != nil {
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting supported_cluster_network_profiles: %s", err), "(Data) ibm_is_instance_profile", "read", "set-supported_cluster_network_profiles")
 	}
 
 	confidentialComputeModes := []map[string]interface{}{}
@@ -1181,9 +1261,6 @@ func dataSourceInstanceProfileFlattenVcpuArchitecture(result vpcv1.InstanceProfi
 func dataSourceInstanceProfileVcpuArchitectureToMap(vcpuArchitectureItem vpcv1.InstanceProfileVcpuArchitecture) (vcpuArchitectureMap map[string]interface{}) {
 	vcpuArchitectureMap = map[string]interface{}{}
 
-	if vcpuArchitectureItem.Default != nil {
-		vcpuArchitectureMap["default"] = vcpuArchitectureItem.Default
-	}
 	if vcpuArchitectureItem.Type != nil {
 		vcpuArchitectureMap["type"] = vcpuArchitectureItem.Type
 	}
@@ -1206,9 +1283,6 @@ func dataSourceInstanceProfileFlattenVcpuManufacture(result vpcv1.InstanceProfil
 func dataSourceInstanceProfileVcpuManufacturerToMap(vcpuManufacutererItem vpcv1.InstanceProfileVcpuManufacturer) (vcpuManufacturerMap map[string]interface{}) {
 	vcpuManufacturerMap = map[string]interface{}{}
 
-	if vcpuManufacutererItem.Default != nil {
-		vcpuManufacturerMap["default"] = vcpuManufacutererItem.Default
-	}
 	if vcpuManufacutererItem.Type != nil {
 		vcpuManufacturerMap["type"] = vcpuManufacutererItem.Type
 	}
@@ -1430,5 +1504,78 @@ func dataSourceIBMIsInstanceProfileInstanceProfileSupportedConfidentialComputeMo
 	modelMap["default"] = model.Default
 	modelMap["type"] = model.Type
 	modelMap["values"] = model.Values
+	return modelMap, nil
+}
+
+func DataSourceIBMIsInstanceProfileInstanceProfileClusterNetworkAttachmentCountToMap(model vpcv1.InstanceProfileClusterNetworkAttachmentCountIntf) (map[string]interface{}, error) {
+	if _, ok := model.(*vpcv1.InstanceProfileClusterNetworkAttachmentCountDependent); ok {
+		return DataSourceIBMIsInstanceProfileInstanceProfileClusterNetworkAttachmentCountDependentToMap(model.(*vpcv1.InstanceProfileClusterNetworkAttachmentCountDependent))
+	} else if _, ok := model.(*vpcv1.InstanceProfileClusterNetworkAttachmentCountEnum); ok {
+		return DataSourceIBMIsInstanceProfileInstanceProfileClusterNetworkAttachmentCountEnumToMap(model.(*vpcv1.InstanceProfileClusterNetworkAttachmentCountEnum))
+	} else if _, ok := model.(*vpcv1.InstanceProfileClusterNetworkAttachmentCountRange); ok {
+		return DataSourceIBMIsInstanceProfileInstanceProfileClusterNetworkAttachmentCountRangeToMap(model.(*vpcv1.InstanceProfileClusterNetworkAttachmentCountRange))
+	} else if _, ok := model.(*vpcv1.InstanceProfileClusterNetworkAttachmentCount); ok {
+		modelMap := make(map[string]interface{})
+		model := model.(*vpcv1.InstanceProfileClusterNetworkAttachmentCount)
+		if model.Type != nil {
+			modelMap["type"] = *model.Type
+		}
+		if model.Default != nil {
+			modelMap["default"] = flex.IntValue(model.Default)
+		}
+		if model.Values != nil {
+			modelMap["values"] = model.Values
+		}
+		if model.Max != nil {
+			modelMap["max"] = flex.IntValue(model.Max)
+		}
+		if model.Min != nil {
+			modelMap["min"] = flex.IntValue(model.Min)
+		}
+		if model.Step != nil {
+			modelMap["step"] = flex.IntValue(model.Step)
+		}
+		return modelMap, nil
+	} else {
+		return nil, fmt.Errorf("Unrecognized vpcv1.InstanceProfileClusterNetworkAttachmentCountIntf subtype encountered")
+	}
+}
+
+func DataSourceIBMIsInstanceProfileInstanceProfileClusterNetworkAttachmentCountDependentToMap(model *vpcv1.InstanceProfileClusterNetworkAttachmentCountDependent) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["type"] = *model.Type
+	return modelMap, nil
+}
+
+func DataSourceIBMIsInstanceProfileInstanceProfileClusterNetworkAttachmentCountEnumToMap(model *vpcv1.InstanceProfileClusterNetworkAttachmentCountEnum) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.Default != nil {
+		modelMap["default"] = flex.IntValue(model.Default)
+	}
+	modelMap["type"] = *model.Type
+	modelMap["values"] = model.Values
+	return modelMap, nil
+}
+
+func DataSourceIBMIsInstanceProfileInstanceProfileClusterNetworkAttachmentCountRangeToMap(model *vpcv1.InstanceProfileClusterNetworkAttachmentCountRange) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.Max != nil {
+		modelMap["max"] = flex.IntValue(model.Max)
+	}
+	if model.Min != nil {
+		modelMap["min"] = flex.IntValue(model.Min)
+	}
+	if model.Step != nil {
+		modelMap["step"] = flex.IntValue(model.Step)
+	}
+	modelMap["type"] = *model.Type
+	return modelMap, nil
+}
+
+func DataSourceIBMIsInstanceProfileClusterNetworkProfileReferenceToMap(model *vpcv1.ClusterNetworkProfileReference) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["href"] = *model.Href
+	modelMap["name"] = *model.Name
+	modelMap["resource_type"] = *model.ResourceType
 	return modelMap, nil
 }

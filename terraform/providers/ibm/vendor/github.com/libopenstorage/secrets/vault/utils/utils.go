@@ -3,18 +3,14 @@ package utils
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"os"
-	"path"
 	"strconv"
 	"strings"
 
-	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/vault/api"
 	"github.com/hashicorp/vault/api/auth/approle"
-	"github.com/hashicorp/vault/command/agent/auth"
-	"github.com/hashicorp/vault/command/agent/auth/kubernetes"
+	"github.com/hashicorp/vault/api/auth/kubernetes"
 )
 
 const (
@@ -53,6 +49,7 @@ var (
 
 	ErrAuthMethodUnknown = errors.New("unknown auth method")
 	ErrKubernetesRole    = errors.New(AuthKubernetesRole + " not set")
+	ErrInCooldown        = errors.New("vault client is in cooldown")
 )
 
 // IsValidAddr checks address has the correct format.
@@ -141,12 +138,7 @@ func GetAuthToken(client *api.Client, config map[string]interface{}) (string, er
 	var err error
 	switch method {
 	case AuthMethodKubernetes:
-		path, _, data, err := authenticate(client, config)
-		if err != nil {
-			return "", err
-		}
-		secret, err = client.Logical().Write(path, data)
-
+		secret, err = authKubernetes(client, config)
 	case AuthMethodAppRole:
 		secret, err = authAppRole(client, config)
 	default:
@@ -166,26 +158,31 @@ func GetAuthToken(client *api.Client, config map[string]interface{}) (string, er
 	return secret.Auth.ClientToken, nil
 }
 
-func authenticate(client *api.Client, config map[string]interface{}) (string, http.Header, map[string]interface{}, error) {
-	method := GetVaultParam(config, AuthMethod)
-	switch method {
-	case AuthMethodKubernetes:
-		return authKubernetes(client, config)
-	}
-	return "", nil, nil, fmt.Errorf("%s method: %s", method, ErrAuthMethodUnknown)
-}
-
-func authKubernetes(client *api.Client, config map[string]interface{}) (string, http.Header, map[string]interface{}, error) {
-	authConfig, err := buildAuthConfig(config)
-	if err != nil {
-		return "", nil, nil, err
-	}
-	method, err := kubernetes.NewKubernetesAuthMethod(authConfig)
-	if err != nil {
-		return "", nil, nil, err
+func authKubernetes(client *api.Client, config map[string]interface{}) (*api.Secret, error) {
+	role := GetVaultParam(config, AuthKubernetesRole)
+	if role == "" {
+		return nil, ErrKubernetesRole
 	}
 
-	return method.Authenticate(context.TODO(), client)
+	loginOpts := []kubernetes.LoginOption{}
+
+	mountPath := GetVaultParam(config, AuthMountPath)
+	if mountPath == "" {
+		mountPath = AuthKubernetesMountPath
+	}
+	loginOpts = append(loginOpts, kubernetes.WithMountPath(mountPath))
+
+	tokenPath := GetVaultParam(config, AuthKubernetesTokenPath)
+	if tokenPath != "" {
+		loginOpts = append(loginOpts, kubernetes.WithServiceAccountTokenPath(tokenPath))
+	}
+
+	kAuth, err := kubernetes.NewKubernetesAuth(role, loginOpts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return kAuth.Login(context.TODO(), client)
 }
 
 func authAppRole(client *api.Client, config map[string]interface{}) (*api.Secret, error) {
@@ -206,26 +203,4 @@ func authAppRole(client *api.Client, config map[string]interface{}) (*api.Secret
 	}
 
 	return client.Auth().Login(context.TODO(), appRoleAuth)
-}
-
-func buildAuthConfig(config map[string]interface{}) (*auth.AuthConfig, error) {
-	role := GetVaultParam(config, AuthKubernetesRole)
-	if role == "" {
-		return nil, ErrKubernetesRole
-	}
-	mountPath := GetVaultParam(config, AuthMountPath)
-	if mountPath == "" {
-		mountPath = AuthKubernetesMountPath
-	}
-	tokenPath := GetVaultParam(config, AuthKubernetesTokenPath)
-
-	authMountPath := path.Join("auth", mountPath)
-	return &auth.AuthConfig{
-		Logger:    hclog.NewNullLogger(),
-		MountPath: authMountPath,
-		Config: map[string]interface{}{
-			"role":       role,
-			"token_path": tokenPath,
-		},
-	}, nil
 }

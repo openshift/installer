@@ -229,7 +229,7 @@ func dataSourceVPNServerClientCollectionClientsRemoteIPToMap(remoteIPItem vpcv1.
 	return remoteIPMap
 }
 
-func dataSourceVPNServerClientCollectionFlattenFirst(result vpcv1.VPNServerClientCollectionFirst) (finalList []map[string]interface{}) {
+func dataSourceVPNServerClientCollectionFlattenFirst(result vpcv1.PageLink) (finalList []map[string]interface{}) {
 	finalList = []map[string]interface{}{}
 	finalMap := dataSourceVPNServerClientCollectionFirstToMap(result)
 	finalList = append(finalList, finalMap)
@@ -237,7 +237,7 @@ func dataSourceVPNServerClientCollectionFlattenFirst(result vpcv1.VPNServerClien
 	return finalList
 }
 
-func dataSourceVPNServerClientCollectionFirstToMap(firstItem vpcv1.VPNServerClientCollectionFirst) (firstMap map[string]interface{}) {
+func dataSourceVPNServerClientCollectionFirstToMap(firstItem vpcv1.PageLink) (firstMap map[string]interface{}) {
 	firstMap = map[string]interface{}{}
 
 	if firstItem.Href != nil {
@@ -247,7 +247,7 @@ func dataSourceVPNServerClientCollectionFirstToMap(firstItem vpcv1.VPNServerClie
 	return firstMap
 }
 
-func dataSourceVPNServerClientCollectionFlattenNext(result vpcv1.VPNServerClientCollectionNext) (finalList []map[string]interface{}) {
+func dataSourceVPNServerClientCollectionFlattenNext(result vpcv1.PageLink) (finalList []map[string]interface{}) {
 	finalList = []map[string]interface{}{}
 	finalMap := dataSourceVPNServerClientCollectionNextToMap(result)
 	finalList = append(finalList, finalMap)
@@ -255,7 +255,7 @@ func dataSourceVPNServerClientCollectionFlattenNext(result vpcv1.VPNServerClient
 	return finalList
 }
 
-func dataSourceVPNServerClientCollectionNextToMap(nextItem vpcv1.VPNServerClientCollectionNext) (nextMap map[string]interface{}) {
+func dataSourceVPNServerClientCollectionNextToMap(nextItem vpcv1.PageLink) (nextMap map[string]interface{}) {
 	nextMap = map[string]interface{}{}
 
 	if nextItem.Href != nil {

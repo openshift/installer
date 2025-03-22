@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -14,6 +15,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
+
+const resourceIbmEnIntegration = "ibm_en_integration"
 
 func ResourceIBMEnIntegration() *schema.Resource {
 	return &schema.Resource{
@@ -76,7 +79,10 @@ func ResourceIBMEnIntegration() *schema.Resource {
 func resourceIBMEnIntegrationCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), resourceIbmEnIntegration, "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+		// return diag.FromErr(err)
 	}
 
 	options := &en.ReplaceIntegrationOptions{}
@@ -90,12 +96,15 @@ func resourceIBMEnIntegrationCreate(context context.Context, d *schema.ResourceD
 		options.SetMetadata(&metadata)
 	}
 
-	_, response, err := enClient.ReplaceIntegrationWithContext(context, options)
+	result, _, err := enClient.ReplaceIntegrationWithContext(context, options)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("ReplaceIntegrationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ReplaceIntegrationWithContext failed: %s", err.Error()), resourceIbmEnIntegration, "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+		// return diag.FromErr(fmt.Errorf("ReplaceIntegrationWithContext failed %s\n%s", err, response))
 	}
 
-	d.SetId(fmt.Sprintf("%s/%s", *options.InstanceID, *options.ID))
+	d.SetId(fmt.Sprintf("%s/%s", *options.InstanceID, *result.ID))
 
 	return resourceIBMEnIntegrationRead(context, d, meta)
 }
@@ -103,14 +112,19 @@ func resourceIBMEnIntegrationCreate(context context.Context, d *schema.ResourceD
 func resourceIBMEnIntegrationRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), resourceIbmEnIntegration, "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+		// return diag.FromErr(err)
 	}
 
 	options := &en.GetIntegrationOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), resourceIbmEnIntegration, "read")
+		return tfErr.GetDiag()
+		// return diag.FromErr(err)
 	}
 
 	options.SetInstanceID(parts[0])
@@ -122,7 +136,10 @@ func resourceIBMEnIntegrationRead(context context.Context, d *schema.ResourceDat
 			d.SetId(d.Get("integration_id").(string))
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("GetIntegrationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetIntegrationWithContext failed: %s", err.Error()), resourceIbmEnIntegration, "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+		// return diag.FromErr(fmt.Errorf("GetIntegrationWithContext failed %s\n%s", err, response))
 	}
 
 	if err = d.Set("instance_guid", options.InstanceID); err != nil {
@@ -146,14 +163,19 @@ func resourceIBMEnIntegrationRead(context context.Context, d *schema.ResourceDat
 func resourceIBMEnIntegrationUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), resourceIbmEnIntegration, "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+		// return diag.FromErr(err)
 	}
 
 	options := &en.ReplaceIntegrationOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), resourceIbmEnIntegration, "update")
+		return tfErr.GetDiag()
+		// return diag.FromErr(err)
 	}
 
 	options.SetInstanceID(parts[0])
@@ -167,9 +189,12 @@ func resourceIBMEnIntegrationUpdate(context context.Context, d *schema.ResourceD
 			options.SetMetadata(&metadata)
 		}
 
-		_, response, err := enClient.ReplaceIntegrationWithContext(context, options)
+		_, _, err := enClient.ReplaceIntegrationWithContext(context, options)
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("ReplaceIntegrationWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ReplaceIntegrationWithContext failed: %s", err.Error()), resourceIbmEnIntegration, "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
+			// return diag.FromErr(fmt.Errorf("ReplaceIntegrationWithContext failed %s\n%s", err, response))
 		}
 
 		return resourceIBMEnIntegrationRead(context, d, meta)

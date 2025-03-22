@@ -1,6 +1,10 @@
 // Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.98.0-8be2046a-20241205-162752
+ */
+
 package vmware
 
 import (
@@ -13,6 +17,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vmware-go-sdk/vmwarev1"
 )
 
@@ -122,6 +127,19 @@ func DataSourceIbmVmaasVdc() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
+						"private_ips": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The private IP addresses assigned to the edge.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"private_only": &schema.Schema{
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Indicates whether the edge is private only. The default value is True for a private Cloud Director site and False for a public Cloud Director site.",
+						},
 						"size": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -222,6 +240,11 @@ func DataSourceIbmVmaasVdc() *schema.Resource {
 										Computed:    true,
 										Description: "Determines the state of the IBM Transit Gateway based on its connections.",
 									},
+									"region": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The region where the IBM Transit Gateway is deployed.",
+									},
 								},
 							},
 						},
@@ -272,6 +295,11 @@ func DataSourceIbmVmaasVdc() *schema.Resource {
 				Computed:    true,
 				Description: "The time that the virtual data center (VDC) is ordered.",
 			},
+			"org_href": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The URL of the organization that owns the VDC.",
+			},
 			"org_name": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -314,7 +342,9 @@ func DataSourceIbmVmaasVdc() *schema.Resource {
 func dataSourceIbmVmaasVdcRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vmwareClient, err := meta.(conns.ClientSession).VmwareV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_vmaas_vdc", "read", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getVdcOptions := &vmwarev1.GetVdcOptions{}
@@ -324,130 +354,137 @@ func dataSourceIbmVmaasVdcRead(context context.Context, d *schema.ResourceData, 
 		getVdcOptions.SetAcceptLanguage(d.Get("accept_language").(string))
 	}
 
-	vDC, response, err := vmwareClient.GetVdcWithContext(context, getVdcOptions)
+	vDC, _, err := vmwareClient.GetVdcWithContext(context, getVdcOptions)
 	if err != nil {
-		log.Printf("[DEBUG] GetVdcWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetVdcWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetVdcWithContext failed: %s", err.Error()), "(Data) ibm_vmaas_vdc", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
-	d.SetId(fmt.Sprintf("%s", *getVdcOptions.ID))
+	d.SetId(*getVdcOptions.ID)
 
 	if err = d.Set("href", vDC.Href); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting href: %s", err), "(Data) ibm_vmaas_vdc", "read", "set-href").GetDiag()
 	}
 
-	if err = d.Set("provisioned_at", flex.DateTimeToString(vDC.ProvisionedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting provisioned_at: %s", err))
+	if !core.IsNil(vDC.ProvisionedAt) {
+		if err = d.Set("provisioned_at", flex.DateTimeToString(vDC.ProvisionedAt)); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting provisioned_at: %s", err), "(Data) ibm_vmaas_vdc", "read", "set-provisioned_at").GetDiag()
+		}
 	}
 
-	if err = d.Set("cpu", flex.IntValue(vDC.Cpu)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting cpu: %s", err))
+	if !core.IsNil(vDC.Cpu) {
+		if err = d.Set("cpu", flex.IntValue(vDC.Cpu)); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting cpu: %s", err), "(Data) ibm_vmaas_vdc", "read", "set-cpu").GetDiag()
+		}
 	}
 
 	if err = d.Set("crn", vDC.Crn); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting crn: %s", err), "(Data) ibm_vmaas_vdc", "read", "set-crn").GetDiag()
 	}
 
-	if err = d.Set("deleted_at", flex.DateTimeToString(vDC.DeletedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting deleted_at: %s", err))
+	if !core.IsNil(vDC.DeletedAt) {
+		if err = d.Set("deleted_at", flex.DateTimeToString(vDC.DeletedAt)); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting deleted_at: %s", err), "(Data) ibm_vmaas_vdc", "read", "set-deleted_at").GetDiag()
+		}
 	}
 
 	directorSite := []map[string]interface{}{}
-	if vDC.DirectorSite != nil {
-		modelMap, err := dataSourceIbmVmaasVdcVDCDirectorSiteToMap(vDC.DirectorSite)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		directorSite = append(directorSite, modelMap)
+	directorSiteMap, err := DataSourceIbmVmaasVdcVDCDirectorSiteToMap(vDC.DirectorSite)
+	if err != nil {
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_vmaas_vdc", "read", "director_site-to-map").GetDiag()
 	}
+	directorSite = append(directorSite, directorSiteMap)
 	if err = d.Set("director_site", directorSite); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting director_site %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting director_site: %s", err), "(Data) ibm_vmaas_vdc", "read", "set-director_site").GetDiag()
 	}
 
 	edges := []map[string]interface{}{}
-	if vDC.Edges != nil {
-		for _, modelItem := range vDC.Edges {
-			modelMap, err := dataSourceIbmVmaasVdcEdgeToMap(&modelItem)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			edges = append(edges, modelMap)
+	for _, edgesItem := range vDC.Edges {
+		edgesItemMap, err := DataSourceIbmVmaasVdcEdgeToMap(&edgesItem) // #nosec G601
+		if err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_vmaas_vdc", "read", "edges-to-map").GetDiag()
 		}
+		edges = append(edges, edgesItemMap)
 	}
 	if err = d.Set("edges", edges); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting edges %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting edges: %s", err), "(Data) ibm_vmaas_vdc", "read", "set-edges").GetDiag()
 	}
 
 	statusReasons := []map[string]interface{}{}
-	if vDC.StatusReasons != nil {
-		for _, modelItem := range vDC.StatusReasons {
-			modelMap, err := dataSourceIbmVmaasVdcStatusReasonToMap(&modelItem)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			statusReasons = append(statusReasons, modelMap)
+	for _, statusReasonsItem := range vDC.StatusReasons {
+		statusReasonsItemMap, err := DataSourceIbmVmaasVdcStatusReasonToMap(&statusReasonsItem) // #nosec G601
+		if err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_vmaas_vdc", "read", "status_reasons-to-map").GetDiag()
 		}
+		statusReasons = append(statusReasons, statusReasonsItemMap)
 	}
 	if err = d.Set("status_reasons", statusReasons); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting status_reasons %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting status_reasons: %s", err), "(Data) ibm_vmaas_vdc", "read", "set-status_reasons").GetDiag()
 	}
 
 	if err = d.Set("name", vDC.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "(Data) ibm_vmaas_vdc", "read", "set-name").GetDiag()
 	}
 
 	if err = d.Set("ordered_at", flex.DateTimeToString(vDC.OrderedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting ordered_at: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting ordered_at: %s", err), "(Data) ibm_vmaas_vdc", "read", "set-ordered_at").GetDiag()
+	}
+
+	if err = d.Set("org_href", vDC.OrgHref); err != nil {
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting org_href: %s", err), "(Data) ibm_vmaas_vdc", "read", "set-org_href").GetDiag()
 	}
 
 	if err = d.Set("org_name", vDC.OrgName); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting org_name: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting org_name: %s", err), "(Data) ibm_vmaas_vdc", "read", "set-org_name").GetDiag()
 	}
 
-	if err = d.Set("ram", flex.IntValue(vDC.Ram)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting ram: %s", err))
+	if !core.IsNil(vDC.Ram) {
+		if err = d.Set("ram", flex.IntValue(vDC.Ram)); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting ram: %s", err), "(Data) ibm_vmaas_vdc", "read", "set-ram").GetDiag()
+		}
 	}
 
 	if err = d.Set("status", vDC.Status); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting status: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting status: %s", err), "(Data) ibm_vmaas_vdc", "read", "set-status").GetDiag()
 	}
 
 	if err = d.Set("type", vDC.Type); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting type: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting type: %s", err), "(Data) ibm_vmaas_vdc", "read", "set-type").GetDiag()
 	}
 
 	if err = d.Set("fast_provisioning_enabled", vDC.FastProvisioningEnabled); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting fast_provisioning_enabled: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting fast_provisioning_enabled: %s", err), "(Data) ibm_vmaas_vdc", "read", "set-fast_provisioning_enabled").GetDiag()
 	}
 
 	if err = d.Set("rhel_byol", vDC.RhelByol); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting rhel_byol: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting rhel_byol: %s", err), "(Data) ibm_vmaas_vdc", "read", "set-rhel_byol").GetDiag()
 	}
 
 	if err = d.Set("windows_byol", vDC.WindowsByol); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting windows_byol: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting windows_byol: %s", err), "(Data) ibm_vmaas_vdc", "read", "set-windows_byol").GetDiag()
 	}
 
 	return nil
 }
 
-func dataSourceIbmVmaasVdcVDCDirectorSiteToMap(model *vmwarev1.VDCDirectorSite) (map[string]interface{}, error) {
+func DataSourceIbmVmaasVdcVDCDirectorSiteToMap(model *vmwarev1.VDCDirectorSite) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	modelMap["id"] = model.ID
-	pvdcMap, err := dataSourceIbmVmaasVdcDirectorSitePVDCToMap(model.Pvdc)
+	modelMap["id"] = *model.ID
+	pvdcMap, err := DataSourceIbmVmaasVdcDirectorSitePVDCToMap(model.Pvdc)
 	if err != nil {
 		return modelMap, err
 	}
 	modelMap["pvdc"] = []map[string]interface{}{pvdcMap}
-	modelMap["url"] = model.URL
+	modelMap["url"] = *model.URL
 	return modelMap, nil
 }
 
-func dataSourceIbmVmaasVdcDirectorSitePVDCToMap(model *vmwarev1.DirectorSitePVDC) (map[string]interface{}, error) {
+func DataSourceIbmVmaasVdcDirectorSitePVDCToMap(model *vmwarev1.DirectorSitePVDC) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	modelMap["id"] = model.ID
+	modelMap["id"] = *model.ID
 	if model.ProviderType != nil {
-		providerTypeMap, err := dataSourceIbmVmaasVdcVDCProviderTypeToMap(model.ProviderType)
+		providerTypeMap, err := DataSourceIbmVmaasVdcVDCProviderTypeToMap(model.ProviderType)
 		if err != nil {
 			return modelMap, err
 		}
@@ -456,68 +493,71 @@ func dataSourceIbmVmaasVdcDirectorSitePVDCToMap(model *vmwarev1.DirectorSitePVDC
 	return modelMap, nil
 }
 
-func dataSourceIbmVmaasVdcVDCProviderTypeToMap(model *vmwarev1.VDCProviderType) (map[string]interface{}, error) {
+func DataSourceIbmVmaasVdcVDCProviderTypeToMap(model *vmwarev1.VDCProviderType) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	modelMap["name"] = model.Name
+	modelMap["name"] = *model.Name
 	return modelMap, nil
 }
 
-func dataSourceIbmVmaasVdcEdgeToMap(model *vmwarev1.Edge) (map[string]interface{}, error) {
+func DataSourceIbmVmaasVdcEdgeToMap(model *vmwarev1.Edge) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	modelMap["id"] = model.ID
+	modelMap["id"] = *model.ID
 	modelMap["public_ips"] = model.PublicIps
-	if model.Size != nil {
-		modelMap["size"] = model.Size
+	modelMap["private_ips"] = model.PrivateIps
+	if model.PrivateOnly != nil {
+		modelMap["private_only"] = *model.PrivateOnly
 	}
-	modelMap["status"] = model.Status
+	modelMap["size"] = *model.Size
+	modelMap["status"] = *model.Status
 	transitGateways := []map[string]interface{}{}
 	for _, transitGatewaysItem := range model.TransitGateways {
-		transitGatewaysItemMap, err := dataSourceIbmVmaasVdcTransitGatewayToMap(&transitGatewaysItem)
+		transitGatewaysItemMap, err := DataSourceIbmVmaasVdcTransitGatewayToMap(&transitGatewaysItem) // #nosec G601
 		if err != nil {
 			return modelMap, err
 		}
 		transitGateways = append(transitGateways, transitGatewaysItemMap)
 	}
 	modelMap["transit_gateways"] = transitGateways
-	modelMap["type"] = model.Type
-	modelMap["version"] = model.Version
+	modelMap["type"] = *model.Type
+	modelMap["version"] = *model.Version
 	return modelMap, nil
 }
 
-func dataSourceIbmVmaasVdcTransitGatewayToMap(model *vmwarev1.TransitGateway) (map[string]interface{}, error) {
+func DataSourceIbmVmaasVdcTransitGatewayToMap(model *vmwarev1.TransitGateway) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	modelMap["id"] = model.ID
+	modelMap["id"] = *model.ID
 	connections := []map[string]interface{}{}
 	for _, connectionsItem := range model.Connections {
-		connectionsItemMap, err := dataSourceIbmVmaasVdcTransitGatewayConnectionToMap(&connectionsItem)
+		connectionsItemMap, err := DataSourceIbmVmaasVdcTransitGatewayConnectionToMap(&connectionsItem) // #nosec G601
 		if err != nil {
 			return modelMap, err
 		}
 		connections = append(connections, connectionsItemMap)
 	}
 	modelMap["connections"] = connections
-	modelMap["status"] = model.Status
+	modelMap["status"] = *model.Status
+	modelMap["region"] = *model.Region
 	return modelMap, nil
 }
 
-func dataSourceIbmVmaasVdcTransitGatewayConnectionToMap(model *vmwarev1.TransitGatewayConnection) (map[string]interface{}, error) {
+func DataSourceIbmVmaasVdcTransitGatewayConnectionToMap(model *vmwarev1.TransitGatewayConnection) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	modelMap["name"] = model.Name
+	modelMap["name"] = *model.Name
 	if model.TransitGatewayConnectionName != nil {
-		modelMap["transit_gateway_connection_name"] = model.TransitGatewayConnectionName
+		modelMap["transit_gateway_connection_name"] = *model.TransitGatewayConnectionName
 	}
-	modelMap["status"] = model.Status
+	modelMap["status"] = *model.Status
 	if model.LocalGatewayIp != nil {
-		modelMap["local_gateway_ip"] = model.LocalGatewayIp
+		modelMap["local_gateway_ip"] = *model.LocalGatewayIp
 	}
 	if model.RemoteGatewayIp != nil {
-		modelMap["remote_gateway_ip"] = model.RemoteGatewayIp
+		modelMap["remote_gateway_ip"] = *model.RemoteGatewayIp
 	}
 	if model.LocalTunnelIp != nil {
-		modelMap["local_tunnel_ip"] = model.LocalTunnelIp
+		modelMap["local_tunnel_ip"] = *model.LocalTunnelIp
 	}
 	if model.RemoteTunnelIp != nil {
-		modelMap["remote_tunnel_ip"] = model.RemoteTunnelIp
+		modelMap["remote_tunnel_ip"] = *model.RemoteTunnelIp
 	}
 	if model.LocalBgpAsn != nil {
 		modelMap["local_bgp_asn"] = flex.IntValue(model.LocalBgpAsn)
@@ -525,19 +565,19 @@ func dataSourceIbmVmaasVdcTransitGatewayConnectionToMap(model *vmwarev1.TransitG
 	if model.RemoteBgpAsn != nil {
 		modelMap["remote_bgp_asn"] = flex.IntValue(model.RemoteBgpAsn)
 	}
-	modelMap["network_account_id"] = model.NetworkAccountID
-	modelMap["network_type"] = model.NetworkType
-	modelMap["base_network_type"] = model.BaseNetworkType
-	modelMap["zone"] = model.Zone
+	modelMap["network_account_id"] = *model.NetworkAccountID
+	modelMap["network_type"] = *model.NetworkType
+	modelMap["base_network_type"] = *model.BaseNetworkType
+	modelMap["zone"] = *model.Zone
 	return modelMap, nil
 }
 
-func dataSourceIbmVmaasVdcStatusReasonToMap(model *vmwarev1.StatusReason) (map[string]interface{}, error) {
+func DataSourceIbmVmaasVdcStatusReasonToMap(model *vmwarev1.StatusReason) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	modelMap["code"] = model.Code
-	modelMap["message"] = model.Message
+	modelMap["code"] = *model.Code
+	modelMap["message"] = *model.Message
 	if model.MoreInfo != nil {
-		modelMap["more_info"] = model.MoreInfo
+		modelMap["more_info"] = *model.MoreInfo
 	}
 	return modelMap, nil
 }

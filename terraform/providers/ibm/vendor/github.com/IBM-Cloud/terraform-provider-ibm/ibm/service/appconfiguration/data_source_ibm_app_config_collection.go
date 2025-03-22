@@ -4,6 +4,8 @@ package appconfiguration
 
 import (
 	"fmt"
+
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/appconfiguration-go-admin-sdk/appconfigurationv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -121,70 +123,70 @@ func dataSourceIbmAppConfigCollectionRead(d *schema.ResourceData, meta interface
 
 	appconfigClient, err := getAppConfigClient(meta, guid)
 	if err != nil {
-		return fmt.Errorf("getAppConfigClient failed %s", err)
+		return flex.FmtErrorf("getAppConfigClient failed %s", err)
 	}
 
 	options := &appconfigurationv1.GetCollectionOptions{}
 
 	options.SetCollectionID(d.Get("collection_id").(string))
 
-	if _, ok := d.GetOk("include"); ok {
+	if _, ok := GetFieldExists(d, "include"); ok {
 		includes := []string{}
 		for _, includeItem := range d.Get("include").([]interface{}) {
 			includes = append(includes, includeItem.(string))
 		}
 		options.SetInclude(includes)
 	}
-	if _, ok := d.GetOk("expand"); ok {
+	if _, ok := GetFieldExists(d, "expand"); ok {
 		options.SetExpand(d.Get("expand").(bool))
 	}
 
 	result, response, err := appconfigClient.GetCollection(options)
 	if err != nil {
-		return fmt.Errorf("GetCollection failed %s\n%s", err, response)
+		return flex.FmtErrorf("GetCollection failed %s\n%s", err, response)
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", guid, *result.CollectionID))
 	if result.Name != nil {
 		if err = d.Set("name", result.Name); err != nil {
-			return fmt.Errorf("[ERROR] Error setting name: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting name: %s", err)
 		}
 	}
 	if result.Description != nil {
 		if err = d.Set("description", result.Description); err != nil {
-			return fmt.Errorf("[ERROR] Error setting description: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting description: %s", err)
 		}
 	}
 	if result.Tags != nil {
 		if err = d.Set("tags", result.Tags); err != nil {
-			return fmt.Errorf("[ERROR] Error setting tags: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting tags: %s", err)
 		}
 	}
 	if result.CreatedTime != nil {
 		if err = d.Set("created_time", result.CreatedTime.String()); err != nil {
-			return fmt.Errorf("[ERROR] Error setting created_time: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting created_time: %s", err)
 		}
 	}
 	if result.UpdatedTime != nil {
 		if err = d.Set("updated_time", result.UpdatedTime.String()); err != nil {
-			return fmt.Errorf("[ERROR] Error setting updated_time: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting updated_time: %s", err)
 		}
 	}
 	if result.Href != nil {
 		if err = d.Set("href", result.Href); err != nil {
-			return fmt.Errorf("[ERROR] Error setting href: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting href: %s", err)
 		}
 	}
 	if result.Features != nil {
 		err = d.Set("features", dataSourceCollectionFlattenFeatures(result.Features))
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error setting features %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting features %s", err)
 		}
 	}
 	if result.Properties != nil {
 		err = d.Set("properties", dataSourceCollectionFlattenProperties(result.Properties))
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error setting properties %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting properties %s", err)
 		}
 	}
 

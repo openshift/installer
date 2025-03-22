@@ -17,7 +17,6 @@
 /*
  * IBM OpenAPI SDK Code Generator Version: 3.26.0-4b317b0c-20210127-171701
  */
- 
 
 // Package cachingapiv1 : Operations and models for the CachingApiV1 service
 package cachingapiv1
@@ -120,8 +119,8 @@ func NewCachingApiV1(options *CachingApiV1Options) (service *CachingApiV1, err e
 
 	service = &CachingApiV1{
 		Service: baseService,
-		Crn: options.Crn,
-		ZoneID: options.ZoneID,
+		Crn:     options.Crn,
+		ZoneID:  options.ZoneID,
 	}
 
 	return
@@ -193,7 +192,7 @@ func (cachingApi *CachingApiV1) PurgeAllWithContext(ctx context.Context, purgeAl
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *cachingApi.Crn,
+		"crn":     *cachingApi.Crn,
 		"zone_id": *cachingApi.ZoneID,
 	}
 
@@ -248,7 +247,7 @@ func (cachingApi *CachingApiV1) PurgeByUrlsWithContext(ctx context.Context, purg
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *cachingApi.Crn,
+		"crn":     *cachingApi.Crn,
 		"zone_id": *cachingApi.ZoneID,
 	}
 
@@ -313,7 +312,7 @@ func (cachingApi *CachingApiV1) PurgeByCacheTagsWithContext(ctx context.Context,
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *cachingApi.Crn,
+		"crn":     *cachingApi.Crn,
 		"zone_id": *cachingApi.ZoneID,
 	}
 
@@ -378,7 +377,7 @@ func (cachingApi *CachingApiV1) PurgeByHostsWithContext(ctx context.Context, pur
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *cachingApi.Crn,
+		"crn":     *cachingApi.Crn,
 		"zone_id": *cachingApi.ZoneID,
 	}
 
@@ -444,7 +443,7 @@ func (cachingApi *CachingApiV1) GetBrowserCacheTTLWithContext(ctx context.Contex
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *cachingApi.Crn,
+		"crn":     *cachingApi.Crn,
 		"zone_id": *cachingApi.ZoneID,
 	}
 
@@ -500,7 +499,7 @@ func (cachingApi *CachingApiV1) UpdateBrowserCacheTTLWithContext(ctx context.Con
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *cachingApi.Crn,
+		"crn":     *cachingApi.Crn,
 		"zone_id": *cachingApi.ZoneID,
 	}
 
@@ -565,7 +564,7 @@ func (cachingApi *CachingApiV1) GetServeStaleContentWithContext(ctx context.Cont
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *cachingApi.Crn,
+		"crn":     *cachingApi.Crn,
 		"zone_id": *cachingApi.ZoneID,
 	}
 
@@ -620,7 +619,7 @@ func (cachingApi *CachingApiV1) UpdateServeStaleContentWithContext(ctx context.C
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *cachingApi.Crn,
+		"crn":     *cachingApi.Crn,
 		"zone_id": *cachingApi.ZoneID,
 	}
 
@@ -685,7 +684,7 @@ func (cachingApi *CachingApiV1) GetDevelopmentModeWithContext(ctx context.Contex
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *cachingApi.Crn,
+		"crn":     *cachingApi.Crn,
 		"zone_id": *cachingApi.ZoneID,
 	}
 
@@ -740,7 +739,7 @@ func (cachingApi *CachingApiV1) UpdateDevelopmentModeWithContext(ctx context.Con
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *cachingApi.Crn,
+		"crn":     *cachingApi.Crn,
 		"zone_id": *cachingApi.ZoneID,
 	}
 
@@ -805,7 +804,7 @@ func (cachingApi *CachingApiV1) GetQueryStringSortWithContext(ctx context.Contex
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *cachingApi.Crn,
+		"crn":     *cachingApi.Crn,
 		"zone_id": *cachingApi.ZoneID,
 	}
 
@@ -860,7 +859,7 @@ func (cachingApi *CachingApiV1) UpdateQueryStringSortWithContext(ctx context.Con
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *cachingApi.Crn,
+		"crn":     *cachingApi.Crn,
 		"zone_id": *cachingApi.ZoneID,
 	}
 
@@ -925,7 +924,7 @@ func (cachingApi *CachingApiV1) GetCacheLevelWithContext(ctx context.Context, ge
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *cachingApi.Crn,
+		"crn":     *cachingApi.Crn,
 		"zone_id": *cachingApi.ZoneID,
 	}
 
@@ -982,7 +981,7 @@ func (cachingApi *CachingApiV1) UpdateCacheLevelWithContext(ctx context.Context,
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *cachingApi.Crn,
+		"crn":     *cachingApi.Crn,
 		"zone_id": *cachingApi.ZoneID,
 	}
 
@@ -1048,7 +1047,6 @@ type BrowserTTLResponseResult struct {
 	ModifiedOn *string `json:"modified_on,omitempty"`
 }
 
-
 // UnmarshalBrowserTTLResponseResult unmarshals an instance of BrowserTTLResponseResult from the specified map of raw messages.
 func UnmarshalBrowserTTLResponseResult(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(BrowserTTLResponseResult)
@@ -1086,7 +1084,6 @@ type CacheLevelResponseResult struct {
 	// modified date.
 	ModifiedOn *string `json:"modified_on,omitempty"`
 }
-
 
 // UnmarshalCacheLevelResponseResult unmarshals an instance of CacheLevelResponseResult from the specified map of raw messages.
 func UnmarshalCacheLevelResponseResult(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -1126,7 +1123,6 @@ type DeveopmentModeResponseResult struct {
 	ModifiedOn *string `json:"modified_on,omitempty"`
 }
 
-
 // UnmarshalDeveopmentModeResponseResult unmarshals an instance of DeveopmentModeResponseResult from the specified map of raw messages.
 func UnmarshalDeveopmentModeResponseResult(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(DeveopmentModeResponseResult)
@@ -1164,7 +1160,6 @@ type EnableQueryStringSortResponseResult struct {
 	// modified date.
 	ModifiedOn *string `json:"modified_on,omitempty"`
 }
-
 
 // UnmarshalEnableQueryStringSortResponseResult unmarshals an instance of EnableQueryStringSortResponseResult from the specified map of raw messages.
 func UnmarshalEnableQueryStringSortResponseResult(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -1303,7 +1298,6 @@ type PurgeAllResponseResult struct {
 	ID *string `json:"id,omitempty"`
 }
 
-
 // UnmarshalPurgeAllResponseResult unmarshals an instance of PurgeAllResponseResult from the specified map of raw messages.
 func UnmarshalPurgeAllResponseResult(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(PurgeAllResponseResult)
@@ -1408,7 +1402,6 @@ type ServeStaleContentResponseResult struct {
 	ModifiedOn *string `json:"modified_on,omitempty"`
 }
 
-
 // UnmarshalServeStaleContentResponseResult unmarshals an instance of ServeStaleContentResponseResult from the specified map of raw messages.
 func UnmarshalServeStaleContentResponseResult(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(ServeStaleContentResponseResult)
@@ -1471,7 +1464,7 @@ type UpdateCacheLevelOptions struct {
 // cache level.
 const (
 	UpdateCacheLevelOptions_Value_Aggressive = "aggressive"
-	UpdateCacheLevelOptions_Value_Basic = "basic"
+	UpdateCacheLevelOptions_Value_Basic      = "basic"
 	UpdateCacheLevelOptions_Value_Simplified = "simplified"
 )
 
@@ -1505,7 +1498,7 @@ type UpdateDevelopmentModeOptions struct {
 // on/off value.
 const (
 	UpdateDevelopmentModeOptions_Value_Off = "off"
-	UpdateDevelopmentModeOptions_Value_On = "on"
+	UpdateDevelopmentModeOptions_Value_On  = "on"
 )
 
 // NewUpdateDevelopmentModeOptions : Instantiate UpdateDevelopmentModeOptions
@@ -1538,7 +1531,7 @@ type UpdateQueryStringSortOptions struct {
 // on/off property value.
 const (
 	UpdateQueryStringSortOptions_Value_Off = "off"
-	UpdateQueryStringSortOptions_Value_On = "on"
+	UpdateQueryStringSortOptions_Value_On  = "on"
 )
 
 // NewUpdateQueryStringSortOptions : Instantiate UpdateQueryStringSortOptions
@@ -1571,7 +1564,7 @@ type UpdateServeStaleContentOptions struct {
 // on/off value.
 const (
 	UpdateServeStaleContentOptions_Value_Off = "off"
-	UpdateServeStaleContentOptions_Value_On = "on"
+	UpdateServeStaleContentOptions_Value_On  = "on"
 )
 
 // NewUpdateServeStaleContentOptions : Instantiate UpdateServeStaleContentOptions
@@ -1605,7 +1598,6 @@ type BrowserTTLResponse struct {
 	// result object.
 	Result *BrowserTTLResponseResult `json:"result" validate:"required"`
 }
-
 
 // UnmarshalBrowserTTLResponse unmarshals an instance of BrowserTTLResponse from the specified map of raw messages.
 func UnmarshalBrowserTTLResponse(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -1645,7 +1637,6 @@ type CacheLevelResponse struct {
 	Result *CacheLevelResponseResult `json:"result" validate:"required"`
 }
 
-
 // UnmarshalCacheLevelResponse unmarshals an instance of CacheLevelResponse from the specified map of raw messages.
 func UnmarshalCacheLevelResponse(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(CacheLevelResponse)
@@ -1683,7 +1674,6 @@ type DeveopmentModeResponse struct {
 	// result object.
 	Result *DeveopmentModeResponseResult `json:"result" validate:"required"`
 }
-
 
 // UnmarshalDeveopmentModeResponse unmarshals an instance of DeveopmentModeResponse from the specified map of raw messages.
 func UnmarshalDeveopmentModeResponse(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -1723,7 +1713,6 @@ type EnableQueryStringSortResponse struct {
 	Result *EnableQueryStringSortResponseResult `json:"result" validate:"required"`
 }
 
-
 // UnmarshalEnableQueryStringSortResponse unmarshals an instance of EnableQueryStringSortResponse from the specified map of raw messages.
 func UnmarshalEnableQueryStringSortResponse(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(EnableQueryStringSortResponse)
@@ -1762,7 +1751,6 @@ type PurgeAllResponse struct {
 	Result *PurgeAllResponseResult `json:"result" validate:"required"`
 }
 
-
 // UnmarshalPurgeAllResponse unmarshals an instance of PurgeAllResponse from the specified map of raw messages.
 func UnmarshalPurgeAllResponse(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(PurgeAllResponse)
@@ -1800,7 +1788,6 @@ type ServeStaleContentResponse struct {
 	// result object.
 	Result *ServeStaleContentResponseResult `json:"result" validate:"required"`
 }
-
 
 // UnmarshalServeStaleContentResponse unmarshals an instance of ServeStaleContentResponse from the specified map of raw messages.
 func UnmarshalServeStaleContentResponse(m map[string]json.RawMessage, result interface{}) (err error) {

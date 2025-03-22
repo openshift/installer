@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"strconv"
 
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/IBM/appconfiguration-go-admin-sdk/appconfigurationv1"
@@ -107,6 +108,11 @@ func DataSourceIBMAppConfigProperties() *schema.Resource {
 							Computed:    true,
 							Description: "Tags associated with the property.",
 						},
+						"format": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Format of the feature (TEXT, JSON, YAML) and it is a required attribute when `type` is `STRING`. It is not required for `BOOLEAN` and `NUMERIC` types. This property is populated in the response body of `POST, PUT and GET` calls if the type `STRING` is used and not populated for `BOOLEAN` and `NUMERIC` types.",
+						},
 						"segment_rules": {
 							Type:        schema.TypeList,
 							Computed:    true,
@@ -199,37 +205,37 @@ func dataSourceIbmAppConfigPropertiesRead(d *schema.ResourceData, meta interface
 
 	appconfigClient, err := getAppConfigClient(meta, guid)
 	if err != nil {
-		return fmt.Errorf("getAppConfigClient failed %s", err)
+		return flex.FmtErrorf("getAppConfigClient failed %s", err)
 	}
 
 	options := &appconfigurationv1.ListPropertiesOptions{}
 
 	options.SetEnvironmentID(d.Get("environment_id").(string))
 
-	if _, ok := d.GetOk("expand"); ok {
+	if _, ok := GetFieldExists(d, "expand"); ok {
 		options.SetExpand(d.Get("expand").(bool))
 	}
-	if _, ok := d.GetOk("sort"); ok {
+	if _, ok := GetFieldExists(d, "sort"); ok {
 		options.SetSort(d.Get("sort").(string))
 	}
-	if _, ok := d.GetOk("tags"); ok {
+	if _, ok := GetFieldExists(d, "tags"); ok {
 		options.SetTags(d.Get("tags").(string))
 	}
-	if _, ok := d.GetOk("collections"); ok {
+	if _, ok := GetFieldExists(d, "collections"); ok {
 		collections := []string{}
 		for _, item := range d.Get("collections").([]interface{}) {
 			collections = append(collections, item.(string))
 		}
 		options.SetCollections(collections)
 	}
-	if _, ok := d.GetOk("segments"); ok {
+	if _, ok := GetFieldExists(d, "segments"); ok {
 		segments := []string{}
 		for _, item := range d.Get("segments").([]interface{}) {
 			segments = append(segments, item.(string))
 		}
 		options.SetSegments(segments)
 	}
-	if _, ok := d.GetOk("include"); ok {
+	if _, ok := GetFieldExists(d, "include"); ok {
 		includes := []string{}
 		for _, item := range d.Get("include").([]interface{}) {
 			includes = append(includes, item.(string))
@@ -243,12 +249,12 @@ func dataSourceIbmAppConfigPropertiesRead(d *schema.ResourceData, meta interface
 	var isLimit bool
 
 	finalList := []appconfigurationv1.Property{}
-	if _, ok := d.GetOk("limit"); ok {
+	if _, ok := GetFieldExists(d, "limit"); ok {
 		isLimit = true
 		limit = int64(d.Get("limit").(int))
 	}
 	options.SetLimit(limit)
-	if _, ok := d.GetOk("offset"); ok {
+	if _, ok := GetFieldExists(d, "offset"); ok {
 		offset = int64(d.Get("offset").(int))
 	}
 	for {
@@ -256,7 +262,7 @@ func dataSourceIbmAppConfigPropertiesRead(d *schema.ResourceData, meta interface
 		result, response, err := appconfigClient.ListProperties(options)
 		propertiesList = result
 		if err != nil {
-			return fmt.Errorf("ListProperties failed %s\n%s", err, response)
+			return flex.FmtErrorf("ListProperties failed %s\n%s", err, response)
 		}
 		if isLimit {
 			offset = 0
@@ -276,22 +282,22 @@ func dataSourceIbmAppConfigPropertiesRead(d *schema.ResourceData, meta interface
 	if propertiesList.Properties != nil {
 		err = d.Set("properties", dataSourcePropertiesListFlattenProperties(propertiesList.Properties))
 		if err != nil {
-			return fmt.Errorf("error setting properties %s", err)
+			return flex.FmtErrorf("error setting properties %s", err)
 		}
 	}
 	if propertiesList.TotalCount != nil {
 		if err = d.Set("total_count", propertiesList.TotalCount); err != nil {
-			return fmt.Errorf("error setting total_count: %s", err)
+			return flex.FmtErrorf("error setting total_count: %s", err)
 		}
 	}
 	if propertiesList.Limit != nil {
 		if err = d.Set("limit", propertiesList.Limit); err != nil {
-			return fmt.Errorf("error setting limit: %s", err)
+			return flex.FmtErrorf("error setting limit: %s", err)
 		}
 	}
 	if propertiesList.Offset != nil {
 		if err = d.Set("offset", propertiesList.Offset); err != nil {
-			return fmt.Errorf("error setting offset: %s", err)
+			return flex.FmtErrorf("error setting offset: %s", err)
 		}
 	}
 
@@ -371,6 +377,9 @@ func dataSourcePropertiesListPropertiesToMap(property appconfigurationv1.Propert
 	}
 	if property.Href != nil {
 		propertyMap["href"] = property.Href
+	}
+	if property.Format != nil {
+		propertyMap["format"] = property.Format
 	}
 	if property.Collections != nil {
 		collectionsList := []map[string]interface{}{}

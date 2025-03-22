@@ -86,6 +86,11 @@ func DataSourceIBMISVPNGatewayConnection() *schema.Resource {
 					},
 				},
 			},
+			"distribute_traffic": &schema.Schema{
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Indicates whether the traffic is distributed between the `up` tunnels of the VPN gateway connection when the VPC route's next hop is a VPN connection. If `false`, the traffic is only routed through the `up` tunnel with the lower `public_ip` address.",
+			},
 			"href": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -574,6 +579,10 @@ func setvpnGatewayConnectionIntfDatasourceData(d *schema.ResourceData, vpn_gatew
 			if err = d.Set("resource_type", vpnGatewayConnection.ResourceType); err != nil {
 				return fmt.Errorf("[ERROR] Error setting resource_type: %s", err)
 			}
+			if err = d.Set("distribute_traffic", vpnGatewayConnection.DistributeTraffic); err != nil {
+				return fmt.Errorf("[ERROR] Error setting distribute_traffic: %s", err)
+			}
+
 			if err = d.Set("status", vpnGatewayConnection.Status); err != nil {
 				return fmt.Errorf("[ERROR] Error setting status: %s", err)
 			}
@@ -678,6 +687,9 @@ func setvpnGatewayConnectionIntfDatasourceData(d *schema.ResourceData, vpn_gatew
 			if err = d.Set("status", vpnGatewayConnection.Status); err != nil {
 				return fmt.Errorf("[ERROR] Error setting status: %s", err)
 			}
+			if err = d.Set("distribute_traffic", vpnGatewayConnection.DistributeTraffic); err != nil {
+				return fmt.Errorf("[ERROR] Error setting distribute_traffic: %s", err)
+			}
 			if err := d.Set("status_reasons", resourceVPNGatewayConnectionFlattenLifecycleReasons(vpnGatewayConnection.StatusReasons)); err != nil {
 				return fmt.Errorf("[ERROR] Error setting status_reasons: %s", err)
 			}
@@ -778,6 +790,9 @@ func setvpnGatewayConnectionIntfDatasourceData(d *schema.ResourceData, vpn_gatew
 			}
 			if err = d.Set("status", vpnGatewayConnection.Status); err != nil {
 				return fmt.Errorf("[ERROR] Error setting status: %s", err)
+			}
+			if err = d.Set("distribute_traffic", vpnGatewayConnection.DistributeTraffic); err != nil {
+				return fmt.Errorf("[ERROR] Error setting distribute_traffic: %s", err)
 			}
 			if err := d.Set("status_reasons", resourceVPNGatewayConnectionFlattenLifecycleReasons(vpnGatewayConnection.StatusReasons)); err != nil {
 				return fmt.Errorf("[ERROR] Error setting status_reasons: %s", err)

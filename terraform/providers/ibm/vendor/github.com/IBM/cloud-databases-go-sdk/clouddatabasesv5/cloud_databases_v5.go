@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.89.0-f33c767b-20240410-144451
+ * IBM OpenAPI SDK Code Generator Version: 3.96.1-5136e54a-20241108-203028
  */
 
 // Package clouddatabasesv5 : Operations and models for the CloudDatabasesV5 service
@@ -3124,6 +3124,9 @@ type Configuration struct {
 	// Maximum connections allowed.
 	MaxConnections *int64 `json:"max_connections,omitempty"`
 
+	// This parameter limits the average number of object locks used by each transaction.
+	MaxLocksPerTransaction *int64 `json:"max_locks_per_transaction,omitempty"`
+
 	// Max number of transactions that can be in the "prepared" state simultaneously.
 	MaxPreparedTransactions *int64 `json:"max_prepared_transactions,omitempty"`
 
@@ -3151,7 +3154,8 @@ type Configuration struct {
 	// retransmitted.
 	TCPKeepalivesInterval *int64 `json:"tcp_keepalives_interval,omitempty"`
 
-	// WAL level.  Set to logical to use logical decoding or logical replication.
+	// Controls WAL level. Allowed values are replica or logical. Set to logical to use logical decoding. If you are not
+	// using logical decoding, using logical increases the WAL size, which has several disadvantages and no real advantage.
 	WalLevel *string `json:"wal_level,omitempty"`
 
 	// The maximum memory Redis should use, as bytes.
@@ -3246,10 +3250,11 @@ const (
 )
 
 // Constants associated with the Configuration.WalLevel property.
-// WAL level.  Set to logical to use logical decoding or logical replication.
+// Controls WAL level. Allowed values are replica or logical. Set to logical to use logical decoding. If you are not
+// using logical decoding, using logical increases the WAL size, which has several disadvantages and no real advantage.
 const (
-	ConfigurationWalLevelHotStandbyConst = "hot_standby"
-	ConfigurationWalLevelLogicalConst    = "logical"
+	ConfigurationWalLevelLogicalConst = "logical"
+	ConfigurationWalLevelReplicaConst = "replica"
 )
 
 // Constants associated with the Configuration.MaxmemoryPolicy property.
@@ -3330,6 +3335,11 @@ func UnmarshalConfiguration(m map[string]json.RawMessage, result interface{}) (e
 	err = core.UnmarshalPrimitive(m, "max_connections", &obj.MaxConnections)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "max_connections-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "max_locks_per_transaction", &obj.MaxLocksPerTransaction)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "max_locks_per_transaction-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "max_prepared_transactions", &obj.MaxPreparedTransactions)
@@ -3497,7 +3507,6 @@ func UnmarshalConfiguration(m map[string]json.RawMessage, result interface{}) (e
 // - ConnectionMongoDbeeConnection
 // - ConnectionMongoDbeeOpsManagerConnection
 // - ConnectionMySQLConnection
-// - ConnectionDataStaxConnection
 // - ConnectionEnterpriseDbConnection
 type Connection struct {
 	Postgres *PostgreSQLConnectionURI `json:"postgres,omitempty"`
@@ -3526,8 +3535,6 @@ type Connection struct {
 	OpsManager *ConnectionURI `json:"ops_manager,omitempty"`
 
 	Mysql *MySQLConnectionURI `json:"mysql,omitempty"`
-
-	Secure *DataStaxConnectionURI `json:"secure,omitempty"`
 
 	Emp *ConnectionURI `json:"emp,omitempty"`
 }
@@ -3608,11 +3615,6 @@ func UnmarshalConnection(m map[string]json.RawMessage, result interface{}) (err 
 		err = core.SDKErrorf(err, "", "mysql-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "secure", &obj.Secure, UnmarshalDataStaxConnectionURI)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "secure-error", common.GetComponentInfo())
-		return
-	}
 	err = core.UnmarshalModel(m, "emp", &obj.Emp, UnmarshalConnectionURI)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "emp-error", common.GetComponentInfo())
@@ -3650,32 +3652,6 @@ func UnmarshalConnectionAuthentication(m map[string]json.RawMessage, result inte
 	err = core.UnmarshalPrimitive(m, "password", &obj.Password)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "password-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// ConnectionBundle : ConnectionBundle struct
-type ConnectionBundle struct {
-	// Name associated with the certificate.
-	Name *string `json:"name,omitempty"`
-
-	// Base64 encoded version of the certificate bundle.
-	BundleBase64 *string `json:"bundle_base64,omitempty"`
-}
-
-// UnmarshalConnectionBundle unmarshals an instance of ConnectionBundle from the specified map of raw messages.
-func UnmarshalConnectionBundle(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ConnectionBundle)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "bundle_base64", &obj.BundleBase64)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "bundle_base64-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3988,38 +3964,6 @@ func UnmarshalCreateLogicalReplicationSlotResponse(m map[string]json.RawMessage,
 	err = core.UnmarshalModel(m, "task", &obj.Task, UnmarshalTask)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "task-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// DataStaxConnectionURI : DataStaxConnectionURI struct
-type DataStaxConnectionURI struct {
-	Hosts []ConnectionHost `json:"hosts,omitempty"`
-
-	// Authentication data for Connection String.
-	Authentication *ConnectionAuthentication `json:"authentication,omitempty"`
-
-	Bundle *ConnectionBundle `json:"bundle,omitempty"`
-}
-
-// UnmarshalDataStaxConnectionURI unmarshals an instance of DataStaxConnectionURI from the specified map of raw messages.
-func UnmarshalDataStaxConnectionURI(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(DataStaxConnectionURI)
-	err = core.UnmarshalModel(m, "hosts", &obj.Hosts, UnmarshalConnectionHost)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "hosts-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "authentication", &obj.Authentication, UnmarshalConnectionAuthentication)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "authentication-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "bundle", &obj.Bundle, UnmarshalConnectionBundle)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "bundle-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7005,6 +6949,9 @@ type ConfigurationPgConfiguration struct {
 	// Maximum connections allowed.
 	MaxConnections *int64 `json:"max_connections,omitempty"`
 
+	// This parameter limits the average number of object locks used by each transaction.
+	MaxLocksPerTransaction *int64 `json:"max_locks_per_transaction,omitempty"`
+
 	// Max number of transactions that can be in the "prepared" state simultaneously.
 	MaxPreparedTransactions *int64 `json:"max_prepared_transactions,omitempty"`
 
@@ -7032,7 +6979,8 @@ type ConfigurationPgConfiguration struct {
 	// retransmitted.
 	TCPKeepalivesInterval *int64 `json:"tcp_keepalives_interval,omitempty"`
 
-	// WAL level.  Set to logical to use logical decoding or logical replication.
+	// Controls WAL level. Allowed values are replica or logical. Set to logical to use logical decoding. If you are not
+	// using logical decoding, using logical increases the WAL size, which has several disadvantages and no real advantage.
 	WalLevel *string `json:"wal_level,omitempty"`
 }
 
@@ -7061,10 +7009,11 @@ const (
 )
 
 // Constants associated with the ConfigurationPgConfiguration.WalLevel property.
-// WAL level.  Set to logical to use logical decoding or logical replication.
+// Controls WAL level. Allowed values are replica or logical. Set to logical to use logical decoding. If you are not
+// using logical decoding, using logical increases the WAL size, which has several disadvantages and no real advantage.
 const (
-	ConfigurationPgConfigurationWalLevelHotStandbyConst = "hot_standby"
-	ConfigurationPgConfigurationWalLevelLogicalConst    = "logical"
+	ConfigurationPgConfigurationWalLevelLogicalConst = "logical"
+	ConfigurationPgConfigurationWalLevelReplicaConst = "replica"
 )
 
 func (*ConfigurationPgConfiguration) isaConfiguration() bool {
@@ -7107,6 +7056,11 @@ func UnmarshalConfigurationPgConfiguration(m map[string]json.RawMessage, result 
 	err = core.UnmarshalPrimitive(m, "max_connections", &obj.MaxConnections)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "max_connections-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "max_locks_per_transaction", &obj.MaxLocksPerTransaction)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "max_locks_per_transaction-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "max_prepared_transactions", &obj.MaxPreparedTransactions)
@@ -7255,28 +7209,6 @@ func UnmarshalConfigurationRedisConfiguration(m map[string]json.RawMessage, resu
 	err = core.UnmarshalPrimitive(m, "stop-writes-on-bgsave-error", &obj.StopWritesOnBgsaveError)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "stop-writes-on-bgsave-error-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// ConnectionDataStaxConnection : DataStax Connection Strings.
-// This model "extends" Connection
-type ConnectionDataStaxConnection struct {
-	Secure *DataStaxConnectionURI `json:"secure" validate:"required"`
-}
-
-func (*ConnectionDataStaxConnection) isaConnection() bool {
-	return true
-}
-
-// UnmarshalConnectionDataStaxConnection unmarshals an instance of ConnectionDataStaxConnection from the specified map of raw messages.
-func UnmarshalConnectionDataStaxConnection(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ConnectionDataStaxConnection)
-	err = core.UnmarshalModel(m, "secure", &obj.Secure, UnmarshalDataStaxConnectionURI)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "secure-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))

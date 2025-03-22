@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -72,7 +73,9 @@ func DataSourceIBMEnSMTPUser() *schema.Resource {
 func dataSourceIBMEnSMTPUserRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	eventNotificationsClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_en_smtp_user", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getSMTPUserOptions := &en.GetSMTPUserOptions{}
@@ -83,33 +86,41 @@ func dataSourceIBMEnSMTPUserRead(context context.Context, d *schema.ResourceData
 
 	smtpUser, _, err := eventNotificationsClient.GetSMTPUserWithContext(context, getSMTPUserOptions)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetTemplateWithContext failed: %s", err.Error()), "(Data) ibm_en_smtp_user", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s/%s", *getSMTPUserOptions.InstanceID, *getSMTPUserOptions.ID, *getSMTPUserOptions.UserID))
 
 	if err = d.Set("smtp_config_id", smtpUser.SMTPConfigID); err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "(Data) ibm_en_smtp_user", "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("description", smtpUser.Description); err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "(Data) ibm_en_smtp_user", "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("domain", smtpUser.Domain); err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "(Data) ibm_en_smtp_user", "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("username", smtpUser.Username); err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "(Data) ibm_en_smtp_user", "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("created_at", flex.DateTimeToString(smtpUser.CreatedAt)); err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "(Data) ibm_en_smtp_user", "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("updated_at", flex.DateTimeToString(smtpUser.UpdatedAt)); err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "(Data) ibm_en_smtp_user", "read")
+		return tfErr.GetDiag()
 	}
 
 	return nil

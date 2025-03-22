@@ -16,6 +16,13 @@ import (
 func ResourceIBMPag() *schema.Resource {
 	riSchema := resourcecontroller.ResourceIBMResourceInstance().Schema
 
+	riSchema["parameters_json"] = &schema.Schema{
+		Type:        schema.TypeString,
+		Description: "PAG parameters to pass in Json string format",
+		ForceNew:    true,
+		Optional:    true,
+	}
+
 	return &schema.Resource{
 		Create:   resourcecontroller.ResourceIBMResourceInstanceCreate,
 		Read:     resourcecontroller.ResourceIBMResourceInstanceRead,

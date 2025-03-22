@@ -120,8 +120,8 @@ func NewAuthenticatedOriginPullApiV1(options *AuthenticatedOriginPullApiV1Option
 	}
 
 	service = &AuthenticatedOriginPullApiV1{
-		Service: baseService,
-		Crn: options.Crn,
+		Service:        baseService,
+		Crn:            options.Crn,
 		ZoneIdentifier: options.ZoneIdentifier,
 	}
 
@@ -193,7 +193,7 @@ func (authenticatedOriginPullApi *AuthenticatedOriginPullApiV1) GetZoneOriginPul
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *authenticatedOriginPullApi.Crn,
+		"crn":             *authenticatedOriginPullApi.Crn,
 		"zone_identifier": *authenticatedOriginPullApi.ZoneIdentifier,
 	}
 
@@ -254,7 +254,7 @@ func (authenticatedOriginPullApi *AuthenticatedOriginPullApiV1) SetZoneOriginPul
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *authenticatedOriginPullApi.Crn,
+		"crn":             *authenticatedOriginPullApi.Crn,
 		"zone_identifier": *authenticatedOriginPullApi.ZoneIdentifier,
 	}
 
@@ -324,7 +324,7 @@ func (authenticatedOriginPullApi *AuthenticatedOriginPullApiV1) ListZoneOriginPu
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *authenticatedOriginPullApi.Crn,
+		"crn":             *authenticatedOriginPullApi.Crn,
 		"zone_identifier": *authenticatedOriginPullApi.ZoneIdentifier,
 	}
 
@@ -387,7 +387,7 @@ func (authenticatedOriginPullApi *AuthenticatedOriginPullApiV1) UploadZoneOrigin
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *authenticatedOriginPullApi.Crn,
+		"crn":             *authenticatedOriginPullApi.Crn,
 		"zone_identifier": *authenticatedOriginPullApi.ZoneIdentifier,
 	}
 
@@ -464,7 +464,7 @@ func (authenticatedOriginPullApi *AuthenticatedOriginPullApiV1) GetZoneOriginPul
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *authenticatedOriginPullApi.Crn,
+		"crn":             *authenticatedOriginPullApi.Crn,
 		"zone_identifier": *authenticatedOriginPullApi.ZoneIdentifier,
 		"cert_identifier": *getZoneOriginPullCertificateOptions.CertIdentifier,
 	}
@@ -529,7 +529,7 @@ func (authenticatedOriginPullApi *AuthenticatedOriginPullApiV1) DeleteZoneOrigin
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *authenticatedOriginPullApi.Crn,
+		"crn":             *authenticatedOriginPullApi.Crn,
 		"zone_identifier": *authenticatedOriginPullApi.ZoneIdentifier,
 		"cert_identifier": *deleteZoneOriginPullCertificateOptions.CertIdentifier,
 	}
@@ -592,7 +592,7 @@ func (authenticatedOriginPullApi *AuthenticatedOriginPullApiV1) SetHostnameOrigi
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *authenticatedOriginPullApi.Crn,
+		"crn":             *authenticatedOriginPullApi.Crn,
 		"zone_identifier": *authenticatedOriginPullApi.ZoneIdentifier,
 	}
 
@@ -666,9 +666,9 @@ func (authenticatedOriginPullApi *AuthenticatedOriginPullApiV1) GetHostnameOrigi
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *authenticatedOriginPullApi.Crn,
+		"crn":             *authenticatedOriginPullApi.Crn,
 		"zone_identifier": *authenticatedOriginPullApi.ZoneIdentifier,
-		"hostname": *getHostnameOriginPullSettingsOptions.Hostname,
+		"hostname":        *getHostnameOriginPullSettingsOptions.Hostname,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -728,7 +728,7 @@ func (authenticatedOriginPullApi *AuthenticatedOriginPullApiV1) UploadHostnameOr
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *authenticatedOriginPullApi.Crn,
+		"crn":             *authenticatedOriginPullApi.Crn,
 		"zone_identifier": *authenticatedOriginPullApi.ZoneIdentifier,
 	}
 
@@ -805,7 +805,7 @@ func (authenticatedOriginPullApi *AuthenticatedOriginPullApiV1) GetHostnameOrigi
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *authenticatedOriginPullApi.Crn,
+		"crn":             *authenticatedOriginPullApi.Crn,
 		"zone_identifier": *authenticatedOriginPullApi.ZoneIdentifier,
 		"cert_identifier": *getHostnameOriginPullCertificateOptions.CertIdentifier,
 	}
@@ -870,7 +870,7 @@ func (authenticatedOriginPullApi *AuthenticatedOriginPullApiV1) DeleteHostnameOr
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *authenticatedOriginPullApi.Crn,
+		"crn":             *authenticatedOriginPullApi.Crn,
 		"zone_identifier": *authenticatedOriginPullApi.ZoneIdentifier,
 		"cert_identifier": *deleteHostnameOriginPullCertificateOptions.CertIdentifier,
 	}
@@ -1578,8 +1578,8 @@ type HostnameOriginPullSettings struct {
 func (*AuthenticatedOriginPullApiV1) NewHostnameOriginPullSettings(hostname string, certID string, enabled bool) (_model *HostnameOriginPullSettings, err error) {
 	_model = &HostnameOriginPullSettings{
 		Hostname: core.StringPtr(hostname),
-		CertID: core.StringPtr(certID),
-		Enabled: core.BoolPtr(enabled),
+		CertID:   core.StringPtr(certID),
+		Enabled:  core.BoolPtr(enabled),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	return

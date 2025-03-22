@@ -6,14 +6,15 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
+	en "github.com/IBM/event-notifications-go-admin-sdk/eventnotificationsv1"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-	en "github.com/IBM/event-notifications-go-admin-sdk/eventnotificationsv1"
 )
 
 func ResourceIBMEnCustomEmailDestination() *schema.Resource {
@@ -51,6 +52,12 @@ func ResourceIBMEnCustomEmailDestination() *schema.Resource {
 				Optional:    true,
 				Description: "Whether to collect the failed event in Cloud Object Storage bucket",
 			},
+			"verification_type": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validate.InvokeValidator("ibm_en_destination_custom_email", "verification_type"),
+				Description:  "Verification Method spf/dkim.",
+			},
 			"config": {
 				Type:        schema.TypeList,
 				MaxItems:    1,
@@ -60,7 +67,6 @@ func ResourceIBMEnCustomEmailDestination() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"params": {
 							Type:     schema.TypeList,
-							MaxItems: 1,
 							Optional: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
@@ -68,6 +74,54 @@ func ResourceIBMEnCustomEmailDestination() *schema.Resource {
 										Type:        schema.TypeString,
 										Required:    true,
 										Description: "Domain for the Custom Domain Email Destination",
+									},
+									"dkim": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "The DKIM attributes.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"public_key": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "dkim public key.",
+												},
+												"selector": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "dkim selector.",
+												},
+												"verification": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "dkim verification.",
+												},
+											},
+										},
+									},
+									"spf": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "The SPF attributes.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"txt_name": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "spf text name.",
+												},
+												"txt_value": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "spf text value.",
+												},
+												"verification": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "spf verification.",
+												},
+											},
+										},
 									},
 								},
 							},
@@ -100,10 +154,29 @@ func ResourceIBMEnCustomEmailDestination() *schema.Resource {
 	}
 }
 
+func ResourceIBMEnEmailDestinationValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "verification_type",
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			AllowedValues:              "spf,dkim",
+			MinValueLength:             1,
+		},
+	)
+
+	resourceValidator := validate.ResourceValidator{ResourceName: "ibm_en_destination_custom_email", Schema: validateSchema}
+	return &resourceValidator
+}
+
 func resourceIBMEnCustomEmailDestinationCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_custom_email", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.CreateDestinationOptions{}
@@ -122,9 +195,11 @@ func resourceIBMEnCustomEmailDestinationCreate(context context.Context, d *schem
 		options.SetConfig(&config)
 	}
 
-	result, response, err := enClient.CreateDestinationWithContext(context, options)
+	result, _, err := enClient.CreateDestinationWithContext(context, options)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("CreateDestinationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateDestinationWithContext failed: %s", err.Error()), "ibm_en_destination_custom_email", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *options.InstanceID, *result.ID))
@@ -135,14 +210,17 @@ func resourceIBMEnCustomEmailDestinationCreate(context context.Context, d *schem
 func resourceIBMEnCustomEmailDestinationRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_custom_email", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.GetDestinationOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_custom_email", "read")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
@@ -154,7 +232,9 @@ func resourceIBMEnCustomEmailDestinationRead(context context.Context, d *schema.
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("GetDestinationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetDestinationWithContext failed: %s", err.Error()), "ibm_en_destination_custom_email", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("instance_guid", options.InstanceID); err != nil {
@@ -206,18 +286,28 @@ func resourceIBMEnCustomEmailDestinationRead(context context.Context, d *schema.
 func resourceIBMEnCustomEmailDestinationUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_custom_email", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.UpdateDestinationOptions{}
+	verifyCustomEmailDestinationConfiguration := &en.UpdateVerifyDestinationOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_custom_email", "update")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
 	options.SetID(parts[1])
+
+	verifyCustomEmailDestinationConfiguration.SetInstanceID(parts[0])
+	verifyCustomEmailDestinationConfiguration.SetID(parts[1])
+	hasChangeverification := false
+
+	verifyCustomEmailDestinationConfiguration.SetType(d.Get("verification_type").(string))
 
 	if ok := d.HasChanges("name", "description", "collect_failed_events", "config"); ok {
 		options.SetName(d.Get("name").(string))
@@ -231,13 +321,27 @@ func resourceIBMEnCustomEmailDestinationUpdate(context context.Context, d *schem
 		}
 
 		destinationtype := d.Get("type").(string)
+
+		if d.HasChange("verification_type") {
+			verifyCustomEmailDestinationConfiguration.SetType(d.Get("verification_type").(string))
+			hasChangeverification = true
+		}
 		if _, ok := d.GetOk("config"); ok {
 			config := CustomEmaildestinationConfigMapToDestinationConfig(d.Get("config.0.params.0").(map[string]interface{}), destinationtype)
 			options.SetConfig(&config)
 		}
-		_, response, err := enClient.UpdateDestinationWithContext(context, options)
+		_, _, err := enClient.UpdateDestinationWithContext(context, options)
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("UpdateDestinationWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateDestinationWithContext failed: %s", err.Error()), "ibm_en_destination_custom_email", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
+		}
+
+		if hasChangeverification {
+			_, _, err = enClient.UpdateVerifyDestinationWithContext(context, verifyCustomEmailDestinationConfiguration)
+			if err != nil {
+				return diag.FromErr(err)
+			}
 		}
 
 		return resourceIBMEnCustomEmailDestinationRead(context, d, meta)
@@ -249,14 +353,17 @@ func resourceIBMEnCustomEmailDestinationUpdate(context context.Context, d *schem
 func resourceIBMEnCustomEmailDestinationDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_custom_email", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.DeleteDestinationOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_custom_email", "delete")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
@@ -268,7 +375,9 @@ func resourceIBMEnCustomEmailDestinationDelete(context context.Context, d *schem
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("DeleteDestinationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteDestinationWithContext failed: %s", err.Error()), "ibm_en_destination_custom_email", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")
@@ -282,7 +391,44 @@ func CustomEmaildestinationConfigMapToDestinationConfig(configParams map[string]
 		params.Domain = core.StringPtr(configParams["domain"].(string))
 	}
 
+	if configParams["dkim"] != nil && len(configParams["dkim"].([]interface{})) > 0 {
+		DkimModel, _ := resourceIBMEnDestinationMapToDkimAttributes(configParams["dkim"].([]interface{})[0].(map[string]interface{}))
+		params.Dkim = &DkimModel
+	}
+	if configParams["spf"] != nil && len(configParams["spf"].([]interface{})) > 0 {
+		SpfModel, _ := resourceIBMEnDestinationMapToSpfAttributes(configParams["spf"].([]interface{})[0].(map[string]interface{}))
+		params.Spf = &SpfModel
+	}
+
 	destinationConfig := new(en.DestinationConfig)
 	destinationConfig.Params = params
 	return *destinationConfig
+}
+
+func resourceIBMEnDestinationMapToDkimAttributes(modelMap map[string]interface{}) (en.DkimAttributes, error) {
+	model := new(en.DkimAttributes)
+	if modelMap["public_key"] != nil && modelMap["public_key"].(string) != "" {
+		model.PublicKey = core.StringPtr(modelMap["public_key"].(string))
+	}
+	if modelMap["selector"] != nil && modelMap["selector"].(string) != "" {
+		model.Selector = core.StringPtr(modelMap["selector"].(string))
+	}
+	if modelMap["verification"] != nil && modelMap["verification"].(string) != "" {
+		model.Verification = core.StringPtr(modelMap["verification"].(string))
+	}
+	return *model, nil
+}
+
+func resourceIBMEnDestinationMapToSpfAttributes(modelMap map[string]interface{}) (en.SpfAttributes, error) {
+	model := new(en.SpfAttributes)
+	if modelMap["txt_name"] != nil && modelMap["txt_name"].(string) != "" {
+		model.TxtName = core.StringPtr(modelMap["txt_name"].(string))
+	}
+	if modelMap["txt_value"] != nil && modelMap["txt_value"].(string) != "" {
+		model.TxtValue = core.StringPtr(modelMap["txt_value"].(string))
+	}
+	if modelMap["verification"] != nil && modelMap["verification"].(string) != "" {
+		model.Verification = core.StringPtr(modelMap["verification"].(string))
+	}
+	return *model, nil
 }

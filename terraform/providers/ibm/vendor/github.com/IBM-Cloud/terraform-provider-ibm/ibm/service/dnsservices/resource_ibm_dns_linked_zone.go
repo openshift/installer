@@ -120,12 +120,10 @@ func resourceIBMDNSLinkedZoneCreate(ctx context.Context, d *schema.ResourceData,
 	}
 	ownerInstanceID := d.Get(DnsLinkedZoneOwnerInstanceID).(string)
 	ownerZoneID := d.Get(DnsLinkedZoneOwnerZoneID).(string)
-	createLinkedZoneOptions := sess.NewCreateLinkedZoneOptions(instanceID)
+	createLinkedZoneOptions := sess.NewCreateLinkedZoneOptions(instanceID, ownerInstanceID, ownerZoneID)
 
 	createLinkedZoneOptions.SetDescription(description)
 	createLinkedZoneOptions.SetLabel(label)
-	createLinkedZoneOptions.SetOwnerInstanceID(ownerInstanceID)
-	createLinkedZoneOptions.SetOwnerZoneID(ownerZoneID)
 	mk := "dns_linked_zone_" + instanceID
 	conns.IbmMutexKV.Lock(mk)
 	defer conns.IbmMutexKV.Unlock(mk)

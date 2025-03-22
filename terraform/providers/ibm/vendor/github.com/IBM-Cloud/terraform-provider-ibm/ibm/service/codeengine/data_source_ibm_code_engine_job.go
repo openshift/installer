@@ -1,6 +1,10 @@
 // Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.94.1-71478489-20240820-161623
+ */
+
 package codeengine
 
 import (
@@ -8,12 +12,12 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/code-engine-go-sdk/codeenginev2"
+	"github.com/IBM/go-sdk-core/v5/core"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func DataSourceIbmCodeEngineJob() *schema.Resource {
@@ -40,6 +44,45 @@ func DataSourceIbmCodeEngineJob() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Reference to a build run that is associated with the job.",
+			},
+			"computed_env_variables": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "References to config maps, secrets or literal values, which are defined and set by Code Engine and are exposed as environment variables in the job run.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"key": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The key to reference as environment variable.",
+						},
+						"name": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The name of the environment variable.",
+						},
+						"prefix": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A prefix that can be added to all keys of a full secret or config map reference.",
+						},
+						"reference": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The name of the secret or config map.",
+						},
+						"type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Specify the type of the environment variable.",
+						},
+						"value": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The literal value of the environment variable.",
+						},
+					},
+				},
 			},
 			"created_at": {
 				Type:        schema.TypeString,
@@ -217,7 +260,7 @@ func DataSourceIbmCodeEngineJob() *schema.Resource {
 func dataSourceIbmCodeEngineJobRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_job", "read")
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_job", "read", "initialize-client")
 		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
 		return tfErr.GetDiag()
 	}
@@ -236,162 +279,189 @@ func dataSourceIbmCodeEngineJobRead(context context.Context, d *schema.ResourceD
 
 	d.SetId(fmt.Sprintf("%s/%s", *getJobOptions.ProjectID, *getJobOptions.Name))
 
-	if err = d.Set("build", job.Build); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting build: %s", err), "(Data) ibm_code_engine_job", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(job.Build) {
+		if err = d.Set("build", job.Build); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting build: %s", err), "(Data) ibm_code_engine_job", "read", "set-build").GetDiag()
+		}
 	}
 
-	if err = d.Set("build_run", job.BuildRun); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting build_run: %s", err), "(Data) ibm_code_engine_job", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(job.BuildRun) {
+		if err = d.Set("build_run", job.BuildRun); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting build_run: %s", err), "(Data) ibm_code_engine_job", "read", "set-build_run").GetDiag()
+		}
 	}
 
-	if err = d.Set("created_at", job.CreatedAt); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting created_at: %s", err), "(Data) ibm_code_engine_job", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(job.ComputedEnvVariables) {
+		computedEnvVariables := []map[string]interface{}{}
+		for _, computedEnvVariablesItem := range job.ComputedEnvVariables {
+			computedEnvVariablesItemMap, err := DataSourceIbmCodeEngineJobEnvVarToMap(&computedEnvVariablesItem) // #nosec G601
+			if err != nil {
+				return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_job", "read", "computed_env_variables-to-map").GetDiag()
+			}
+			computedEnvVariables = append(computedEnvVariables, computedEnvVariablesItemMap)
+		}
+		if err = d.Set("computed_env_variables", computedEnvVariables); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting computed_env_variables: %s", err), "(Data) ibm_code_engine_job", "read", "set-computed_env_variables").GetDiag()
+		}
+	}
+
+	if !core.IsNil(job.CreatedAt) {
+		if err = d.Set("created_at", job.CreatedAt); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting created_at: %s", err), "(Data) ibm_code_engine_job", "read", "set-created_at").GetDiag()
+		}
 	}
 
 	if err = d.Set("entity_tag", job.EntityTag); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting entity_tag: %s", err), "(Data) ibm_code_engine_job", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting entity_tag: %s", err), "(Data) ibm_code_engine_job", "read", "set-entity_tag").GetDiag()
 	}
 
-	if err = d.Set("href", job.Href); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting href: %s", err), "(Data) ibm_code_engine_job", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(job.Href) {
+		if err = d.Set("href", job.Href); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting href: %s", err), "(Data) ibm_code_engine_job", "read", "set-href").GetDiag()
+		}
 	}
 
-	if err = d.Set("job_id", job.ID); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting job_id: %s", err), "(Data) ibm_code_engine_job", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(job.ID) {
+		if err = d.Set("job_id", job.ID); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting job_id: %s", err), "(Data) ibm_code_engine_job", "read", "set-job_id").GetDiag()
+		}
 	}
 
 	if err = d.Set("image_reference", job.ImageReference); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting image_reference: %s", err), "(Data) ibm_code_engine_job", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting image_reference: %s", err), "(Data) ibm_code_engine_job", "read", "set-image_reference").GetDiag()
 	}
 
-	if err = d.Set("image_secret", job.ImageSecret); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting image_secret: %s", err), "(Data) ibm_code_engine_job", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(job.ImageSecret) {
+		if err = d.Set("image_secret", job.ImageSecret); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting image_secret: %s", err), "(Data) ibm_code_engine_job", "read", "set-image_secret").GetDiag()
+		}
 	}
 
-	if err = d.Set("region", job.Region); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting region: %s", err), "(Data) ibm_code_engine_job", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(job.Region) {
+		if err = d.Set("region", job.Region); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting region: %s", err), "(Data) ibm_code_engine_job", "read", "set-region").GetDiag()
+		}
 	}
 
-	if err = d.Set("resource_type", job.ResourceType); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting resource_type: %s", err), "(Data) ibm_code_engine_job", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(job.ResourceType) {
+		if err = d.Set("resource_type", job.ResourceType); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting resource_type: %s", err), "(Data) ibm_code_engine_job", "read", "set-resource_type").GetDiag()
+		}
 	}
 
-	if err = d.Set("run_as_user", flex.IntValue(job.RunAsUser)); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting run_as_user: %s", err), "(Data) ibm_code_engine_job", "read")
-		return tfErr.GetDiag()
+	runArguments := []interface{}{}
+	for _, runArgumentsItem := range job.RunArguments {
+		runArguments = append(runArguments, runArgumentsItem)
+	}
+	if err = d.Set("run_arguments", runArguments); err != nil {
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting run_arguments: %s", err), "(Data) ibm_code_engine_job", "read", "set-run_arguments").GetDiag()
+	}
+
+	if !core.IsNil(job.RunAsUser) {
+		if err = d.Set("run_as_user", flex.IntValue(job.RunAsUser)); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting run_as_user: %s", err), "(Data) ibm_code_engine_job", "read", "set-run_as_user").GetDiag()
+		}
+	}
+
+	runCommands := []interface{}{}
+	for _, runCommandsItem := range job.RunCommands {
+		runCommands = append(runCommands, runCommandsItem)
+	}
+	if err = d.Set("run_commands", runCommands); err != nil {
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting run_commands: %s", err), "(Data) ibm_code_engine_job", "read", "set-run_commands").GetDiag()
 	}
 
 	runEnvVariables := []map[string]interface{}{}
-	if job.RunEnvVariables != nil {
-		for _, modelItem := range job.RunEnvVariables {
-			modelMap, err := dataSourceIbmCodeEngineJobEnvVarToMap(&modelItem) /* #nosec G601 */
-			if err != nil {
-				tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_job", "read")
-				return tfErr.GetDiag()
-			}
-			runEnvVariables = append(runEnvVariables, modelMap)
+	for _, runEnvVariablesItem := range job.RunEnvVariables {
+		runEnvVariablesItemMap, err := DataSourceIbmCodeEngineJobEnvVarToMap(&runEnvVariablesItem) // #nosec G601
+		if err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_job", "read", "run_env_variables-to-map").GetDiag()
 		}
+		runEnvVariables = append(runEnvVariables, runEnvVariablesItemMap)
 	}
 	if err = d.Set("run_env_variables", runEnvVariables); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting run_env_variables: %s", err), "(Data) ibm_code_engine_job", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting run_env_variables: %s", err), "(Data) ibm_code_engine_job", "read", "set-run_env_variables").GetDiag()
 	}
 
 	if err = d.Set("run_mode", job.RunMode); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting run_mode: %s", err), "(Data) ibm_code_engine_job", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting run_mode: %s", err), "(Data) ibm_code_engine_job", "read", "set-run_mode").GetDiag()
 	}
 
-	if err = d.Set("run_service_account", job.RunServiceAccount); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting run_service_account: %s", err), "(Data) ibm_code_engine_job", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(job.RunServiceAccount) {
+		if err = d.Set("run_service_account", job.RunServiceAccount); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting run_service_account: %s", err), "(Data) ibm_code_engine_job", "read", "set-run_service_account").GetDiag()
+		}
 	}
 
 	runVolumeMounts := []map[string]interface{}{}
-	if job.RunVolumeMounts != nil {
-		for _, modelItem := range job.RunVolumeMounts {
-			modelMap, err := dataSourceIbmCodeEngineJobVolumeMountToMap(&modelItem) /* #nosec G601 */
-			if err != nil {
-				tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_job", "read")
-				return tfErr.GetDiag()
-			}
-			runVolumeMounts = append(runVolumeMounts, modelMap)
+	for _, runVolumeMountsItem := range job.RunVolumeMounts {
+		runVolumeMountsItemMap, err := DataSourceIbmCodeEngineJobVolumeMountToMap(&runVolumeMountsItem) // #nosec G601
+		if err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_job", "read", "run_volume_mounts-to-map").GetDiag()
 		}
+		runVolumeMounts = append(runVolumeMounts, runVolumeMountsItemMap)
 	}
 	if err = d.Set("run_volume_mounts", runVolumeMounts); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting run_volume_mounts: %s", err), "(Data) ibm_code_engine_job", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting run_volume_mounts: %s", err), "(Data) ibm_code_engine_job", "read", "set-run_volume_mounts").GetDiag()
 	}
 
 	if err = d.Set("scale_array_spec", job.ScaleArraySpec); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting scale_array_spec: %s", err), "(Data) ibm_code_engine_job", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting scale_array_spec: %s", err), "(Data) ibm_code_engine_job", "read", "set-scale_array_spec").GetDiag()
 	}
 
 	if err = d.Set("scale_cpu_limit", job.ScaleCpuLimit); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting scale_cpu_limit: %s", err), "(Data) ibm_code_engine_job", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting scale_cpu_limit: %s", err), "(Data) ibm_code_engine_job", "read", "set-scale_cpu_limit").GetDiag()
 	}
 
 	if err = d.Set("scale_ephemeral_storage_limit", job.ScaleEphemeralStorageLimit); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting scale_ephemeral_storage_limit: %s", err), "(Data) ibm_code_engine_job", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting scale_ephemeral_storage_limit: %s", err), "(Data) ibm_code_engine_job", "read", "set-scale_ephemeral_storage_limit").GetDiag()
 	}
 
-	if err = d.Set("scale_max_execution_time", flex.IntValue(job.ScaleMaxExecutionTime)); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting scale_max_execution_time: %s", err), "(Data) ibm_code_engine_job", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(job.ScaleMaxExecutionTime) {
+		if err = d.Set("scale_max_execution_time", flex.IntValue(job.ScaleMaxExecutionTime)); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting scale_max_execution_time: %s", err), "(Data) ibm_code_engine_job", "read", "set-scale_max_execution_time").GetDiag()
+		}
 	}
 
 	if err = d.Set("scale_memory_limit", job.ScaleMemoryLimit); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting scale_memory_limit: %s", err), "(Data) ibm_code_engine_job", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting scale_memory_limit: %s", err), "(Data) ibm_code_engine_job", "read", "set-scale_memory_limit").GetDiag()
 	}
 
-	if err = d.Set("scale_retry_limit", flex.IntValue(job.ScaleRetryLimit)); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting scale_retry_limit: %s", err), "(Data) ibm_code_engine_job", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(job.ScaleRetryLimit) {
+		if err = d.Set("scale_retry_limit", flex.IntValue(job.ScaleRetryLimit)); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting scale_retry_limit: %s", err), "(Data) ibm_code_engine_job", "read", "set-scale_retry_limit").GetDiag()
+		}
 	}
 
 	return nil
 }
 
-func dataSourceIbmCodeEngineJobEnvVarToMap(model *codeenginev2.EnvVar) (map[string]interface{}, error) {
+func DataSourceIbmCodeEngineJobEnvVarToMap(model *codeenginev2.EnvVar) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Key != nil {
-		modelMap["key"] = model.Key
+		modelMap["key"] = *model.Key
 	}
 	if model.Name != nil {
-		modelMap["name"] = model.Name
+		modelMap["name"] = *model.Name
 	}
 	if model.Prefix != nil {
-		modelMap["prefix"] = model.Prefix
+		modelMap["prefix"] = *model.Prefix
 	}
 	if model.Reference != nil {
-		modelMap["reference"] = model.Reference
+		modelMap["reference"] = *model.Reference
 	}
-	modelMap["type"] = model.Type
+	modelMap["type"] = *model.Type
 	if model.Value != nil {
-		modelMap["value"] = model.Value
+		modelMap["value"] = *model.Value
 	}
 	return modelMap, nil
 }
 
-func dataSourceIbmCodeEngineJobVolumeMountToMap(model *codeenginev2.VolumeMount) (map[string]interface{}, error) {
+func DataSourceIbmCodeEngineJobVolumeMountToMap(model *codeenginev2.VolumeMount) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	modelMap["mount_path"] = model.MountPath
-	modelMap["name"] = model.Name
-	modelMap["reference"] = model.Reference
-	modelMap["type"] = model.Type
+	modelMap["mount_path"] = *model.MountPath
+	modelMap["name"] = *model.Name
+	modelMap["reference"] = *model.Reference
+	modelMap["type"] = *model.Type
 	return modelMap, nil
 }

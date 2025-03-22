@@ -13,6 +13,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/networking-go-sdk/dnssvcsv1"
 
 	"github.com/IBM/go-sdk-core/v5/core"
@@ -21,25 +22,27 @@ import (
 )
 
 const (
-	ibmDNSCustomResolver        = "ibm_dns_custom_resolver"
-	pdnsCustomResolvers         = "custom_resolvers"
-	pdnsCustomResolverLocations = "locations"
-	pdnsCRId                    = "custom_resolver_id"
-	pdnsCRName                  = "name"
-	pdnsCRDescription           = "description"
-	pdnsCRHealth                = "health"
-	pdnsCREnabled               = "enabled"
-	pdnsCRCreatedOn             = "created_on"
-	pdnsCRModifiedOn            = "modified_on"
-	pdnsCRLocationId            = "location_id"
-	pdnsCRLocationSubnetCrn     = "subnet_crn"
-	pdnsCRLocationEnabled       = "enabled"
-	pdnsCRLocationHealthy       = "healthy"
-	pdnsCRLocationDnsServerIp   = "dns_server_ip"
-	pdnsCustomResolverCritical  = "CRITICAL"
-	pdnsCustomResolverDegraded  = "DEGRADED"
-	pdnsCustomResolverHealthy   = "HEALTHY"
-	pdnsCRHighAvailability      = "high_availability"
+	ibmDNSCustomResolver         = "ibm_dns_custom_resolver"
+	pdnsCustomResolvers          = "custom_resolvers"
+	pdnsCustomResolverLocations  = "locations"
+	pdnsCRId                     = "custom_resolver_id"
+	pdnsCRName                   = "name"
+	pdnsCRDescription            = "description"
+	pdnsCRHealth                 = "health"
+	pdnsCREnabled                = "enabled"
+	pdnsCRCreatedOn              = "created_on"
+	pdnsCRModifiedOn             = "modified_on"
+	pdnsCRLocationId             = "location_id"
+	pdnsCRLocationSubnetCrn      = "subnet_crn"
+	pdnsCRLocationEnabled        = "enabled"
+	pdnsCRLocationHealthy        = "healthy"
+	pdnsCRLocationDnsServerIp    = "dns_server_ip"
+	pdnsCustomResolverCritical   = "CRITICAL"
+	pdnsCustomResolverDegraded   = "DEGRADED"
+	pdnsCustomResolverHealthy    = "HEALTHY"
+	pdnsCRHighAvailability       = "high_availability"
+	pdnsCRProfile                = "profile"
+	pdnsCRAllowDisruptiveUpdates = "allow_disruptive_updates"
 )
 
 func ResourceIBMPrivateDNSCustomResolver() *schema.Resource {
@@ -132,6 +135,19 @@ func ResourceIBMPrivateDNSCustomResolver() *schema.Resource {
 					},
 				},
 			},
+			pdnsCRProfile: {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "essential",
+				Description:  "The profile name of the custom resolver.",
+				ValidateFunc: validate.InvokeValidator(ibmDNSCustomResolver, pdnsCRProfile),
+			},
+			pdnsCRAllowDisruptiveUpdates: {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Whether a disruptive update is allowed for the custom resolver.",
+			},
 			pdnsCRForwardRules: {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -165,6 +181,36 @@ func ResourceIBMPrivateDNSCustomResolver() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
+						pdnsCRFRViews: {
+							Type:        schema.TypeList,
+							Description: "An array of views used by forwarding rules.",
+							Optional:    true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									pdnsCRFRVName: {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "Unique name of the view.",
+									},
+									pdnsCRFRVDescription: {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "Description of the view.",
+									},
+									pdnsCRFRVExpression: {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "Expression of the view.",
+									},
+									pdnsCRFRVForwardTo: {
+										Type:        schema.TypeList,
+										Required:    true,
+										Description: "The upstream DNS servers that the matching DNS queries will be forwarded to.",
+										Elem:        &schema.Schema{Type: schema.TypeString},
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -181,6 +227,21 @@ func ResourceIBMPrivateDNSCustomResolver() *schema.Resource {
 			},
 		},
 	}
+}
+
+func ResourceIBMPrivateDNSCustomResolverValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 pdnsCRProfile,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			AllowedValues:              "essential, advanced, premier",
+		},
+	)
+	resourceValidator := validate.ResourceValidator{ResourceName: ibmDNSCustomResolver, Schema: validateSchema}
+	return &resourceValidator
 }
 
 type location struct {
@@ -205,10 +266,11 @@ func resouceIBMPrivateDNSCustomResolverCreate(context context.Context, d *schema
 	if des, ok := d.GetOk(pdnsCRDescription); ok {
 		crDescription = des.(string)
 	}
+	crProfile := d.Get(pdnsCRProfile).(string)
 
-	customResolverOption := sess.NewCreateCustomResolverOptions(crn)
-	customResolverOption.SetName(crName)
+	customResolverOption := sess.NewCreateCustomResolverOptions(crn, crName)
 	customResolverOption.SetDescription(crDescription)
+	customResolverOption.SetProfile(crProfile)
 
 	cr_highaval := d.Get(pdnsCRHighAvailability).(bool)
 
@@ -294,6 +356,7 @@ func resouceIBMPrivateDNSCustomResolverRead(context context.Context, d *schema.R
 		forwardRule[pdnsCRFRType] = *instance.Type
 		forwardRule[pdnsCRFRMatch] = *instance.Match
 		forwardRule[pdnsCRFRForwardTo] = instance.ForwardTo
+		forwardRule[pdnsCRFRViews] = flattenPDNSFRViews(instance.Views)
 		forwardRules = append(forwardRules, forwardRule)
 	}
 	d.Set(pdnsInstanceID, crn)
@@ -304,6 +367,8 @@ func resouceIBMPrivateDNSCustomResolverRead(context context.Context, d *schema.R
 	d.Set(pdnsCREnabled, *result.Enabled)
 	d.Set(pdnsCustomResolverLocations, flattenPdnsCRLocations(result.Locations))
 	d.Set(pdnsCRForwardRules, forwardRules)
+	d.Set(pdnsCRProfile, *result.Profile)
+	d.Set(pdnsCRAllowDisruptiveUpdates, *result.AllowDisruptiveUpdates)
 	return nil
 }
 
@@ -331,7 +396,9 @@ func resouceIBMPrivateDNSCustomResolverUpdate(context context.Context, d *schema
 	if d.HasChange(pdnsCRName) ||
 		d.HasChange(pdnsCRDescription) ||
 		d.HasChange(pdnsCREnabled) ||
-		d.HasChange(pdnsCRHighAvailability) {
+		d.HasChange(pdnsCRHighAvailability) ||
+		d.HasChange(pdnsCRProfile) ||
+		d.HasChange(pdnsCRAllowDisruptiveUpdates) {
 
 		// Validation
 		if _, ok := d.GetOk(pdnsCustomResolverLocations); ok {
@@ -367,6 +434,14 @@ func resouceIBMPrivateDNSCustomResolverUpdate(context context.Context, d *schema
 		}
 		if !cr_enable {
 			opt.SetEnabled(false)
+		}
+		if des, ok := d.GetOk(pdnsCRProfile); ok {
+			crProfile := des.(string)
+			opt.SetProfile(crProfile)
+		}
+		if des, ok := d.GetOk(pdnsCRAllowDisruptiveUpdates); ok {
+			crDisruptiveUpdates := des.(bool)
+			opt.SetAllowDisruptiveUpdates(crDisruptiveUpdates)
 		}
 		result, resp, err := sess.UpdateCustomResolverWithContext(context, opt)
 		if err != nil || result == nil {
@@ -491,7 +566,7 @@ func resouceIBMPrivateDNSCustomResolverDelete(context context.Context, d *schema
 	optEnabled := sess.NewUpdateCustomResolverOptions(crn, customResolverID)
 	optEnabled.SetEnabled(false)
 	result, resp, errEnabled := sess.UpdateCustomResolverWithContext(context, optEnabled)
-	if err != nil || result == nil {
+	if errEnabled != nil || result == nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error updating the custom resolver to disable before deleting %s:%s", errEnabled, resp))
 	}
 
@@ -644,8 +719,7 @@ func addCRLocation(meta interface{}, instanceID string, customResolverID string,
 	if err != nil {
 		return "", diag.FromErr(err)
 	}
-	opt := sess.NewAddCustomResolverLocationOptions(instanceID, customResolverID)
-	opt.SetSubnetCrn(subnet)
+	opt := sess.NewAddCustomResolverLocationOptions(instanceID, customResolverID, subnet)
 	opt.SetEnabled(false)
 	result, resp, err := sess.AddCustomResolverLocation(opt)
 	locationID := *result.ID

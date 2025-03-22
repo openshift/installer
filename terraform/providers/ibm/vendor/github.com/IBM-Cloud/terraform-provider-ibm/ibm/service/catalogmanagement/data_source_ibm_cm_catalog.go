@@ -168,11 +168,39 @@ func DataSourceIBMCmCatalog() *schema.Resource {
 							Description: "-> true - Include all of the public catalog when filtering. Further settings will specifically exclude some offerings. false - Exclude all of the public catalog when filtering. Further settings will specifically include some offerings.",
 						},
 						"category_filters": &schema.Schema{
-							Type:        schema.TypeMap,
+							Type:        schema.TypeList,
 							Computed:    true,
-							Description: "Filter against offering properties.",
-							Elem: &schema.Schema{
-								Type: schema.TypeString,
+							Description: "Filter against offering categories with dynamic keys.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"category_name": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Name of this category",
+									},
+									"include": &schema.Schema{
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "Whether to include the category in the catalog filter.",
+									},
+									"filter": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "Filter terms related to the category.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"filter_terms": &schema.Schema{
+													Type:        schema.TypeList,
+													Computed:    true,
+													Description: "List of filter terms for the category.",
+													Elem: &schema.Schema{
+														Type: schema.TypeString,
+													},
+												},
+											},
+										},
+									},
+								},
 							},
 						},
 						"id_filters": &schema.Schema{
@@ -544,8 +572,15 @@ func dataSourceIBMCmCatalogFiltersToMap(model *catalogmanagementv1.Filters) (map
 		modelMap["include_all"] = *model.IncludeAll
 	}
 	if model.CategoryFilters != nil {
-		categoryFiltersMap := make(map[string]interface{}, len(model.CategoryFilters))
-		modelMap["category_filters"] = flex.Flatten(categoryFiltersMap)
+		var categoryFiltersList []map[string]interface{}
+		for k, category := range model.CategoryFilters {
+			categoryFilterMap, err := dataSourceIBMCmCatalogCategoryFilterToMap(k, &category)
+			if err != nil {
+				return modelMap, err
+			}
+			categoryFiltersList = append(categoryFiltersList, categoryFilterMap)
+		}
+		modelMap["category_filters"] = categoryFiltersList
 	}
 	if model.IDFilters != nil {
 		idFiltersMap, err := dataSourceIBMCmCatalogIDFilterToMap(model.IDFilters)
@@ -557,8 +592,11 @@ func dataSourceIBMCmCatalogFiltersToMap(model *catalogmanagementv1.Filters) (map
 	return modelMap, nil
 }
 
-func dataSourceIBMCmCatalogCategoryFilterToMap(model *catalogmanagementv1.CategoryFilter) (map[string]interface{}, error) {
+func dataSourceIBMCmCatalogCategoryFilterToMap(key string, model *catalogmanagementv1.CategoryFilter) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
+	if key != "" {
+		modelMap["category_name"] = key
+	}
 	if model.Include != nil {
 		modelMap["include"] = *model.Include
 	}

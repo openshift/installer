@@ -283,7 +283,7 @@ func dataSourceIBMIsFloatingIpsID(d *schema.ResourceData) string {
 	return time.Now().UTC().String()
 }
 
-func dataSourceFloatingIPCollectionFlattenFirst(result vpcv1.FloatingIPCollectionFirst) (finalList []map[string]interface{}) {
+func dataSourceFloatingIPCollectionFlattenFirst(result vpcv1.PageLink) (finalList []map[string]interface{}) {
 	finalList = []map[string]interface{}{}
 	finalMap := dataSourceFloatingIPCollectionFirstToMap(result)
 	finalList = append(finalList, finalMap)
@@ -291,7 +291,7 @@ func dataSourceFloatingIPCollectionFlattenFirst(result vpcv1.FloatingIPCollectio
 	return finalList
 }
 
-func dataSourceFloatingIPCollectionFirstToMap(firstItem vpcv1.FloatingIPCollectionFirst) (firstMap map[string]interface{}) {
+func dataSourceFloatingIPCollectionFirstToMap(firstItem vpcv1.PageLink) (firstMap map[string]interface{}) {
 	firstMap = map[string]interface{}{}
 
 	if firstItem.Href != nil {
@@ -534,7 +534,7 @@ func dataSourceFloatingIPCollectionFloatingIpsZoneToMap(zoneItem vpcv1.ZoneRefer
 	return zoneMap
 }
 
-func dataSourceFloatingIPCollectionFlattenNext(result vpcv1.FloatingIPCollectionNext) (finalList []map[string]interface{}) {
+func dataSourceFloatingIPCollectionFlattenNext(result vpcv1.PageLink) (finalList []map[string]interface{}) {
 	finalList = []map[string]interface{}{}
 	finalMap := dataSourceFloatingIPCollectionNextToMap(result)
 	finalList = append(finalList, finalMap)
@@ -542,7 +542,7 @@ func dataSourceFloatingIPCollectionFlattenNext(result vpcv1.FloatingIPCollection
 	return finalList
 }
 
-func dataSourceFloatingIPCollectionNextToMap(nextItem vpcv1.FloatingIPCollectionNext) (nextMap map[string]interface{}) {
+func dataSourceFloatingIPCollectionNextToMap(nextItem vpcv1.PageLink) (nextMap map[string]interface{}) {
 	nextMap = map[string]interface{}{}
 
 	if nextItem.Href != nil {

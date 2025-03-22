@@ -90,25 +90,25 @@ func resourceEnvironmentCreate(d *schema.ResourceData, meta interface{}) error {
 	guid := d.Get("guid").(string)
 	appconfigClient, err := getAppConfigClient(meta, guid)
 	if err != nil {
-		return err
+		return flex.FmtErrorf(fmt.Sprintf("%s", err))
 	}
 	options := &appconfigurationv1.CreateEnvironmentOptions{}
 
 	options.SetName(d.Get("name").(string))
 	options.SetEnvironmentID(d.Get("environment_id").(string))
-	if _, ok := d.GetOk("description"); ok {
+	if _, ok := GetFieldExists(d, "description"); ok {
 		options.SetDescription(d.Get("description").(string))
 	}
-	if _, ok := d.GetOk("tags"); ok {
+	if _, ok := GetFieldExists(d, "tags"); ok {
 		options.SetTags(d.Get("tags").(string))
 	}
-	if _, ok := d.GetOk("color_code"); ok {
+	if _, ok := GetFieldExists(d, "color_code"); ok {
 		options.SetColorCode(d.Get("color_code").(string))
 	}
 	_, response, err := appconfigClient.CreateEnvironment(options)
 
 	if err != nil {
-		return fmt.Errorf("[DEBUG] CreateEnvironment failed %s\n%s", err, response)
+		return flex.FmtErrorf("[ERROR] CreateEnvironment failed %s\n%s", err, response)
 	}
 	d.SetId(fmt.Sprintf("%s/%s", guid, *options.EnvironmentID))
 
@@ -123,26 +123,26 @@ func resourceEnvironmentUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 		appconfigClient, err := getAppConfigClient(meta, parts[0])
 		if err != nil {
-			return err
+			return flex.FmtErrorf(fmt.Sprintf("%s", err))
 		}
 
 		options := &appconfigurationv1.UpdateEnvironmentOptions{}
 
 		options.SetName(d.Get("name").(string))
 		options.SetEnvironmentID(d.Get("environment_id").(string))
-		if _, ok := d.GetOk("description"); ok {
+		if _, ok := GetFieldExists(d, "description"); ok {
 			options.SetDescription(d.Get("description").(string))
 		}
-		if _, ok := d.GetOk("tags"); ok {
+		if _, ok := GetFieldExists(d, "tags"); ok {
 			options.SetTags(d.Get("tags").(string))
 		}
-		if _, ok := d.GetOk("color_code"); ok {
+		if _, ok := GetFieldExists(d, "color_code"); ok {
 			options.SetColorCode(d.Get("color_code").(string))
 		}
 
 		_, response, err := appconfigClient.UpdateEnvironment(options)
 		if err != nil {
-			return fmt.Errorf("[DEBUG] UpdateEnvironment failed %s\n%s", err, response)
+			return flex.FmtErrorf("[ERROR] UpdateEnvironment failed %s\n%s", err, response)
 		}
 		return resourceEnvironmentRead(d, meta)
 	}
@@ -156,7 +156,7 @@ func resourceEnvironmentRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	appconfigClient, err := getAppConfigClient(meta, parts[0])
 	if err != nil {
-		return err
+		return flex.FmtErrorf(fmt.Sprintf("%s", err))
 	}
 
 	options := &appconfigurationv1.GetEnvironmentOptions{}
@@ -167,47 +167,47 @@ func resourceEnvironmentRead(d *schema.ResourceData, meta interface{}) error {
 	result, response, err := appconfigClient.GetEnvironment(options)
 
 	if err != nil {
-		return fmt.Errorf("[DEBUG] GetEnvironment failed %s\n%s", err, response)
+		return flex.FmtErrorf("[ERROR] GetEnvironment failed %s\n%s", err, response)
 	}
 	d.Set("guid", parts[0])
 	if result.Name != nil {
 		if err = d.Set("name", result.Name); err != nil {
-			return fmt.Errorf("[ERROR] Error setting name: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting name: %s", err)
 		}
 	}
 	if result.EnvironmentID != nil {
 		if err = d.Set("environment_id", result.EnvironmentID); err != nil {
-			return fmt.Errorf("[ERROR] Error setting environment_id: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting environment_id: %s", err)
 		}
 	}
 	if result.Description != nil {
 		if err = d.Set("description", result.Description); err != nil {
-			return fmt.Errorf("[ERROR] Error setting description: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting description: %s", err)
 		}
 	}
 	if result.Tags != nil {
 		if err = d.Set("tags", result.Tags); err != nil {
-			return fmt.Errorf("[ERROR] Error setting tags: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting tags: %s", err)
 		}
 	}
 	if result.ColorCode != nil {
 		if err = d.Set("color_code", result.ColorCode); err != nil {
-			return fmt.Errorf("[ERROR] Error setting color_code: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting color_code: %s", err)
 		}
 	}
 	if result.CreatedTime != nil {
 		if err = d.Set("created_time", result.CreatedTime.String()); err != nil {
-			return fmt.Errorf("[ERROR] Error setting created_time: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting created_time: %s", err)
 		}
 	}
 	if result.UpdatedTime != nil {
 		if err = d.Set("updated_time", result.UpdatedTime.String()); err != nil {
-			return fmt.Errorf("[ERROR] Error setting updated_time: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting updated_time: %s", err)
 		}
 	}
 	if result.Href != nil {
 		if err = d.Set("href", result.Href); err != nil {
-			return fmt.Errorf("[ERROR] Error setting href: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting href: %s", err)
 		}
 	}
 	return nil
@@ -221,7 +221,7 @@ func resourceEnvironmentDelete(d *schema.ResourceData, meta interface{}) error {
 
 	appconfigClient, err := getAppConfigClient(meta, parts[0])
 	if err != nil {
-		return err
+		return flex.FmtErrorf(fmt.Sprintf("%s", err))
 	}
 
 	options := &appconfigurationv1.DeleteEnvironmentOptions{}
@@ -234,7 +234,7 @@ func resourceEnvironmentDelete(d *schema.ResourceData, meta interface{}) error {
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("[DEBUG] DeleteEnvironment failed %s\n%s", err, response)
+		return flex.FmtErrorf("[ERROR] DeleteEnvironment failed %s\n%s", err, response)
 	}
 	d.SetId("")
 	return nil

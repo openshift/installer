@@ -1,5 +1,9 @@
-// Copyright IBM Corp. 2023 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
+
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.96.0-d6dec9d7-20241008-212902
+ */
 
 package cdtoolchain
 
@@ -18,7 +22,7 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
-	"github.com/IBM/continuous-delivery-go-sdk/cdtoolchainv2"
+	"github.com/IBM/continuous-delivery-go-sdk/v2/cdtoolchainv2"
 	"github.com/IBM/go-sdk-core/v5/core"
 )
 
@@ -154,7 +158,9 @@ func ResourceIBMCdToolchainValidator() *validate.ResourceValidator {
 func resourceIBMCdToolchainCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain", "create", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	createToolchainOptions := &cdtoolchainv2.CreateToolchainOptions{}
@@ -165,10 +171,11 @@ func resourceIBMCdToolchainCreate(context context.Context, d *schema.ResourceDat
 		createToolchainOptions.SetDescription(d.Get("description").(string))
 	}
 
-	toolchainPost, response, err := cdToolchainClient.CreateToolchainWithContext(context, createToolchainOptions)
+	toolchainPost, _, err := cdToolchainClient.CreateToolchainWithContext(context, createToolchainOptions)
 	if err != nil {
-		log.Printf("[DEBUG] CreateToolchainWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateToolchainWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateToolchainWithContext failed: %s", err.Error()), "ibm_cd_toolchain", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(*toolchainPost.ID)
@@ -189,7 +196,9 @@ func resourceIBMCdToolchainCreate(context context.Context, d *schema.ResourceDat
 func resourceIBMCdToolchainRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain", "read", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getToolchainByIDOptions := &cdtoolchainv2.GetToolchainByIDOptions{}
@@ -216,8 +225,9 @@ func resourceIBMCdToolchainRead(context context.Context, d *schema.ResourceData,
 			d.SetId("")
 			return nil
 		}
-		log.Printf("[DEBUG] GetToolchainByIDWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetToolchainByIDWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetToolchainByIDWithContext failed: %s", err.Error()), "ibm_cd_toolchain", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	tags, err := flex.GetTagsUsingCRN(meta, *toolchain.CRN)
@@ -228,39 +238,50 @@ func resourceIBMCdToolchainRead(context context.Context, d *schema.ResourceData,
 	d.Set("tags", tags)
 
 	if err = d.Set("name", toolchain.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		err = fmt.Errorf("Error setting name: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain", "read", "set-name").GetDiag()
 	}
 	if !core.IsNil(toolchain.Description) {
 		if err = d.Set("description", toolchain.Description); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting description: %s", err))
+			err = fmt.Errorf("Error setting description: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain", "read", "set-description").GetDiag()
 		}
 	}
 	if err = d.Set("resource_group_id", toolchain.ResourceGroupID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting resource_group_id: %s", err))
+		err = fmt.Errorf("Error setting resource_group_id: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain", "read", "set-resource_group_id").GetDiag()
 	}
 	if err = d.Set("account_id", toolchain.AccountID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting account_id: %s", err))
+		err = fmt.Errorf("Error setting account_id: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain", "read", "set-account_id").GetDiag()
 	}
 	if err = d.Set("location", toolchain.Location); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting location: %s", err))
+		err = fmt.Errorf("Error setting location: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain", "read", "set-location").GetDiag()
 	}
 	if err = d.Set("crn", toolchain.CRN); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
+		err = fmt.Errorf("Error setting crn: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain", "read", "set-crn").GetDiag()
 	}
 	if err = d.Set("href", toolchain.Href); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
+		err = fmt.Errorf("Error setting href: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain", "read", "set-href").GetDiag()
 	}
 	if err = d.Set("ui_href", toolchain.UIHref); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting ui_href: %s", err))
+		err = fmt.Errorf("Error setting ui_href: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain", "read", "set-ui_href").GetDiag()
 	}
 	if err = d.Set("created_at", flex.DateTimeToString(toolchain.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
+		err = fmt.Errorf("Error setting created_at: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain", "read", "set-created_at").GetDiag()
 	}
 	if err = d.Set("updated_at", flex.DateTimeToString(toolchain.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
+		err = fmt.Errorf("Error setting updated_at: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain", "read", "set-updated_at").GetDiag()
 	}
 	if err = d.Set("created_by", toolchain.CreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_by: %s", err))
+		err = fmt.Errorf("Error setting created_by: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain", "read", "set-created_by").GetDiag()
 	}
 
 	return nil
@@ -269,7 +290,9 @@ func resourceIBMCdToolchainRead(context context.Context, d *schema.ResourceData,
 func resourceIBMCdToolchainUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain", "update", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	updateToolchainOptions := &cdtoolchainv2.UpdateToolchainOptions{}
@@ -300,11 +323,16 @@ func resourceIBMCdToolchainUpdate(context context.Context, d *schema.ResourceDat
 	}
 
 	if hasChange {
-		updateToolchainOptions.ToolchainPrototypePatch, _ = patchVals.AsPatch()
-		_, response, err := cdToolchainClient.UpdateToolchainWithContext(context, updateToolchainOptions)
+		// Fields with `nil` values are omitted from the generic map,
+		// so we need to re-add them to support removing arguments
+		// in merge-patch operations sent to the service.
+		updateToolchainOptions.ToolchainPrototypePatch = ResourceIBMCdToolchainToolchainPrototypePatchAsPatch(patchVals, d)
+
+		_, _, err = cdToolchainClient.UpdateToolchainWithContext(context, updateToolchainOptions)
 		if err != nil {
-			log.Printf("[DEBUG] UpdateToolchainWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("UpdateToolchainWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateToolchainWithContext failed: %s", err.Error()), "ibm_cd_toolchain", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -314,20 +342,39 @@ func resourceIBMCdToolchainUpdate(context context.Context, d *schema.ResourceDat
 func resourceIBMCdToolchainDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain", "delete", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	deleteToolchainOptions := &cdtoolchainv2.DeleteToolchainOptions{}
 
 	deleteToolchainOptions.SetToolchainID(d.Id())
 
-	response, err := cdToolchainClient.DeleteToolchainWithContext(context, deleteToolchainOptions)
+	_, err = cdToolchainClient.DeleteToolchainWithContext(context, deleteToolchainOptions)
 	if err != nil {
-		log.Printf("[DEBUG] DeleteToolchainWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteToolchainWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteToolchainWithContext failed: %s", err.Error()), "ibm_cd_toolchain", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")
 
 	return nil
+}
+
+func ResourceIBMCdToolchainToolchainPrototypePatchAsPatch(patchVals *cdtoolchainv2.ToolchainPrototypePatch, d *schema.ResourceData) map[string]interface{} {
+	patch, _ := patchVals.AsPatch()
+	var path string
+
+	path = "name"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["name"] = nil
+	}
+	path = "description"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["description"] = nil
+	}
+
+	return patch
 }

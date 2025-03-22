@@ -37,6 +37,7 @@ const (
 
 const (
 	DisableOutboundTrafficProtectionFlag = "disable_outbound_traffic_protection"
+	EnableSecureByDefaultFlag            = "enable_secure_by_default"
 )
 
 func ResourceIBMContainerVpcCluster() *schema.Resource {
@@ -51,6 +52,9 @@ func ResourceIBMContainerVpcCluster() *schema.Resource {
 		CustomizeDiff: customdiff.Sequence(
 			func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
 				return flex.ResourceTagsCustomizeDiff(diff)
+			},
+			func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+				return flex.OnlyInUpdateDiff([]string{EnableSecureByDefaultFlag}, diff)
 			},
 		),
 
@@ -355,6 +359,22 @@ func ResourceIBMContainerVpcCluster() *schema.Resource {
 				Optional:    true,
 				Default:     false,
 				Description: "Allow outbound connections to public destinations",
+			},
+
+			EnableSecureByDefaultFlag: {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Enable Secure-by-default on existing clusters (note: can be used on existing clusters)",
+				ValidateFunc: func(i interface{}, s string) (warnings []string, errors []error) {
+					v := i.(bool)
+					if !v {
+						// The field can only be true
+						errors = append(errors, fmt.Errorf("%s can be only true", s))
+						return warnings, errors
+					}
+
+					return warnings, errors
+				},
 			},
 
 			//Get Cluster info Request
@@ -746,8 +766,7 @@ func resourceIBMContainerVpcClusterUpdate(d *schema.ResourceData, meta interface
 		}
 	}
 
-	if d.HasChange(DisableOutboundTrafficProtectionFlag) {
-		outbound_traffic_protection := !d.Get(DisableOutboundTrafficProtectionFlag).(bool)
+	if d.HasChange(DisableOutboundTrafficProtectionFlag) || d.HasChange(EnableSecureByDefaultFlag) {
 		ClusterClient, err := meta.(conns.ClientSession).VpcContainerAPI()
 		if err != nil {
 			return err
@@ -758,9 +777,21 @@ func resourceIBMContainerVpcClusterUpdate(d *schema.ResourceData, meta interface
 			return err
 		}
 
-		if err := ClusterClient.VPCs().SetOutboundTrafficProtection(clusterID, outbound_traffic_protection, Env); err != nil {
-			return err
+		if d.HasChange(DisableOutboundTrafficProtectionFlag) {
+			outbound_traffic_protection := !d.Get(DisableOutboundTrafficProtectionFlag).(bool)
+			if err := ClusterClient.VPCs().SetOutboundTrafficProtection(clusterID, outbound_traffic_protection, Env); err != nil {
+				return err
+			}
 		}
+
+		if d.HasChange(EnableSecureByDefaultFlag) {
+			enableSecureByDefault := d.Get(EnableSecureByDefaultFlag).(bool)
+			if err := ClusterClient.VPCs().EnableSecureByDefault(clusterID, enableSecureByDefault, Env); err != nil {
+				return err
+			}
+
+		}
+
 	}
 
 	if (d.HasChange("kube_version") || d.HasChange("update_all_workers") || d.HasChange("patch_version") || d.HasChange("retry_patch_version")) && !d.IsNewResource() {

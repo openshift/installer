@@ -206,7 +206,7 @@ func dataSourceIbmSccReportRead(context context.Context, d *schema.ResourceData,
 		return diag.FromErr(flex.FmtErrorf("Error setting group_id: %s", err))
 	}
 
-	if err = d.Set("created_on", report.CreatedOn); err != nil {
+	if err = d.Set("created_on", flex.DateTimeToString(report.CreatedOn)); err != nil {
 		return diag.FromErr(flex.FmtErrorf("Error setting created_on: %s", err))
 	}
 
@@ -307,9 +307,9 @@ func dataSourceIbmSccReportAttachmentToMap(model *securityandcompliancecenterapi
 	if model.Schedule != nil {
 		modelMap["schedule"] = model.Schedule
 	}
-	if model.Scope != nil {
+	if model.Scopes != nil {
 		scope := []map[string]interface{}{}
-		for _, scopeItem := range model.Scope {
+		for _, scopeItem := range model.Scopes {
 			scopeItemMap, err := dataSourceIbmSccReportAttachmentScopeToMap(&scopeItem)
 			if err != nil {
 				return modelMap, err
@@ -321,7 +321,7 @@ func dataSourceIbmSccReportAttachmentToMap(model *securityandcompliancecenterapi
 	return modelMap, nil
 }
 
-func dataSourceIbmSccReportAttachmentScopeToMap(model *securityandcompliancecenterapiv3.AttachmentScope) (map[string]interface{}, error) {
+func dataSourceIbmSccReportAttachmentScopeToMap(model *securityandcompliancecenterapiv3.Scope) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ID != nil {
 		modelMap["id"] = model.ID
@@ -332,7 +332,7 @@ func dataSourceIbmSccReportAttachmentScopeToMap(model *securityandcompliancecent
 	if model.Properties != nil {
 		properties := []map[string]interface{}{}
 		for _, propertiesItem := range model.Properties {
-			propertiesItemMap, err := dataSourceIbmSccReportScopePropertyToMap(&propertiesItem)
+			propertiesItemMap, err := dataSourceIbmSccReportScopePropertyToMap(propertiesItem)
 			if err != nil {
 				return modelMap, err
 			}
@@ -343,13 +343,6 @@ func dataSourceIbmSccReportAttachmentScopeToMap(model *securityandcompliancecent
 	return modelMap, nil
 }
 
-func dataSourceIbmSccReportScopePropertyToMap(model *securityandcompliancecenterapiv3.ScopeProperty) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	if model.Name != nil {
-		modelMap["name"] = model.Name
-	}
-	if model.Value != nil {
-		modelMap["value"] = model.Value
-	}
-	return modelMap, nil
+func dataSourceIbmSccReportScopePropertyToMap(model securityandcompliancecenterapiv3.ScopePropertyIntf) (map[string]interface{}, error) {
+	return scopePropertiesToMap(model)
 }

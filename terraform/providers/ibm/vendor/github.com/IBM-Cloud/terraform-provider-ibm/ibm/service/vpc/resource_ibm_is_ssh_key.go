@@ -108,7 +108,17 @@ func ResourceIBMISSSHKey() *schema.Resource {
 				Computed:    true,
 				Description: "Resource group ID",
 			},
-
+			// missing schema
+			"href": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The URL for this key.",
+			},
+			"created_at": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The date and time that the key was created.",
+			},
 			flex.ResourceControllerURL: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -282,6 +292,12 @@ func keyGet(d *schema.ResourceData, meta interface{}, id string) error {
 	d.Set(isKeyType, *key.Type)
 	d.Set(isKeyFingerprint, *key.Fingerprint)
 	d.Set(isKeyLength, *key.Length)
+	if err = d.Set("created_at", flex.DateTimeToString(key.CreatedAt)); err != nil {
+		return fmt.Errorf("Error setting created_at: %s", err)
+	}
+	if err = d.Set("href", key.Href); err != nil {
+		return fmt.Errorf("Error setting href: %s", err)
+	}
 	tags, err := flex.GetGlobalTagsUsingCRN(meta, *key.CRN, "", isKeyUserTagType)
 	if err != nil {
 		log.Printf(

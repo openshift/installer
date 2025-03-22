@@ -15,7 +15,9 @@ import (
 
 const defaultClientID = "sarama"
 
-var validID = regexp.MustCompile(`\A[A-Za-z0-9._-]+\z`)
+// validClientID specifies the permitted characters for a client.id when
+// connecting to Kafka versions before 1.0.0 (KIP-190)
+var validClientID = regexp.MustCompile(`\A[A-Za-z0-9._-]+\z`)
 
 // Config is used to pass multiple configuration options to Sarama's constructors.
 type Config struct {
@@ -267,6 +269,13 @@ type Config struct {
 			// more sophisticated backoff strategies. This takes precedence over
 			// `Backoff` if set.
 			BackoffFunc func(retries, maxRetries int) time.Duration
+			// The maximum length of the bridging buffer between `input` and `retries` channels
+			// in AsyncProducer#retryHandler.
+			// The limit is to prevent this buffer from overflowing or causing OOM.
+			// Defaults to 0 for unlimited.
+			// Any value between 0 and 4096 is pushed to 4096.
+			// A zero or negative value indicates unlimited.
+			MaxBufferLength int
 		}
 
 		// Interceptors to be called when the producer dispatcher reads the
@@ -385,7 +394,7 @@ type Config struct {
 		// default is 250ms, since 0 causes the consumer to spin when no events are
 		// available. 100-500ms is a reasonable range for most cases. Kafka only
 		// supports precision up to milliseconds; nanoseconds will be truncated.
-		// Equivalent to the JVM's `fetch.wait.max.ms`.
+		// Equivalent to the JVM's `fetch.max.wait.ms`.
 		MaxWaitTime time.Duration
 
 		// The maximum amount of time the consumer expects a message takes to
@@ -521,7 +530,7 @@ func NewConfig() *Config {
 	c.Metadata.Full = true
 	c.Metadata.AllowAutoTopicCreation = true
 
-	c.Producer.MaxMessageBytes = 1000000
+	c.Producer.MaxMessageBytes = 1024 * 1024
 	c.Producer.RequiredAcks = WaitForLocal
 	c.Producer.Timeout = 10 * time.Second
 	c.Producer.Partitioner = NewHashPartitioner
@@ -846,8 +855,11 @@ func (c *Config) Validate() error {
 	switch {
 	case c.ChannelBufferSize < 0:
 		return ConfigurationError("ChannelBufferSize must be >= 0")
-	case !validID.MatchString(c.ClientID):
-		return ConfigurationError("ClientID is invalid")
+	}
+
+	// only validate clientID locally for Kafka versions before KIP-190 was implemented
+	if !c.Version.IsAtLeast(V1_0_0_0) && !validClientID.MatchString(c.ClientID) {
+		return ConfigurationError(fmt.Sprintf("ClientID value %q is not valid for Kafka versions before 1.0.0", c.ClientID))
 	}
 
 	return nil

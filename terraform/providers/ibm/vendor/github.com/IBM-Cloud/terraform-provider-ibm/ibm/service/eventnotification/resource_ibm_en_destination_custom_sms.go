@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -78,7 +79,9 @@ func ResourceIBMEnCustomSMSDestination() *schema.Resource {
 func resourceIBMEnCustomSMSDestinationCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_custom_sms", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.CreateDestinationOptions{}
@@ -91,14 +94,12 @@ func resourceIBMEnCustomSMSDestinationCreate(context context.Context, d *schema.
 	if _, ok := d.GetOk("description"); ok {
 		options.SetDescription(d.Get("description").(string))
 	}
-	// if _, ok := d.GetOk("config"); ok {
-	// 	config := SlackdestinationConfigMapToDestinationConfig(d.Get("config.0.params.0").(map[string]interface{}), destinationtype)
-	// 	options.SetConfig(&config)
-	// }
 
-	result, response, err := enClient.CreateDestinationWithContext(context, options)
+	result, _, err := enClient.CreateDestinationWithContext(context, options)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("CreateDestinationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateDestinationWithContext failed: %s", err.Error()), "ibm_en_destination_custom_sms", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *options.InstanceID, *result.ID))
@@ -109,14 +110,17 @@ func resourceIBMEnCustomSMSDestinationCreate(context context.Context, d *schema.
 func resourceIBMEnCustomSMSDestinationRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_custom_sms", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.GetDestinationOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_custom_sms", "read")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
@@ -128,7 +132,9 @@ func resourceIBMEnCustomSMSDestinationRead(context context.Context, d *schema.Re
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("GetDestinationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetDestinationWithContext failed: %s", err.Error()), "ibm_en_destination_custom_sms", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("instance_guid", options.InstanceID); err != nil {
@@ -155,13 +161,6 @@ func resourceIBMEnCustomSMSDestinationRead(context context.Context, d *schema.Re
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting CollectFailedEvents: %s", err))
 	}
 
-	// if result.Config != nil {
-	// 	err = d.Set("config", enWebhookDestinationFlattenConfig(*result.Config))
-	// 	if err != nil {
-	// 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting config %s", err))
-	// 	}
-	// }
-
 	if err = d.Set("updated_at", flex.DateTimeToString(result.UpdatedAt)); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting updated_at: %s", err))
 	}
@@ -181,14 +180,17 @@ func resourceIBMEnCustomSMSDestinationRead(context context.Context, d *schema.Re
 func resourceIBMEnCustomSMSDestinationUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_custom_sms", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.UpdateDestinationOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_custom_sms", "update")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
@@ -203,9 +205,11 @@ func resourceIBMEnCustomSMSDestinationUpdate(context context.Context, d *schema.
 		if _, ok := d.GetOk("collect_failed_events"); ok {
 			options.SetCollectFailedEvents(d.Get("collect_failed_events").(bool))
 		}
-		_, response, err := enClient.UpdateDestinationWithContext(context, options)
+		_, _, err := enClient.UpdateDestinationWithContext(context, options)
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("UpdateDestinationWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateDestinationWithContext failed: %s", err.Error()), "ibm_en_destination_custom_sms", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 
 		return resourceIBMEnSlackDestinationRead(context, d, meta)
@@ -217,14 +221,17 @@ func resourceIBMEnCustomSMSDestinationUpdate(context context.Context, d *schema.
 func resourceIBMEnCustomSMSDestinationDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_custom_sms", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.DeleteDestinationOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_custom_sms", "delete")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
@@ -236,25 +243,12 @@ func resourceIBMEnCustomSMSDestinationDelete(context context.Context, d *schema.
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("DeleteDestinationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteDestinationWithContext failed: %s", err.Error()), "ibm_en_destination_custom_sms", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")
 
 	return nil
 }
-
-// func SlackdestinationConfigMapToDestinationConfig(configParams map[string]interface{}, destinationtype string) en.DestinationConfig {
-// 	params := new(en.DestinationConfigOneOf)
-// 	if configParams["url"] != nil {
-// 		params.URL = core.StringPtr(configParams["url"].(string))
-// 	}
-
-// 	if configParams["collect_failed_events"] != nil {
-// 		params.CollectFailedEvents = core.BoolPtr(configParams["collect_failed_events"].(bool))
-// 	}
-
-// 	destinationConfig := new(en.DestinationConfig)
-// 	destinationConfig.Params = params
-// 	return *destinationConfig
-// }

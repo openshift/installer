@@ -240,7 +240,7 @@ func resourceIbmSccRuleCreate(context context.Context, d *schema.ResourceData, m
 
 	createRuleOptions.SetDescription(d.Get("description").(string))
 	// Manual Intervention
-	targetModel, err := modelMapToTarget(d.Get("target.0").(map[string]interface{}))
+	targetModel, err := modelMapToTargetPrototype(d.Get("target.0").(map[string]interface{}))
 	// End Manual Intervention
 	if err != nil {
 		return diag.FromErr(err)
@@ -400,7 +400,7 @@ func resourceIbmSccRuleUpdate(context context.Context, d *schema.ResourceData, m
 
 	if d.HasChange("description") || d.HasChange("target") || d.HasChange("required_config") {
 		replaceRuleOptions.SetDescription(d.Get("description").(string))
-		target, err := modelMapToTarget(d.Get("target.0").(map[string]interface{}))
+		target, err := modelMapToTargetPrototype(d.Get("target.0").(map[string]interface{}))
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -483,7 +483,7 @@ func resourceIbmSccRuleDelete(context context.Context, d *schema.ResourceData, m
 func resourceIbmSccRuleMapToImport(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.Import, error) {
 	model := &securityandcompliancecenterapiv3.Import{}
 	if modelMap["parameters"] != nil {
-		parameters := []securityandcompliancecenterapiv3.Parameter{}
+		parameters := []securityandcompliancecenterapiv3.RuleParameter{}
 		for _, parametersItem := range modelMap["parameters"].([]interface{}) {
 			parametersItemModel, err := resourceIbmSccRuleMapToParameter(parametersItem.(map[string]interface{}))
 			if err != nil {
@@ -496,8 +496,8 @@ func resourceIbmSccRuleMapToImport(modelMap map[string]interface{}) (*securityan
 	return model, nil
 }
 
-func resourceIbmSccRuleMapToParameter(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.Parameter, error) {
-	model := &securityandcompliancecenterapiv3.Parameter{}
+func resourceIbmSccRuleMapToParameter(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.RuleParameter, error) {
+	model := &securityandcompliancecenterapiv3.RuleParameter{}
 	if modelMap["name"] != nil && modelMap["name"].(string) != "" {
 		model.Name = core.StringPtr(modelMap["name"].(string))
 	}
@@ -529,7 +529,7 @@ func resourceIbmSccRuleImportToMap(model *securityandcompliancecenterapiv3.Impor
 	return modelMap, nil
 }
 
-func resourceIbmSccRuleParameterToMap(model *securityandcompliancecenterapiv3.Parameter) (map[string]interface{}, error) {
+func resourceIbmSccRuleParameterToMap(model *securityandcompliancecenterapiv3.RuleParameter) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Name != nil {
 		modelMap["name"] = model.Name

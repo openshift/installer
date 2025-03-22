@@ -549,7 +549,285 @@ func resourceIBMIAMAuthorizationPolicyRead(d *schema.ResourceData, meta interfac
 
 // Returns nil, because ibmcloud iam cli authorization policy does not have an update command
 func resourceIBMIAMAuthorizationPolicyUpdate(d *schema.ResourceData, meta interface{}) error {
-	return nil
+	if d.HasChange("source_service_name") || d.HasChange("target_service_name") || d.HasChange("roles") || d.HasChange("source_resource_instance_id") || d.HasChange("target_resource_instance_id") ||
+		d.HasChange("source_resource_group_id") || d.HasChange("source_resource_type") || d.HasChange("target_resource_type") || d.HasChange("source_service_account") ||
+		d.HasChange("subject_attributes") || d.HasChange("resource_attributes") {
+		var sourceServiceName, targetServiceName string
+		policyType := "authorization"
+		policySubject := &iampolicymanagementv1.V2PolicySubject{}
+		policyResource := &iampolicymanagementv1.V2PolicyResource{}
+
+		userDetails, err := meta.(conns.ClientSession).BluemixUserDetails()
+		if err != nil {
+			return err
+		}
+
+		iampapClient, err := meta.(conns.ClientSession).IAMPolicyManagementV1API()
+		if err != nil {
+			return err
+		}
+
+		// check subject_attributes exists
+		if attributes, ok := d.GetOk("subject_attributes"); ok {
+			for _, attribute := range attributes.(*schema.Set).List() {
+				a := attribute.(map[string]interface{})
+				name := a["name"].(string)
+				value := a["value"].(string)
+				operator := a["operator"].(string)
+				if name == "serviceName" {
+					sourceServiceName = value
+				}
+
+				if operator == "" && value == "*" && name == "resourceGroupId" {
+					at := iampolicymanagementv1.V2PolicySubjectAttribute{
+						Key:      &name,
+						Value:    true,
+						Operator: core.StringPtr("stringExists"),
+					}
+					policySubject.Attributes = append(policySubject.Attributes, at)
+				} else if operator == "stringExists" {
+					var resourceValue bool
+					if value == "true" {
+						resourceValue = true
+					} else if value == "false" {
+						resourceValue = false
+					} else {
+						return fmt.Errorf("[ERROR] Only values \"true\" and \"false\" are allowed when operator is \"stringExists\". Received %s.", value)
+					}
+					at := iampolicymanagementv1.V2PolicySubjectAttribute{
+						Key:      &name,
+						Value:    &resourceValue,
+						Operator: &operator,
+					}
+					policySubject.Attributes = append(policySubject.Attributes, at)
+				} else {
+					if operator == "" {
+						operator = "stringEquals"
+					}
+					at := iampolicymanagementv1.V2PolicySubjectAttribute{
+						Key:      &name,
+						Value:    &value,
+						Operator: &operator,
+					}
+					policySubject.Attributes = append(policySubject.Attributes, at)
+				}
+			}
+		} else {
+
+			if name, ok := d.GetOk("source_service_name"); ok {
+				sourceServiceName = name.(string)
+
+				serviceNameSubjectAttribute := &iampolicymanagementv1.V2PolicySubjectAttribute{
+					Key:      core.StringPtr("serviceName"),
+					Value:    &sourceServiceName,
+					Operator: core.StringPtr("stringEquals"),
+				}
+				policySubject.Attributes = append(policySubject.Attributes, *serviceNameSubjectAttribute)
+			}
+
+			sourceServiceAccount := userDetails.UserAccount
+			if account, ok := d.GetOk("source_service_account"); ok {
+				sourceServiceAccount = account.(string)
+			}
+
+			accountIdSubjectAttribute := &iampolicymanagementv1.V2PolicySubjectAttribute{
+				Key:      core.StringPtr("accountId"),
+				Value:    &sourceServiceAccount,
+				Operator: core.StringPtr("stringEquals"),
+			}
+
+			policySubject.Attributes = append(policySubject.Attributes, *accountIdSubjectAttribute)
+
+			if sID, ok := d.GetOk("source_resource_instance_id"); ok {
+				serviceInstanceSubjectAttribute := iampolicymanagementv1.V2PolicySubjectAttribute{
+					Key:      core.StringPtr("serviceInstance"),
+					Value:    core.StringPtr(sID.(string)),
+					Operator: core.StringPtr("stringEquals"),
+				}
+				policySubject.Attributes = append(policySubject.Attributes, serviceInstanceSubjectAttribute)
+			}
+
+			if sType, ok := d.GetOk("source_resource_type"); ok {
+				resourceTypeSubjectAttribute := iampolicymanagementv1.V2PolicySubjectAttribute{
+					Key:      core.StringPtr("resourceType"),
+					Value:    core.StringPtr(sType.(string)),
+					Operator: core.StringPtr("stringEquals"),
+				}
+				policySubject.Attributes = append(policySubject.Attributes, resourceTypeSubjectAttribute)
+			}
+
+			if sResGrpID, ok := d.GetOk("source_resource_group_id"); ok {
+				if sResGrpID == "*" {
+					resourceGroupSubjectAttribute := iampolicymanagementv1.V2PolicySubjectAttribute{
+						Key:      core.StringPtr("resourceGroupId"),
+						Value:    true,
+						Operator: core.StringPtr("stringExists"),
+					}
+					policySubject.Attributes = append(policySubject.Attributes, resourceGroupSubjectAttribute)
+				} else {
+					resourceGroupSubjectAttribute := iampolicymanagementv1.V2PolicySubjectAttribute{
+						Key:      core.StringPtr("resourceGroupId"),
+						Value:    core.StringPtr(sResGrpID.(string)),
+						Operator: core.StringPtr("stringEquals"),
+					}
+					policySubject.Attributes = append(policySubject.Attributes, resourceGroupSubjectAttribute)
+				}
+			}
+		}
+
+		// check resource_attributes exists
+		if attributes, ok := d.GetOk("resource_attributes"); ok {
+			for _, attribute := range attributes.(*schema.Set).List() {
+				a := attribute.(map[string]interface{})
+				name := a["name"].(string)
+				value := a["value"].(string)
+				operator := a["operator"].(string)
+				if name == "serviceName" {
+					targetServiceName = value
+				}
+				if name == "resourceType" && targetServiceName == "" {
+					targetServiceName = "resource-controller"
+				}
+				if operator == "stringExists" {
+					var resourceValue bool
+					if value == "true" {
+						resourceValue = true
+					} else if value == "false" {
+						resourceValue = false
+					} else {
+						return fmt.Errorf("[ERROR] When operator equals stringExists, value should be either \"true\" or \"false\", instead of %s", value)
+					}
+					at := iampolicymanagementv1.V2PolicyResourceAttribute{
+						Key:      &name,
+						Value:    &resourceValue,
+						Operator: &operator,
+					}
+					policyResource.Attributes = append(policyResource.Attributes, at)
+				} else {
+					at := iampolicymanagementv1.V2PolicyResourceAttribute{
+						Key:      &name,
+						Value:    &value,
+						Operator: &operator,
+					}
+					policyResource.Attributes = append(policyResource.Attributes, at)
+				}
+			}
+		} else {
+			if name, ok := d.GetOk("target_service_name"); ok {
+				targetServiceName = name.(string)
+				serviceNameResourceAttribute := &iampolicymanagementv1.V2PolicyResourceAttribute{
+					Key:      core.StringPtr("serviceName"),
+					Value:    core.StringPtr(targetServiceName),
+					Operator: core.StringPtr("stringEquals"),
+				}
+				policyResource.Attributes = append(policyResource.Attributes, *serviceNameResourceAttribute)
+			}
+
+			accountIDResourceAttribute := &iampolicymanagementv1.V2PolicyResourceAttribute{
+				Key:      core.StringPtr("accountId"),
+				Value:    core.StringPtr(userDetails.UserAccount),
+				Operator: core.StringPtr("stringEquals"),
+			}
+
+			policyResource.Attributes = append(policyResource.Attributes, *accountIDResourceAttribute)
+
+			if tID, ok := d.GetOk("target_resource_instance_id"); ok {
+				serviceInstanceResourceAttribute := iampolicymanagementv1.V2PolicyResourceAttribute{
+					Key:      core.StringPtr("serviceInstance"),
+					Value:    core.StringPtr(tID.(string)),
+					Operator: core.StringPtr("stringEquals"),
+				}
+				policyResource.Attributes = append(policyResource.Attributes, serviceInstanceResourceAttribute)
+			}
+
+			if tType, ok := d.GetOk("target_resource_type"); ok {
+				resourceTypeResourceAttribute := iampolicymanagementv1.V2PolicyResourceAttribute{
+					Key:      core.StringPtr("resourceType"),
+					Value:    core.StringPtr(tType.(string)),
+					Operator: core.StringPtr("stringEquals"),
+				}
+				policyResource.Attributes = append(policyResource.Attributes, resourceTypeResourceAttribute)
+				if targetServiceName == "" {
+					targetServiceName = "resource-controller"
+				}
+			}
+
+			if tResGrpID, ok := d.GetOk("target_resource_group_id"); ok {
+				resourceGroupResourceAttribute := iampolicymanagementv1.V2PolicyResourceAttribute{
+					Key:      core.StringPtr("resourceGroupId"),
+					Value:    core.StringPtr(tResGrpID.(string)),
+					Operator: core.StringPtr("stringEquals"),
+				}
+				policyResource.Attributes = append(policyResource.Attributes, resourceGroupResourceAttribute)
+			}
+		}
+
+		listRoleOptions := &iampolicymanagementv1.ListRolesOptions{
+			ServiceName:       &targetServiceName,
+			SourceServiceName: &sourceServiceName,
+			PolicyType:        &policyType,
+		}
+		roleList, resp, err := iampapClient.ListRoles(listRoleOptions)
+
+		if err != nil || roleList == nil {
+			return fmt.Errorf("[ERROR] Error in listing roles %s, %s", err, resp)
+		}
+
+		policyRoles := flex.MapRoleListToPolicyRoles(*roleList)
+		roles, err := flex.GetRolesFromRoleNames(flex.ExpandStringList(d.Get("roles").([]interface{})), policyRoles)
+
+		if err != nil {
+			return err
+		}
+
+		policyGrant := &iampolicymanagementv1.Grant{
+			Roles: flex.MapPolicyRolesToRoles(roles),
+		}
+		policyControl := &iampolicymanagementv1.Control{
+			Grant: policyGrant,
+		}
+
+		getPolicyOptions := &iampolicymanagementv1.GetV2PolicyOptions{
+			ID: core.StringPtr(d.Id()),
+		}
+
+		if transactionID, ok := d.GetOk("transaction_id"); ok {
+			getPolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+		}
+
+		authorizationPolicy, response, err := iampapClient.GetV2Policy(getPolicyOptions)
+
+		if err != nil || authorizationPolicy == nil {
+			if response != nil && response.StatusCode == 404 {
+				return nil
+			}
+			return fmt.Errorf("[ERROR] Error retrieving Authorization Policy: %s\n%s", err, response)
+		}
+		policyETag := response.Headers.Get("ETag")
+
+		updatePolicyOptions := iampapClient.NewReplaceV2PolicyOptions(
+			d.Id(),
+			policyETag,
+			policyControl,
+			"authorization",
+		)
+		updatePolicyOptions.SetSubject(policySubject)
+		updatePolicyOptions.SetResource(policyResource)
+
+		if description, ok := d.GetOk("description"); ok {
+			des := description.(string)
+			updatePolicyOptions.Description = &des
+		}
+
+		if transactionID, ok := d.GetOk("transaction_id"); ok {
+			updatePolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+		}
+		_, resp, err = iampapClient.ReplaceV2Policy(updatePolicyOptions)
+		if err != nil {
+			return fmt.Errorf("[ERROR] Error creating authorization policy: %s %s", err, resp)
+		}
+	}
+	return resourceIBMIAMAuthorizationPolicyRead(d, meta)
 }
 
 func resourceIBMIAMAuthorizationPolicyDelete(d *schema.ResourceData, meta interface{}) error {

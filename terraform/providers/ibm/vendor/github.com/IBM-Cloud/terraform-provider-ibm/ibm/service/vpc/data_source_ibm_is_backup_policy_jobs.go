@@ -277,6 +277,49 @@ func DataSourceIBMIsBackupPolicyJobs() *schema.Resource {
 								},
 							},
 						},
+						"source_share": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The source share this backup was created from (may be[deleted](https://cloud.ibm.com/apidocs/vpc#deleted-resources)).",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"crn": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The CRN for this volume.",
+									},
+									"deleted": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "If present, this property indicates the referenced resource has been deleted and providessome supplementary information.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"more_info": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Link to documentation about deleted resources.",
+												},
+											},
+										},
+									},
+									"href": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The URL for this volume.",
+									},
+									"id": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The unique identifier for this volume.",
+									},
+									"name": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The unique user-defined name for this volume.",
+									},
+								},
+							},
+						},
 						"status": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -345,6 +388,53 @@ func DataSourceIBMIsBackupPolicyJobs() *schema.Resource {
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "The user-defined name for this snapshot.",
+									},
+									"remote": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "If present, this property indicates that the resource associated with this referenceis remote and therefore may not be directly retrievable.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"account": &schema.Schema{
+													Type:        schema.TypeList,
+													Computed:    true,
+													Description: "If present, this property indicates that the referenced resource is remote to thisaccount, and identifies the owning account.",
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"id": &schema.Schema{
+																Type:        schema.TypeString,
+																Computed:    true,
+																Description: "The unique identifier for this account.",
+															},
+															"resource_type": &schema.Schema{
+																Type:        schema.TypeString,
+																Computed:    true,
+																Description: "The resource type.",
+															},
+														},
+													},
+												},
+												"region": &schema.Schema{
+													Type:        schema.TypeList,
+													Computed:    true,
+													Description: "If present, this property indicates that the referenced resource is remote to thisregion, and identifies the native region.",
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"href": &schema.Schema{
+																Type:        schema.TypeString,
+																Computed:    true,
+																Description: "The URL for this region.",
+															},
+															"name": &schema.Schema{
+																Type:        schema.TypeString,
+																Computed:    true,
+																Description: "The globally unique name for this region.",
+															},
+														},
+													},
+												},
+											},
+										},
 									},
 									"resource_type": &schema.Schema{
 										Type:        schema.TypeString,
@@ -512,8 +602,17 @@ func dataSourceBackupPolicyJobCollectionJobsToMap(jobsItem vpcv1.BackupPolicyJob
 				sourceVolumeList = append(sourceVolumeList, sourceVolumeMap)
 				jobsMap["source_instance"] = sourceVolumeList
 			}
+		case "*vpcv1.BackupPolicyJobSourceShareReference":
+			{
+				jobSource := jobsItem.Source.(*vpcv1.BackupPolicyJobSourceShareReference)
+				sourceShareList := []map[string]interface{}{}
+				sourceShareMap := dataShareBackupPolicyJobSourceShareReferenceToMap(jobSource)
+				sourceShareList = append(sourceShareList, sourceShareMap)
+				jobsMap["source_share"] = sourceShareList
+			}
 		}
 	}
+
 	if jobsItem.Status != nil {
 		jobsMap["status"] = jobsItem.Status
 	}
@@ -534,9 +633,37 @@ func dataSourceBackupPolicyJobCollectionJobsToMap(jobsItem vpcv1.BackupPolicyJob
 		}
 		jobsMap["target_snapshot"] = targetSnapshotList
 	}
-	// log.Println("jobsItem")
-	// log.Println(jobsItem)
 	return jobsMap
+}
+func dataShareBackupPolicyJobSourceShareReferenceToMap(model *vpcv1.BackupPolicyJobSourceShareReference) map[string]interface{} {
+	modelMap := make(map[string]interface{})
+	modelMap["crn"] = *model.CRN
+	if model.Deleted != nil {
+		deletedMap := ResourceIBMIsShareShareReferenceDeletedToMap(model.Deleted)
+		modelMap["deleted"] = []map[string]interface{}{deletedMap}
+	}
+	modelMap["href"] = *model.Href
+	modelMap["id"] = *model.ID
+	modelMap["name"] = *model.Name
+	if model.Remote != nil {
+		remoteMap := ResourceIBMIsShareShareRemoteToMap(model.Remote)
+		modelMap["remote"] = []map[string]interface{}{remoteMap}
+	}
+	modelMap["resource_type"] = *model.ResourceType
+	return modelMap
+}
+func AccountReferenceToMap(model *vpcv1.AccountReference) map[string]interface{} {
+	modelMap := make(map[string]interface{})
+	modelMap["id"] = *model.ID
+	modelMap["resource_type"] = *model.ResourceType
+	return modelMap
+}
+
+func RegionReferenceToMap(model *vpcv1.RegionReference) map[string]interface{} {
+	modelMap := make(map[string]interface{})
+	modelMap["href"] = *model.Href
+	modelMap["name"] = *model.Name
+	return modelMap
 }
 
 func dataSourceBackupPolicyJobCollectionJobsBackupPolicyPlanToMap(backupPolicyPlanItem vpcv1.BackupPolicyPlanReference) (backupPolicyPlanMap map[string]interface{}) {
@@ -674,9 +801,38 @@ func dataSourceBackupPolicyJobCollectionJobsStatusReasonsToMap(statusReasonsItem
 	return statusReasonsMap
 }
 
-func dataSourceBackupPolicyJobCollectionJobsTargetSnapshotToMap(targetSnapshotItem vpcv1.SnapshotReference) (targetSnapshotMap map[string]interface{}) {
+func dataSourceBackupPolicyJobCollectionJobsTargetSnapshotRefToMap(targetSnapshotItem vpcv1.BackupPolicyTargetSnapshotSnapshotReference) (targetSnapshotMap map[string]interface{}) {
 	targetSnapshotMap = map[string]interface{}{}
+	if targetSnapshotItem.CRN != nil {
+		targetSnapshotMap["crn"] = targetSnapshotItem.CRN
+	}
+	if targetSnapshotItem.Deleted != nil {
+		deletedList := []map[string]interface{}{}
+		deletedMap := dataSourceBackupPolicyJobCollectionTargetSnapshotDeletedToMap(*targetSnapshotItem.Deleted)
+		deletedList = append(deletedList, deletedMap)
+		targetSnapshotMap["deleted"] = deletedList
+	}
+	if targetSnapshotItem.Href != nil {
+		targetSnapshotMap["href"] = targetSnapshotItem.Href
+	}
+	if targetSnapshotItem.ID != nil {
+		targetSnapshotMap["id"] = targetSnapshotItem.ID
+	}
+	if targetSnapshotItem.Name != nil {
+		targetSnapshotMap["name"] = targetSnapshotItem.Name
+	}
+	if targetSnapshotItem.ResourceType != nil {
+		targetSnapshotMap["resource_type"] = targetSnapshotItem.ResourceType
+	}
+	if targetSnapshotItem.Remote != nil {
+		remoteMap := DataSourceIBMISRemoteAccountRegionToMap(targetSnapshotItem.Remote)
+		targetSnapshotMap["remote"] = []map[string]interface{}{remoteMap}
+	}
+	return targetSnapshotMap
+}
 
+func dataSourceBackupPolicyJobCollectionJobsTargetShareSnapshotRefToMap(targetSnapshotItem vpcv1.BackupPolicyTargetSnapshotShareSnapshotReference) (targetSnapshotMap map[string]interface{}) {
+	targetSnapshotMap = map[string]interface{}{}
 	if targetSnapshotItem.CRN != nil {
 		targetSnapshotMap["crn"] = targetSnapshotItem.CRN
 	}
@@ -701,6 +857,34 @@ func dataSourceBackupPolicyJobCollectionJobsTargetSnapshotToMap(targetSnapshotIt
 
 	return targetSnapshotMap
 }
+func DataSourceIBMISRemoteAccountRegionToMap(model *vpcv1.SnapshotRemote) map[string]interface{} {
+	modelMap := make(map[string]interface{})
+	if model.Account != nil {
+		accountMap := AccountReferenceToMap(model.Account)
+		modelMap["account"] = []map[string]interface{}{accountMap}
+	}
+	if model.Region != nil {
+		regionMap := RegionReferenceToMap(model.Region)
+		modelMap["region"] = []map[string]interface{}{regionMap}
+	}
+	return modelMap
+}
+func dataSourceBackupPolicyJobCollectionJobsTargetSnapshotToMap(targetSnapshotItemIntf vpcv1.BackupPolicyTargetSnapshotIntf) (targetSnapshotMap map[string]interface{}) {
+	targetSnapshotMap = map[string]interface{}{}
+	switch reflect.TypeOf(targetSnapshotItemIntf).String() {
+	case "*vpcv1.BackupPolicyTargetSnapshotSnapshotReference":
+		{
+			targetSnapshotItem := targetSnapshotItemIntf.(*vpcv1.BackupPolicyTargetSnapshotSnapshotReference)
+			targetSnapshotMap = dataSourceBackupPolicyJobCollectionJobsTargetSnapshotRefToMap(*targetSnapshotItem)
+		}
+	case "*vpcv1.BackupPolicyTargetSnapshotShareSnapshotReference":
+		{
+			targetSnapshotItem := targetSnapshotItemIntf.(*vpcv1.BackupPolicyTargetSnapshotShareSnapshotReference)
+			targetSnapshotMap = dataSourceBackupPolicyJobCollectionJobsTargetShareSnapshotRefToMap(*targetSnapshotItem)
+		}
+	}
+	return targetSnapshotMap
+}
 
 func dataSourceBackupPolicyJobCollectionTargetSnapshotDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
@@ -712,7 +896,7 @@ func dataSourceBackupPolicyJobCollectionTargetSnapshotDeletedToMap(deletedItem v
 	return deletedMap
 }
 
-func dataSourceBackupPolicyJobCollectionNextToMap(nextItem vpcv1.BackupPolicyJobCollectionNext) (nextMap map[string]interface{}) {
+func dataSourceBackupPolicyJobCollectionNextToMap(nextItem vpcv1.PageLink) (nextMap map[string]interface{}) {
 	nextMap = map[string]interface{}{}
 
 	if nextItem.Href != nil {
