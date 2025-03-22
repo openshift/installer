@@ -8,7 +8,6 @@ import (
 
 	"github.com/apparentlymart/go-cidr/cidr"
 	"google.golang.org/api/compute/v1"
-	"google.golang.org/api/option"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -16,6 +15,7 @@ import (
 	capg "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	gcpic "github.com/openshift/installer/pkg/asset/installconfig/gcp"
@@ -49,7 +49,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	if installConfig.Config.GCP.ControlPlaneSubnet != "" {
 		controlPlaneSubnetName = installConfig.Config.GCP.ControlPlaneSubnet
 
-		controlPlaneSubnet, err := getSubnet(context.TODO(), networkProject, installConfig.Config.GCP.Region, controlPlaneSubnetName)
+		controlPlaneSubnet, err := getSubnet(context.TODO(), networkProject, installConfig.Config.GCP.Region, controlPlaneSubnetName, installConfig.Config.GCP.ServiceEndpoints)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get control plane subnet: %w", err)
 		}
@@ -69,7 +69,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	if installConfig.Config.GCP.ComputeSubnet != "" {
 		computeSubnetName = installConfig.Config.GCP.ComputeSubnet
 
-		computeSubnet, err := getSubnet(context.TODO(), networkProject, installConfig.Config.GCP.Region, computeSubnetName)
+		computeSubnet, err := getSubnet(context.TODO(), networkProject, installConfig.Config.GCP.Region, computeSubnetName, installConfig.Config.GCP.ServiceEndpoints)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get compute subnet: %w", err)
 		}
@@ -226,16 +226,11 @@ func findFailureDomains(installConfig *installconfig.InstallConfig) []string {
 
 // getSubnet will find a subnet in a project by the name. The matching subnet structure will be returned if
 // one is found.
-func getSubnet(ctx context.Context, project, region, subnetName string) (*compute.Subnetwork, error) {
+func getSubnet(ctx context.Context, project, region, subnetName string, serviceEndpoints []configv1.GCPServiceEndpoint) (*compute.Subnetwork, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
 	defer cancel()
 
-	ssn, err := gcpic.GetSession(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get session: %w", err)
-	}
-
-	computeService, err := compute.NewService(ctx, option.WithCredentials(ssn.Credentials))
+	computeService, err := gcpic.GetComputeService(ctx, serviceEndpoints)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create compute service: %w", err)
 	}
