@@ -24,7 +24,6 @@ import (
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/errors"
 )
 
 // Constants block.
@@ -134,7 +133,7 @@ func (s *SuspendProcessesTypes) ConvertSetValuesToStringSlice() []string {
 
 	e := reflect.ValueOf(s.Processes).Elem()
 	var result []string
-	for i := 0; i < e.NumField(); i++ {
+	for i := range e.NumField() {
 		if s.All {
 			if !e.Field(i).IsNil() && !*e.Field(i).Interface().(*bool) {
 				// don't enable if explicitly set to false.
@@ -210,6 +209,10 @@ type AWSMachinePoolStatus struct {
 	// +optional
 	LaunchTemplateVersion *string `json:"launchTemplateVersion,omitempty"`
 
+	// InfrastructureMachineKind is the kind of the infrastructure resources behind MachinePool Machines.
+	// +optional
+	InfrastructureMachineKind string `json:"infrastructureMachineKind,omitempty"`
+
 	// FailureReason will be set in the event that there is a terminal problem
 	// reconciling the Machine and will contain a succinct value suitable
 	// for machine interpretation.
@@ -227,7 +230,7 @@ type AWSMachinePoolStatus struct {
 	// can be added as events to the Machine object and/or logged in the
 	// controller's output.
 	// +optional
-	FailureReason *errors.MachineStatusError `json:"failureReason,omitempty"`
+	FailureReason *string `json:"failureReason,omitempty"`
 
 	// FailureMessage will be set in the event that there is a terminal problem
 	// reconciling the Machine and will contain a more verbose string suitable

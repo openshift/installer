@@ -958,6 +958,16 @@ func GetAccountRolePolicyKeys(roleType string) []string {
 	return []string{fmt.Sprintf("sts_%s_permission_policy", roleType)}
 }
 
+// GetAccountRolePolicyKeys returns the policy key for fetching the managed policy ARN
+func GetHcpAccountRolePolicyKeys(roleType string) []string {
+	policyKeys := []string{fmt.Sprintf("sts_hcp_%s_permission_policy", roleType)}
+	if roleType == HCPWorkerRole {
+		policyKeys = append(policyKeys, WorkerEC2RegistryKey)
+	}
+
+	return policyKeys
+}
+
 func ComputeOperatorRoleArn(prefix string, operator *cmv1.STSOperator, creator *Creator, path string) string {
 	role := fmt.Sprintf("%s-%s-%s", prefix, operator.Namespace(), operator.Name())
 	role = awsCommonUtils.TruncateRoleName(role)

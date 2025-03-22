@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	"github.com/openshift/rosa/pkg/ocm"
 )
 
 const (
@@ -14,7 +13,7 @@ const (
 
 // CreateAdminUserIfNotExist creates a new admin user withe username/password in the cluster if username doesn't already exist.
 // the user is granted admin privileges by being added to a special IDP called `cluster-admin` which will be created if it doesn't already exist.
-func CreateAdminUserIfNotExist(client *ocm.Client, clusterID, username, password string) error {
+func CreateAdminUserIfNotExist(client OCMClient, clusterID, username, password string) error {
 	existingClusterAdminIDP, userList, err := findExistingClusterAdminIDP(client, clusterID)
 	if err != nil {
 		return fmt.Errorf("failed to find existing cluster admin IDP: %w", err)
@@ -75,7 +74,7 @@ func CreateAdminUserIfNotExist(client *ocm.Client, clusterID, username, password
 }
 
 // CreateUserIfNotExist creates a new user with `username` and adds it to the group if it doesn't already exist.
-func CreateUserIfNotExist(client *ocm.Client, clusterID string, group, username string) (*cmv1.User, error) {
+func CreateUserIfNotExist(client OCMClient, clusterID string, group, username string) (*cmv1.User, error) {
 	user, err := client.GetUser(clusterID, group, username)
 	if user != nil || err != nil {
 		return user, err
@@ -88,7 +87,7 @@ func CreateUserIfNotExist(client *ocm.Client, clusterID string, group, username 
 	return client.CreateUser(clusterID, group, userCfg)
 }
 
-func findExistingClusterAdminIDP(client *ocm.Client, clusterID string) (
+func findExistingClusterAdminIDP(client OCMClient, clusterID string) (
 	htpasswdIDP *cmv1.IdentityProvider, userList *cmv1.HTPasswdUserList, reterr error) {
 	idps, err := client.GetIdentityProviders(clusterID)
 	if err != nil {

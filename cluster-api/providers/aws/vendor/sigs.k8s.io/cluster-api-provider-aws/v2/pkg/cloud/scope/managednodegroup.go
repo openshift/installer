@@ -232,6 +232,7 @@ func (s *ManagedMachinePoolScope) NodegroupReadyFalse(reason string, err string)
 		expinfrav1.EKSNodegroupReadyCondition,
 		reason,
 		severity,
+		"%s",
 		err,
 	)
 	if err := s.PatchObject(); err != nil {
@@ -252,6 +253,7 @@ func (s *ManagedMachinePoolScope) IAMReadyFalse(reason string, err string) error
 		expinfrav1.IAMNodegroupRolesReadyCondition,
 		reason,
 		severity,
+		"%s",
 		err,
 	)
 	if err := s.PatchObject(); err != nil {

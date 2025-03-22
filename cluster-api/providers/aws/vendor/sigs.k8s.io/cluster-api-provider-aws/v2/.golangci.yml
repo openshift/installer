@@ -6,12 +6,12 @@ linters:
   - bidichk
   - bodyclose
   - containedctx
+  - copyloopvar
   - dogsled
   - dupword
   - durationcheck
   - errcheck
   - errchkjson
-  - exportloopref
   - gci
   - ginkgolinter
   - goconst
@@ -23,8 +23,10 @@ linters:
   - gosec
   - gosimple
   - govet
+  - iface
   - importas
   - ineffassign
+  - intrange
   - loggercheck
   - misspell
   - nakedret

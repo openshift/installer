@@ -215,6 +215,7 @@ type Client interface {
 	GetIAMServiceQuota(quotaCode string) (*servicequotas.GetServiceQuotaOutput, error)
 	GetAccountRoleDefaultPolicy(roleName string, prefix string) (string, error)
 	GetOperatorRoleDefaultPolicy(roleName string) (string, error)
+	ListPolicyVersions(policyArn string) ([]PolicyVersion, error)
 }
 
 type AccessKeyGetter interface {

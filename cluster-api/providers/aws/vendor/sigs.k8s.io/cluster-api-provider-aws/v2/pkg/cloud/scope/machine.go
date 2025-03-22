@@ -29,9 +29,9 @@ import (
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	ekscontrolplanev1 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/eks/api/v1beta2"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	capierrors "sigs.k8s.io/cluster-api/errors"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/conditions"
@@ -114,6 +114,19 @@ func (m *MachineScope) IsControlPlane() bool {
 	return util.IsControlPlaneMachine(m.Machine)
 }
 
+// IsMachinePoolMachine returns true if the machine is created for a machinepool.
+func (m *MachineScope) IsMachinePoolMachine() bool {
+	if _, ok := m.Machine.GetLabels()[clusterv1.MachinePoolNameLabel]; ok {
+		return true
+	}
+	for _, owner := range m.Machine.OwnerReferences {
+		if owner.Kind == v1beta2.KindMachinePool {
+			return true
+		}
+	}
+	return false
+}
+
 // Role returns the machine role from the labels.
 func (m *MachineScope) Role() string {
 	if util.IsControlPlaneMachine(m.Machine) {
@@ -176,7 +189,7 @@ func (m *MachineScope) SetFailureMessage(v error) {
 }
 
 // SetFailureReason sets the AWSMachine status failure reason.
-func (m *MachineScope) SetFailureReason(v capierrors.MachineStatusError) {
+func (m *MachineScope) SetFailureReason(v string) {
 	m.AWSMachine.Status.FailureReason = &v
 }
 

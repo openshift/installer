@@ -33,6 +33,11 @@ import (
 	"sigs.k8s.io/cluster-api/util/annotations"
 )
 
+const (
+	warningClassicELB                = "%s load balancer is using a classic elb which is deprecated & support will be removed in a future release, please consider using another type of load balancer instead"
+	warningHealthCheckProtocolNotSet = "healthcheck protocol is not set, the default value has changed from SSL to TCP. Health checks for existing clusters will be updated to TCP"
+)
+
 // log is for logging in this package.
 var _ = ctrl.Log.WithName("awscluster-resource")
 
@@ -53,15 +58,23 @@ var (
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *AWSCluster) ValidateCreate() (admission.Warnings, error) {
 	var allErrs field.ErrorList
+	var allWarnings admission.Warnings
 
 	allErrs = append(allErrs, r.Spec.Bastion.Validate()...)
 	allErrs = append(allErrs, r.validateSSHKeyName()...)
 	allErrs = append(allErrs, r.Spec.AdditionalTags.Validate()...)
 	allErrs = append(allErrs, r.Spec.S3Bucket.Validate()...)
 	allErrs = append(allErrs, r.validateNetwork()...)
-	allErrs = append(allErrs, r.validateControlPlaneLBs()...)
 
-	return nil, aggregateObjErrors(r.GroupVersionKind().GroupKind(), r.Name, allErrs)
+	warnings, errs := r.validateControlPlaneLBs()
+	if len(errs) > 0 {
+		allErrs = append(allErrs, errs...)
+	}
+	if len(warnings) > 0 {
+		allWarnings = append(allWarnings, warnings...)
+	}
+
+	return allWarnings, aggregateObjErrors(r.GroupVersionKind().GroupKind(), r.Name, allErrs)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
@@ -72,6 +85,7 @@ func (r *AWSCluster) ValidateDelete() (admission.Warnings, error) {
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
 func (r *AWSCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	var allErrs field.ErrorList
+	var allWarnings admission.Warnings
 
 	allErrs = append(allErrs, r.validateGCTasksAnnotation()...)
 
@@ -139,7 +153,23 @@ func (r *AWSCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, err
 	allErrs = append(allErrs, r.Spec.AdditionalTags.Validate()...)
 	allErrs = append(allErrs, r.Spec.S3Bucket.Validate()...)
 
-	return nil, aggregateObjErrors(r.GroupVersionKind().GroupKind(), r.Name, allErrs)
+	if r.Spec.ControlPlaneLoadBalancer != nil {
+		if r.Spec.ControlPlaneLoadBalancer.LoadBalancerType == LoadBalancerTypeClassic {
+			allWarnings = append(allWarnings, fmt.Sprintf(warningClassicELB, "primary control plane"))
+		}
+	}
+
+	if r.Spec.SecondaryControlPlaneLoadBalancer != nil {
+		if r.Spec.SecondaryControlPlaneLoadBalancer.LoadBalancerType == LoadBalancerTypeClassic {
+			allWarnings = append(allWarnings, fmt.Sprintf(warningClassicELB, "secondary control plane"))
+		}
+	}
+
+	if r.Spec.ControlPlaneLoadBalancer == nil || r.Spec.ControlPlaneLoadBalancer.HealthCheckProtocol == nil {
+		allWarnings = append(allWarnings, fmt.Sprintf("%s. Existing load balancers will be updates", warningHealthCheckProtocolNotSet))
+	}
+
+	return allWarnings, aggregateObjErrors(r.GroupVersionKind().GroupKind(), r.Name, allErrs)
 }
 
 func (r *AWSCluster) validateControlPlaneLoadBalancerUpdate(oldlb, newlb *AWSLoadBalancerSpec) field.ErrorList {
@@ -180,16 +210,18 @@ func (r *AWSCluster) validateControlPlaneLoadBalancerUpdate(oldlb, newlb *AWSLoa
 					newlb.Name, "field is immutable"),
 			)
 		}
-	}
 
-	// Block the update for Protocol :
-	// - if it was not set in old spec but added in new spec
-	// - if it was set in old spec but changed in new spec
-	if !cmp.Equal(newlb.HealthCheckProtocol, oldlb.HealthCheckProtocol) {
-		allErrs = append(allErrs,
-			field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "healthCheckProtocol"),
-				newlb.HealthCheckProtocol, "field is immutable once set"),
-		)
+		// Block the update for Protocol :
+		// - if it was not set in old spec but added in new spec
+		// - if it was set in old spec but changed in new spec
+		if oldlb.LoadBalancerType != LoadBalancerTypeClassic {
+			if !cmp.Equal(newlb.HealthCheckProtocol, oldlb.HealthCheckProtocol) {
+				allErrs = append(allErrs,
+					field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "healthCheckProtocol"),
+						newlb.HealthCheckProtocol, "field is immutable once set"),
+				)
+			}
+		}
 	}
 
 	return allErrs
@@ -301,8 +333,21 @@ func (r *AWSCluster) validateNetwork() field.ErrorList {
 	return allErrs
 }
 
-func (r *AWSCluster) validateControlPlaneLBs() field.ErrorList {
+func (r *AWSCluster) validateControlPlaneLBs() (admission.Warnings, field.ErrorList) {
 	var allErrs field.ErrorList
+	var allWarnings admission.Warnings
+
+	if r.Spec.ControlPlaneLoadBalancer != nil && r.Spec.ControlPlaneLoadBalancer.LoadBalancerType == LoadBalancerTypeClassic {
+		allWarnings = append(allWarnings, fmt.Sprintf(warningClassicELB, "primary control plane"))
+
+		if r.Spec.ControlPlaneLoadBalancer.HealthCheckProtocol == nil {
+			allWarnings = append(allWarnings, warningHealthCheckProtocolNotSet)
+		}
+
+		if r.Spec.ControlPlaneLoadBalancer.HealthCheckProtocol != nil && *r.Spec.ControlPlaneLoadBalancer.HealthCheckProtocol == ELBProtocolSSL {
+			allWarnings = append(allWarnings, "loadbalancer is using a classic elb with SSL health check, this causes issues with ciper suites with kubernetes v1.30+")
+		}
+	}
 
 	// If the secondary is defined, check that the name is not empty and different from the primary.
 	// Also, ensure that the secondary load balancer is an NLB
@@ -321,6 +366,9 @@ func (r *AWSCluster) validateControlPlaneLBs() field.ErrorList {
 
 		if r.Spec.SecondaryControlPlaneLoadBalancer.LoadBalancerType != LoadBalancerTypeNLB {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "secondaryControlPlaneLoadBalancer", "loadBalancerType"), r.Spec.SecondaryControlPlaneLoadBalancer.LoadBalancerType, "secondary control plane load balancer must be a Network Load Balancer"))
+		}
+		if r.Spec.SecondaryControlPlaneLoadBalancer.LoadBalancerType == LoadBalancerTypeClassic {
+			allWarnings = append(allWarnings, fmt.Sprintf(warningClassicELB, "secondary control plane"))
 		}
 	}
 
@@ -378,7 +426,7 @@ func (r *AWSCluster) validateControlPlaneLBs() field.ErrorList {
 		}
 	}
 
-	return allErrs
+	return allWarnings, allErrs
 }
 
 func (r *AWSCluster) validateIngressRule(rule IngressRule) field.ErrorList {
