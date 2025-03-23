@@ -4,9 +4,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	v1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -57,6 +59,7 @@ func TestFeatureGates(t *testing.T) {
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.FeatureSet = v1.Default
+				c.AWS = nil // validInstallConfig defaults to AWS
 				c.VSphere = validVSpherePlatform()
 				c.VSphere.Hosts = []*vsphere.Host{{Role: "test"}}
 				return c
@@ -67,23 +70,10 @@ func TestFeatureGates(t *testing.T) {
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.FeatureSet = v1.CustomNoUpgrade
-				c.FeatureGates = []string{"VSphereStaticIPs=true"}
 				c.VSphere = validVSpherePlatform()
 				c.VSphere.Hosts = []*vsphere.Host{{Role: "test"}}
 				return c
 			}(),
-		},
-		{
-			name: "vSphere hosts is not allowed with custom Feature Gate disabled",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.FeatureSet = v1.CustomNoUpgrade
-				c.FeatureGates = []string{"VSphereStaticIPs=false"}
-				c.VSphere = validVSpherePlatform()
-				c.VSphere.Hosts = []*vsphere.Host{{Role: "test"}}
-				return c
-			}(),
-			expected: `^platform.vsphere.hosts: Forbidden: this field is protected by the VSphereStaticIPs feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
 		},
 		{
 			name: "vSphere one vcenter is allowed with default Feature Gates",
@@ -122,6 +112,114 @@ func TestFeatureGates(t *testing.T) {
 				c.FeatureSet = v1.TechPreviewNoUpgrade
 				c.VSphere = validVSpherePlatform()
 				c.VSphere.VCenters = append(c.VSphere.VCenters, vsphere.VCenter{Server: "Number2"})
+				return c
+			}(),
+		},
+		{
+			name: "Azure system-assigned identities (control plane) requires MachineAPIMigration feature gate",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.AWS = nil // validInstallConfig defaults to AWS
+				c.Azure = &azure.Platform{}
+				c.ControlPlane.Platform.Azure = &azure.MachinePool{
+					Identity: &azure.VMIdentity{
+						Type:                       capz.VMIdentitySystemAssigned,
+						SystemAssignedIdentityRole: &capz.SystemAssignedIdentityRole{},
+					},
+				}
+				return c
+			}(),
+			expected: `^controlPlane.azure.identity.systemAssignedIdentityRole: Forbidden: this field is protected by the MachineAPIMigration feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set`,
+		},
+		{
+			name: "Azure system-assigned identities (default platform) requires MachineAPIMigration feature gate",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.AWS = nil // validInstallConfig defaults to AWS
+				c.Azure = &azure.Platform{
+					DefaultMachinePlatform: &azure.MachinePool{
+						Identity: &azure.VMIdentity{
+							Type:                       capz.VMIdentitySystemAssigned,
+							SystemAssignedIdentityRole: &capz.SystemAssignedIdentityRole{},
+						},
+					},
+				}
+				return c
+			}(),
+			expected: `^platform.azure.defaultMachinePlatform.identity.systemAssignedIdentityRole: Forbidden: this field is protected by the MachineAPIMigration feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set`,
+		},
+		{
+			name: "Azure user-assigned identities (control plane) > 1 requires MachineAPIMigration feature gate",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.AWS = nil // validInstallConfig defaults to AWS
+				c.Azure = &azure.Platform{}
+				c.ControlPlane.Platform.Azure = &azure.MachinePool{
+					Identity: &azure.VMIdentity{
+						Type: capz.VMIdentityUserAssigned,
+						UserAssignedIdentities: []azure.UserAssignedIdentity{
+							{
+								Name:          "first-identity",
+								Subscription:  "my-subscription",
+								ResourceGroup: "my-resource-group",
+							},
+							{
+								Name:          "second-identity",
+								Subscription:  "my-subscription",
+								ResourceGroup: "my-resource-group",
+							},
+						},
+					},
+				}
+				return c
+			}(),
+			expected: `^controlPlane.azure.identity.userAssignedIdentities: Forbidden: this field is protected by the MachineAPIMigration feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set`,
+		},
+		{
+			name: "Azure user-assigned identities (default machine platform) > 1 requires MachineAPIMigration feature gate",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.AWS = nil // validInstallConfig defaults to AWS
+				c.Azure = &azure.Platform{}
+				c.Azure.DefaultMachinePlatform = &azure.MachinePool{
+					Identity: &azure.VMIdentity{
+						Type: capz.VMIdentityUserAssigned,
+						UserAssignedIdentities: []azure.UserAssignedIdentity{
+							{
+								Name:          "first-identity",
+								Subscription:  "my-subscription",
+								ResourceGroup: "my-resource-group",
+							},
+							{
+								Name:          "second-identity",
+								Subscription:  "my-subscription",
+								ResourceGroup: "my-resource-group",
+							},
+						},
+					},
+				}
+				return c
+			}(),
+			expected: `^platform.azure.defaultMachinePlatform.identity.userAssignedIdentities: Forbidden: this field is protected by the MachineAPIMigration feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set`,
+		},
+		{
+			name: "Azure user-assigned identities (control plane) == 1 does not require feature gate",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.AWS = nil // validInstallConfig defaults to AWS
+				c.Azure = &azure.Platform{}
+				c.ControlPlane.Platform.Azure = &azure.MachinePool{
+					Identity: &azure.VMIdentity{
+						Type: capz.VMIdentityUserAssigned,
+						UserAssignedIdentities: []azure.UserAssignedIdentity{
+							{
+								Name:          "solo-bolo!",
+								Subscription:  "my-subscription",
+								ResourceGroup: "my-resource-group",
+							},
+						},
+					},
+				}
 				return c
 			}(),
 		},

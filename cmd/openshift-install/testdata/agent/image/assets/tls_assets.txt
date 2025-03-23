@@ -1,0 +1,12 @@
+# Verify that the create certificates command generates the tls assets 
+
+exec openshift-install agent create certificates --dir $WORK
+
+exists $WORK/tls/admin-kubeconfig-signer.crt
+exists $WORK/tls/kube-apiserver-lb-signer.crt
+exists $WORK/tls/kube-apiserver-localhost-signer.crt
+exists $WORK/tls/kube-apiserver-service-network-signer.crt
+exists $WORK/tls/admin-kubeconfig-signer.key
+exists $WORK/tls/kube-apiserver-lb-signer.key 
+exists $WORK/tls/kube-apiserver-localhost-signer.key
+exists $WORK/tls/kube-apiserver-service-network-signer.key

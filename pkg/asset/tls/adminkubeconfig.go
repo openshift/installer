@@ -25,7 +25,7 @@ func (c *AdminKubeConfigSignerCertKey) Generate(ctx context.Context, parents ass
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "admin-kubeconfig-signer", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityTenYears,
+		Validity:  ValidityTenYears(),
 		IsCA:      true,
 	}
 
@@ -97,7 +97,7 @@ func (a *AdminKubeConfigClientCertKey) Generate(ctx context.Context, dependencie
 		Subject:      pkix.Name{CommonName: "system:admin", Organization: []string{"system:masters"}},
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
-		Validity:     ValidityTenYears,
+		Validity:     ValidityTenYears(),
 	}
 
 	return a.SignedCertKey.Generate(ctx, cfg, ca, "admin-kubeconfig-client", DoNotAppendParent)

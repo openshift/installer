@@ -796,4 +796,25 @@ var (
 		// the other still in TechPreview.
 		enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 		mustRegister()
+
+	FeatureGateGatewayAPIController = newFeatureGate("GatewayAPIController").
+					reportProblemsToJiraComponent("Routing").
+					contactPerson("miciah").
+					productScope(ocpSpecific).
+		// Previously, the "GatewayAPI" feature gate managed both the GatewayAPI CRDs
+		// and the Gateway Controller. However, with the introduction of Gateway CRD
+		// lifecycle management (EP#1756), these responsibilities were separated.
+		// A dedicated feature gate now controls the Gateway Controller to distinguish
+		// its production readiness from that of the CRDs.
+		enhancementPR("https://github.com/openshift/enhancements/pull/1756").
+		enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+		mustRegister()
+
+	FeatureShortCertRotation = newFeatureGate("ShortCertRotation").
+					reportProblemsToJiraComponent("kube-apiserver").
+					contactPerson("vrutkovs").
+					productScope(ocpSpecific).
+					enableIn(configv1.DevPreviewNoUpgrade).
+					enhancementPR("https://github.com/openshift/enhancements/pull/1670").
+					mustRegister()
 )

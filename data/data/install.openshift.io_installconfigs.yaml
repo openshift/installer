@@ -200,6 +200,78 @@ spec:
                         description: EncryptionAtHost enables encryption at the VM
                           host.
                         type: boolean
+                      identity:
+                        default: None
+                        description: |-
+                          Identity is the type of identity used for the virtual machine.
+                          The type 'SystemAssigned' is an implicitly created identity.
+                          The generated identity will be assigned a Subscription contributor role.
+                          The type 'UserAssigned' is a standalone Azure resource provided by the user
+                          and assigned to the VM
+                          Identity can only be set for control-plane nodes.
+                        properties:
+                          systemAssignedIdentityRole:
+                            description: |-
+                              SystemAssignedIdentityRole defines the role and scope to assign to the system-assigned identity.
+                              SystemAssignedIdentity is an experimental feature which may be enabled with the MachineAPIMigration
+                              feature gate and may only be assigned on control-plane nodes.
+                            properties:
+                              definitionID:
+                                description: |-
+                                  DefinitionID is the ID of the role definition to create for a system assigned identity. It can be an Azure built-in role or a custom role.
+                                  Refer to built-in roles: https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
+                                type: string
+                              name:
+                                description: |-
+                                  Name is the name of the role assignment to create for a system assigned identity. It can be any valid UUID.
+                                  If not specified, a random UUID will be generated.
+                                type: string
+                              scope:
+                                description: |-
+                                  Scope is the scope that the role assignment or definition applies to. The scope can be any REST resource instance.
+                                  If not specified, the scope will be the subscription.
+                                type: string
+                            type: object
+                          type:
+                            description: Type specifies the type of identity to be
+                              used.
+                            enum:
+                            - None
+                            - SystemAssigned
+                            - UserAssigned
+                            type: string
+                          userAssignedIdentities:
+                            description: |-
+                              UserAssignedIdentities is a list of identities to be attached to a node.
+                              Only one user-assigned identity may be supplied.
+                              Supplying more than one user-assigned identity is an experimental feature
+                              which may be enabled with the MachineAPIMigration feature gate.
+                            items:
+                              description: UserAssignedIdentity contains the fields
+                                that comprise a user-assigned identity.
+                              properties:
+                                name:
+                                  description: Name is the name of the user-assigned
+                                    identity to be assigned to the node.
+                                  type: string
+                                resourceGroup:
+                                  description: ResourceGroup is the resource group
+                                    that contains the user-assigned identity.
+                                  type: string
+                                subscription:
+                                  description: Subscription is the subscription that
+                                    contains the user-assigned identity.
+                                  type: string
+                              required:
+                              - name
+                              - resourceGroup
+                              - subscription
+                              type: object
+                            type: array
+                        required:
+                        - type
+                        - userAssignedIdentities
+                        type: object
                       osDisk:
                         description: OSDisk defines the storage for instance.
                         properties:
@@ -1391,6 +1463,78 @@ spec:
                           description: EncryptionAtHost enables encryption at the
                             VM host.
                           type: boolean
+                        identity:
+                          default: None
+                          description: |-
+                            Identity is the type of identity used for the virtual machine.
+                            The type 'SystemAssigned' is an implicitly created identity.
+                            The generated identity will be assigned a Subscription contributor role.
+                            The type 'UserAssigned' is a standalone Azure resource provided by the user
+                            and assigned to the VM
+                            Identity can only be set for control-plane nodes.
+                          properties:
+                            systemAssignedIdentityRole:
+                              description: |-
+                                SystemAssignedIdentityRole defines the role and scope to assign to the system-assigned identity.
+                                SystemAssignedIdentity is an experimental feature which may be enabled with the MachineAPIMigration
+                                feature gate and may only be assigned on control-plane nodes.
+                              properties:
+                                definitionID:
+                                  description: |-
+                                    DefinitionID is the ID of the role definition to create for a system assigned identity. It can be an Azure built-in role or a custom role.
+                                    Refer to built-in roles: https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
+                                  type: string
+                                name:
+                                  description: |-
+                                    Name is the name of the role assignment to create for a system assigned identity. It can be any valid UUID.
+                                    If not specified, a random UUID will be generated.
+                                  type: string
+                                scope:
+                                  description: |-
+                                    Scope is the scope that the role assignment or definition applies to. The scope can be any REST resource instance.
+                                    If not specified, the scope will be the subscription.
+                                  type: string
+                              type: object
+                            type:
+                              description: Type specifies the type of identity to
+                                be used.
+                              enum:
+                              - None
+                              - SystemAssigned
+                              - UserAssigned
+                              type: string
+                            userAssignedIdentities:
+                              description: |-
+                                UserAssignedIdentities is a list of identities to be attached to a node.
+                                Only one user-assigned identity may be supplied.
+                                Supplying more than one user-assigned identity is an experimental feature
+                                which may be enabled with the MachineAPIMigration feature gate.
+                              items:
+                                description: UserAssignedIdentity contains the fields
+                                  that comprise a user-assigned identity.
+                                properties:
+                                  name:
+                                    description: Name is the name of the user-assigned
+                                      identity to be assigned to the node.
+                                    type: string
+                                  resourceGroup:
+                                    description: ResourceGroup is the resource group
+                                      that contains the user-assigned identity.
+                                    type: string
+                                  subscription:
+                                    description: Subscription is the subscription
+                                      that contains the user-assigned identity.
+                                    type: string
+                                required:
+                                - name
+                                - resourceGroup
+                                - subscription
+                                type: object
+                              type: array
+                          required:
+                          - type
+                          - userAssignedIdentities
+                          type: object
                         osDisk:
                           description: OSDisk defines the storage for instance.
                           properties:
@@ -2521,6 +2665,78 @@ spec:
                         description: EncryptionAtHost enables encryption at the VM
                           host.
                         type: boolean
+                      identity:
+                        default: None
+                        description: |-
+                          Identity is the type of identity used for the virtual machine.
+                          The type 'SystemAssigned' is an implicitly created identity.
+                          The generated identity will be assigned a Subscription contributor role.
+                          The type 'UserAssigned' is a standalone Azure resource provided by the user
+                          and assigned to the VM
+                          Identity can only be set for control-plane nodes.
+                        properties:
+                          systemAssignedIdentityRole:
+                            description: |-
+                              SystemAssignedIdentityRole defines the role and scope to assign to the system-assigned identity.
+                              SystemAssignedIdentity is an experimental feature which may be enabled with the MachineAPIMigration
+                              feature gate and may only be assigned on control-plane nodes.
+                            properties:
+                              definitionID:
+                                description: |-
+                                  DefinitionID is the ID of the role definition to create for a system assigned identity. It can be an Azure built-in role or a custom role.
+                                  Refer to built-in roles: https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
+                                type: string
+                              name:
+                                description: |-
+                                  Name is the name of the role assignment to create for a system assigned identity. It can be any valid UUID.
+                                  If not specified, a random UUID will be generated.
+                                type: string
+                              scope:
+                                description: |-
+                                  Scope is the scope that the role assignment or definition applies to. The scope can be any REST resource instance.
+                                  If not specified, the scope will be the subscription.
+                                type: string
+                            type: object
+                          type:
+                            description: Type specifies the type of identity to be
+                              used.
+                            enum:
+                            - None
+                            - SystemAssigned
+                            - UserAssigned
+                            type: string
+                          userAssignedIdentities:
+                            description: |-
+                              UserAssignedIdentities is a list of identities to be attached to a node.
+                              Only one user-assigned identity may be supplied.
+                              Supplying more than one user-assigned identity is an experimental feature
+                              which may be enabled with the MachineAPIMigration feature gate.
+                            items:
+                              description: UserAssignedIdentity contains the fields
+                                that comprise a user-assigned identity.
+                              properties:
+                                name:
+                                  description: Name is the name of the user-assigned
+                                    identity to be assigned to the node.
+                                  type: string
+                                resourceGroup:
+                                  description: ResourceGroup is the resource group
+                                    that contains the user-assigned identity.
+                                  type: string
+                                subscription:
+                                  description: Subscription is the subscription that
+                                    contains the user-assigned identity.
+                                  type: string
+                              required:
+                              - name
+                              - resourceGroup
+                              - subscription
+                              type: object
+                            type: array
+                        required:
+                        - type
+                        - userAssignedIdentities
+                        type: object
                       osDisk:
                         description: OSDisk defines the storage for instance.
                         properties:
@@ -4134,6 +4350,78 @@ spec:
                         description: EncryptionAtHost enables encryption at the VM
                           host.
                         type: boolean
+                      identity:
+                        default: None
+                        description: |-
+                          Identity is the type of identity used for the virtual machine.
+                          The type 'SystemAssigned' is an implicitly created identity.
+                          The generated identity will be assigned a Subscription contributor role.
+                          The type 'UserAssigned' is a standalone Azure resource provided by the user
+                          and assigned to the VM
+                          Identity can only be set for control-plane nodes.
+                        properties:
+                          systemAssignedIdentityRole:
+                            description: |-
+                              SystemAssignedIdentityRole defines the role and scope to assign to the system-assigned identity.
+                              SystemAssignedIdentity is an experimental feature which may be enabled with the MachineAPIMigration
+                              feature gate and may only be assigned on control-plane nodes.
+                            properties:
+                              definitionID:
+                                description: |-
+                                  DefinitionID is the ID of the role definition to create for a system assigned identity. It can be an Azure built-in role or a custom role.
+                                  Refer to built-in roles: https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
+                                type: string
+                              name:
+                                description: |-
+                                  Name is the name of the role assignment to create for a system assigned identity. It can be any valid UUID.
+                                  If not specified, a random UUID will be generated.
+                                type: string
+                              scope:
+                                description: |-
+                                  Scope is the scope that the role assignment or definition applies to. The scope can be any REST resource instance.
+                                  If not specified, the scope will be the subscription.
+                                type: string
+                            type: object
+                          type:
+                            description: Type specifies the type of identity to be
+                              used.
+                            enum:
+                            - None
+                            - SystemAssigned
+                            - UserAssigned
+                            type: string
+                          userAssignedIdentities:
+                            description: |-
+                              UserAssignedIdentities is a list of identities to be attached to a node.
+                              Only one user-assigned identity may be supplied.
+                              Supplying more than one user-assigned identity is an experimental feature
+                              which may be enabled with the MachineAPIMigration feature gate.
+                            items:
+                              description: UserAssignedIdentity contains the fields
+                                that comprise a user-assigned identity.
+                              properties:
+                                name:
+                                  description: Name is the name of the user-assigned
+                                    identity to be assigned to the node.
+                                  type: string
+                                resourceGroup:
+                                  description: ResourceGroup is the resource group
+                                    that contains the user-assigned identity.
+                                  type: string
+                                subscription:
+                                  description: Subscription is the subscription that
+                                    contains the user-assigned identity.
+                                  type: string
+                              required:
+                              - name
+                              - resourceGroup
+                              - subscription
+                              type: object
+                            type: array
+                        required:
+                        - type
+                        - userAssignedIdentities
+                        type: object
                       osDisk:
                         description: OSDisk defines the storage for instance.
                         properties:

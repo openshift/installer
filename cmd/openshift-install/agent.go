@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/password"
+	"github.com/openshift/installer/pkg/asset/tls"
 )
 
 func newAgentCmd(ctx context.Context) *cobra.Command {
@@ -116,7 +117,23 @@ var (
 		},
 	}
 
-	agentTargets = []target{agentConfigTarget, agentManifestsTarget, agentImageTarget, agentPXEFilesTarget, agentConfigImageTarget, agentUnconfiguredIgnitionTarget}
+	agentCertificatesTarget = target{
+		name: "Agent create certificates",
+		command: &cobra.Command{
+			Use:    "certificates",
+			Short:  "Generates the tls certificates that can be used to create kubeconfig",
+			Args:   cobra.ExactArgs(0),
+			Hidden: true,
+		},
+		assets: []asset.WritableAsset{
+			&tls.KubeAPIServerLBSignerCertKey{},
+			&tls.KubeAPIServerLocalhostSignerCertKey{},
+			&tls.KubeAPIServerServiceNetworkSignerCertKey{},
+			&tls.AdminKubeConfigSignerCertKey{},
+		},
+	}
+
+	agentTargets = []target{agentConfigTarget, agentManifestsTarget, agentImageTarget, agentPXEFilesTarget, agentConfigImageTarget, agentUnconfiguredIgnitionTarget, agentCertificatesTarget}
 )
 
 func newAgentCreateCmd(ctx context.Context) *cobra.Command {

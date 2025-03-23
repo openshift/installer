@@ -41,7 +41,7 @@ func (a *IronicTLSCert) Generate(ctx context.Context, dependencies asset.Parents
 		Subject:      pkix.Name{CommonName: "ironic", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		Validity:     ValidityOneDay,
+		Validity:     ValidityOneDay(installConfig),
 	}
 
 	vips := installConfig.Config.BareMetal.APIVIPs

@@ -212,9 +212,9 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		publicLB = ""
 	}
 
-	managedIdentity := fmt.Sprintf("%s-identity", clusterID)
-	if platform.IsARO() || platform.CloudName == azure.StackCloud {
-		managedIdentity = ""
+	managedIdentity := ""
+	if len(mpool.Identity.UserAssignedIdentities) > 0 {
+		managedIdentity = mpool.Identity.UserAssignedIdentities[0].ProviderID()
 	}
 
 	var diskEncryptionSet *machineapi.DiskEncryptionSetParameters

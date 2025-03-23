@@ -28,11 +28,6 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 
 	return []featuregates.GatedInstallConfigFeature{
 		{
-			FeatureGateName: features.FeatureGateVSphereStaticIPs,
-			Condition:       len(v.Hosts) > 0,
-			Field:           field.NewPath("platform", "vsphere", "hosts"),
-		},
-		{
 			FeatureGateName: features.FeatureGateVSphereMultiNetworks,
 			Condition:       multiNetworksFound,
 			Field:           field.NewPath("platform", "vsphere", "failureDomains", "topology", "networks"),
