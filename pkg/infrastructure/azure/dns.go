@@ -37,7 +37,7 @@ type recordPrivateList struct {
 }
 
 // Create DNS entries for azure.
-func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBFQDN string, resourceGroup string, opts *arm.ClientOptions) error {
+func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBFQDN, publicIP, resourceGroup string, opts *arm.ClientOptions) error {
 	baseDomainResourceGroup := in.InstallConfig.Config.Azure.BaseDomainResourceGroupName
 	zone := in.InstallConfig.Config.BaseDomain
 	privatezone := in.InstallConfig.Config.ClusterDomain()
@@ -102,7 +102,7 @@ func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBF
 	if in.InstallConfig.Azure.CloudName == azure.StackCloud {
 		stackRecords := []recordList{}
 		if in.InstallConfig.Config.PublicAPI() {
-			stackRecords = append(stackRecords, createRecordSet(apiExternalName, azureTags, ttl, cname, "", extLBFQDN))
+			stackRecords = append(stackRecords, createRecordSet(apiExternalName, azureTags, ttl, arecord, publicIP, ""))
 		} else {
 			stackRecords = append(stackRecords, createRecordSet(apiExternalName, azureTags, ttl, arecord, ipIlb, ""))
 		}

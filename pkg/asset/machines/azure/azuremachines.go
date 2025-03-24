@@ -29,6 +29,7 @@ type MachineInput struct {
 	Role            string
 	UserDataSecret  string
 	HyperVGen       string
+	StorageSuffix   string
 	UseImageGallery bool
 	Private         bool
 	UserTags        map[string]string
@@ -83,10 +84,13 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 		if in.HyperVGen == "V2" {
 			id += genV2Suffix
 		}
-		imageID := fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/galleries/gallery_%s/images/%s/versions/latest", resourceGroup, galleryName, id)
+		imageID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/galleries/gallery_%s/images/%s", subscriptionID, resourceGroup, galleryName, clusterID)
+		//imageID := fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/galleries/gallery_%s/images/%s/versions/latest", resourceGroup, galleryName, id)
 		image = &capz.Image{ID: &imageID}
 	default:
-		imageID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/galleries/gallery_%s/images/%s", subscriptionID, resourceGroup, galleryName, clusterID)
+		imageID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/images/%s", subscriptionID, resourceGroup, clusterID)
+		//TODO it seems like in.UseImageGallery is not getting set correctly.
+		//imageID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/galleries/gallery_%s/images/%s", subscriptionID, resourceGroup, galleryName, clusterID)
 		if in.HyperVGen == "V2" && in.Platform.CloudName != azure.StackCloud {
 			imageID += genV2Suffix
 		}
@@ -144,6 +148,8 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 		}
 	}
 
+	storageAccountName := getStorageAccountName(clusterID)
+
 	var result []*asset.RuntimeFile
 	for idx := int64(0); idx < total; idx++ {
 		zone := mpool.Zones[int(idx)%len(mpool.Zones)]
@@ -187,7 +193,10 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 			azureMachine.Spec.UserAssignedIdentities = nil
 			azureMachine.Spec.Diagnostics = &capz.Diagnostics{
 				Boot: &capz.BootDiagnostics{
-					StorageAccountType: capz.DisabledDiagnosticsStorage,
+					StorageAccountType: capz.UserManagedDiagnosticsStorage,
+					UserManaged: &capz.UserManagedBootDiagnostics{
+						StorageAccountURI: fmt.Sprintf("https://%s.blob.%s", storageAccountName, in.StorageSuffix),
+					},
 				},
 			}
 		}
@@ -257,7 +266,10 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 		bootstrapAzureMachine.Spec.UserAssignedIdentities = nil
 		bootstrapAzureMachine.Spec.Diagnostics = &capz.Diagnostics{
 			Boot: &capz.BootDiagnostics{
-				StorageAccountType: capz.DisabledDiagnosticsStorage,
+				StorageAccountType: capz.UserManagedDiagnosticsStorage,
+				UserManaged: &capz.UserManagedBootDiagnostics{
+					StorageAccountURI: fmt.Sprintf("https://%s.blob.%s", storageAccountName, in.StorageSuffix),
+				},
 			},
 		}
 	}
@@ -319,4 +331,17 @@ func CapzTagsFromUserTags(clusterID string, usertags map[string]string) (capz.Ta
 		tags[k] = usertags[k]
 	}
 	return tags, nil
+}
+
+// Storage account names can't be more than 24 characters.
+func getStorageAccountName(infraID string) string {
+	storageAccountNameMax := 24
+
+	storageAccountName := strings.ReplaceAll(infraID, "-", "")
+	if len(storageAccountName) > storageAccountNameMax-2 {
+		storageAccountName = storageAccountName[:storageAccountNameMax-2]
+	}
+	storageAccountName = fmt.Sprintf("%ssa", storageAccountName)
+
+	return storageAccountName
 }

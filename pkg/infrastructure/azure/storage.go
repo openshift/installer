@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	account "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/storage/mgmt/storage"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
@@ -73,8 +74,8 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 
 	opts := &arm.ClientOptions{
 		ClientOptions: policy.ClientOptions{
-			Cloud:      in.ClientOpts.Cloud,
-			APIVersion: "2019-06-01",
+			Cloud: in.ClientOpts.Cloud,
+			//APIVersion: "2019-06-01", //apparently override is not supported
 		},
 	}
 	allowSharedKeyAccess := true
@@ -455,6 +456,11 @@ type CreateBlockBlobInput struct {
 	ContainerName      string
 	BlobName           string
 	StorageSuffix      string
+	ARMEndpoint        string
+	Region             string
+	ResourceGroupName  string
+	Session            *azic.Session
+	Tags               map[string]*string
 }
 
 // CreateBlockBlobOutput contains the return values after creating a block
@@ -466,16 +472,14 @@ type CreateBlockBlobOutput struct {
 
 // CreateBlockBlob creates a block blob and uploads a file from a URL to it.
 func CreateBlockBlob(ctx context.Context, in *CreateBlockBlobInput) (string, error) {
+	if in.CloudEnvironment == aztypes.StackCloud {
+		return createBlockBlobOnStack(ctx, in)
+	}
 	logrus.Debugf("Getting block blob credentials")
-
 	// XXX: Should try all of them until one is successful
 	sharedKeyCredential, err := azblob.NewSharedKeyCredential(in.StorageAccountName, *in.StorageAccountKeys[0].Value)
 	if err != nil {
 		return "", fmt.Errorf("failed to get shared crdentials for storage account: %w", err)
-	}
-
-	if in.CloudEnvironment == aztypes.StackCloud {
-		return createBlockBlobOnStack(in, *in.StorageAccountKeys[0].Value)
 	}
 	return createBlockBlob(ctx, in, sharedKeyCredential)
 }
@@ -513,7 +517,64 @@ func createBlockBlob(ctx context.Context, in *CreateBlockBlobInput, sharedKeyCre
 	return sasURL, nil
 }
 
-func createBlockBlobOnStack(in *CreateBlockBlobInput, key string) (string, error) {
+func createBlockBlobOnStack(ctx context.Context, in *CreateBlockBlobInput) (string, error) {
+	if err := createAccountOnStack(ctx, in); err != nil {
+		return "", fmt.Errorf("failed to create storage account for ignition: %w", err)
+	}
+	key, err := getStorageAccountKey(ctx, in)
+	if err != nil {
+		return "", fmt.Errorf("error getting stack storage account key: %w", err)
+	}
+	return uploadBlockBlobOnStack(in, key)
+}
+
+func createAccountOnStack(ctx context.Context, in *CreateBlockBlobInput) error {
+	cl := account.NewAccountsClientWithBaseURI(in.ARMEndpoint, in.Session.Credentials.SubscriptionID)
+	cl.Authorizer = in.Session.Authorizer
+
+	parameters := account.AccountCreateParameters{
+		// AccountPropertiesCreateParameters: &account.AccountPropertiesCreateParameters{
+		// 	AccessTier: account.Hot,
+		// },
+		Location: &in.Region,
+		Sku: &account.Sku{
+			Name: account.PremiumLRS,
+		},
+		Tags: in.Tags,
+		Kind: account.Storage,
+	}
+
+	future, err := cl.Create(ctx, in.ResourceGroupName, in.StorageAccountName, parameters)
+	if err != nil {
+		return fmt.Errorf("error creating storage account creation request: %w", err)
+	}
+	if err = future.WaitForCompletionRef(ctx, cl.Client); err != nil {
+		return fmt.Errorf("error waiting for stack storage account to provision: %w", err)
+	}
+	acct, err := future.Result(cl)
+	if err != nil {
+		return fmt.Errorf("error fetching storage account: %w", err)
+	}
+	logrus.Debugf("Created storage account %s", *acct.ID)
+	return nil
+
+}
+
+func getStorageAccountKey(ctx context.Context, in *CreateBlockBlobInput) (string, error) {
+	cl := account.NewAccountsClientWithBaseURI(in.ARMEndpoint, in.Session.Credentials.SubscriptionID)
+	cl.Authorizer = in.Session.Authorizer
+	res, err := cl.ListKeys(ctx, in.ResourceGroupName, in.StorageAccountName)
+	if err != nil {
+		return "", fmt.Errorf("error listing stack storage account keys: %w", err)
+	}
+	keys := *res.Keys
+	if len(keys) > 0 {
+		return *keys[0].Value, nil
+	}
+	return "", fmt.Errorf("no storage account key found")
+}
+
+func uploadBlockBlobOnStack(in *CreateBlockBlobInput, key string) (string, error) {
 	logrus.Debugf("Creating block blob for bootstrap ignition")
 	storageClient, err := storage.NewClient(in.StorageAccountName, key, in.StorageSuffix, "2016-05-31", true)
 	if err != nil {
@@ -521,6 +582,9 @@ func createBlockBlobOnStack(in *CreateBlockBlobInput, key string) (string, error
 	}
 	blobClient := storageClient.GetBlobService()
 	container := blobClient.GetContainerReference(in.ContainerName)
+	if err := container.Create(&storage.CreateContainerOptions{Access: storage.ContainerAccessTypeBlob}); err != nil {
+		return "", fmt.Errorf("unable to create container: %w", err)
+	}
 	blob := container.GetBlobReference(in.BlobName)
 	// blob.Properties = storage.BlobProperties{}
 	//	blob.Metadata = storage.BlobMetadata{}

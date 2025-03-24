@@ -236,3 +236,39 @@ func CreateGalleryImageVersion(ctx context.Context, in *CreateGalleryImageVersio
 		GalleryImageVersion: to.Ptr(galleryImageVersionPollDone.GalleryImageVersion),
 	}, nil
 }
+
+type CreateManagedImageInput struct {
+	VHDBlobUrl        string
+	ResourceGroupName string
+	Region            string
+	InfraID           string
+	Tags              map[string]*string
+	Client            *armcompute.ImagesClient
+}
+
+func CreateManagedImage(ctx context.Context, in *CreateManagedImageInput) error {
+	params := armcompute.Image{
+		Location: to.Ptr(in.Region),
+		Tags:     in.Tags,
+		Properties: &armcompute.ImageProperties{
+			HyperVGeneration: to.Ptr(armcompute.HyperVGenerationTypesV1),
+			StorageProfile: &armcompute.ImageStorageProfile{
+				OSDisk: &armcompute.ImageOSDisk{
+					OSState: to.Ptr(armcompute.OperatingSystemStateTypesGeneralized),
+					OSType:  to.Ptr(armcompute.OperatingSystemTypesLinux),
+					BlobURI: to.Ptr(in.VHDBlobUrl),
+				},
+			},
+		},
+	}
+	poll, err := in.Client.BeginCreateOrUpdate(ctx, in.ResourceGroupName, in.InfraID, params, nil)
+	if err != nil {
+		return fmt.Errorf("error beginning managed image creation: %w", err)
+	}
+	res, err := poll.PollUntilDone(ctx, &runtime.PollUntilDoneOptions{})
+	if err != nil {
+		return fmt.Errorf("failed during managed image creation: %w", err)
+	}
+	logrus.Debugf("Successfully created managed image: %s", *res.ID)
+	return nil
+}

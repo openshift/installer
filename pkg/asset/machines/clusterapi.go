@@ -294,6 +294,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 				UserTags:        installConfig.Config.Platform.Azure.UserTags,
 				Platform:        installConfig.Config.Platform.Azure,
 				Pool:            &pool,
+				StorageSuffix:   session.Environment.StorageEndpointSuffix,
 			},
 		)
 		if err != nil {
