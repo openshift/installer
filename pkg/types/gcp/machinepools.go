@@ -79,6 +79,15 @@ const (
 	ConfidentialComputePolicyTDX ConfidentialComputePolicy = "IntelTrustedDomainExtensions"
 )
 
+var (
+	// ConfidentialComputePolicyToSupportedInstanceType is a map containing machine types and the list of confidential computing technologies each of them support.
+	ConfidentialComputePolicyToSupportedInstanceType = map[ConfidentialComputePolicy][]string{
+		ConfidentialComputePolicySEV:    {"c2d", "n2d", "c3d"},
+		ConfidentialComputePolicySEVSNP: {"n2d"},
+		ConfidentialComputePolicyTDX:    {"c3"},
+	}
+)
+
 // MachinePool stores the configuration for a machine pool installed on GCP.
 type MachinePool struct {
 	// Zones is list of availability zones that can be used.
