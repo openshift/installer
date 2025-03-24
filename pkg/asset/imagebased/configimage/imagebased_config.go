@@ -1,6 +1,7 @@
 package configimage
 
 import (
+	_ "embed"
 	"context"
 	"fmt"
 	"os"
@@ -40,38 +41,11 @@ func (*ImageBasedConfig) Dependencies() []asset.Asset {
 	return []asset.Asset{}
 }
 
+//go:embed image_based_config_template.yaml
+var imageBasedConfigTemplate string
+
 // Generate generates the Image-based Config manifest.
 func (i *ImageBasedConfig) Generate(_ context.Context, dependencies asset.Parents) error {
-	imageBasedConfigTemplate := `#
-# Note: This is a sample ImageBasedConfig file showing
-# which fields are available to aid you in creating your
-# own image-based-config.yaml file.
-#
-apiVersion: v1beta1
-kind: ImageBasedConfig
-metadata:
-  name: example-image-based-config
-additionalNTPSources:
-  - 0.rhel.pool.ntp.org
-  - 1.rhel.pool.ntp.org
-hostname: change-to-hostname
-releaseRegistry: quay.io
-# networkConfig contains the network configuration for the host in NMState format.
-# See https://nmstate.io/examples.html for examples.
-networkConfig:
-  interfaces:
-    - name: eth0
-      type: ethernet
-      state: up
-      mac-address: 00:00:00:00:00:00
-      ipv4:
-        enabled: true
-        address:
-          - ip: 192.168.122.2
-            prefix-length: 23
-        dhcp: false
-`
-
 	i.Template = imageBasedConfigTemplate
 
 	// Set the File field correctly with the generated image-based install config YAML content
