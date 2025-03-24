@@ -29,8 +29,6 @@ github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.6.0 h1:U2rTu3Ef+7w9FHKIAXM6Z
 github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.6.0/go.mod h1:9kIvujWAA58nmPmWB1m23fyWic1kYZMxD9CxaWn4Qpg=
 github.com/Azure/azure-sdk-for-go/sdk/internal v1.9.0 h1:H+U3Gk9zY56G3u872L82bk4thcsy2Gghb9ExT4Zvm1o=
 github.com/Azure/azure-sdk-for-go/sdk/internal v1.9.0/go.mod h1:mgrmMSgaLp9hmax62XQTd0N4aAqSE5E0DulSpVYK7vc=
-github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v3 v3.0.0-beta.2 h1:qiir/pptnHqp6hV8QwV+IExYIf6cPsXBfUDUXQ27t2Y=
-github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v3 v3.0.0-beta.2/go.mod h1:jVRrRDLCOuif95HDYC23ADTMlvahB7tMdl519m9Iyjc=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4 v4.2.1 h1:UPeCRD+XY7QlaGQte2EVI2iOcWvUYA2XY8w5T/8v0NQ=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4 v4.2.1/go.mod h1:oGV6NlB0cvi1ZbYRR2UN44QHxWFyGk+iylgD0qaMXjA=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5 v5.7.0 h1:LkHbJbgF3YyvC53aqYGR+wWQDn2Rdp9AQdGndf9QvY4=
@@ -45,8 +43,6 @@ github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault v1.4.
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault v1.4.0/go.mod h1:StGsLbuJh06Bd8IBfnAlIFV3fLb+gkczONWf15hpX2E=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/managementgroups/armmanagementgroups v1.0.0 h1:pPvTJ1dY0sA35JOeFq6TsY2xj6Z85Yo23Pj4wCCvu4o=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/managementgroups/armmanagementgroups v1.0.0/go.mod h1:mLfWfj8v3jfWKsL9G4eoBoXVcsqcIUTapmdKy7uGOp0=
-github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/msi/armmsi v1.2.0 h1:z4YeiSXxnUI+PqB46Yj6MZA3nwb1CcJIkEMDrzUd8Cs=
-github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/msi/armmsi v1.2.0/go.mod h1:rko9SzMxcMk0NJsNAxALEGaTYyy79bNRwxgJfrH0Spw=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork v1.0.0 h1:nBy98uKOIfun5z6wx6jwWLrULcM0+cjBalBFZlEZ7CA=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork v1.0.0/go.mod h1:243D9iHbcQXoFUtgHJwL7gl2zx1aDuDMjvBZVGr2uW0=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2 v2.2.1 h1:bWh0Z2rOEDfB/ywv/l0iHN1JgyazE6kW/aIA89+CEK0=
@@ -248,6 +244,8 @@ github.com/digitalocean/go-libvirt v0.0.0-20240220204746-fcabe97a6eed h1:pDXysiX
 github.com/digitalocean/go-libvirt v0.0.0-20240220204746-fcabe97a6eed/go.mod h1:isF7ghADfbC01gQx4vZnIOrxXT5RXLG81y+UCb5XSwc=
 github.com/diskfs/go-diskfs v1.4.0 h1:MAybY6TPD+fmhY+a2qFhmdvMeIKvCqlgh4QIc1uCmBs=
 github.com/diskfs/go-diskfs v1.4.0/go.mod h1:G8cyy+ngM+3yKlqjweMmtqvE+TxsnIo1xumbJX1AeLg=
+github.com/dnaeon/go-vcr v1.2.0 h1:zHCHvJYTMh1N7xnV7zf1m1GPBF9Ad0Jk/whtQ1663qI=
+github.com/dnaeon/go-vcr v1.2.0/go.mod h1:R4UdLID7HZT3taECzJs4YgbbH6PIGXB6W/sc5OLb6RQ=
 github.com/docker/go-units v0.5.0 h1:69rxXcBk27SvSaaxTtLh/8llcHD8vYHT7WSdRZ/jvr4=
 github.com/docker/go-units v0.5.0/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
 github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815/go.mod h1:WwZ+bS3ebgob9U8Nd0kOddGdZWjyMGR8Wziv+TBNwSE=
@@ -383,6 +381,8 @@ github.com/gobuffalo/packr/v2 v2.0.9/go.mod h1:emmyGweYTm6Kdper+iywB6YK5YzuKchGt
 github.com/gobuffalo/packr/v2 v2.2.0/go.mod h1:CaAwI0GPIAv+5wKLtv8Afwl+Cm78K/I/VCm/3ptBN+0=
 github.com/gobuffalo/syncx v0.0.0-20190224160051-33c29581e754/go.mod h1:HhnNqWY95UYwwW3uSASeV7vtgYkT2t16hJgV3AEPUpw=
 github.com/godbus/dbus/v5 v5.0.4/go.mod h1:xhWf0FNVPg57R7Z0UbKHbJfkEywrmjJnf7w5xrFpKfA=
+github.com/gofrs/uuid v4.4.0+incompatible h1:3qXRTX8/NbyulANqlc0lchS1gqAVxRgsuW1YrTJupqA=
+github.com/gofrs/uuid v4.4.0+incompatible/go.mod h1:b2aQJv3Z4Fp6yNu3cdSllBxTCLRxnplIgP/c0N/04lM=
 github.com/gofrs/uuid/v5 v5.3.0 h1:m0mUMr+oVYUdxpMLgSYCZiXe7PuVPnI94+OMeVBNedk=
 github.com/gofrs/uuid/v5 v5.3.0/go.mod h1:CDOjlDMVAtN56jqyRUZh58JT31Tiw7/oQyEXZV+9bD8=
 github.com/gogo/protobuf v1.3.2 h1:Ov1cvc58UF3b5XjBnZv7+opcTcQFZebYjWzi34vdm4Q=
