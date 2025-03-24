@@ -10,7 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-        "strings"
+	"strings"
 
 	"github.com/coreos/stream-metadata-go/arch"
 	"github.com/sirupsen/logrus"
@@ -276,9 +276,3 @@ func (a *AgentPXEFiles) handleAdditionals390xArtifacts(bootArtifactsFullPath str
 	logrus.Infof("Updated generic.ins with correct filenames: %s", agentINSFile)
 	return nil
 }
-
-
-
-
-
-
