@@ -58,8 +58,6 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 		return nil, fmt.Errorf("failed to create machineapi.TagSpecifications from UserTags: %w", err)
 	}
 
-	userAssignedIdentityID := fmt.Sprintf("/subscriptions/%s/resourcegroups/%s/providers/Microsoft.ManagedIdentity/userAssignedIdentities/%s-identity", subscriptionID, resourceGroup, clusterID)
-
 	var image *capz.Image
 	osImage := mpool.OSImage
 	galleryName := strings.ReplaceAll(clusterID, "-", "_")
@@ -144,6 +142,11 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 		}
 	}
 
+	userAssignedIdentities := make([]capz.UserAssignedIdentity, len(mpool.Identity.UserAssignedIdentities))
+	for i, id := range mpool.Identity.UserAssignedIdentities {
+		userAssignedIdentities[i] = capz.UserAssignedIdentity{ProviderID: id.ProviderID()}
+	}
+
 	var result []*asset.RuntimeFile
 	for idx := int64(0); idx < total; idx++ {
 		zone := mpool.Zones[int(idx)%len(mpool.Zones)]
@@ -172,12 +175,9 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 						AcceleratedNetworking: ptr.To(mpool.VMNetworkingType == string(azure.VMnetworkingTypeAccelerated) || mpool.VMNetworkingType == string(azure.AcceleratedNetworkingEnabled)),
 					},
 				},
-				Identity: capz.VMIdentityUserAssigned,
-				UserAssignedIdentities: []capz.UserAssignedIdentity{
-					{
-						ProviderID: userAssignedIdentityID,
-					},
-				},
+				Identity:                   mpool.Identity.Type,
+				UserAssignedIdentities:     userAssignedIdentities,
+				SystemAssignedIdentityRole: mpool.Identity.SystemAssignedIdentityRole,
 			},
 		}
 		azureMachine.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureMachine"))
@@ -232,12 +232,9 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 			AllocatePublicIP:           !in.Private,
 			AdditionalCapabilities:     additionalCapabilities,
 			SecurityProfile:            securityProfile,
-			Identity:                   capz.VMIdentityUserAssigned,
-			UserAssignedIdentities: []capz.UserAssignedIdentity{
-				{
-					ProviderID: userAssignedIdentityID,
-				},
-			},
+			Identity:                   mpool.Identity.Type,
+			UserAssignedIdentities:     userAssignedIdentities,
+			SystemAssignedIdentityRole: mpool.Identity.SystemAssignedIdentityRole,
 		},
 	}
 	bootstrapAzureMachine.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureMachine"))
