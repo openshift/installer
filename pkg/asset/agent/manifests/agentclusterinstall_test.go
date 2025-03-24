@@ -79,7 +79,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 
 	goodNetworkOverrideACI := getGoodACI()
 	goodNetworkOverrideACI.SetAnnotations(map[string]string{
-		installConfigOverrides: `{"networking":{"networkType":"CustomNetworkType","machineNetwork":[{"cidr":"10.10.11.0/24"}],"clusterNetwork":[{"cidr":"192.168.111.0/24","hostPrefix":23}],"serviceNetwork":["172.30.0.0/16"]}}`,
+		installConfigOverrides: `{"networking":{"networkType":"CustomNetworkType","machineNetwork":[{"cidr":"10.10.11.0/24"}],"clusterNetwork":[{"cidr":"192.168.96.0/20","hostPrefix":23}],"serviceNetwork":["172.30.0.0/16"]}}`,
 	})
 
 	installConfigWithCPUPartitioning := getValidOptionalInstallConfig()
@@ -711,7 +711,7 @@ spec:
     clusterNetwork:
     - cidr: 10.128.0.0/14
       hostPrefix: 23
-    - cidr: 2001:db8:1111:2222::/64
+    - cidr: 2001:db8:1111::/48
       hostPrefix: 64
     serviceNetwork:
     - 172.30.0.0/16
@@ -751,7 +751,7 @@ spec:
 								HostPrefix: 23,
 							},
 							{
-								CIDR:       "2001:db8:1111:2222::/64",
+								CIDR:       "2001:db8:1111::/48",
 								HostPrefix: 64,
 							},
 						},

@@ -69,7 +69,7 @@ var (
 
 // GetValidOptionalInstallConfig returns a valid optional install config
 func getValidOptionalInstallConfig() *agent.OptionalInstallConfig {
-	_, newCidr, _ := net.ParseCIDR("192.168.111.0/24")
+	_, newCidr, _ := net.ParseCIDR("192.168.96.0/20")
 	_, machineNetCidr, _ := net.ParseCIDR("10.10.11.0/24")
 
 	return &agent.OptionalInstallConfig{
@@ -128,8 +128,8 @@ func getValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 
 // GetValidOptionalInstallConfigDualStack returns a valid optional install config for dual stack
 func getValidOptionalInstallConfigDualStack() *agent.OptionalInstallConfig {
-	_, newCidr, _ := net.ParseCIDR("192.168.111.0/24")
-	_, newCidrIPv6, _ := net.ParseCIDR("2001:db8:1111:2222::/64")
+	_, newCidr, _ := net.ParseCIDR("192.168.96.0/20")
+	_, newCidrIPv6, _ := net.ParseCIDR("2001:db8:1111::/48")
 	_, machineNetCidr, _ := net.ParseCIDR("10.10.11.0/24")
 	_, machineNetCidrIPv6, _ := net.ParseCIDR("2001:db8:5dd8:c956::/64")
 
@@ -527,7 +527,7 @@ func getGoodACI() *hiveext.AgentClusterInstall {
 				},
 				ClusterNetwork: []hiveext.ClusterNetworkEntry{
 					{
-						CIDR:       "192.168.111.0/24",
+						CIDR:       "192.168.96.0/20",
 						HostPrefix: 23,
 					},
 				},
@@ -576,7 +576,7 @@ func getGoodACIDualStack() *hiveext.AgentClusterInstall {
 		CIDR: "2001:db8:5dd8:c956::/64",
 	})
 	goodACI.Spec.Networking.ClusterNetwork = append(goodACI.Spec.Networking.ClusterNetwork, hiveext.ClusterNetworkEntry{
-		CIDR:       "2001:db8:1111:2222::/64",
+		CIDR:       "2001:db8:1111::/48",
 		HostPrefix: 64,
 	})
 	goodACI.Spec.Networking.ServiceNetwork = append(goodACI.Spec.Networking.ServiceNetwork, "fd02::/112")
