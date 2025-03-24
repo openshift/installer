@@ -45,6 +45,16 @@ done
 if [ "${IS_NODE_ZERO}" = "true" ]; then
     echo "Node 0 IP ${NODE_ZERO_IP} found on this host" 1>&2
 
+    # Create tls certs, if they don't exist, via the installer command.
+    # This allows the certs to be created at run-time, e.g. when installed via the UI
+    AGENT_TLS_DIR=/opt/agent/tls
+    if [ -z $(ls -A "$AGENT_TLS_DIR") ]; then
+       . /usr/local/bin/release-image.sh
+       IMAGE=$(image_for installer)
+       /usr/bin/podman run --privileged -v /tmp:/assets --rm "${IMAGE}" agent create certificates --dir=/assets
+       cp /tmp/tls/* $AGENT_TLS_DIR
+    fi
+
     NODE0_PATH=/etc/assisted/node0
     mkdir -p "$(dirname "${NODE0_PATH}")"
 

@@ -95,3 +95,5 @@ IMAGE_SERVICE_BASE_URL=http://{{.RendezvousIP}}:8888/
 PULL_SECRET_TOKEN=
 USER_AUTH_TOKEN=
 WORKFLOW_TYPE=install-interactive-disconnected
+AIUI_APP_API_URL=http://{{.RendezvousIP}}:8090/
+AIUI_URL=http://{{.RendezvousIP}}:3001/

@@ -6,6 +6,7 @@ import (
 	"crypto/x509/pkix"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/installconfig"
 )
 
 // KubeletCSRSignerCertKey is a key/cert pair that signs the kubelet client certs.
@@ -17,15 +18,17 @@ var _ asset.WritableAsset = (*KubeletCSRSignerCertKey)(nil)
 
 // Dependencies returns the dependency of the root-ca, which is empty.
 func (c *KubeletCSRSignerCertKey) Dependencies() []asset.Asset {
-	return []asset.Asset{}
+	return []asset.Asset{&installconfig.InstallConfig{}}
 }
 
 // Generate generates the root-ca key and cert pair.
 func (c *KubeletCSRSignerCertKey) Generate(ctx context.Context, parents asset.Parents) error {
+	installConfig := &installconfig.InstallConfig{}
+	parents.Get(installConfig)
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "kubelet-signer", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityOneDay,
+		Validity:  ValidityOneDay(installConfig),
 		IsCA:      true,
 	}
 
@@ -115,7 +118,7 @@ func (c *KubeletBootstrapCertSigner) Generate(ctx context.Context, parents asset
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "kubelet-bootstrap-kubeconfig-signer", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityTenYears,
+		Validity:  ValidityTenYears(),
 		IsCA:      true,
 	}
 
@@ -183,7 +186,7 @@ func (a *KubeletClientCertKey) Generate(ctx context.Context, dependencies asset.
 		Subject:      pkix.Name{CommonName: "system:serviceaccount:openshift-machine-config-operator:node-bootstrapper", Organization: []string{"system:serviceaccounts:openshift-machine-config-operator", "system:serviceaccounts"}},
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
-		Validity:     ValidityTenYears,
+		Validity:     ValidityTenYears(),
 	}
 
 	return a.SignedCertKey.Generate(ctx, cfg, ca, "kubelet-client", DoNotAppendParent)
