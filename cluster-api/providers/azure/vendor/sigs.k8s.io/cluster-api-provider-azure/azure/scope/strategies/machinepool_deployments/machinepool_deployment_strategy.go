@@ -24,11 +24,12 @@ import (
 
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	ctrl "sigs.k8s.io/controller-runtime"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	infrav1exp "sigs.k8s.io/cluster-api-provider-azure/exp/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 type (
@@ -129,6 +130,7 @@ func (rollingUpdateStrategy rollingUpdateStrategy) SelectMachinesToDelete(ctx co
 			}
 		}()
 		log                        = ctrl.LoggerFrom(ctx).V(4)
+		deleteAnnotatedMachines    = order(getDeleteAnnotatedMachines(machinesByProviderID))
 		failedMachines             = order(getFailedMachines(machinesByProviderID))
 		deletingMachines           = order(getDeletingMachines(machinesByProviderID))
 		readyMachines              = order(getReadyMachines(machinesByProviderID))
@@ -143,12 +145,10 @@ func (rollingUpdateStrategy rollingUpdateStrategy) SelectMachinesToDelete(ctx co
 		}()
 	)
 
-	// Order AzureMachinePoolMachines with the clutserv1.DeleteMachineAnnotation to the front so that they have delete priority.
+	// Order AzureMachinePoolMachines with the clusterv1.DeleteMachineAnnotation to the front so that they have delete priority.
 	// This allows MachinePool Machines to work with the autoscaler.
 	failedMachines = orderByDeleteMachineAnnotation(failedMachines)
 	deletingMachines = orderByDeleteMachineAnnotation(deletingMachines)
-	readyMachines = orderByDeleteMachineAnnotation(readyMachines)
-	machinesWithoutLatestModel = orderByDeleteMachineAnnotation(machinesWithoutLatestModel)
 
 	log.Info("selecting machines to delete",
 		"readyMachines", len(readyMachines),
@@ -156,6 +156,7 @@ func (rollingUpdateStrategy rollingUpdateStrategy) SelectMachinesToDelete(ctx co
 		"maxUnavailable", maxUnavailable,
 		"disruptionBudget", disruptionBudget,
 		"machinesWithoutTheLatestModel", len(machinesWithoutLatestModel),
+		"deleteAnnotatedMachines", len(deleteAnnotatedMachines),
 		"failedMachines", len(failedMachines),
 		"deletingMachines", len(deletingMachines),
 	)
@@ -164,6 +165,12 @@ func (rollingUpdateStrategy rollingUpdateStrategy) SelectMachinesToDelete(ctx co
 	if len(failedMachines) > 0 || len(deletingMachines) > 0 {
 		log.Info("failed or deleting machines", "desiredReplicaCount", desiredReplicaCount, "maxUnavailable", maxUnavailable, "failedMachines", getProviderIDs(failedMachines), "deletingMachines", getProviderIDs(deletingMachines))
 		return append(failedMachines, deletingMachines...), nil
+	}
+
+	// if we have machines annotated with delete machine, remove them
+	if len(deleteAnnotatedMachines) > 0 {
+		log.Info("delete annotated machines", "desiredReplicaCount", desiredReplicaCount, "maxUnavailable", maxUnavailable, "deleteAnnotatedMachines", getProviderIDs(deleteAnnotatedMachines))
+		return deleteAnnotatedMachines, nil
 	}
 
 	// if we have not yet reached our desired count, don't try to delete anything
@@ -222,6 +229,18 @@ func (rollingUpdateStrategy rollingUpdateStrategy) SelectMachinesToDelete(ctx co
 
 	log.Info("completed without filling toDelete", "toDelete", getProviderIDs(toDelete), "numToDelete", len(toDelete))
 	return toDelete, nil
+}
+
+func getDeleteAnnotatedMachines(machinesByProviderID map[string]infrav1exp.AzureMachinePoolMachine) []infrav1exp.AzureMachinePoolMachine {
+	var machines []infrav1exp.AzureMachinePoolMachine
+	for _, v := range machinesByProviderID {
+		if v.Annotations != nil {
+			if _, hasDeleteAnnotation := v.Annotations[clusterv1.DeleteMachineAnnotation]; hasDeleteAnnotation {
+				machines = append(machines, v)
+			}
+		}
+	}
+	return machines
 }
 
 func getFailedMachines(machinesByProviderID map[string]infrav1exp.AzureMachinePoolMachine) []infrav1exp.AzureMachinePoolMachine {
@@ -307,7 +326,7 @@ func orderRandom(machines []infrav1exp.AzureMachinePoolMachine) []infrav1exp.Azu
 // orderByDeleteMachineAnnotation will sort AzureMachinePoolMachines with the clusterv1.DeleteMachineAnnotation to the front of the list.
 // It will preserve the existing order of the list otherwise so that it respects the existing delete priority otherwise.
 func orderByDeleteMachineAnnotation(machines []infrav1exp.AzureMachinePoolMachine) []infrav1exp.AzureMachinePoolMachine {
-	sort.SliceStable(machines, func(i, j int) bool {
+	sort.SliceStable(machines, func(i, _ int) bool {
 		_, iHasAnnotation := machines[i].Annotations[clusterv1.DeleteMachineAnnotation]
 
 		return iHasAnnotation

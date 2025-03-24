@@ -25,6 +25,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
@@ -92,6 +93,9 @@ func (s *ScaleSetSpec) OwnerResourceName() string {
 }
 
 func (s *ScaleSetSpec) existingParameters(ctx context.Context, existing interface{}) (parameters interface{}, err error) {
+	ctx, log, done := tele.StartSpanWithLogger(ctx, "scalesets.ScaleSetSpec.existingParameters")
+	defer done()
+
 	existingVMSS, ok := existing.(armcompute.VirtualMachineScaleSet)
 	if !ok {
 		return nil, errors.Errorf("%T is not an armcompute.VirtualMachineScaleSet", existing)
@@ -129,6 +133,15 @@ func (s *ScaleSetSpec) existingParameters(ctx context.Context, existing interfac
 	if *vmss.SKU.Capacity <= existingInfraVMSS.Capacity && !hasModelChanges && !s.ShouldPatchCustomData {
 		// up to date, nothing to do
 		return nil, nil
+	}
+
+	// if there are no model changes and no change in custom data, remove VirtualMachineProfile to avoid unnecessary VMSS model
+	// updates.
+	if !hasModelChanges && !s.ShouldPatchCustomData {
+		log.V(4).Info("removing virtual machine profile from parameters", "hasModelChanges", hasModelChanges, "shouldPatchCustomData", s.ShouldPatchCustomData)
+		vmss.Properties.VirtualMachineProfile = nil
+	} else {
+		log.V(4).Info("has changes, not removing virtual machine profile from parameters", "hasModelChanges", hasModelChanges, "shouldPatchCustomData", s.ShouldPatchCustomData)
 	}
 
 	return vmss, nil
@@ -288,7 +301,6 @@ func hasModelModifyingDifferences(infraVMSS *azure.VMSS, vmss armcompute.Virtual
 func (s *ScaleSetSpec) generateExtensions(ctx context.Context) ([]armcompute.VirtualMachineScaleSetExtension, error) {
 	extensions := make([]armcompute.VirtualMachineScaleSetExtension, len(s.VMSSExtensionSpecs))
 	for i, extensionSpec := range s.VMSSExtensionSpecs {
-		extensionSpec := extensionSpec
 		parameters, err := extensionSpec.Parameters(ctx, nil)
 		if err != nil {
 			return nil, err
@@ -331,7 +343,7 @@ func (s *ScaleSetSpec) getVirtualMachineScaleSetNetworkConfiguration() *[]armcom
 		ipconfigs := []armcompute.VirtualMachineScaleSetIPConfiguration{}
 		for j := 0; j < n.PrivateIPConfigs; j++ {
 			ipconfig := armcompute.VirtualMachineScaleSetIPConfiguration{
-				Name: ptr.To(fmt.Sprintf("ipConfig" + strconv.Itoa(j))),
+				Name: ptr.To(fmt.Sprintf("ipConfig%d", j)),
 				Properties: &armcompute.VirtualMachineScaleSetIPConfigurationProperties{
 					PrivateIPAddressVersion: ptr.To(armcompute.IPVersionIPv4),
 					Subnet: &armcompute.APIEntityReference{
@@ -390,6 +402,10 @@ func (s *ScaleSetSpec) generateStorageProfile(ctx context.Context) (*armcompute.
 
 		storageProfile.OSDisk.DiffDiskSettings = &armcompute.DiffDiskSettings{
 			Option: ptr.To(armcompute.DiffDiskOptions(s.OSDisk.DiffDiskSettings.Option)),
+		}
+
+		if s.OSDisk.DiffDiskSettings.Placement != nil {
+			storageProfile.OSDisk.DiffDiskSettings.Placement = ptr.To(armcompute.DiffDiskPlacement(*s.OSDisk.DiffDiskSettings.Placement))
 		}
 	}
 

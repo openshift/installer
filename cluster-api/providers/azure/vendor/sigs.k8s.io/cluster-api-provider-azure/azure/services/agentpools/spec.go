@@ -19,19 +19,20 @@ package agentpools
 import (
 	"context"
 
-	asocontainerservicev1preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230202preview"
 	asocontainerservicev1 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001"
 	asocontainerservicev1hub "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/storage"
+	asocontainerservicev1preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231102preview"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/aso"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	"sigs.k8s.io/cluster-api-provider-azure/util/versions"
-	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
 // KubeletConfig defines the set of kubelet configurations for nodes in pools.
@@ -342,7 +343,7 @@ func (s *AgentPoolSpec) Parameters(ctx context.Context, existingObj genruntime.M
 }
 
 // WasManaged implements azure.ASOResourceSpecGetter.
-func (s *AgentPoolSpec) WasManaged(resource genruntime.MetaObject) bool {
+func (s *AgentPoolSpec) WasManaged(_ genruntime.MetaObject) bool {
 	// CAPZ has never supported BYO agent pools.
 	return true
 }

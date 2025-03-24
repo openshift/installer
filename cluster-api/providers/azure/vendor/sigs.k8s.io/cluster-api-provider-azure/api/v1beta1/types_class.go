@@ -48,6 +48,7 @@ type AzureClusterClassSpec struct {
 	// - GermanCloud: "AzureGermanCloud"
 	// - PublicCloud: "AzurePublicCloud"
 	// - USGovernmentCloud: "AzureUSGovernmentCloud"
+	// - StackCloud: "HybridEnvironment"
 	//
 	// Note that values other than the default must also be accompanied by corresponding changes to the
 	// aso-controller-settings Secret to configure ASO to refer to the non-Public cloud. ASO currently does
@@ -77,6 +78,12 @@ type AzureClusterClassSpec struct {
 	// See: https://learn.microsoft.com/azure/reliability/availability-zones-overview
 	// +optional
 	FailureDomains clusterv1.FailureDomains `json:"failureDomains,omitempty"`
+
+	// ARMEndpoint specifies a URL for the ARM Resource Manager endpoint.
+	// It may only be specified when the AzureEnvironment is set to AzureStackCloud,
+	// in which case it is required.
+	// +optional
+	ARMEndpoint string `json:"armEndpoint,omitempty"`
 }
 
 // AzureManagedControlPlaneClassSpec defines the AzureManagedControlPlane properties that may be shared across several azure managed control planes.
@@ -114,6 +121,7 @@ type AzureManagedControlPlaneClassSpec struct {
 
 	// NetworkPlugin used for building Kubernetes network.
 	// +kubebuilder:validation:Enum=azure;kubenet;none
+	// +kubebuilder:default:=azure
 	// +optional
 	NetworkPlugin *string `json:"networkPlugin,omitempty"`
 
@@ -185,6 +193,7 @@ type AzureManagedControlPlaneClassSpec struct {
 	// - PublicCloud: "AzurePublicCloud"
 	// - USGovernmentCloud: "AzureUSGovernmentCloud"
 	//
+	//
 	// Note that values other than the default must also be accompanied by corresponding changes to the
 	// aso-controller-settings Secret to configure ASO to refer to the non-Public cloud. ASO currently does
 	// not support referring to multiple different clouds in a single installation. The following fields must
@@ -248,6 +257,7 @@ type AzureManagedControlPlaneClassSpec struct {
 	ASOManagedClusterPatches []string `json:"asoManagedClusterPatches,omitempty"`
 
 	// EnablePreviewFeatures enables preview features for the cluster.
+	// +kubebuilder:default:=false
 	// +optional
 	EnablePreviewFeatures *bool `json:"enablePreviewFeatures,omitempty"`
 }
@@ -340,6 +350,7 @@ type AzureManagedMachinePoolClassSpec struct {
 	//
 	// [AKS doc]: https://learn.microsoft.com/rest/api/aks/agent-pools/create-or-update?tabs=HTTP#ostype
 	// +kubebuilder:validation:Enum=Linux;Windows
+	// +kubebuilder:default:=Linux
 	// +optional
 	OSType *string `json:"osType,omitempty"`
 
@@ -419,6 +430,7 @@ type AzureManagedMachinePoolClassSpec struct {
 
 // ManagedControlPlaneVirtualNetworkClassSpec defines the ManagedControlPlaneVirtualNetwork properties that may be shared across several managed control plane vnets.
 type ManagedControlPlaneVirtualNetworkClassSpec struct {
+	// +kubebuilder:default:="10.0.0.0/8"
 	CIDRBlock string `json:"cidrBlock"`
 	// +optional
 	Subnet ManagedControlPlaneSubnet `json:"subnet,omitempty"`
@@ -473,7 +485,7 @@ type SubnetClassSpec struct {
 	Name string `json:"name"`
 
 	// Role defines the subnet role (eg. Node, ControlPlane)
-	// +kubebuilder:validation:Enum=node;control-plane;bastion;all
+	// +kubebuilder:validation:Enum=node;control-plane;bastion;cluster
 	Role SubnetRole `json:"role"`
 
 	// CIDRBlocks defines the subnet's address space, specified as one or more address prefixes in CIDR notation.
@@ -503,6 +515,7 @@ type LoadBalancerClassSpec struct {
 // FleetsMemberClassSpec defines the FleetsMemberSpec properties that may be shared across several Azure clusters.
 type FleetsMemberClassSpec struct {
 	// Group is the group this member belongs to for multi-cluster update management.
+	// +kubebuilder:default:=default
 	// +optional
 	Group string `json:"group,omitempty"`
 

@@ -28,24 +28,26 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/utils/ptr"
-	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-azure/azure/scope"
-	"sigs.k8s.io/cluster-api-provider-azure/azure/services/identities"
-	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
-	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/azure"
+	"sigs.k8s.io/cluster-api-provider-azure/azure/scope"
+	"sigs.k8s.io/cluster-api-provider-azure/azure/services/identities"
+	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
+	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
+	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
 // AzureJSONMachineReconciler reconciles Azure json secrets for AzureMachine objects.
@@ -54,6 +56,7 @@ type AzureJSONMachineReconciler struct {
 	Recorder         record.EventRecorder
 	Timeouts         reconciler.Timeouts
 	WatchFilterValue string
+	CredentialCache  azure.CredentialCache
 }
 
 // SetupWithManager initializes this controller with a manager.
@@ -68,30 +71,23 @@ func (r *AzureJSONMachineReconciler) SetupWithManager(ctx context.Context, mgr c
 		return errors.Wrap(err, "failed to create mapper for Cluster to AzureMachines")
 	}
 
-	c, err := ctrl.NewControllerManagedBy(mgr).
+	return ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options).
 		For(&infrav1.AzureMachine{}).
 		WithEventFilter(filterUnclonedMachinesPredicate{log: log}).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(log, r.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log, r.WatchFilterValue)).
 		Owns(&corev1.Secret{}).
-		Build(r)
-
-	if err != nil {
-		return errors.Wrap(err, "failed to create controller")
-	}
-
-	// Add a watch on Clusters to requeue when the infraRef is set. This is needed because the infraRef is not initially
-	// set in Clusters created from a ClusterClass.
-	if err := c.Watch(
-		source.Kind(mgr.GetCache(), &clusterv1.Cluster{}),
-		handler.EnqueueRequestsFromMapFunc(azureMachineMapper),
-		predicates.ClusterUnpausedAndInfrastructureReady(log),
-		predicates.ResourceNotPausedAndHasFilterLabel(log, r.WatchFilterValue),
-	); err != nil {
-		return errors.Wrap(err, "failed adding a watch for Clusters")
-	}
-
-	return nil
+		// Add a watch on Clusters to requeue when the infraRef is set. This is needed because the infraRef is not initially
+		// set in Clusters created from a ClusterClass.
+		Watches(
+			&clusterv1.Cluster{},
+			handler.EnqueueRequestsFromMapFunc(azureMachineMapper),
+			builder.WithPredicates(
+				predicates.ClusterPausedTransitionsOrInfrastructureReady(mgr.GetScheme(), log),
+				predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log, r.WatchFilterValue),
+			),
+		).
+		Complete(r)
 }
 
 type filterUnclonedMachinesPredicate struct {
@@ -195,10 +191,11 @@ func (r *AzureJSONMachineReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	// Create the scope.
 	clusterScope, err := scope.NewClusterScope(ctx, scope.ClusterScopeParams{
-		Client:       r.Client,
-		Cluster:      cluster,
-		AzureCluster: azureCluster,
-		Timeouts:     r.Timeouts,
+		Client:          r.Client,
+		Cluster:         cluster,
+		AzureCluster:    azureCluster,
+		Timeouts:        r.Timeouts,
+		CredentialCache: r.CredentialCache,
 	})
 	if err != nil {
 		return reconcile.Result{}, errors.Wrap(err, "failed to create scope")

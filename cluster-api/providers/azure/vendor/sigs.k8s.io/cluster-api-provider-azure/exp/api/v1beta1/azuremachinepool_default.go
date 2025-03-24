@@ -24,10 +24,11 @@ import (
 	"golang.org/x/crypto/ssh"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/uuid"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
 	utilSSH "sigs.k8s.io/cluster-api-provider-azure/util/ssh"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // SetDefaults sets the default values for an AzureMachinePool.
@@ -42,6 +43,7 @@ func (amp *AzureMachinePool) SetDefaults(client client.Client) error {
 	}
 	amp.SetDiagnosticsDefaults()
 	amp.SetNetworkInterfacesDefaults()
+	amp.SetOSDiskDefaults()
 
 	return kerrors.NewAggregate(errs)
 }
@@ -157,5 +159,15 @@ func (amp *AzureMachinePool) SetNetworkInterfacesDefaults() {
 		if amp.Spec.Template.NetworkInterfaces[i].PrivateIPConfigs == 0 {
 			amp.Spec.Template.NetworkInterfaces[i].PrivateIPConfigs = 1
 		}
+	}
+}
+
+// SetOSDiskDefaults sets the defaults for the OSDisk.
+func (amp *AzureMachinePool) SetOSDiskDefaults() {
+	if amp.Spec.Template.OSDisk.OSType == "" {
+		amp.Spec.Template.OSDisk.OSType = "Linux"
+	}
+	if amp.Spec.Template.OSDisk.CachingType == "" {
+		amp.Spec.Template.OSDisk.CachingType = "None"
 	}
 }

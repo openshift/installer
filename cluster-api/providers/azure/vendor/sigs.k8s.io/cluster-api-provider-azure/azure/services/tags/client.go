@@ -21,6 +21,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	"github.com/pkg/errors"
+
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
@@ -40,7 +41,10 @@ var _ client = (*AzureClient)(nil)
 
 // NewClient creates a tags client from an authorizer.
 func NewClient(auth azure.Authorizer) (*AzureClient, error) {
-	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
+	opts, err := azure.ARMClientOptions(auth.CloudEnvironment(), auth.BaseURI())
+	opts.APIVersion = "2018-05-01"
+	//TODO: try testing this API version, altohugh we would expect
+	// API version to throw a more explicit error for API version.
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create tags client options")
 	}
@@ -55,7 +59,7 @@ func NewClient(auth azure.Authorizer) (*AzureClient, error) {
 func (ac *AzureClient) GetAtScope(ctx context.Context, scope string) (armresources.TagsResource, error) {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "tags.AzureClient.GetAtScope")
 	defer done()
-
+	//TODO check out how this client is constructed
 	resp, err := ac.tags.GetAtScope(ctx, scope, nil)
 	if err != nil {
 		return armresources.TagsResource{}, err

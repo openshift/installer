@@ -21,7 +21,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
-	"sort"
+	"slices"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"syscall"
@@ -136,6 +137,11 @@ type Params struct {
 	// Dir is interpreted relative to the current test directory.
 	Dir string
 
+	// Files holds a set of script filenames. If Dir is empty and this
+	// is non-nil, these files will be used instead of reading
+	// a directory.
+	Files []string
+
 	// Setup is called, if not nil, to complete any setup required
 	// for a test. The WorkDir and Vars fields will have already
 	// been initialized and all the files extracted into WorkDir,
@@ -219,8 +225,7 @@ type T interface {
 	Verbose() bool
 }
 
-// TFailed holds optional extra methods implemented on T.
-// It's defined as a separate type for backward compatibility reasons.
+// Deprecated: this type is unused.
 type TFailed interface {
 	Failed() bool
 }
@@ -242,24 +247,29 @@ func (t tshim) Verbose() bool {
 // RunT is like Run but uses an interface type instead of the concrete *testing.T
 // type to make it possible to use testscript functionality outside of go test.
 func RunT(t T, p Params) {
-	entries, err := os.ReadDir(p.Dir)
-	if os.IsNotExist(err) {
-		// Continue so we give a helpful error on len(files)==0 below.
-	} else if err != nil {
-		t.Fatal(err)
-	}
 	var files []string
-	for _, entry := range entries {
-		name := entry.Name()
-		if strings.HasSuffix(name, ".txtar") || strings.HasSuffix(name, ".txt") {
-			files = append(files, filepath.Join(p.Dir, name))
+	if p.Dir == "" && p.Files != nil {
+		files = p.Files
+	} else {
+		entries, err := os.ReadDir(p.Dir)
+		if os.IsNotExist(err) {
+			// Continue so we give a helpful error on len(files)==0 below.
+		} else if err != nil {
+			t.Fatal(err)
+		}
+		for _, entry := range entries {
+			name := entry.Name()
+			if strings.HasSuffix(name, ".txtar") || strings.HasSuffix(name, ".txt") {
+				files = append(files, filepath.Join(p.Dir, name))
+			}
+		}
+
+		if len(files) == 0 {
+			t.Fatal(fmt.Sprintf("no txtar nor txt scripts found in dir %s", p.Dir))
 		}
 	}
-
-	if len(files) == 0 {
-		t.Fatal(fmt.Sprintf("no txtar nor txt scripts found in dir %s", p.Dir))
-	}
 	testTempDir := p.WorkdirRoot
+	var err error
 	if testTempDir == "" {
 		testTempDir, err = os.MkdirTemp(os.Getenv("GOTMPDIR"), "go-test-script")
 		if err != nil {
@@ -308,10 +318,26 @@ func RunT(t T, p Params) {
 	}
 
 	refCount := int32(len(files))
+	names := make(map[string]bool)
 	for _, file := range files {
-		file := file
-		name := strings.TrimSuffix(filepath.Base(file), ".txt")
-		name = strings.TrimSuffix(name, ".txtar")
+		name := filepath.Base(file)
+		if name1, ok := strings.CutSuffix(name, ".txt"); ok {
+			name = name1
+		} else if name1, ok := strings.CutSuffix(name, ".txtar"); ok {
+			name = name1
+		}
+		// We can have duplicate names when files are passed explicitly,
+		// so disambiguate by adding a counter.
+		// Take care to handle the situation where a name with a counter-like
+		// suffix already exists, for example:
+		//	a/foo.txt
+		//	b/foo.txtar
+		//	c/foo#1.txt
+		prefix := name
+		for i := 1; names[name]; i++ {
+			name = prefix + "#" + strconv.Itoa(i)
+		}
+		names[name] = true
 		t.Run(name, func(t T) {
 			t.Parallel()
 			ts := &TestScript{
@@ -624,7 +650,11 @@ func (ts *TestScript) run() {
 	for _, bg := range ts.background {
 		interruptProcess(bg.cmd.Process)
 	}
-	ts.cmdWait(false, nil)
+	// On some platforms like Windows, we kill background commands directly
+	// as we can't send them an interrupt signal, so they always fail.
+	// Moreover, it's relatively common for a process to fail when interrupted.
+	// Once we've reached the end of the script, ignore the status of background commands.
+	ts.waitBackground(false)
 
 	// If we reached here but we've failed (probably because ContinueOnError
 	// was set), don't wipe the log and print "PASS".
@@ -706,13 +736,13 @@ func (ts *TestScript) runLine(line string) (runOK bool) {
 			ts.Fatalf("unknown command %q", args[0])
 		}
 	}
-	ts.callBuiltinCmd(args[0], func() {
+	ts.callBuiltinCmd(func() {
 		cmd(ts, neg, args[1:])
 	})
 	return true
 }
 
-func (ts *TestScript) callBuiltinCmd(cmd string, runCmd func()) {
+func (ts *TestScript) callBuiltinCmd(runCmd func()) {
 	ts.runningBuiltin = true
 	defer func() {
 		r := recover()
@@ -754,15 +784,8 @@ func (ts *TestScript) cmdSuggestions(name string) []string {
 		return nil
 	}
 	// deduplicate candidates
-	// TODO: Use slices.Compact (and maybe slices.Sort) once we can use Go 1.21
-	sort.Strings(candidates)
-	out := candidates[:1]
-	for _, c := range candidates[1:] {
-		if out[len(out)-1] == c {
-			out = append(out, c)
-		}
-	}
-	return out
+	slices.Sort(candidates)
+	return slices.Compact(candidates)
 }
 
 func (ts *TestScript) applyScriptUpdates() {
@@ -891,7 +914,7 @@ func (ts *TestScript) Check(err error) {
 }
 
 // Stdout returns an io.Writer that can be used by a user-supplied builtin
-// command (delcared via Params.Cmds) to write to stdout. If this method is
+// command (declared via Params.Cmds) to write to stdout. If this method is
 // called outside of the execution of a user-supplied builtin command, the
 // call panics.
 func (ts *TestScript) Stdout() io.Writer {
@@ -903,7 +926,7 @@ func (ts *TestScript) Stdout() io.Writer {
 }
 
 // Stderr returns an io.Writer that can be used by a user-supplied builtin
-// command (delcared via Params.Cmds) to write to stderr. If this method is
+// command (declared via Params.Cmds) to write to stderr. If this method is
 // called outside of the execution of a user-supplied builtin command, the
 // call panics.
 func (ts *TestScript) Stderr() io.Writer {
@@ -1043,6 +1066,24 @@ func (ts *TestScript) BackgroundCmds() []*exec.Cmd {
 	return cmds
 }
 
+// Chdir changes the current directory of the script.
+// The path may be relative to the current directory.
+func (ts *TestScript) Chdir(dir string) error {
+	if !filepath.IsAbs(dir) {
+		dir = filepath.Join(ts.cd, dir)
+	}
+	info, err := os.Stat(dir)
+	if err != nil {
+		return err
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("%s is not a directory", dir)
+	}
+
+	ts.cd = dir
+	return nil
+}
+
 // waitOrStop waits for the already-started command cmd by calling its Wait method.
 //
 // If cmd does not return before ctx is done, waitOrStop sends it an interrupt
@@ -1171,7 +1212,7 @@ func (ts *TestScript) MkAbs(file string) string {
 }
 
 // ReadFile returns the contents of the file with the
-// given name, intepreted relative to the test script's
+// given name, interpreted relative to the test script's
 // current directory. It interprets "stdout" and "stderr" to
 // mean the standard output or standard error from
 // the most recent exec or wait command respectively.

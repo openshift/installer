@@ -27,6 +27,8 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	azureautorest "github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
+
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 )
 
 // AzureClients contains all the Azure clients used by the scopes.
@@ -36,6 +38,8 @@ type AzureClients struct {
 	TokenCredential            azcore.TokenCredential
 	ResourceManagerEndpoint    string
 	ResourceManagerVMDNSSuffix string
+
+	authType infrav1.IdentityType
 }
 
 // CloudEnvironment returns the Azure environment the controller runs in.
@@ -73,16 +77,16 @@ func (c *AzureClients) Token() azcore.TokenCredential {
 // ClientID).
 func (c *AzureClients) HashKey() string {
 	hasher := sha256.New()
-	_, _ = hasher.Write([]byte(c.TenantID() + c.CloudEnvironment() + c.SubscriptionID() + c.ClientID()))
+	_, _ = hasher.Write([]byte(c.TenantID() + c.CloudEnvironment() + c.SubscriptionID() + c.ClientID() + string(c.authType)))
 	return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 }
 
-func (c *AzureClients) setCredentialsWithProvider(ctx context.Context, subscriptionID, environmentName string, credentialsProvider CredentialsProvider) error {
+func (c *AzureClients) setCredentialsWithProvider(ctx context.Context, subscriptionID, environmentName, armEndpoint string, credentialsProvider CredentialsProvider) error {
 	if credentialsProvider == nil {
 		return fmt.Errorf("credentials provider cannot have an empty value")
 	}
 
-	settings, err := c.getSettingsFromEnvironment(environmentName)
+	settings, err := c.getSettingsFromEnvironment(environmentName, armEndpoint)
 	if err != nil {
 		return err
 	}
@@ -107,6 +111,8 @@ func (c *AzureClients) setCredentialsWithProvider(ctx context.Context, subscript
 	}
 	c.Values["AZURE_CLIENT_SECRET"] = strings.TrimSuffix(clientSecret, "\n")
 
+	c.authType = credentialsProvider.Type()
+
 	tokenCredential, err := credentialsProvider.GetTokenCredential(ctx, c.ResourceManagerEndpoint, c.Environment.ActiveDirectoryEndpoint, c.Environment.TokenAudience)
 	if err != nil {
 		return err
@@ -115,7 +121,7 @@ func (c *AzureClients) setCredentialsWithProvider(ctx context.Context, subscript
 	return err
 }
 
-func (c *AzureClients) getSettingsFromEnvironment(environmentName string) (s auth.EnvironmentSettings, err error) {
+func (c *AzureClients) getSettingsFromEnvironment(environmentName, armEndpoint string) (s auth.EnvironmentSettings, err error) {
 	s = auth.EnvironmentSettings{
 		Values: map[string]string{},
 	}
@@ -132,6 +138,8 @@ func (c *AzureClients) getSettingsFromEnvironment(environmentName string) (s aut
 	setValue(s, "AZURE_AD_RESOURCE")
 	if v := s.Values["AZURE_ENVIRONMENT"]; v == "" {
 		s.Environment = azureautorest.PublicCloud
+	} else if strings.EqualFold(v, "HybridEnvironment") {
+		s.Environment, err = azureautorest.EnvironmentFromURL(armEndpoint)
 	} else {
 		s.Environment, err = azureautorest.EnvironmentFromName(v)
 	}

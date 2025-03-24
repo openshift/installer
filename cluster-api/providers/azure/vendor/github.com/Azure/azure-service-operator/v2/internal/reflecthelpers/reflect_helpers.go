@@ -15,6 +15,7 @@ import (
 
 	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 )
 
 // ValueOfPtr dereferences a pointer and returns the value the pointer points to.
@@ -147,13 +148,13 @@ func Find[T comparable](obj interface{}) (set.Set[T], error) {
 }
 
 // FindOptionalConfigMapReferences finds all the genruntime.ConfigMapReference's on the provided object
-func FindOptionalConfigMapReferences(obj interface{}) ([]*genruntime.OptionalConfigMapReferencePair, error) {
+func FindOptionalConfigMapReferences(obj interface{}) ([]*configmaps.OptionalReferencePair, error) {
 	untypedResult, err := FindPropertiesWithTag(obj, "optionalConfigMapPair") // TODO: This is astmodel.OptionalConfigMapPairTag
 	if err != nil {
 		return nil, err
 	}
 
-	collector := make(map[string][]*genruntime.OptionalConfigMapReferencePair)
+	collector := make(map[string][]*configmaps.OptionalReferencePair)
 	suffix := "FromConfig" // TODO This is astmodel.OptionalConfigMapReferenceSuffix
 
 	// This could probably be more efficient, but this avoids code duplication, and we're not dealing
@@ -163,13 +164,13 @@ func FindOptionalConfigMapReferences(obj interface{}) ([]*genruntime.OptionalCon
 			continue
 		}
 
-		collector[key] = make([]*genruntime.OptionalConfigMapReferencePair, 0, len(values))
+		collector[key] = make([]*configmaps.OptionalReferencePair, 0, len(values))
 		for _, val := range values {
 			typedValue, ok := val.(*string)
 			if !ok {
 				return nil, errors.Errorf("value of property %s was not a *string like expected", key)
 			}
-			collector[key] = append(collector[key], &genruntime.OptionalConfigMapReferencePair{
+			collector[key] = append(collector[key], &configmaps.OptionalReferencePair{
 				Name:  key,
 				Value: typedValue,
 			})
@@ -196,7 +197,7 @@ func FindOptionalConfigMapReferences(obj interface{}) ([]*genruntime.OptionalCon
 	}
 
 	// Translate our collector into a simple list
-	var result []*genruntime.OptionalConfigMapReferencePair
+	var result []*configmaps.OptionalReferencePair
 	for _, values := range collector {
 		for _, val := range values {
 			result = append(result, val)

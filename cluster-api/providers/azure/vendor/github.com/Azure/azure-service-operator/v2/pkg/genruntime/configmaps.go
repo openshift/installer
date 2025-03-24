@@ -9,9 +9,6 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
-
-	"github.com/Azure/azure-service-operator/v2/internal/set"
 )
 
 // ConfigMapReference is a reference to a Kubernetes configmap and key in the same namespace as
@@ -91,34 +88,6 @@ func (c ConfigMapDestination) String() string {
 	return fmt.Sprintf("Name: %q, Key: %q", c.Name, c.Key)
 }
 
-func makeKeyPairFromConfigMap(dest *ConfigMapDestination) keyPair {
-	return keyPair{
-		name: dest.Name,
-		key:  dest.Key,
-	}
-}
-
-// ValidateConfigMapDestinations checks that no two destinations are writing to the same configmap/key, as that could cause
-// those values to overwrite one another.
-func ValidateConfigMapDestinations(destinations []*ConfigMapDestination) (admission.Warnings, error) {
-	locations := set.Make[keyPair]()
-
-	for _, dest := range destinations {
-		if dest == nil {
-			continue
-		}
-
-		pair := makeKeyPairFromConfigMap(dest)
-		if locations.Contains(pair) {
-			return nil, errors.Errorf("cannot write more than one configmap value to destination %s", dest.String())
-		}
-
-		locations.Add(pair)
-	}
-
-	return nil, nil
-}
-
 // LookupOptionalConfigMapReferenceValue looks up a ConfigMapReference if it's not nil, or else returns the provided value
 func LookupOptionalConfigMapReferenceValue(resolved Resolved[ConfigMapReference, string], ref *ConfigMapReference, value *string) (string, error) {
 	if ref == nil && value == nil {
@@ -134,26 +103,4 @@ func LookupOptionalConfigMapReferenceValue(resolved Resolved[ConfigMapReference,
 	} else {
 		return resolved.LookupFromPtr(ref)
 	}
-}
-
-// OptionalConfigMapReferencePair represents an optional configmap pair. Each pair has two optional fields, a
-// string and a ConfigMapReference.
-// This type is used purely for validation. The actual user supplied types are inline on the objects themselves as
-// two properties: Foo and FooFromConfig
-type OptionalConfigMapReferencePair struct {
-	Value   *string
-	Ref     *ConfigMapReference
-	Name    string
-	RefName string
-}
-
-// ValidateOptionalConfigMapReferences checks that only one of Foo and FooFromConfig are set
-func ValidateOptionalConfigMapReferences(pairs []*OptionalConfigMapReferencePair) (admission.Warnings, error) {
-	for _, pair := range pairs {
-		if pair.Value != nil && pair.Ref != nil {
-			return nil, errors.Errorf("cannot specify both %s and %s", pair.Name, pair.RefName)
-		}
-	}
-
-	return nil, nil
 }

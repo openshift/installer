@@ -99,8 +99,8 @@ type ManagedClusterAgentPoolProfileProperties_ARM struct {
 	// be within two minor versions of the control plane version. The node pool version cannot be greater than the control
 	// plane version. For more information see [upgrading a node
 	// pool](https://docs.microsoft.com/azure/aks/use-multiple-node-pools#upgrade-a-node-pool).
-	OrchestratorVersion *string                 `json:"orchestratorVersion,omitempty"`
-	OsDiskSizeGB        *ContainerServiceOSDisk `json:"osDiskSizeGB,omitempty"`
+	OrchestratorVersion *string `json:"orchestratorVersion,omitempty"`
+	OsDiskSizeGB        *int    `json:"osDiskSizeGB,omitempty"`
 
 	// OsDiskType: The default is 'Ephemeral' if the VM supports it and has a cache disk larger than the requested
 	// OSDiskSizeGB. Otherwise,  defaults to 'Managed'. May not be changed after creation. For more information see [Ephemeral

@@ -17,6 +17,7 @@ limitations under the License.
 package azure
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -26,6 +27,10 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
+	"github.com/Azure/azure-sdk-for-go/sdk/tracing/azotel"
+	"github.com/Azure/go-autorest/autorest/azure"
+
+	"sigs.k8s.io/cluster-api-provider-azure/pkg/ot"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	"sigs.k8s.io/cluster-api-provider-azure/version"
 )
@@ -41,17 +46,17 @@ const (
 	ChinaCloudName = "AzureChinaCloud"
 	// USGovernmentCloudName is the name of the Azure US Government cloud.
 	USGovernmentCloudName = "AzureUSGovernmentCloud"
+	// StackCloudName is the name for Azure Stack hybrid cloud environments.
+	StackCloudName = "HybridEnvironment"
 )
 
 const (
-	// DefaultImageOfferID is the default Azure Marketplace offer ID.
-	DefaultImageOfferID = "capi"
-	// DefaultWindowsImageOfferID is the default Azure Marketplace offer ID for Windows.
-	DefaultWindowsImageOfferID = "capi-windows"
-	// DefaultImagePublisherID is the default Azure Marketplace publisher ID.
-	DefaultImagePublisherID = "cncf-upstream"
-	// LatestVersion is the image version latest.
-	LatestVersion = "latest"
+	// DefaultPublicGalleryName is the default Azure compute gallery.
+	DefaultPublicGalleryName = "ClusterAPI-f72ceb4f-5159-4c26-a0fe-2ea738f0d019"
+	// DefaultLinuxGalleryImageName is the default Linux community gallery image definition.
+	DefaultLinuxGalleryImageName = "capi-ubun2-2404"
+	// DefaultWindowsGalleryImageName is the default Windows community gallery image definition.
+	DefaultWindowsGalleryImageName = "capi-win-2019-containerd"
 )
 
 const (
@@ -106,6 +111,12 @@ const (
 	// E.g. add `"infrastructure.cluster.x-k8s.io/custom-header-UseGPUDedicatedVHD": "true"` annotation to
 	// AzureManagedMachinePool CR to enable creating GPU nodes by the node pool.
 	CustomHeaderPrefix = "infrastructure.cluster.x-k8s.io/custom-header-"
+)
+
+const (
+	// StackAPIVersion is the API version profile to set for ARM clients. See:
+	// https://learn.microsoft.com/en-us/azure-stack/user/azure-stack-profiles-azure-resource-manager-versions?view=azs-2408#overview-of-the-2020-09-01-hybrid-profile
+	StackAPIVersionProfile = "2020-06-01"
 )
 
 var (
@@ -215,6 +226,11 @@ func ResourceGroupID(subscriptionID, resourceGroup string) string {
 // VMID returns the azure resource ID for a given VM.
 func VMID(subscriptionID, resourceGroup, vmName string) string {
 	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/virtualMachines/%s", subscriptionID, resourceGroup, vmName)
+}
+
+// VMSSID returns the azure resource ID for a given VMSS.
+func VMSSID(subscriptionID, resourceGroup, vmssName string) string {
+	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/virtualMachineScaleSets/%s", subscriptionID, resourceGroup, vmssName)
 }
 
 // VNetID returns the azure resource ID for a given VNet.
@@ -351,7 +367,7 @@ func UserAgent() string {
 }
 
 // ARMClientOptions returns default ARM client options for CAPZ SDK v2 requests.
-func ARMClientOptions(azureEnvironment string, extraPolicies ...policy.Policy) (*arm.ClientOptions, error) {
+func ARMClientOptions(azureEnvironment, armEndpoint string, extraPolicies ...policy.Policy) (*arm.ClientOptions, error) {
 	opts := &arm.ClientOptions{}
 
 	switch azureEnvironment {
@@ -361,6 +377,21 @@ func ARMClientOptions(azureEnvironment string, extraPolicies ...policy.Policy) (
 		opts.Cloud = cloud.AzureChina
 	case USGovernmentCloudName:
 		opts.Cloud = cloud.AzureGovernment
+	case StackCloudName:
+		cloudEnv, err := azure.EnvironmentFromURL(armEndpoint)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get Azure Stack cloud environment: %w", err)
+		}
+		opts.APIVersion = StackAPIVersionProfile
+		opts.Cloud = cloud.Configuration{
+			ActiveDirectoryAuthorityHost: cloudEnv.ActiveDirectoryEndpoint,
+			Services: map[cloud.ServiceName]cloud.ServiceConfiguration{
+				cloud.ResourceManager: {
+					Audience: cloudEnv.TokenAudience,
+					Endpoint: cloudEnv.ResourceManagerEndpoint,
+				},
+			},
+		}
 	case "":
 		// No cloud name provided, so leave at defaults.
 	default:
@@ -372,6 +403,12 @@ func ARMClientOptions(azureEnvironment string, extraPolicies ...policy.Policy) (
 	}
 	opts.PerCallPolicies = append(opts.PerCallPolicies, extraPolicies...)
 	opts.Retry.MaxRetries = -1 // Less than zero means one try and no retries.
+
+	otelTP, err := ot.OTLPTracerProvider(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+	opts.TracingProvider = azotel.NewTracingProvider(otelTP, nil)
 
 	return opts, nil
 }

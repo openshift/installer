@@ -23,6 +23,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4"
 	"github.com/pkg/errors"
+
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/async"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
@@ -43,7 +44,7 @@ var _ client = (*azureClient)(nil)
 
 // newClient creates a new inbound NAT rules client from an authorizer.
 func newClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*azureClient, error) {
-	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
+	opts, err := azure.ARMClientOptions(auth.CloudEnvironment(), auth.BaseURI())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create inboundnatrules client options")
 	}

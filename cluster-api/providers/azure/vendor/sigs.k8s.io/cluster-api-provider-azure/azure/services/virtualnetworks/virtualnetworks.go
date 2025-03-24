@@ -23,11 +23,12 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/common/labels"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/aso"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const serviceName = "virtualnetworks"

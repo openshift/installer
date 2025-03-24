@@ -199,6 +199,11 @@ type ExtendedLocationType string
 
 const ExtendedLocationType_EdgeZone = ExtendedLocationType("EdgeZone")
 
+// Mapping from string to ExtendedLocationType
+var extendedLocationType_Values = map[string]ExtendedLocationType{
+	"edgezone": ExtendedLocationType_EdgeZone,
+}
+
 // For more details see [managed AAD on AKS](https://docs.microsoft.com/azure/aks/managed-aad).
 type ManagedClusterAADProfile_ARM struct {
 	// AdminGroupObjectIDs: The list of AAD group object IDs that will have admin role of the cluster.
@@ -306,8 +311,8 @@ type ManagedClusterAgentPoolProfile_ARM struct {
 	// be within two minor versions of the control plane version. The node pool version cannot be greater than the control
 	// plane version. For more information see [upgrading a node
 	// pool](https://docs.microsoft.com/azure/aks/use-multiple-node-pools#upgrade-a-node-pool).
-	OrchestratorVersion *string                 `json:"orchestratorVersion,omitempty"`
-	OsDiskSizeGB        *ContainerServiceOSDisk `json:"osDiskSizeGB,omitempty"`
+	OrchestratorVersion *string `json:"orchestratorVersion,omitempty"`
+	OsDiskSizeGB        *int    `json:"osDiskSizeGB,omitempty"`
 
 	// OsDiskType: The default is 'Ephemeral' if the VM supports it and has a cache disk larger than the requested
 	// OSDiskSizeGB. Otherwise,  defaults to 'Managed'. May not be changed after creation. For more information see [Ephemeral
@@ -402,6 +407,13 @@ const (
 	ManagedClusterIdentity_Type_SystemAssigned = ManagedClusterIdentity_Type("SystemAssigned")
 	ManagedClusterIdentity_Type_UserAssigned   = ManagedClusterIdentity_Type("UserAssigned")
 )
+
+// Mapping from string to ManagedClusterIdentity_Type
+var managedClusterIdentity_Type_Values = map[string]ManagedClusterIdentity_Type{
+	"none":           ManagedClusterIdentity_Type_None,
+	"systemassigned": ManagedClusterIdentity_Type_SystemAssigned,
+	"userassigned":   ManagedClusterIdentity_Type_UserAssigned,
+}
 
 // See [use AAD pod identity](https://docs.microsoft.com/azure/aks/use-azure-ad-pod-identity) for more details on pod
 // identity integration.
@@ -499,6 +511,11 @@ type ManagedClusterSKU_Name string
 
 const ManagedClusterSKU_Name_Basic = ManagedClusterSKU_Name("Basic")
 
+// Mapping from string to ManagedClusterSKU_Name
+var managedClusterSKU_Name_Values = map[string]ManagedClusterSKU_Name{
+	"basic": ManagedClusterSKU_Name_Basic,
+}
+
 // +kubebuilder:validation:Enum={"Free","Paid"}
 type ManagedClusterSKU_Tier string
 
@@ -506,6 +523,12 @@ const (
 	ManagedClusterSKU_Tier_Free = ManagedClusterSKU_Tier("Free")
 	ManagedClusterSKU_Tier_Paid = ManagedClusterSKU_Tier("Paid")
 )
+
+// Mapping from string to ManagedClusterSKU_Tier
+var managedClusterSKU_Tier_Values = map[string]ManagedClusterSKU_Tier{
+	"free": ManagedClusterSKU_Tier_Free,
+	"paid": ManagedClusterSKU_Tier_Paid,
+}
 
 // Profile for Windows VMs in the managed cluster.
 type ManagedClusterWindowsProfile_ARM struct {

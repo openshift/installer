@@ -22,6 +22,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
@@ -64,7 +65,7 @@ func (s *LBSpec) OwnerResourceName() string {
 }
 
 // Parameters returns the parameters for the load balancer.
-func (s *LBSpec) Parameters(ctx context.Context, existing interface{}) (parameters interface{}, err error) {
+func (s *LBSpec) Parameters(_ context.Context, existing interface{}) (parameters interface{}, err error) {
 	var (
 		etag                *string
 		frontendIDs         []*armnetwork.SubResource
@@ -213,7 +214,7 @@ func getOutboundRules(lbSpec LBSpec, frontendIDs []*armnetwork.SubResource) []*a
 }
 
 func getLoadBalancingRules(lbSpec LBSpec, frontendIDs []*armnetwork.SubResource) []*armnetwork.LoadBalancingRule {
-	if lbSpec.Role == infrav1.APIServerRole {
+	if lbSpec.Role == infrav1.APIServerRole || lbSpec.Role == infrav1.APIServerRoleInternal {
 		// We disable outbound SNAT explicitly in the HTTPS LB rule and enable TCP and UDP outbound NAT with an outbound rule.
 		// For more information on Standard LB outbound connections see https://learn.microsoft.com/azure/load-balancer/load-balancer-outbound-connections.
 		var frontendIPConfig *armnetwork.SubResource
@@ -254,7 +255,7 @@ func getBackendAddressPools(lbSpec LBSpec) []*armnetwork.BackendAddressPool {
 }
 
 func getProbes(lbSpec LBSpec) []*armnetwork.Probe {
-	if lbSpec.Role == infrav1.APIServerRole {
+	if lbSpec.Role == infrav1.APIServerRole || lbSpec.Role == infrav1.APIServerRoleInternal {
 		return []*armnetwork.Probe{
 			{
 				Name: ptr.To(httpsProbe),

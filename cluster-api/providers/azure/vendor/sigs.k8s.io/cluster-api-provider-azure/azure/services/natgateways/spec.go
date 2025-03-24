@@ -23,6 +23,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 )
@@ -49,7 +50,7 @@ func (s *NatGatewaySpec) ResourceRef() *asonetworkv1.NatGateway {
 }
 
 // Parameters implements azure.ASOResourceSpecGetter.
-func (s *NatGatewaySpec) Parameters(ctx context.Context, existingNatGateway *asonetworkv1.NatGateway) (params *asonetworkv1.NatGateway, err error) {
+func (s *NatGatewaySpec) Parameters(_ context.Context, existingNatGateway *asonetworkv1.NatGateway) (params *asonetworkv1.NatGateway, err error) {
 	natGateway := &asonetworkv1.NatGateway{}
 	natGateway.Spec = asonetworkv1.NatGateway_Spec{}
 
@@ -83,6 +84,6 @@ func (s *NatGatewaySpec) Parameters(ctx context.Context, existingNatGateway *aso
 }
 
 // WasManaged implements azure.ASOResourceSpecGetter.
-func (s *NatGatewaySpec) WasManaged(resource *asonetworkv1.NatGateway) bool {
+func (s *NatGatewaySpec) WasManaged(_ *asonetworkv1.NatGateway) bool {
 	return s.IsVnetManaged
 }

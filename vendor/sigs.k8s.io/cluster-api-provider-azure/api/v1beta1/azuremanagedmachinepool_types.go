@@ -19,7 +19,6 @@ package v1beta1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	capierrors "sigs.k8s.io/cluster-api/errors"
 )
 
 const (
@@ -464,7 +463,7 @@ type AzureManagedMachinePoolStatus struct {
 	// can be added as events to the Machine object and/or logged in the
 	// controller's output.
 	// +optional
-	ErrorReason *capierrors.MachineStatusError `json:"errorReason,omitempty"`
+	ErrorReason *string `json:"errorReason,omitempty"`
 
 	// Any transient errors that occur during the reconciliation of Machines
 	// can be added as events to the Machine object and/or logged in the

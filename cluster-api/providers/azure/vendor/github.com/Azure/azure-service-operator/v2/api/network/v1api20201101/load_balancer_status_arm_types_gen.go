@@ -112,6 +112,11 @@ type ExtendedLocationType_STATUS string
 
 const ExtendedLocationType_STATUS_EdgeZone = ExtendedLocationType_STATUS("EdgeZone")
 
+// Mapping from string to ExtendedLocationType_STATUS
+var extendedLocationType_STATUS_Values = map[string]ExtendedLocationType_STATUS{
+	"edgezone": ExtendedLocationType_STATUS_EdgeZone,
+}
+
 // Frontend IP address of the load balancer.
 type FrontendIPConfiguration_STATUS_LoadBalancer_SubResourceEmbedded_ARM struct {
 	// Etag: A unique read-only string that changes whenever the resource is updated.
@@ -179,12 +184,24 @@ const (
 	LoadBalancerSku_Name_STATUS_Standard = LoadBalancerSku_Name_STATUS("Standard")
 )
 
+// Mapping from string to LoadBalancerSku_Name_STATUS
+var loadBalancerSku_Name_STATUS_Values = map[string]LoadBalancerSku_Name_STATUS{
+	"basic":    LoadBalancerSku_Name_STATUS_Basic,
+	"standard": LoadBalancerSku_Name_STATUS_Standard,
+}
+
 type LoadBalancerSku_Tier_STATUS string
 
 const (
 	LoadBalancerSku_Tier_STATUS_Global   = LoadBalancerSku_Tier_STATUS("Global")
 	LoadBalancerSku_Tier_STATUS_Regional = LoadBalancerSku_Tier_STATUS("Regional")
 )
+
+// Mapping from string to LoadBalancerSku_Tier_STATUS
+var loadBalancerSku_Tier_STATUS_Values = map[string]LoadBalancerSku_Tier_STATUS{
+	"global":   LoadBalancerSku_Tier_STATUS_Global,
+	"regional": LoadBalancerSku_Tier_STATUS_Regional,
+}
 
 // A load balancing rule for a load balancer.
 type LoadBalancingRule_STATUS_ARM struct {

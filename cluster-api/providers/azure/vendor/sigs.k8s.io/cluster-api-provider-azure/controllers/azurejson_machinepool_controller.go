@@ -26,21 +26,23 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/utils/ptr"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util"
+	"sigs.k8s.io/cluster-api/util/predicates"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/identities"
 	infrav1exp "sigs.k8s.io/cluster-api-provider-azure/exp/api/v1beta1"
 	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util"
-	"sigs.k8s.io/cluster-api/util/predicates"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 // AzureJSONMachinePoolReconciler reconciles Azure json secrets for AzureMachinePool objects.
@@ -49,6 +51,7 @@ type AzureJSONMachinePoolReconciler struct {
 	Recorder         record.EventRecorder
 	Timeouts         reconciler.Timeouts
 	WatchFilterValue string
+	CredentialCache  azure.CredentialCache
 }
 
 // SetupWithManager initializes this controller with a manager.
@@ -63,29 +66,22 @@ func (r *AzureJSONMachinePoolReconciler) SetupWithManager(ctx context.Context, m
 		return errors.Wrap(err, "failed to create mapper for Cluster to AzureMachinePools")
 	}
 
-	c, err := ctrl.NewControllerManagedBy(mgr).
+	return ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options).
 		For(&infrav1exp.AzureMachinePool{}).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(log, r.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log, r.WatchFilterValue)).
 		Owns(&corev1.Secret{}).
-		Build(r)
-
-	if err != nil {
-		return errors.Wrap(err, "failed to create controller")
-	}
-
-	// Add a watch on Clusters to requeue when the infraRef is set. This is needed because the infraRef is not initially
-	// set in Clusters created from a ClusterClass.
-	if err := c.Watch(
-		source.Kind(mgr.GetCache(), &clusterv1.Cluster{}),
-		handler.EnqueueRequestsFromMapFunc(azureMachinePoolMapper),
-		predicates.ClusterUnpausedAndInfrastructureReady(log),
-		predicates.ResourceNotPausedAndHasFilterLabel(log, r.WatchFilterValue),
-	); err != nil {
-		return errors.Wrap(err, "failed adding a watch for Clusters")
-	}
-
-	return nil
+		// Add a watch on Clusters to requeue when the infraRef is set. This is needed because the infraRef is not initially
+		// set in Clusters created from a ClusterClass.
+		Watches(
+			&clusterv1.Cluster{},
+			handler.EnqueueRequestsFromMapFunc(azureMachinePoolMapper),
+			builder.WithPredicates(
+				predicates.ClusterPausedTransitionsOrInfrastructureReady(mgr.GetScheme(), log),
+				predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log, r.WatchFilterValue),
+			),
+		).
+		Complete(r)
 }
 
 // Reconcile reconciles the Azure json for AzureMachinePool objects.
@@ -141,7 +137,7 @@ func (r *AzureJSONMachinePoolReconciler) Reconcile(ctx context.Context, req ctrl
 		return ctrl.Result{}, nil
 	}
 
-	clusterScope, err := GetClusterScoper(ctx, log, r.Client, cluster, r.Timeouts)
+	clusterScope, err := GetClusterScoper(ctx, log, r.Client, cluster, r.Timeouts, r.CredentialCache)
 	if err != nil {
 		return reconcile.Result{}, errors.Wrapf(err, "failed to create cluster scope for cluster %s/%s", cluster.Namespace, cluster.Name)
 	}

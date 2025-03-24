@@ -327,6 +327,7 @@ const (
 // AKSSku - AKS SKU.
 type AKSSku struct {
 	// Tier - Tier of an AKS cluster.
+	// +kubebuilder:default:="Free"
 	Tier AzureManagedControlPlaneSkuTier `json:"tier"`
 }
 
@@ -383,7 +384,9 @@ type ManagedControlPlaneVirtualNetwork struct {
 
 // ManagedControlPlaneSubnet describes a subnet for an AKS cluster.
 type ManagedControlPlaneSubnet struct {
-	Name      string `json:"name"`
+	Name string `json:"name"`
+
+	// +kubebuilder:default:="10.240.0.0/16"
 	CIDRBlock string `json:"cidrBlock"`
 
 	// ServiceEndpoints is a slice of Virtual Network service endpoints to enable for the subnets.
@@ -442,72 +445,90 @@ type OIDCIssuerProfileStatus struct {
 //
 // [AKS doc]: https://learn.microsoft.com/azure/aks/cluster-autoscaler#use-the-cluster-autoscaler-profile
 // [K8s doc]: https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/FAQ.md#what-are-the-parameters-to-ca
+// Default values are from https://learn.microsoft.com/azure/aks/cluster-autoscaler#using-the-autoscaler-profile
 type AutoScalerProfile struct {
 	// BalanceSimilarNodeGroups - Valid values are 'true' and 'false'. The default is false.
 	// +kubebuilder:validation:Enum="true";"false"
+	// +kubebuilder:default:="false"
 	// +optional
 	BalanceSimilarNodeGroups *BalanceSimilarNodeGroups `json:"balanceSimilarNodeGroups,omitempty"`
 	// Expander - If not specified, the default is 'random'. See [expanders](https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/FAQ.md#what-are-expanders) for more information.
 	// +kubebuilder:validation:Enum=least-waste;most-pods;priority;random
+	// +kubebuilder:default:="random"
 	// +optional
 	Expander *Expander `json:"expander,omitempty"`
 	// MaxEmptyBulkDelete - The default is 10.
+	// +kubebuilder:default:="10"
 	// +optional
 	MaxEmptyBulkDelete *string `json:"maxEmptyBulkDelete,omitempty"`
 	// MaxGracefulTerminationSec - The default is 600.
 	// +kubebuilder:validation:Pattern=`^(\d+)$`
+	// +kubebuilder:default:="600"
 	// +optional
 	MaxGracefulTerminationSec *string `json:"maxGracefulTerminationSec,omitempty"`
 	// MaxNodeProvisionTime - The default is '15m'. Values must be an integer followed by an 'm'. No unit of time other than minutes (m) is supported.
 	// +kubebuilder:validation:Pattern=`^(\d+)m$`
+	// +kubebuilder:default:="15m"
 	// +optional
 	MaxNodeProvisionTime *string `json:"maxNodeProvisionTime,omitempty"`
 	// MaxTotalUnreadyPercentage - The default is 45. The maximum is 100 and the minimum is 0.
 	// +kubebuilder:validation:Pattern=`^(\d+)$`
 	// +kubebuilder:validation:MaxLength=3
 	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:default:="45"
 	// +optional
 	MaxTotalUnreadyPercentage *string `json:"maxTotalUnreadyPercentage,omitempty"`
 	// NewPodScaleUpDelay - For scenarios like burst/batch scale where you don't want CA to act before the kubernetes scheduler could schedule all the pods, you can tell CA to ignore unscheduled pods before they're a certain age. The default is '0s'. Values must be an integer followed by a unit ('s' for seconds, 'm' for minutes, 'h' for hours, etc).
 	// +optional
+	// +kubebuilder:default:="0s"
 	NewPodScaleUpDelay *string `json:"newPodScaleUpDelay,omitempty"`
 	// OkTotalUnreadyCount - This must be an integer. The default is 3.
 	// +kubebuilder:validation:Pattern=`^(\d+)$`
+	// +kubebuilder:default:="3"
 	// +optional
 	OkTotalUnreadyCount *string `json:"okTotalUnreadyCount,omitempty"`
 	// ScanInterval - How often cluster is reevaluated for scale up or down. The default is '10s'.
 	// +kubebuilder:validation:Pattern=`^(\d+)s$`
+	// +kubebuilder:default:="10s"
 	// +optional
 	ScanInterval *string `json:"scanInterval,omitempty"`
 	// ScaleDownDelayAfterAdd - The default is '10m'. Values must be an integer followed by an 'm'. No unit of time other than minutes (m) is supported.
 	// +kubebuilder:validation:Pattern=`^(\d+)m$`
+	// +kubebuilder:default:="10m"
 	// +optional
 	ScaleDownDelayAfterAdd *string `json:"scaleDownDelayAfterAdd,omitempty"`
 	// ScaleDownDelayAfterDelete - The default is the scan-interval. Values must be an integer followed by an 's'. No unit of time other than seconds (s) is supported.
 	// +kubebuilder:validation:Pattern=`^(\d+)s$`
+	// +kubebuilder:default:="10s"
 	// +optional
 	ScaleDownDelayAfterDelete *string `json:"scaleDownDelayAfterDelete,omitempty"`
 	// ScaleDownDelayAfterFailure - The default is '3m'. Values must be an integer followed by an 'm'. No unit of time other than minutes (m) is supported.
 	// +kubebuilder:validation:Pattern=`^(\d+)m$`
+	// +kubebuilder:default:="3m"
 	// +optional
 	ScaleDownDelayAfterFailure *string `json:"scaleDownDelayAfterFailure,omitempty"`
 	// ScaleDownUnneededTime - The default is '10m'. Values must be an integer followed by an 'm'. No unit of time other than minutes (m) is supported.
 	// +kubebuilder:validation:Pattern=`^(\d+)m$`
+	// +kubebuilder:default:="10m"
 	// +optional
 	ScaleDownUnneededTime *string `json:"scaleDownUnneededTime,omitempty"`
 	// ScaleDownUnreadyTime - The default is '20m'. Values must be an integer followed by an 'm'. No unit of time other than minutes (m) is supported.
 	// +kubebuilder:validation:Pattern=`^(\d+)m$`
+	// +kubebuilder:default:="20m"
 	// +optional
 	ScaleDownUnreadyTime *string `json:"scaleDownUnreadyTime,omitempty"`
 	// ScaleDownUtilizationThreshold - The default is '0.5'.
+	// +kubebuilder:default:="0.5"
 	// +optional
 	ScaleDownUtilizationThreshold *string `json:"scaleDownUtilizationThreshold,omitempty"`
 	// SkipNodesWithLocalStorage - The default is false.
 	// +kubebuilder:validation:Enum="true";"false"
+	// +kubebuilder:default:="false"
 	// +optional
 	SkipNodesWithLocalStorage *SkipNodesWithLocalStorage `json:"skipNodesWithLocalStorage,omitempty"`
 	// SkipNodesWithSystemPods - The default is true.
 	// +kubebuilder:validation:Enum="true";"false"
+	// +kubebuilder:default:="true"
 	// +optional
 	SkipNodesWithSystemPods *SkipNodesWithSystemPods `json:"skipNodesWithSystemPods,omitempty"`
 }
@@ -563,6 +584,7 @@ const (
 type Identity struct {
 	// Type - The Identity type to use.
 	// +kubebuilder:validation:Enum=SystemAssigned;UserAssigned
+	// +kubebuilder:default:=SystemAssigned
 	// +optional
 	Type ManagedControlPlaneIdentityType `json:"type,omitempty"`
 
@@ -577,6 +599,7 @@ type Identity struct {
 // [AKS doc]: https://learn.microsoft.com/en-us/azure/aks/use-oidc-issuer
 type OIDCIssuerProfile struct {
 	// Enabled is whether the OIDC issuer is enabled.
+	// +kubebuilder:default:=false
 	// +optional
 	Enabled *bool `json:"enabled,omitempty"`
 }

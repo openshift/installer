@@ -23,6 +23,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/pkg/errors"
 	azprovider "sigs.k8s.io/cloud-provider-azure/pkg/provider"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
@@ -96,7 +97,7 @@ func (s *Service) Reconcile(ctx context.Context) (retErr error) {
 		return errors.Errorf("%T is not of type ScaleSetSpec", spec)
 	}
 
-	_, err := s.Client.Get(ctx, spec)
+	result, err := s.Client.Get(ctx, spec)
 	if err == nil {
 		// We can only get the existing instances if the VMSS already exists
 		scaleSetSpec.VMSSInstances, err = s.Client.ListInstances(ctx, spec.ResourceGroupName(), spec.ResourceName())
@@ -105,34 +106,51 @@ func (s *Service) Reconcile(ctx context.Context) (retErr error) {
 			s.Scope.UpdatePutStatus(infrav1.BootstrapSucceededCondition, serviceName, err)
 			return err
 		}
+		if result != nil {
+			if err := s.updateScopeState(ctx, result, scaleSetSpec); err != nil {
+				return err
+			}
+		}
 	} else if !azure.ResourceNotFound(err) {
 		return errors.Wrapf(err, "failed to get existing VMSS")
 	}
 
-	result, err := s.CreateOrUpdateResource(ctx, scaleSetSpec, serviceName)
+	result, err = s.CreateOrUpdateResource(ctx, scaleSetSpec, serviceName)
 	s.Scope.UpdatePutStatus(infrav1.BootstrapSucceededCondition, serviceName, err)
 
 	if err == nil && result != nil {
-		vmss, ok := result.(armcompute.VirtualMachineScaleSet)
-		if !ok {
-			return errors.Errorf("%T is not an armcompute.VirtualMachineScaleSet", result)
+		if err := s.updateScopeState(ctx, result, scaleSetSpec); err != nil {
+			return err
 		}
-
-		fetchedVMSS := converters.SDKToVMSS(vmss, scaleSetSpec.VMSSInstances)
-		if err := s.Scope.ReconcileReplicas(ctx, &fetchedVMSS); err != nil {
-			return errors.Wrap(err, "unable to reconcile VMSS replicas")
-		}
-
-		// Transform the VMSS resource representation to conform to the cloud-provider-azure representation
-		providerID, err := azprovider.ConvertResourceGroupNameToLower(azureutil.ProviderIDPrefix + fetchedVMSS.ID)
-		if err != nil {
-			return errors.Wrapf(err, "failed to parse VMSS ID %s", fetchedVMSS.ID)
-		}
-		s.Scope.SetProviderID(providerID)
-		s.Scope.SetVMSSState(&fetchedVMSS)
 	}
 
 	return err
+}
+
+// updateScopeState updates the scope's VMSS state and provider ID
+//
+// Code later in the reconciler uses scope's VMSS state for determining scale status and whether to create/delete
+// AzureMachinePoolMachines.
+// N.B.: before calling this function, make sure scaleSetSpec.VMSSInstances is updated to the latest state.
+func (s *Service) updateScopeState(ctx context.Context, result interface{}, scaleSetSpec *ScaleSetSpec) error {
+	vmss, ok := result.(armcompute.VirtualMachineScaleSet)
+	if !ok {
+		return errors.Errorf("%T is not an armcompute.VirtualMachineScaleSet", result)
+	}
+
+	fetchedVMSS := converters.SDKToVMSS(vmss, scaleSetSpec.VMSSInstances)
+	if err := s.Scope.ReconcileReplicas(ctx, &fetchedVMSS); err != nil {
+		return errors.Wrap(err, "unable to reconcile VMSS replicas")
+	}
+
+	// Transform the VMSS resource representation to conform to the cloud-provider-azure representation
+	providerID, err := azprovider.ConvertResourceGroupNameToLower(azureutil.ProviderIDPrefix + fetchedVMSS.ID)
+	if err != nil {
+		return errors.Wrapf(err, "failed to parse VMSS ID %s", fetchedVMSS.ID)
+	}
+	s.Scope.SetProviderID(providerID)
+	s.Scope.SetVMSSState(&fetchedVMSS)
+	return nil
 }
 
 // Delete deletes a scale set asynchronously. Delete sends a DELETE request to Azure and if accepted without error,
@@ -297,6 +315,6 @@ func (s *Service) getVirtualMachineScaleSet(ctx context.Context, spec azure.Reso
 }
 
 // IsManaged returns always returns true as CAPZ does not support BYO scale set.
-func (s *Service) IsManaged(ctx context.Context) (bool, error) {
+func (s *Service) IsManaged(_ context.Context) (bool, error) {
 	return true, nil
 }

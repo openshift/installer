@@ -23,6 +23,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/privatedns/armprivatedns"
 	"github.com/pkg/errors"
+
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/async"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
@@ -36,7 +37,7 @@ type azureVirtualNetworkLinksClient struct {
 
 // newVirtualNetworkLinksClient creates a virtual network links client from an authorizer.
 func newVirtualNetworkLinksClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*azureVirtualNetworkLinksClient, error) {
-	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
+	opts, err := azure.ARMClientOptions(auth.CloudEnvironment(), auth.BaseURI())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create virtualnetworkslink client options")
 	}

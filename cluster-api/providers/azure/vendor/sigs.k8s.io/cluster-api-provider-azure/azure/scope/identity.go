@@ -18,18 +18,23 @@ package scope
 
 import (
 	"context"
+	"os"
 	"reflect"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/tracing/azotel"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/azure"
+	"sigs.k8s.io/cluster-api-provider-azure/pkg/ot"
+	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
 // AzureSecretKey is the value for they client secret key.
@@ -41,111 +46,65 @@ type CredentialsProvider interface {
 	GetClientSecret(ctx context.Context) (string, error)
 	GetTenantID() string
 	GetTokenCredential(ctx context.Context, resourceManagerEndpoint, activeDirectoryEndpoint, tokenAudience string) (azcore.TokenCredential, error)
+	Type() infrav1.IdentityType
 }
 
 // AzureCredentialsProvider represents a credential provider with azure cluster identity.
 type AzureCredentialsProvider struct {
 	Client   client.Client
 	Identity *infrav1.AzureClusterIdentity
+
+	cache azure.CredentialCache
 }
 
-// AzureClusterCredentialsProvider wraps AzureCredentialsProvider with AzureCluster.
-type AzureClusterCredentialsProvider struct {
-	AzureCredentialsProvider
-	AzureCluster *infrav1.AzureCluster
-}
-
-// ManagedControlPlaneCredentialsProvider wraps AzureCredentialsProvider with AzureManagedControlPlane.
-type ManagedControlPlaneCredentialsProvider struct {
-	AzureCredentialsProvider
-	AzureManagedControlPlane *infrav1.AzureManagedControlPlane
-}
-
-var _ CredentialsProvider = (*AzureClusterCredentialsProvider)(nil)
-var _ CredentialsProvider = (*ManagedControlPlaneCredentialsProvider)(nil)
-
-// NewAzureClusterCredentialsProvider creates a new AzureClusterCredentialsProvider from the supplied inputs.
-func NewAzureClusterCredentialsProvider(ctx context.Context, kubeClient client.Client, azureCluster *infrav1.AzureCluster) (*AzureClusterCredentialsProvider, error) {
-	if azureCluster.Spec.IdentityRef == nil {
+// NewAzureCredentialsProvider creates a new AzureClusterCredentialsProvider from the supplied inputs.
+func NewAzureCredentialsProvider(ctx context.Context, cache azure.CredentialCache, kubeClient client.Client, identityRef *corev1.ObjectReference, defaultNamespace string) (*AzureCredentialsProvider, error) {
+	if identityRef == nil {
 		return nil, errors.New("failed to generate new AzureClusterCredentialsProvider from empty identityName")
 	}
 
-	ref := azureCluster.Spec.IdentityRef
 	// if the namespace isn't specified then assume it's in the same namespace as the AzureCluster
-	namespace := ref.Namespace
+	namespace := identityRef.Namespace
 	if namespace == "" {
-		namespace = azureCluster.Namespace
+		namespace = defaultNamespace
 	}
 	identity := &infrav1.AzureClusterIdentity{}
-	key := client.ObjectKey{Name: ref.Name, Namespace: namespace}
+	key := client.ObjectKey{Name: identityRef.Name, Namespace: namespace}
 	if err := kubeClient.Get(ctx, key, identity); err != nil {
 		return nil, errors.Errorf("failed to retrieve AzureClusterIdentity external object %q/%q: %v", key.Namespace, key.Name, err)
 	}
 
-	return &AzureClusterCredentialsProvider{
-		AzureCredentialsProvider{
-			Client:   kubeClient,
-			Identity: identity,
-		},
-		azureCluster,
+	return &AzureCredentialsProvider{
+		Client:   kubeClient,
+		Identity: identity,
+		cache:    cache,
 	}, nil
 }
 
 // GetTokenCredential returns an Azure TokenCredential based on the provided azure identity.
-func (p *AzureClusterCredentialsProvider) GetTokenCredential(ctx context.Context, resourceManagerEndpoint, activeDirectoryEndpoint, tokenAudience string) (azcore.TokenCredential, error) {
-	return p.AzureCredentialsProvider.GetTokenCredential(ctx, resourceManagerEndpoint, activeDirectoryEndpoint, tokenAudience, p.AzureCluster.ObjectMeta)
-}
-
-// NewManagedControlPlaneCredentialsProvider creates a new ManagedControlPlaneCredentialsProvider from the supplied inputs.
-func NewManagedControlPlaneCredentialsProvider(ctx context.Context, kubeClient client.Client, managedControlPlane *infrav1.AzureManagedControlPlane) (*ManagedControlPlaneCredentialsProvider, error) {
-	if managedControlPlane.Spec.IdentityRef == nil {
-		return nil, errors.New("failed to generate new ManagedControlPlaneCredentialsProvider from empty identityName")
-	}
-
-	ref := managedControlPlane.Spec.IdentityRef
-	// if the namespace isn't specified then assume it's in the same namespace as the AzureManagedControlPlane
-	namespace := ref.Namespace
-	if namespace == "" {
-		namespace = managedControlPlane.Namespace
-	}
-	identity := &infrav1.AzureClusterIdentity{}
-	key := client.ObjectKey{Name: ref.Name, Namespace: namespace}
-	if err := kubeClient.Get(ctx, key, identity); err != nil {
-		return nil, errors.Errorf("failed to retrieve AzureClusterIdentity external object %q/%q: %v", key.Namespace, key.Name, err)
-	}
-
-	return &ManagedControlPlaneCredentialsProvider{
-		AzureCredentialsProvider{
-			Client:   kubeClient,
-			Identity: identity,
-		},
-		managedControlPlane,
-	}, nil
-}
-
-// GetTokenCredential returns an Azure TokenCredential based on the provided azure identity.
-func (p *ManagedControlPlaneCredentialsProvider) GetTokenCredential(ctx context.Context, resourceManagerEndpoint, activeDirectoryEndpoint, tokenAudience string) (azcore.TokenCredential, error) {
-	return p.AzureCredentialsProvider.GetTokenCredential(ctx, resourceManagerEndpoint, activeDirectoryEndpoint, tokenAudience, p.AzureManagedControlPlane.ObjectMeta)
-}
-
-// GetTokenCredential returns an Azure TokenCredential based on the provided azure identity.
-func (p *AzureCredentialsProvider) GetTokenCredential(ctx context.Context, resourceManagerEndpoint, activeDirectoryEndpoint, tokenAudience string, clusterMeta metav1.ObjectMeta) (azcore.TokenCredential, error) {
+func (p *AzureCredentialsProvider) GetTokenCredential(ctx context.Context, resourceManagerEndpoint, activeDirectoryEndpoint, tokenAudience string) (azcore.TokenCredential, error) {
 	ctx, log, done := tele.StartSpanWithLogger(ctx, "azure.scope.AzureCredentialsProvider.GetTokenCredential")
 	defer done()
 
 	var authErr error
 	var cred azcore.TokenCredential
 
+	otelTP, err := ot.OTLPTracerProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+	tracingProvider := azotel.NewTracingProvider(otelTP, nil)
+
 	switch p.Identity.Spec.Type {
 	case infrav1.WorkloadIdentity:
-		azwiCredOptions, err := NewWorkloadIdentityCredentialOptions().
-			WithTenantID(p.Identity.Spec.TenantID).
-			WithClientID(p.Identity.Spec.ClientID).
-			WithDefaults()
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to setup azwi options for identity %s", p.Identity.Name)
-		}
-		cred, authErr = NewWorkloadIdentityCredential(azwiCredOptions)
+		cred, authErr = p.cache.GetOrStoreWorkloadIdentity(&azidentity.WorkloadIdentityCredentialOptions{
+			ClientOptions: azcore.ClientOptions{
+				TracingProvider: tracingProvider,
+			},
+			TenantID:      p.Identity.Spec.TenantID,
+			ClientID:      p.Identity.Spec.ClientID,
+			TokenFilePath: GetProjectedTokenPath(),
+		})
 
 	case infrav1.ManualServicePrincipal:
 		log.Info("Identity type ManualServicePrincipal is deprecated and will be removed in a future release. See https://capz.sigs.k8s.io/topics/identities to find a supported identity type.")
@@ -157,6 +116,7 @@ func (p *AzureCredentialsProvider) GetTokenCredential(ctx context.Context, resou
 		}
 		options := azidentity.ClientSecretCredentialOptions{
 			ClientOptions: azcore.ClientOptions{
+				TracingProvider: tracingProvider,
 				Cloud: cloud.Configuration{
 					ActiveDirectoryAuthorityHost: activeDirectoryEndpoint,
 					Services: map[cloud.ServiceName]cloud.ServiceConfiguration{
@@ -168,24 +128,36 @@ func (p *AzureCredentialsProvider) GetTokenCredential(ctx context.Context, resou
 				},
 			},
 		}
-		cred, authErr = azidentity.NewClientSecretCredential(p.GetTenantID(), p.Identity.Spec.ClientID, clientSecret, &options)
+		cred, authErr = p.cache.GetOrStoreClientSecret(p.GetTenantID(), p.Identity.Spec.ClientID, clientSecret, &options)
 
 	case infrav1.ServicePrincipalCertificate:
-		clientSecret, err := p.GetClientSecret(ctx)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to get client secret")
+		var certsContent []byte
+		if p.Identity.Spec.CertPath != "" {
+			certsContent, err = os.ReadFile(p.Identity.Spec.CertPath)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to read certificate file")
+			}
+		} else {
+			clientSecret, err := p.GetClientSecret(ctx)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to get client secret")
+			}
+			certsContent = []byte(clientSecret)
 		}
-		certs, key, err := azidentity.ParseCertificates([]byte(clientSecret), nil)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to parse certificate data")
-		}
-		cred, authErr = azidentity.NewClientCertificateCredential(p.GetTenantID(), p.Identity.Spec.ClientID, certs, key, nil)
+		cred, authErr = p.cache.GetOrStoreClientCert(p.GetTenantID(), p.Identity.Spec.ClientID, certsContent, nil, &azidentity.ClientCertificateCredentialOptions{
+			ClientOptions: azcore.ClientOptions{
+				TracingProvider: tracingProvider,
+			},
+		})
 
 	case infrav1.UserAssignedMSI:
 		options := azidentity.ManagedIdentityCredentialOptions{
+			ClientOptions: azcore.ClientOptions{
+				TracingProvider: tracingProvider,
+			},
 			ID: azidentity.ClientID(p.Identity.Spec.ClientID),
 		}
-		cred, authErr = azidentity.NewManagedIdentityCredential(&options)
+		cred, authErr = p.cache.GetOrStoreManagedIdentity(&options)
 
 	default:
 		return nil, errors.Errorf("identity type %s not supported", p.Identity.Spec.Type)
@@ -228,12 +200,19 @@ func (p *AzureCredentialsProvider) GetTenantID() string {
 	return p.Identity.Spec.TenantID
 }
 
+// Type returns the auth mechanism used.
+func (p *AzureCredentialsProvider) Type() infrav1.IdentityType {
+	return p.Identity.Spec.Type
+}
+
 // hasClientSecret returns true if the identity has a Service Principal Client Secret.
 // This does not include managed identities.
 func (p *AzureCredentialsProvider) hasClientSecret() bool {
 	switch p.Identity.Spec.Type {
-	case infrav1.ServicePrincipal, infrav1.ManualServicePrincipal, infrav1.ServicePrincipalCertificate:
+	case infrav1.ServicePrincipal, infrav1.ManualServicePrincipal:
 		return true
+	case infrav1.ServicePrincipalCertificate:
+		return p.Identity.Spec.CertPath == ""
 	default:
 		return false
 	}

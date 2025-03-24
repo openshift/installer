@@ -24,6 +24,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
+
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/async"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
@@ -48,7 +49,7 @@ var _ Client = &AzureClient{}
 
 // NewClient creates a VMs client from an authorizer.
 func NewClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*AzureClient, error) {
-	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
+	opts, err := azure.ARMClientOptions(auth.CloudEnvironment(), auth.BaseURI())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create virtualmachines client options")
 	}

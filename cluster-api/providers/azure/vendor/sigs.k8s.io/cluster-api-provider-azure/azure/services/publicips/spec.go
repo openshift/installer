@@ -23,6 +23,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
 )
@@ -57,7 +58,7 @@ func (s *PublicIPSpec) OwnerResourceName() string {
 }
 
 // Parameters returns the parameters for the public IP.
-func (s *PublicIPSpec) Parameters(ctx context.Context, existing interface{}) (params interface{}, err error) {
+func (s *PublicIPSpec) Parameters(_ context.Context, existing interface{}) (params interface{}, err error) {
 	if existing != nil {
 		if _, ok := existing.(armnetwork.PublicIPAddress); !ok {
 			return nil, errors.Errorf("%T is not an armnetwork.PublicIPAddress", existing)

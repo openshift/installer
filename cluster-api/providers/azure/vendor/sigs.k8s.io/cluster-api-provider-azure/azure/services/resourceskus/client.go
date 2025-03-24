@@ -21,6 +21,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/pkg/errors"
+
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
@@ -39,7 +40,7 @@ var _ Client = &AzureClient{}
 
 // NewClient creates a new Resource SKUs client from an authorizer.
 func NewClient(auth azure.Authorizer) (*AzureClient, error) {
-	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
+	opts, err := azure.ARMClientOptions(auth.CloudEnvironment(), auth.BaseURI())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create resourceskus client options")
 	}

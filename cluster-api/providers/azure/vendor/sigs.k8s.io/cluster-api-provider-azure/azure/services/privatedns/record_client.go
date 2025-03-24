@@ -22,6 +22,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/privatedns/armprivatedns"
 	"github.com/pkg/errors"
+
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
@@ -33,7 +34,7 @@ type azureRecordsClient struct {
 
 // newRecordSetsClient creates a record sets client from an authorizer.
 func newRecordSetsClient(auth azure.Authorizer) (*azureRecordsClient, error) {
-	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
+	opts, err := azure.ARMClientOptions(auth.CloudEnvironment(), auth.BaseURI())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create recordsets client options")
 	}
@@ -45,13 +46,13 @@ func newRecordSetsClient(auth azure.Authorizer) (*azureRecordsClient, error) {
 }
 
 // Get gets the specified record set. Noop for records.
-func (arc *azureRecordsClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (result interface{}, err error) {
+func (arc *azureRecordsClient) Get(_ context.Context, _ azure.ResourceSpecGetter) (result interface{}, err error) {
 	return nil, nil
 }
 
 // CreateOrUpdateAsync creates or updates a record asynchronously.
 // Creating a record set is not a long-running operation, so we don't ever return a future.
-func (arc *azureRecordsClient) CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string, parameters interface{}) (result interface{}, poller *runtime.Poller[armprivatedns.RecordSetsClientCreateOrUpdateResponse], err error) {
+func (arc *azureRecordsClient) CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, _ string, parameters interface{}) (result interface{}, poller *runtime.Poller[armprivatedns.RecordSetsClientCreateOrUpdateResponse], err error) {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "privatedns.azureRecordsClient.CreateOrUpdateAsync")
 	defer done()
 
@@ -80,6 +81,6 @@ func (arc *azureRecordsClient) CreateOrUpdateAsync(ctx context.Context, spec azu
 }
 
 // DeleteAsync deletes a record asynchronously. Noop for records.
-func (arc *azureRecordsClient) DeleteAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string) (poller *runtime.Poller[armprivatedns.RecordSetsClientDeleteResponse], err error) {
+func (arc *azureRecordsClient) DeleteAsync(_ context.Context, _ azure.ResourceSpecGetter, _ string) (poller *runtime.Poller[armprivatedns.RecordSetsClientDeleteResponse], err error) {
 	return nil, nil
 }

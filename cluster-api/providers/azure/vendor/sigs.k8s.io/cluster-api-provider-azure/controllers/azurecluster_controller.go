@@ -24,23 +24,24 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/record"
-	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-azure/azure"
-	"sigs.k8s.io/cluster-api-provider-azure/azure/scope"
-	"sigs.k8s.io/cluster-api-provider-azure/pkg/coalescing"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
-	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/azure"
+	"sigs.k8s.io/cluster-api-provider-azure/azure/scope"
+	"sigs.k8s.io/cluster-api-provider-azure/pkg/coalescing"
+	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
+	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
 // AzureClusterReconciler reconciles an AzureCluster object.
@@ -49,18 +50,20 @@ type AzureClusterReconciler struct {
 	Recorder                  record.EventRecorder
 	Timeouts                  reconciler.Timeouts
 	WatchFilterValue          string
+	CredentialCache           azure.CredentialCache
 	createAzureClusterService azureClusterServiceCreator
 }
 
 type azureClusterServiceCreator func(clusterScope *scope.ClusterScope) (*azureClusterService, error)
 
 // NewAzureClusterReconciler returns a new AzureClusterReconciler instance.
-func NewAzureClusterReconciler(client client.Client, recorder record.EventRecorder, timeouts reconciler.Timeouts, watchFilterValue string) *AzureClusterReconciler {
+func NewAzureClusterReconciler(client client.Client, recorder record.EventRecorder, timeouts reconciler.Timeouts, watchFilterValue string, credCache azure.CredentialCache) *AzureClusterReconciler {
 	acr := &AzureClusterReconciler{
 		Client:           client,
 		Recorder:         recorder,
 		Timeouts:         timeouts,
 		WatchFilterValue: watchFilterValue,
+		CredentialCache:  credCache,
 	}
 
 	acr.createAzureClusterService = newAzureClusterService
@@ -81,27 +84,21 @@ func (acr *AzureClusterReconciler) SetupWithManager(ctx context.Context, mgr ctr
 		r = coalescing.NewReconciler(acr, options.Cache, log)
 	}
 
-	c, err := ctrl.NewControllerManagedBy(mgr).
+	return ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options.Options).
 		For(&infrav1.AzureCluster{}).
-		WithEventFilter(predicates.ResourceHasFilterLabel(log, acr.WatchFilterValue)).
-		WithEventFilter(predicates.ResourceIsNotExternallyManaged(log)).
-		Build(r)
-	if err != nil {
-		return errors.Wrap(err, "error creating controller")
-	}
-
-	// Add a watch on clusterv1.Cluster object for pause/unpause notifications.
-	if err = c.Watch(
-		source.Kind(mgr.GetCache(), &clusterv1.Cluster{}),
-		handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, infrav1.GroupVersion.WithKind(infrav1.AzureClusterKind), mgr.GetClient(), &infrav1.AzureCluster{})),
-		ClusterUpdatePauseChange(log),
-		predicates.ResourceHasFilterLabel(log, acr.WatchFilterValue),
-	); err != nil {
-		return errors.Wrap(err, "failed adding a watch for ready clusters")
-	}
-
-	return nil
+		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), log, acr.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceIsNotExternallyManaged(mgr.GetScheme(), log)).
+		// Add a watch on clusterv1.Cluster object for pause/unpause notifications.
+		Watches(
+			&clusterv1.Cluster{},
+			handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, infrav1.GroupVersion.WithKind(infrav1.AzureClusterKind), mgr.GetClient(), &infrav1.AzureCluster{})),
+			builder.WithPredicates(
+				ClusterUpdatePauseChange(log),
+				predicates.ResourceHasFilterLabel(mgr.GetScheme(), log, acr.WatchFilterValue),
+			),
+		).
+		Complete(r)
 }
 
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=azureclusters,verbs=get;list;watch;create;update;patch;delete
@@ -156,10 +153,11 @@ func (acr *AzureClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	// Create the scope.
 	clusterScope, err := scope.NewClusterScope(ctx, scope.ClusterScopeParams{
-		Client:       acr.Client,
-		Cluster:      cluster,
-		AzureCluster: azureCluster,
-		Timeouts:     acr.Timeouts,
+		Client:          acr.Client,
+		Cluster:         cluster,
+		AzureCluster:    azureCluster,
+		Timeouts:        acr.Timeouts,
+		CredentialCache: acr.CredentialCache,
 	})
 	if err != nil {
 		err = errors.Wrap(err, "failed to create scope")
@@ -248,12 +246,22 @@ func (acr *AzureClusterReconciler) reconcileNormal(ctx context.Context, clusterS
 		return reconcile.Result{}, wrappedErr
 	}
 
-	// Set APIEndpoints so the Cluster API Cluster Controller can pull them
-	if azureCluster.Spec.ControlPlaneEndpoint.Host == "" {
-		azureCluster.Spec.ControlPlaneEndpoint.Host = clusterScope.APIServerHost()
-	}
-	if azureCluster.Spec.ControlPlaneEndpoint.Port == 0 {
-		azureCluster.Spec.ControlPlaneEndpoint.Port = clusterScope.APIServerPort()
+	if azureCluster.Spec.ControlPlaneEnabled {
+		// Set APIEndpoints so the Cluster API Cluster Controller can pull them
+		if azureCluster.Spec.ControlPlaneEndpoint.Host == "" {
+			azureCluster.Spec.ControlPlaneEndpoint.Host = clusterScope.APIServerHost()
+		}
+		if azureCluster.Spec.ControlPlaneEndpoint.Port == 0 {
+			azureCluster.Spec.ControlPlaneEndpoint.Port = clusterScope.APIServerPort()
+		}
+	} else {
+		if azureCluster.Spec.ControlPlaneEndpoint.Host == "" {
+			conditions.MarkFalse(azureCluster, infrav1.NetworkInfrastructureReadyCondition, "ExternallyManagedControlPlane", clusterv1.ConditionSeverityInfo, "Waiting for the Control Plane host")
+			return reconcile.Result{}, nil
+		} else if azureCluster.Spec.ControlPlaneEndpoint.Port == 0 {
+			conditions.MarkFalse(azureCluster, infrav1.NetworkInfrastructureReadyCondition, "ExternallyManagedControlPlane", clusterv1.ConditionSeverityInfo, "Waiting for the Control Plane port")
+			return reconcile.Result{}, nil
+		}
 	}
 
 	// No errors, so mark us ready so the Cluster API Cluster Controller can pull it
@@ -263,7 +271,6 @@ func (acr *AzureClusterReconciler) reconcileNormal(ctx context.Context, clusterS
 	return reconcile.Result{}, nil
 }
 
-//nolint:unparam // Always returns an empty struct for reconcile.Result
 func (acr *AzureClusterReconciler) reconcilePause(ctx context.Context, clusterScope *scope.ClusterScope) (reconcile.Result, error) {
 	ctx, log, done := tele.StartSpanWithLogger(ctx, "controllers.AzureClusterReconciler.reconcilePause")
 	defer done()

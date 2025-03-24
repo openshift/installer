@@ -87,6 +87,12 @@ const (
 	Sku_Name_Standard = Sku_Name("Standard")
 )
 
+// Mapping from string to Sku_Name
+var sku_Name_Values = map[string]Sku_Name{
+	"basic":    Sku_Name_Basic,
+	"standard": Sku_Name_Standard,
+}
+
 // Properties of IP configuration of an Bastion Host.
 type BastionHostIPConfigurationPropertiesFormat_ARM struct {
 	// PrivateIPAllocationMethod: Private IP allocation method.

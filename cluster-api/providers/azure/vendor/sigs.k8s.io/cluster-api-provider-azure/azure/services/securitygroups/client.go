@@ -24,6 +24,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4"
 	"github.com/pkg/errors"
+
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/async"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
@@ -38,7 +39,7 @@ type azureClient struct {
 
 // newClient creates a new security groups client from an authorizer.
 func newClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*azureClient, error) {
-	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
+	opts, err := azure.ARMClientOptions(auth.CloudEnvironment(), auth.BaseURI())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create securitygroups client options")
 	}
@@ -83,7 +84,7 @@ func (ac *azureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.Resou
 	}
 
 	// Create a new client that knows how to add the etag header.
-	clientOpts, err := azure.ARMClientOptions(ac.auth.CloudEnvironment(), extraPolicies...)
+	clientOpts, err := azure.ARMClientOptions(ac.auth.CloudEnvironment(), ac.auth.BaseURI(), extraPolicies...)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to create securitygroups client options")
 	}

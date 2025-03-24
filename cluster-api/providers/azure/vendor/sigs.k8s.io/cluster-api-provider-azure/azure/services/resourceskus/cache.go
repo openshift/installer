@@ -27,6 +27,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
+
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/util/cache/ttllru"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
@@ -138,7 +139,6 @@ func (c *Cache) Get(ctx context.Context, name string, kind ResourceType) (SKU, e
 	}
 
 	for _, sku := range c.data {
-
 		if sku.Name != nil && *sku.Name == name {
 			return SKU(sku), nil
 		}

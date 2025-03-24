@@ -20,11 +20,13 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/scope"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/resourceskus"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/roleassignments"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/scalesets"
+	"sigs.k8s.io/cluster-api-provider-azure/azure/services/tags"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
@@ -49,12 +51,17 @@ func newAzureMachinePoolService(machinePoolScope *scope.MachinePoolScope) (*azur
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create a scalesets service")
 	}
+	tagsSvc, err := tags.New(machinePoolScope)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed creating tags service")
+	}
 
 	return &azureMachinePoolService{
 		scope: machinePoolScope,
 		services: []azure.ServiceReconciler{
 			scaleSetsSvc,
 			roleAssignmentsSvc,
+			tagsSvc,
 		},
 		skuCache: cache,
 	}, nil

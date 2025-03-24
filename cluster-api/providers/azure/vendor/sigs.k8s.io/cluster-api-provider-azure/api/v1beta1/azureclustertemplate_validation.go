@@ -162,6 +162,7 @@ func (c *AzureClusterTemplate) validatePrivateDNSZoneName() field.ErrorList {
 
 	allErrs = append(allErrs, validatePrivateDNSZoneName(
 		networkSpec.PrivateDNSZoneName,
+		true,
 		networkSpec.APIServerLB.Type,
 		fldPath,
 	)...)

@@ -7,11 +7,6 @@ package genruntime
 
 import (
 	"fmt"
-
-	"github.com/pkg/errors"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
-
-	"github.com/Azure/azure-service-operator/v2/internal/set"
 )
 
 // SecretReference is a reference to a Kubernetes secret and key in the same namespace as
@@ -143,38 +138,4 @@ func (s SecretDestination) Copy() SecretDestination {
 
 func (s SecretDestination) String() string {
 	return fmt.Sprintf("Name: %q, Key: %q", s.Name, s.Key)
-}
-
-type keyPair struct {
-	name string
-	key  string
-}
-
-func makeKeyPairFromSecret(dest *SecretDestination) keyPair {
-	return keyPair{
-		name: dest.Name,
-		key:  dest.Key,
-	}
-}
-
-// ValidateSecretDestinations checks that no two destinations are writing to the same secret/key, as that could cause
-// those secrets to overwrite one another.
-func ValidateSecretDestinations(destinations []*SecretDestination) (admission.Warnings, error) {
-	// Map of secret -> keys
-	locations := set.Make[keyPair]()
-
-	for _, dest := range destinations {
-		if dest == nil {
-			continue
-		}
-
-		pair := makeKeyPairFromSecret(dest)
-		if locations.Contains(pair) {
-			return nil, errors.Errorf("cannot write more than one secret to destination %s", dest.String())
-		}
-
-		locations.Add(pair)
-	}
-
-	return nil, nil
 }

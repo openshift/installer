@@ -308,6 +308,11 @@ type ExtendedLocationType string
 
 const ExtendedLocationType_EdgeZone = ExtendedLocationType("EdgeZone")
 
+// Mapping from string to ExtendedLocationType
+var extendedLocationType_Values = map[string]ExtendedLocationType{
+	"edgezone": ExtendedLocationType_EdgeZone,
+}
+
 // For more details see [managed AAD on AKS](https://docs.microsoft.com/azure/aks/managed-aad).
 type ManagedClusterAADProfile_ARM struct {
 	// AdminGroupObjectIDs: The list of AAD group object IDs that will have admin role of the cluster.
@@ -449,8 +454,8 @@ type ManagedClusterAgentPoolProfile_ARM struct {
 	// must have the same major version as the control plane. The node pool minor version must be within two minor versions of
 	// the control plane version. The node pool version cannot be greater than the control plane version. For more information
 	// see [upgrading a node pool](https://docs.microsoft.com/azure/aks/use-multiple-node-pools#upgrade-a-node-pool).
-	OrchestratorVersion *string                 `json:"orchestratorVersion,omitempty"`
-	OsDiskSizeGB        *ContainerServiceOSDisk `json:"osDiskSizeGB,omitempty"`
+	OrchestratorVersion *string `json:"orchestratorVersion,omitempty"`
+	OsDiskSizeGB        *int    `json:"osDiskSizeGB,omitempty"`
 
 	// OsDiskType: The default is 'Ephemeral' if the VM supports it and has a cache disk larger than the requested
 	// OSDiskSizeGB. Otherwise,  defaults to 'Managed'. May not be changed after creation. For more information see [Ephemeral
@@ -598,6 +603,13 @@ const (
 	ManagedClusterIdentity_Type_UserAssigned   = ManagedClusterIdentity_Type("UserAssigned")
 )
 
+// Mapping from string to ManagedClusterIdentity_Type
+var managedClusterIdentity_Type_Values = map[string]ManagedClusterIdentity_Type{
+	"none":           ManagedClusterIdentity_Type_None,
+	"systemassigned": ManagedClusterIdentity_Type_SystemAssigned,
+	"userassigned":   ManagedClusterIdentity_Type_UserAssigned,
+}
+
 // Ingress profile for the container service cluster.
 type ManagedClusterIngressProfile_ARM struct {
 	// WebAppRouting: Web App Routing settings for the ingress profile.
@@ -730,7 +742,7 @@ type ManagedClusterSecurityProfile_ARM struct {
 	// CustomCATrustCertificates: A list of up to 10 base64 encoded CAs that will be added to the trust store on nodes with the
 	// Custom CA Trust feature enabled. For more information see [Custom CA Trust
 	// Certificates](https://learn.microsoft.com/en-us/azure/aks/custom-certificate-authority)
-	CustomCATrustCertificates ManagedClusterSecurityProfileCustomCATrustCertificates `json:"customCATrustCertificates,omitempty"`
+	CustomCATrustCertificates []string `json:"customCATrustCertificates"`
 
 	// Defender: Microsoft Defender settings for the security profile.
 	Defender *ManagedClusterSecurityProfileDefender_ARM `json:"defender,omitempty"`
@@ -767,6 +779,11 @@ type ManagedClusterSKU_Name string
 
 const ManagedClusterSKU_Name_Base = ManagedClusterSKU_Name("Base")
 
+// Mapping from string to ManagedClusterSKU_Name
+var managedClusterSKU_Name_Values = map[string]ManagedClusterSKU_Name{
+	"base": ManagedClusterSKU_Name_Base,
+}
+
 // +kubebuilder:validation:Enum={"Free","Premium","Standard"}
 type ManagedClusterSKU_Tier string
 
@@ -775,6 +792,13 @@ const (
 	ManagedClusterSKU_Tier_Premium  = ManagedClusterSKU_Tier("Premium")
 	ManagedClusterSKU_Tier_Standard = ManagedClusterSKU_Tier("Standard")
 )
+
+// Mapping from string to ManagedClusterSKU_Tier
+var managedClusterSKU_Tier_Values = map[string]ManagedClusterSKU_Tier{
+	"free":     ManagedClusterSKU_Tier_Free,
+	"premium":  ManagedClusterSKU_Tier_Premium,
+	"standard": ManagedClusterSKU_Tier_Standard,
+}
 
 // Storage profile for the container service cluster.
 type ManagedClusterStorageProfile_ARM struct {

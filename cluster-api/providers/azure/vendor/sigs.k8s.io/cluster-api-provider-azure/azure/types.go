@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/google/go-cmp/cmp"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
 )
@@ -126,7 +127,6 @@ func (vmss VMSS) HasModelChanges(other VMSS) bool {
 	equal := cmp.Equal(vmss.Image, other.Image) &&
 		cmp.Equal(vmss.Identity, other.Identity) &&
 		cmp.Equal(vmss.Zones, other.Zones) &&
-		cmp.Equal(vmss.Tags, other.Tags) &&
 		cmp.Equal(vmss.Sku, other.Sku)
 	return !equal
 }

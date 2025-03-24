@@ -24,6 +24,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
@@ -77,7 +78,7 @@ func (s *VMSpec) OwnerResourceName() string {
 }
 
 // Parameters returns the parameters for the virtual machine.
-func (s *VMSpec) Parameters(ctx context.Context, existing interface{}) (params interface{}, err error) {
+func (s *VMSpec) Parameters(_ context.Context, existing interface{}) (params interface{}, err error) {
 	if existing != nil {
 		if _, ok := existing.(armcompute.VirtualMachine); !ok {
 			return nil, errors.Errorf("%T is not an armcompute.VirtualMachine", existing)
@@ -183,6 +184,7 @@ func (s *VMSpec) generateStorageProfile() (*armcompute.StorageProfile, error) {
 	if !MemoryCapability {
 		return nil, azure.WithTerminalError(errors.New("VM memory should be bigger or equal to at least 2Gi"))
 	}
+
 	// enable ephemeral OS
 	if s.OSDisk.DiffDiskSettings != nil {
 		if !s.SKU.HasCapability(resourceskus.EphemeralOSDisk) {
@@ -191,6 +193,10 @@ func (s *VMSpec) generateStorageProfile() (*armcompute.StorageProfile, error) {
 
 		storageProfile.OSDisk.DiffDiskSettings = &armcompute.DiffDiskSettings{
 			Option: ptr.To(armcompute.DiffDiskOptions(s.OSDisk.DiffDiskSettings.Option)),
+		}
+
+		if s.OSDisk.DiffDiskSettings.Placement != nil {
+			storageProfile.OSDisk.DiffDiskSettings.Placement = ptr.To(armcompute.DiffDiskPlacement(*s.OSDisk.DiffDiskSettings.Placement))
 		}
 	}
 

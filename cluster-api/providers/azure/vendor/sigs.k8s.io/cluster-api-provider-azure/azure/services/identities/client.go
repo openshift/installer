@@ -22,6 +22,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/msi/armmsi"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
+
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
@@ -40,7 +41,7 @@ type AzureClient struct {
 
 // NewClient creates a new MSI client from an authorizer.
 func NewClient(auth azure.Authorizer) (Client, error) {
-	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
+	opts, err := azure.ARMClientOptions(auth.CloudEnvironment(), auth.BaseURI())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create identities client options")
 	}
@@ -53,7 +54,7 @@ func NewClient(auth azure.Authorizer) (Client, error) {
 
 // NewClientBySub creates a new MSI client with a given subscriptionID.
 func NewClientBySub(auth azure.Authorizer, subscriptionID string) (Client, error) {
-	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
+	opts, err := azure.ARMClientOptions(auth.CloudEnvironment(), auth.BaseURI())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create identities client options")
 	}

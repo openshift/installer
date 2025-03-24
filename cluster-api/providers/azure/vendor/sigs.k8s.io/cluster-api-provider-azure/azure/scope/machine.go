@@ -28,6 +28,12 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util"
+	"sigs.k8s.io/cluster-api/util/conditions"
+	"sigs.k8s.io/cluster-api/util/patch"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/availabilitysets"
@@ -40,15 +46,10 @@ import (
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/virtualmachineimages"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/virtualmachines"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/vmextensions"
+	"sigs.k8s.io/cluster-api-provider-azure/feature"
 	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/util/futures"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	capierrors "sigs.k8s.io/cluster-api/errors"
-	"sigs.k8s.io/cluster-api/util"
-	"sigs.k8s.io/cluster-api/util/conditions"
-	"sigs.k8s.io/cluster-api/util/patch"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // MachineScopeParams defines the input parameters used to create a new MachineScope.
@@ -148,10 +149,11 @@ func (m *MachineScope) InitMachineCache(ctx context.Context) error {
 			return errors.Wrapf(err, "failed to get VM SKU %s in compute api", m.AzureMachine.Spec.VMSize)
 		}
 
-		// m.cache.availabilitySetSKU, err = skuCache.Get(ctx, string(armcompute.AvailabilitySetSKUTypesAligned), resourceskus.AvailabilitySets)
-		// if err != nil {
-		// 	return errors.Wrapf(err, "failed to get availability set SKU %s in compute api", string(armcompute.AvailabilitySetSKUTypesAligned))
-		// }
+		m.cache.availabilitySetSKU, err = skuCache.Get(ctx, string(armcompute.AvailabilitySetSKUTypesAligned), resourceskus.AvailabilitySets)
+		// Resource SKU API for availability sets may not be available in Azure Stack environments.
+		if err != nil && !strings.EqualFold(m.CloudEnvironment(), "HybridEnvironment") {
+			return errors.Wrapf(err, "failed to get availability set SKU %s in compute api", string(armcompute.AvailabilitySetSKUTypesAligned))
+		}
 	}
 
 	return nil
@@ -297,6 +299,10 @@ func (m *MachineScope) BuildNICSpec(nicName string, infrav1NetworkInterface infr
 				spec.InternalLBName = m.APIServerLBName()
 				spec.InternalLBAddressPoolName = m.APIServerLBPoolName()
 			} else {
+				if feature.Gates.Enabled(feature.APIServerILB) {
+					spec.InternalLBName = m.APIServerLBName() + "-internal"
+					spec.InternalLBAddressPoolName = m.APIServerLBPoolName() + "-internal"
+				}
 				spec.PublicLBNATRuleName = m.Name()
 				spec.PublicLBAddressPoolName = m.APIServerLBPoolName()
 			}
@@ -489,17 +495,18 @@ func (m *MachineScope) AvailabilitySetSpec() azure.ResourceSpecGetter {
 	}
 
 	spec := &availabilitysets.AvailabilitySetSpec{
-		Name:           availabilitySetName,
-		ResourceGroup:  m.NodeResourceGroup(),
-		ClusterName:    m.ClusterName(),
-		Location:       m.Location(),
-		SKU:            &resourceskus.SKU{Name: ptr.To(string(armcompute.AvailabilitySetSKUTypesAligned))},
-		AdditionalTags: m.AdditionalTags(),
+		Name:             availabilitySetName,
+		ResourceGroup:    m.NodeResourceGroup(),
+		ClusterName:      m.ClusterName(),
+		Location:         m.Location(),
+		CloudEnvironment: m.CloudEnvironment(),
+		SKU:              nil,
+		AdditionalTags:   m.AdditionalTags(),
 	}
 
-	// if m.cache != nil {
-	// 	spec.SKU = &m.cache.availabilitySetSKU
-	// }
+	if m.cache != nil {
+		spec.SKU = &m.cache.availabilitySetSKU
+	}
 
 	return spec
 }
@@ -508,7 +515,8 @@ func (m *MachineScope) AvailabilitySetSpec() azure.ResourceSpecGetter {
 func (m *MachineScope) AvailabilitySet() (string, bool) {
 	// AvailabilitySet service is not supported on EdgeZone currently.
 	// AvailabilitySet cannot be used with Spot instances.
-	if !m.AvailabilitySetEnabled() || m.AzureMachine.Spec.SpotVMOptions != nil || m.ExtendedLocation() != nil {
+	if !m.AvailabilitySetEnabled() || m.AzureMachine.Spec.SpotVMOptions != nil || m.ExtendedLocation() != nil ||
+		m.AzureMachine.Spec.FailureDomain != nil || m.Machine.Spec.FailureDomain != nil {
 		return "", false
 	}
 
@@ -596,7 +604,7 @@ func (m *MachineScope) SetFailureMessage(v error) {
 }
 
 // SetFailureReason sets the AzureMachine status failure reason.
-func (m *MachineScope) SetFailureReason(v capierrors.MachineStatusError) {
+func (m *MachineScope) SetFailureReason(v string) {
 	m.AzureMachine.Status.FailureReason = &v
 }
 
@@ -723,7 +731,7 @@ func (m *MachineScope) GetVMImage(ctx context.Context) (*infrav1.Image, error) {
 	}
 
 	log.Info("No image specified for machine, using default Linux Image", "machine", m.AzureMachine.GetName())
-	return svc.GetDefaultUbuntuImage(ctx, m.Location(), ptr.Deref(m.Machine.Spec.Version, ""))
+	return svc.GetDefaultLinuxImage(ctx, m.Location(), ptr.Deref(m.Machine.Spec.Version, ""))
 }
 
 // SetSubnetName defaults the AzureMachine subnet name to the name of one the subnets with the machine role when there is only one of them.
