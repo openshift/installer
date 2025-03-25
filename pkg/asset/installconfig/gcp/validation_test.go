@@ -133,14 +133,25 @@ var (
 		)
 	}
 
+	invalidKeyRing = gcp.KMSKeyReference{
+		Name:      "invalidKeyName",
+		KeyRing:   "invalidKeyRingName",
+		Location:  "validLocation",
+		ProjectID: "validProjectID",
+	}
+
+	validKeyRing = gcp.KMSKeyReference{
+		Name:      "validKeyName",
+		KeyRing:   "validKeyRingName",
+		Location:  "validLocation",
+		ProjectID: "validProjectID",
+	}
+
 	invalidDefaultMachineKeyRing = func(ic *types.InstallConfig) {
 		ic.GCP.DefaultMachinePlatform = &gcp.MachinePool{}
 		ic.GCP.DefaultMachinePlatform.OSDisk = gcp.OSDisk{
 			EncryptionKey: &gcp.EncryptionKeyReference{
-				KMSKey: &gcp.KMSKeyReference{
-					Name:    "invalidKeyName",
-					KeyRing: "invalidKeyRingName",
-				},
+				KMSKey: &invalidKeyRing,
 			},
 		}
 	}
@@ -148,20 +159,14 @@ var (
 	validCPKMSKeyRing = func(ic *types.InstallConfig) {
 		ic.ControlPlane.Platform.GCP.OSDisk = gcp.OSDisk{
 			EncryptionKey: &gcp.EncryptionKeyReference{
-				KMSKey: &gcp.KMSKeyReference{
-					Name:    "validKeyName",
-					KeyRing: "validKeyRingName",
-				},
+				KMSKey: &validKeyRing,
 			},
 		}
 	}
 	invalidateCPKMSKeyRing = func(ic *types.InstallConfig) {
 		ic.ControlPlane.Platform.GCP.OSDisk = gcp.OSDisk{
 			EncryptionKey: &gcp.EncryptionKeyReference{
-				KMSKey: &gcp.KMSKeyReference{
-					Name:    "invalidKeyName",
-					KeyRing: "invalidKeyRingName",
-				},
+				KMSKey: &invalidKeyRing,
 			},
 		}
 	}
@@ -169,20 +174,14 @@ var (
 	validComputeKMSKeyRing = func(ic *types.InstallConfig) {
 		ic.Compute[0].Platform.GCP.OSDisk = gcp.OSDisk{
 			EncryptionKey: &gcp.EncryptionKeyReference{
-				KMSKey: &gcp.KMSKeyReference{
-					Name:    "validKeyName",
-					KeyRing: "validKeyRingName",
-				},
+				KMSKey: &validKeyRing,
 			},
 		}
 	}
 	invalidateComputeKMSKeyRing = func(ic *types.InstallConfig) {
 		ic.Compute[0].Platform.GCP.OSDisk = gcp.OSDisk{
 			EncryptionKey: &gcp.EncryptionKeyReference{
-				KMSKey: &gcp.KMSKeyReference{
-					Name:    "validKeyName",
-					KeyRing: "invalidKeyRingName",
-				},
+				KMSKey: &invalidKeyRing,
 			},
 		}
 	}
@@ -495,11 +494,11 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 	gcpClient.EXPECT().GetServiceAccount(gomock.Any(), validProjectName, validXpnSA).Return(validXpnSA, nil).AnyTimes()
 	gcpClient.EXPECT().GetServiceAccount(gomock.Any(), validProjectName, invalidXpnSA).Return("", fmt.Errorf("controlPlane.platform.gcp.serviceAccount: Internal error\"")).AnyTimes()
 
-	validKeyRing := &kmspb.KeyRing{
+	validKeyRingRet := &kmspb.KeyRing{
 		Name: "validKeyRingName",
 	}
-	gcpClient.EXPECT().GetKeyRing(gomock.Any(), "validKeyRingName").Return(validKeyRing, nil).AnyTimes()
-	gcpClient.EXPECT().GetKeyRing(gomock.Any(), "invalidKeyRingName").Return(nil, fmt.Errorf("failed to find key ring invalidKeyRingName: data")).AnyTimes()
+	gcpClient.EXPECT().GetKeyRing(gomock.Any(), &validKeyRing).Return(validKeyRingRet, nil).AnyTimes()
+	gcpClient.EXPECT().GetKeyRing(gomock.Any(), &invalidKeyRing).Return(nil, fmt.Errorf("failed to find key ring invalidKeyRingName: data")).AnyTimes()
 
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
