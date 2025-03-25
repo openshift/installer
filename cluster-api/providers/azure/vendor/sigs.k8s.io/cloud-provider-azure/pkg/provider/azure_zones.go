@@ -179,6 +179,9 @@ func (az *Cloud) GetZone(_ context.Context) (cloudprovider.Zone, error) {
 	if err != nil {
 		return cloudprovider.Zone{}, fmt.Errorf("failure getting hostname from kernel")
 	}
+	if az.VMSet == nil {
+		return cloudprovider.Zone{}, fmt.Errorf("VMSet is not initialized")
+	}
 	return az.VMSet.GetZoneByNodeName(strings.ToLower(hostname))
 }
 

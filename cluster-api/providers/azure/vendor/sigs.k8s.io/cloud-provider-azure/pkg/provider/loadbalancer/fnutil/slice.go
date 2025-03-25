@@ -24,6 +24,16 @@ func Map[T any, R any](f func(T) R, xs []T) []R {
 	return rv
 }
 
+func Filter[T any](f func(T) bool, xs []T) []T {
+	var rv []T
+	for _, x := range xs {
+		if f(x) {
+			rv = append(rv, x)
+		}
+	}
+	return rv
+}
+
 func RemoveIf[T any](f func(T) bool, xs []T) []T {
 	var rv []T
 	for _, x := range xs {
@@ -41,4 +51,23 @@ func IsAll[T any](f func(T) bool, xs []T) bool {
 		}
 	}
 	return true
+}
+
+func IndexSet[T comparable](xs []T) map[T]bool {
+	rv := make(map[T]bool, len(xs))
+	for _, x := range xs {
+		rv[x] = true
+	}
+	return rv
+}
+
+func Intersection[T comparable](xs, ys []T) []T {
+	ysSet := IndexSet(ys)
+	var rv []T
+	for _, x := range xs {
+		if ysSet[x] {
+			rv = append(rv, x)
+		}
+	}
+	return rv
 }

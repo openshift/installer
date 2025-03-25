@@ -63,3 +63,8 @@ type NatGatewaySku_STATUS_ARM struct {
 type NatGatewaySku_Name_STATUS string
 
 const NatGatewaySku_Name_STATUS_Standard = NatGatewaySku_Name_STATUS("Standard")
+
+// Mapping from string to NatGatewaySku_Name_STATUS
+var natGatewaySku_Name_STATUS_Values = map[string]NatGatewaySku_Name_STATUS{
+	"standard": NatGatewaySku_Name_STATUS_Standard,
+}

@@ -39,13 +39,13 @@ import (
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 // AzureJSONMachineReconciler reconciles Azure json secrets for AzureMachine objects.
@@ -68,30 +68,23 @@ func (r *AzureJSONMachineReconciler) SetupWithManager(ctx context.Context, mgr c
 		return errors.Wrap(err, "failed to create mapper for Cluster to AzureMachines")
 	}
 
-	c, err := ctrl.NewControllerManagedBy(mgr).
+	return ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options).
 		For(&infrav1.AzureMachine{}).
 		WithEventFilter(filterUnclonedMachinesPredicate{log: log}).
 		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(log, r.WatchFilterValue)).
 		Owns(&corev1.Secret{}).
-		Build(r)
-
-	if err != nil {
-		return errors.Wrap(err, "failed to create controller")
-	}
-
-	// Add a watch on Clusters to requeue when the infraRef is set. This is needed because the infraRef is not initially
-	// set in Clusters created from a ClusterClass.
-	if err := c.Watch(
-		source.Kind(mgr.GetCache(), &clusterv1.Cluster{}),
-		handler.EnqueueRequestsFromMapFunc(azureMachineMapper),
-		predicates.ClusterUnpausedAndInfrastructureReady(log),
-		predicates.ResourceNotPausedAndHasFilterLabel(log, r.WatchFilterValue),
-	); err != nil {
-		return errors.Wrap(err, "failed adding a watch for Clusters")
-	}
-
-	return nil
+		// Add a watch on Clusters to requeue when the infraRef is set. This is needed because the infraRef is not initially
+		// set in Clusters created from a ClusterClass.
+		Watches(
+			&clusterv1.Cluster{},
+			handler.EnqueueRequestsFromMapFunc(azureMachineMapper),
+			builder.WithPredicates(
+				predicates.ClusterUnpausedAndInfrastructureReady(log),
+				predicates.ResourceNotPausedAndHasFilterLabel(log, r.WatchFilterValue),
+			),
+		).
+		Complete(r)
 }
 
 type filterUnclonedMachinesPredicate struct {
