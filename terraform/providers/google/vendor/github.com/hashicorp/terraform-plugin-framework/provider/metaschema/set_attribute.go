@@ -1,6 +1,11 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package metaschema
 
 import (
+	"context"
+
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/internal/fwschema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -10,7 +15,8 @@ import (
 
 // Ensure the implementation satisifies the desired interfaces.
 var (
-	_ Attribute = SetAttribute{}
+	_ Attribute                                    = SetAttribute{}
+	_ fwschema.AttributeWithValidateImplementation = SetAttribute{}
 )
 
 // SetAttribute represents a schema attribute that is a set with a single
@@ -124,4 +130,14 @@ func (a SetAttribute) IsRequired() bool {
 // schema data.
 func (a SetAttribute) IsSensitive() bool {
 	return false
+}
+
+// ValidateImplementation contains logic for validating the
+// provider-defined implementation of the attribute to prevent unexpected
+// errors or panics. This logic runs during the GetProviderSchema RPC
+// and should never include false positives.
+func (a SetAttribute) ValidateImplementation(ctx context.Context, req fwschema.ValidateImplementationRequest, resp *fwschema.ValidateImplementationResponse) {
+	if a.CustomType == nil && a.ElementType == nil {
+		resp.Diagnostics.Append(fwschema.AttributeMissingElementTypeDiag(req.Path))
+	}
 }

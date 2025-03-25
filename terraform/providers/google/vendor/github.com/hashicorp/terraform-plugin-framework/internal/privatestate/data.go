@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package privatestate
 
 import (
@@ -321,6 +324,13 @@ func (d *ProviderData) SetKey(ctx context.Context, key string, value []byte) dia
 	diags.Append(ValidateProviderDataKey(ctx, key)...)
 
 	if diags.HasError() {
+		return diags
+	}
+
+	// Support removing keys by setting them to nil or zero-length value.
+	if len(value) == 0 {
+		delete(d.data, key)
+
 		return diags
 	}
 

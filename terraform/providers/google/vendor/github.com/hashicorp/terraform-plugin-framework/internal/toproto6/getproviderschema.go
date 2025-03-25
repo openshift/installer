@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package toproto6
 
 import (
@@ -15,9 +18,10 @@ func GetProviderSchemaResponse(ctx context.Context, fw *fwserver.GetProviderSche
 	}
 
 	protov6 := &tfprotov6.GetProviderSchemaResponse{
-		DataSourceSchemas:  map[string]*tfprotov6.Schema{},
+		DataSourceSchemas:  make(map[string]*tfprotov6.Schema, len(fw.DataSourceSchemas)),
 		Diagnostics:        Diagnostics(ctx, fw.Diagnostics),
-		ResourceSchemas:    map[string]*tfprotov6.Schema{},
+		Functions:          make(map[string]*tfprotov6.Function, len(fw.FunctionDefinitions)),
+		ResourceSchemas:    make(map[string]*tfprotov6.Schema, len(fw.ResourceSchemas)),
 		ServerCapabilities: ServerCapabilities(ctx, fw.ServerCapabilities),
 	}
 
@@ -59,6 +63,10 @@ func GetProviderSchemaResponse(ctx context.Context, fw *fwserver.GetProviderSche
 
 			return protov6
 		}
+	}
+
+	for name, functionDefinition := range fw.FunctionDefinitions {
+		protov6.Functions[name] = Function(ctx, functionDefinition)
 	}
 
 	for resourceType, resourceSchema := range fw.ResourceSchemas {

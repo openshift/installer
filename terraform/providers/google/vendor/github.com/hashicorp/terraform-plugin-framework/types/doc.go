@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 // Package types contains the framework-defined data types and values, such as
 // boolean, floating point, integer, list, map, object, set, and string.
 //

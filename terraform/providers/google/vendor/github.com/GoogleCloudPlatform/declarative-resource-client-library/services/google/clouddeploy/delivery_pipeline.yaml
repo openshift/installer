@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC. All Rights Reserved.
+# Copyright 2024 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -193,11 +193,14 @@ components:
           x-dcl-go-name: Location
           description: The location for the resource
           x-kubernetes-immutable: true
+          x-dcl-parameter: true
         name:
           type: string
           x-dcl-go-name: Name
-          description: Name of the `DeliveryPipeline`. Format is [a-z][a-z0-9\-]{0,62}.
+          description: Name of the `DeliveryPipeline`. Format is `[a-z]([a-z0-9-]{0,61}[a-z0-9])?`.
           x-kubernetes-immutable: true
+          x-dcl-parameter: true
+          x-dcl-has-long-form: true
         project:
           type: string
           x-dcl-go-name: Project
@@ -207,6 +210,7 @@ components:
           - resource: Cloudresourcemanager/Project
             field: name
             parent: true
+          x-dcl-parameter: true
         serialPipeline:
           type: object
           x-dcl-go-name: SerialPipeline
@@ -301,6 +305,44 @@ components:
                                   type: integer
                                   format: int64
                                   x-dcl-go-type: int64
+                              postdeploy:
+                                type: object
+                                x-dcl-go-name: Postdeploy
+                                x-dcl-go-type: DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy
+                                description: Optional. Configuration for the postdeploy
+                                  job of the last phase. If this is not configured,
+                                  postdeploy job will not be present.
+                                properties:
+                                  actions:
+                                    type: array
+                                    x-dcl-go-name: Actions
+                                    description: Optional. A sequence of skaffold
+                                      custom actions to invoke during execution of
+                                      the postdeploy job.
+                                    x-dcl-send-empty: true
+                                    x-dcl-list-type: list
+                                    items:
+                                      type: string
+                                      x-dcl-go-type: string
+                              predeploy:
+                                type: object
+                                x-dcl-go-name: Predeploy
+                                x-dcl-go-type: DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy
+                                description: Optional. Configuration for the predeploy
+                                  job of the first phase. If this is not configured,
+                                  predeploy job will not be present.
+                                properties:
+                                  actions:
+                                    type: array
+                                    x-dcl-go-name: Actions
+                                    description: Optional. A sequence of skaffold
+                                      custom actions to invoke during execution of
+                                      the predeploy job.
+                                    x-dcl-send-empty: true
+                                    x-dcl-list-type: list
+                                    items:
+                                      type: string
+                                      x-dcl-go-type: string
                               verify:
                                 type: boolean
                                 x-dcl-go-name: Verify
@@ -348,6 +390,46 @@ components:
                                         or a number, and have a max length of 63 characters.
                                         In other words, it must match the following
                                         regex: `^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$`.'
+                                    postdeploy:
+                                      type: object
+                                      x-dcl-go-name: Postdeploy
+                                      x-dcl-go-type: DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy
+                                      description: Optional. Configuration for the
+                                        postdeploy job of this phase. If this is not
+                                        configured, postdeploy job will not be present
+                                        for this phase.
+                                      properties:
+                                        actions:
+                                          type: array
+                                          x-dcl-go-name: Actions
+                                          description: Optional. A sequence of skaffold
+                                            custom actions to invoke during execution
+                                            of the postdeploy job.
+                                          x-dcl-send-empty: true
+                                          x-dcl-list-type: list
+                                          items:
+                                            type: string
+                                            x-dcl-go-type: string
+                                    predeploy:
+                                      type: object
+                                      x-dcl-go-name: Predeploy
+                                      x-dcl-go-type: DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy
+                                      description: Optional. Configuration for the
+                                        predeploy job of this phase. If this is not
+                                        configured, predeploy job will not be present
+                                        for this phase.
+                                      properties:
+                                        actions:
+                                          type: array
+                                          x-dcl-go-name: Actions
+                                          description: Optional. A sequence of skaffold
+                                            custom actions to invoke during execution
+                                            of the predeploy job.
+                                          x-dcl-send-empty: true
+                                          x-dcl-list-type: list
+                                          items:
+                                            type: string
+                                            x-dcl-go-type: string
                                     profiles:
                                       type: array
                                       x-dcl-go-name: Profiles
@@ -390,6 +472,39 @@ components:
                                       the user's behalf to facilitate traffic splitting.
                                       This is required to be true for CanaryDeployments,
                                       but optional for CustomCanaryDeployments.
+                                  canaryRevisionTags:
+                                    type: array
+                                    x-dcl-go-name: CanaryRevisionTags
+                                    description: Optional. A list of tags that are
+                                      added to the canary revision while the canary
+                                      phase is in progress.
+                                    x-dcl-send-empty: true
+                                    x-dcl-list-type: list
+                                    items:
+                                      type: string
+                                      x-dcl-go-type: string
+                                  priorRevisionTags:
+                                    type: array
+                                    x-dcl-go-name: PriorRevisionTags
+                                    description: Optional. A list of tags that are
+                                      added to the prior revision while the canary
+                                      phase is in progress.
+                                    x-dcl-send-empty: true
+                                    x-dcl-list-type: list
+                                    items:
+                                      type: string
+                                      x-dcl-go-type: string
+                                  stableRevisionTags:
+                                    type: array
+                                    x-dcl-go-name: StableRevisionTags
+                                    description: Optional. A list of tags that are
+                                      added to the final stable revision when the
+                                      stable phase is applied.
+                                    x-dcl-send-empty: true
+                                    x-dcl-list-type: list
+                                    items:
+                                      type: string
+                                      x-dcl-go-type: string
                               kubernetes:
                                 type: object
                                 x-dcl-go-name: Kubernetes
@@ -422,11 +537,28 @@ components:
                                         x-dcl-go-name: HttpRoute
                                         description: Required. Name of the Gateway
                                           API HTTPRoute.
+                                      routeUpdateWaitTime:
+                                        type: string
+                                        x-dcl-go-name: RouteUpdateWaitTime
+                                        description: Optional. The time to wait for
+                                          route updates to propagate. The maximum
+                                          configurable time is 3 hours, in seconds
+                                          format. If unspecified, there is no wait
+                                          time.
                                       service:
                                         type: string
                                         x-dcl-go-name: Service
                                         description: Required. Name of the Kubernetes
                                           Service.
+                                      stableCutbackDuration:
+                                        type: string
+                                        x-dcl-go-name: StableCutbackDuration
+                                        description: Optional. The amount of time
+                                          to migrate traffic back from the canary
+                                          Service to the original Service during the
+                                          stable phase deployment. If specified, must
+                                          be between 15s and 3600s. If unspecified,
+                                          there is no cutback time.
                                   serviceNetworking:
                                     type: object
                                     x-dcl-go-name: ServiceNetworking
@@ -465,6 +597,44 @@ components:
                         description: Standard deployment strategy executes a single
                           deploy and allows verifying the deployment.
                         properties:
+                          postdeploy:
+                            type: object
+                            x-dcl-go-name: Postdeploy
+                            x-dcl-go-type: DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy
+                            description: Optional. Configuration for the postdeploy
+                              job. If this is not configured, postdeploy job will
+                              not be present.
+                            properties:
+                              actions:
+                                type: array
+                                x-dcl-go-name: Actions
+                                description: Optional. A sequence of skaffold custom
+                                  actions to invoke during execution of the postdeploy
+                                  job.
+                                x-dcl-send-empty: true
+                                x-dcl-list-type: list
+                                items:
+                                  type: string
+                                  x-dcl-go-type: string
+                          predeploy:
+                            type: object
+                            x-dcl-go-name: Predeploy
+                            x-dcl-go-type: DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy
+                            description: Optional. Configuration for the predeploy
+                              job. If this is not configured, predeploy job will not
+                              be present.
+                            properties:
+                              actions:
+                                type: array
+                                x-dcl-go-name: Actions
+                                description: Optional. A sequence of skaffold custom
+                                  actions to invoke during execution of the predeploy
+                                  job.
+                                x-dcl-send-empty: true
+                                x-dcl-list-type: list
+                                items:
+                                  type: string
+                                  x-dcl-go-type: string
                           verify:
                             type: boolean
                             x-dcl-go-name: Verify

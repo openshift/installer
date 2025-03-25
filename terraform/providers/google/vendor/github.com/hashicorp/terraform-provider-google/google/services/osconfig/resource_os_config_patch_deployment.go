@@ -20,9 +20,11 @@ package osconfig
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
@@ -45,6 +47,10 @@ func ResourceOSConfigPatchDeployment() *schema.Resource {
 			Create: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"instance_filter": {
@@ -547,7 +553,8 @@ be executed directly, which will likely only succeed for scripts with shebang li
 											Type:         schema.TypeString,
 											ValidateFunc: verify.ValidateEnum([]string{"CRITICAL", "SECURITY", "DEFINITION", "DRIVER", "FEATURE_PACK", "SERVICE_PACK", "TOOL", "UPDATE_ROLLUP", "UPDATE"}),
 										},
-										ExactlyOneOf: []string{"patch_config.0.windows_update.0.classifications", "patch_config.0.windows_update.0.excludes", "patch_config.0.windows_update.0.exclusive_patches"},
+										ConflictsWith: []string{"patch_config.0.windows_update.0.exclusive_patches"},
+										AtLeastOneOf:  []string{"patch_config.0.windows_update.0.classifications", "patch_config.0.windows_update.0.excludes", "patch_config.0.windows_update.0.exclusive_patches"},
 									},
 									"excludes": {
 										Type:        schema.TypeList,
@@ -557,7 +564,8 @@ be executed directly, which will likely only succeed for scripts with shebang li
 										Elem: &schema.Schema{
 											Type: schema.TypeString,
 										},
-										ExactlyOneOf: []string{"patch_config.0.windows_update.0.classifications", "patch_config.0.windows_update.0.excludes", "patch_config.0.windows_update.0.exclusive_patches"},
+										ConflictsWith: []string{"patch_config.0.windows_update.0.exclusive_patches"},
+										AtLeastOneOf:  []string{"patch_config.0.windows_update.0.classifications", "patch_config.0.windows_update.0.excludes", "patch_config.0.windows_update.0.exclusive_patches"},
 									},
 									"exclusive_patches": {
 										Type:     schema.TypeList,
@@ -568,7 +576,8 @@ This field must not be used with other patch configurations.`,
 										Elem: &schema.Schema{
 											Type: schema.TypeString,
 										},
-										ExactlyOneOf: []string{"patch_config.0.windows_update.0.classifications", "patch_config.0.windows_update.0.excludes", "patch_config.0.windows_update.0.exclusive_patches"},
+										ConflictsWith: []string{"patch_config.0.windows_update.0.classifications", "patch_config.0.windows_update.0.excludes"},
+										AtLeastOneOf:  []string{"patch_config.0.windows_update.0.classifications", "patch_config.0.windows_update.0.excludes", "patch_config.0.windows_update.0.exclusive_patches"},
 									},
 								},
 							},
@@ -815,6 +824,13 @@ will not run in February, April, June, etc.`,
 													ValidateFunc: validation.IntBetween(-1, 4),
 													Description:  `Week number in a month. 1-4 indicates the 1st to 4th week of the month. -1 indicates the last week of the month.`,
 												},
+												"day_offset": {
+													Type:         schema.TypeInt,
+													Optional:     true,
+													ForceNew:     true,
+													ValidateFunc: validation.IntBetween(-30, 30),
+													Description:  `Represents the number of days before or after the given week day of month that the patch deployment is scheduled for.`,
+												},
 											},
 										},
 										ExactlyOneOf: []string{"recurring_schedule.0.monthly.0.week_day_of_month", "recurring_schedule.0.monthly.0.month_day"},
@@ -1022,6 +1038,7 @@ func resourceOSConfigPatchDeploymentCreate(d *schema.ResourceData, meta interfac
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -1030,6 +1047,7 @@ func resourceOSConfigPatchDeploymentCreate(d *schema.ResourceData, meta interfac
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating PatchDeployment: %s", err)
@@ -1093,12 +1111,14 @@ func resourceOSConfigPatchDeploymentRead(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("OSConfigPatchDeployment %q", d.Id()))
@@ -1178,13 +1198,15 @@ func resourceOSConfigPatchDeploymentDelete(d *schema.ResourceData, meta interfac
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting PatchDeployment %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting PatchDeployment %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -1193,6 +1215,7 @@ func resourceOSConfigPatchDeploymentDelete(d *schema.ResourceData, meta interfac
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "PatchDeployment")
@@ -1974,6 +1997,8 @@ func flattenOSConfigPatchDeploymentRecurringScheduleMonthlyWeekDayOfMonth(v inte
 		flattenOSConfigPatchDeploymentRecurringScheduleMonthlyWeekDayOfMonthWeekOrdinal(original["weekOrdinal"], d, config)
 	transformed["day_of_week"] =
 		flattenOSConfigPatchDeploymentRecurringScheduleMonthlyWeekDayOfMonthDayOfWeek(original["dayOfWeek"], d, config)
+	transformed["day_offset"] =
+		flattenOSConfigPatchDeploymentRecurringScheduleMonthlyWeekDayOfMonthDayOffset(original["dayOffset"], d, config)
 	return []interface{}{transformed}
 }
 func flattenOSConfigPatchDeploymentRecurringScheduleMonthlyWeekDayOfMonthWeekOrdinal(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1995,6 +2020,23 @@ func flattenOSConfigPatchDeploymentRecurringScheduleMonthlyWeekDayOfMonthWeekOrd
 
 func flattenOSConfigPatchDeploymentRecurringScheduleMonthlyWeekDayOfMonthDayOfWeek(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
+}
+
+func flattenOSConfigPatchDeploymentRecurringScheduleMonthlyWeekDayOfMonthDayOffset(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
 }
 
 func flattenOSConfigPatchDeploymentRecurringScheduleMonthlyMonthDay(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -3225,6 +3267,13 @@ func expandOSConfigPatchDeploymentRecurringScheduleMonthlyWeekDayOfMonth(v inter
 		transformed["dayOfWeek"] = transformedDayOfWeek
 	}
 
+	transformedDayOffset, err := expandOSConfigPatchDeploymentRecurringScheduleMonthlyWeekDayOfMonthDayOffset(original["day_offset"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedDayOffset); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["dayOffset"] = transformedDayOffset
+	}
+
 	return transformed, nil
 }
 
@@ -3233,6 +3282,10 @@ func expandOSConfigPatchDeploymentRecurringScheduleMonthlyWeekDayOfMonthWeekOrdi
 }
 
 func expandOSConfigPatchDeploymentRecurringScheduleMonthlyWeekDayOfMonthDayOfWeek(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandOSConfigPatchDeploymentRecurringScheduleMonthlyWeekDayOfMonthDayOffset(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

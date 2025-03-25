@@ -13,7 +13,8 @@ import (
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
 	"github.com/hashicorp/terraform-provider-google/google/verify"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"google.golang.org/api/storagetransfer/v1"
@@ -63,9 +64,14 @@ func ResourceStorageTransferJob() *schema.Resource {
 			State: resourceStorageTransferJobStateImporter,
 		},
 
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
+
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
+				Optional:    true,
 				Computed:    true,
 				Description: `The name of the Transfer Job.`,
 			},
@@ -81,6 +87,33 @@ func ResourceStorageTransferJob() *schema.Resource {
 				Computed:    true,
 				ForceNew:    true,
 				Description: `The project in which the resource belongs. If it is not provided, the provider project is used.`,
+			},
+			"event_stream": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				MaxItems:      1,
+				ConflictsWith: []string{"schedule"},
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Specifies a unique name of the resource such as AWS SQS ARN in the form 'arn:aws:sqs:region:account_id:queue_name', or Pub/Sub subscription resource name in the form 'projects/{project}/subscriptions/{sub}'",
+						},
+						"event_stream_start_time": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Description:  "Specifies the date and time that Storage Transfer Service starts listening for events from this stream. If no start time is specified or start time is in the past, Storage Transfer Service starts listening immediately",
+							ValidateFunc: validation.IsRFC3339Time,
+						},
+						"event_stream_expiration_time": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Description:  "Specifies the data and time at which Storage Transfer Service stops listening for events from this stream. After this time, any transfers in progress will complete, but no new transfers are initiated",
+							ValidateFunc: validation.IsRFC3339Time,
+						},
+					},
+				},
 			},
 			"transfer_spec": {
 				Type:     schema.TypeList,
@@ -195,9 +228,10 @@ func ResourceStorageTransferJob() *schema.Resource {
 				Description: `Notification configuration.`,
 			},
 			"schedule": {
-				Type:     schema.TypeList,
-				Optional: true,
-				MaxItems: 1,
+				Type:          schema.TypeList,
+				Optional:      true,
+				MaxItems:      1,
+				ConflictsWith: []string{"event_stream"},
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"schedule_start_date": {
@@ -563,10 +597,12 @@ func resourceStorageTransferJobCreate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	transferJob := &storagetransfer.TransferJob{
+		Name:               d.Get("name").(string),
 		Description:        d.Get("description").(string),
 		ProjectId:          project,
 		Status:             d.Get("status").(string),
 		Schedule:           expandTransferSchedules(d.Get("schedule").([]interface{})),
+		EventStream:        expandEventStream(d.Get("event_stream").([]interface{})),
 		TransferSpec:       expandTransferSpecs(d.Get("transfer_spec").([]interface{})),
 		NotificationConfig: expandTransferJobNotificationConfig(d.Get("notification_config").([]interface{})),
 	}
@@ -642,6 +678,11 @@ func resourceStorageTransferJobRead(d *schema.ResourceData, meta interface{}) er
 		return err
 	}
 
+	err = d.Set("event_stream", flattenTransferEventStream(res.EventStream))
+	if err != nil {
+		return err
+	}
+
 	err = d.Set("transfer_spec", flattenTransferSpec(res.TransferSpec, d))
 	if err != nil {
 		return err
@@ -669,6 +710,13 @@ func resourceStorageTransferJobUpdate(d *schema.ResourceData, meta interface{}) 
 
 	transferJob := &storagetransfer.TransferJob{}
 	fieldMask := []string{}
+
+	if d.HasChange("event_stream") {
+		fieldMask = append(fieldMask, "event_stream")
+		if v, ok := d.GetOk("event_stream"); ok {
+			transferJob.EventStream = expandEventStream(v.([]interface{}))
+		}
+	}
 
 	if d.HasChange("description") {
 		fieldMask = append(fieldMask, "description")
@@ -756,10 +804,10 @@ func resourceStorageTransferJobDelete(d *schema.ResourceData, meta interface{}) 
 
 	// Update transfer job with status set to DELETE
 	log.Printf("[DEBUG] Setting status to DELETE for: %v\n\n", transferJobName)
-	err = resource.Retry(1*time.Minute, func() *resource.RetryError {
+	err = retry.Retry(1*time.Minute, func() *retry.RetryError {
 		_, err := config.NewStorageTransferClient(userAgent).TransferJobs.Patch(transferJobName, updateRequest).Do()
 		if err != nil {
-			return resource.RetryableError(err)
+			return retry.RetryableError(err)
 		}
 
 		return nil
@@ -899,6 +947,39 @@ func flattenTransferSchedule(transferSchedule *storagetransfer.Schedule) []map[s
 	return []map[string]interface{}{data}
 }
 
+func expandEventStream(e []interface{}) *storagetransfer.EventStream {
+	if len(e) == 0 || e[0] == nil {
+		return nil
+	}
+
+	eventStream := e[0].(map[string]interface{})
+	return &storagetransfer.EventStream{
+		Name:                      eventStream["name"].(string),
+		EventStreamStartTime:      eventStream["event_stream_start_time"].(string),
+		EventStreamExpirationTime: eventStream["event_stream_expiration_time"].(string),
+	}
+}
+
+func flattenTransferEventStream(eventStream *storagetransfer.EventStream) []map[string]interface{} {
+	if eventStream == nil || reflect.DeepEqual(eventStream, &storagetransfer.EventStream{}) {
+		return nil
+	}
+
+	data := map[string]interface{}{
+		"name": eventStream.Name,
+	}
+
+	if eventStream.EventStreamStartTime != "" {
+		data["event_stream_start_time"] = eventStream.EventStreamStartTime
+	}
+
+	if eventStream.EventStreamExpirationTime != "" {
+		data["event_stream_expiration_time"] = eventStream.EventStreamExpirationTime
+	}
+
+	return []map[string]interface{}{data}
+}
+
 func expandGcsData(gcsDatas []interface{}) *storagetransfer.GcsData {
 	if len(gcsDatas) == 0 || gcsDatas[0] == nil {
 		return nil
@@ -963,10 +1044,9 @@ func flattenAwsS3Data(awsS3Data *storagetransfer.AwsS3Data, d *schema.ResourceDa
 		"path":        awsS3Data.Path,
 		"role_arn":    awsS3Data.RoleArn,
 	}
-	if awsS3Data.AwsAccessKey != nil {
+	if _, exist := d.GetOkExists("transfer_spec.0.aws_s3_data_source.0.aws_access_key"); exist {
 		data["aws_access_key"] = flattenAwsAccessKeys(d)
 	}
-
 	return []map[string]interface{}{data}
 }
 

@@ -20,10 +20,12 @@ package certificatemanager
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -47,6 +49,11 @@ func ResourceCertificateManagerCertificateMap() *schema.Resource {
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
+		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
+			tpgresource.DefaultProviderProject,
+		),
+
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
@@ -61,11 +68,14 @@ globally and match the pattern 'projects/*/locations/*/certificateMaps/*'.`,
 				Description: `A human-readable description of the resource.`,
 			},
 			"labels": {
-				Type:        schema.TypeMap,
-				Computed:    true,
-				Optional:    true,
-				Description: `Set of labels associated with a Certificate Map resource.`,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `Set of labels associated with a Certificate Map resource.
+
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"create_time": {
 				Type:     schema.TypeString,
@@ -73,6 +83,12 @@ globally and match the pattern 'projects/*/locations/*/certificateMaps/*'.`,
 				Description: `Creation timestamp of a Certificate Map. Timestamp is in RFC3339 UTC "Zulu" format,
 accurate to nanoseconds with up to nine fractional digits.
 Examples: "2014-10-02T15:01:23Z" and "2014-10-02T15:01:23.045123456Z".`,
+			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"gclb_targets": {
 				Type:        schema.TypeList,
@@ -119,6 +135,13 @@ This field is part of a union field 'target_proxy': Only one of 'targetHttpsProx
 					},
 				},
 			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
+			},
 			"update_time": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -151,10 +174,10 @@ func resourceCertificateManagerCertificateMapCreate(d *schema.ResourceData, meta
 	} else if v, ok := d.GetOkExists("description"); !tpgresource.IsEmptyValue(reflect.ValueOf(descriptionProp)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
 	}
-	labelsProp, err := expandCertificateManagerCertificateMapLabels(d.Get("labels"), d, config)
+	labelsProp, err := expandCertificateManagerCertificateMapEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
 		obj["labels"] = labelsProp
 	}
 
@@ -177,6 +200,7 @@ func resourceCertificateManagerCertificateMapCreate(d *schema.ResourceData, meta
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -185,6 +209,7 @@ func resourceCertificateManagerCertificateMapCreate(d *schema.ResourceData, meta
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating CertificateMap: %s", err)
@@ -237,12 +262,14 @@ func resourceCertificateManagerCertificateMapRead(d *schema.ResourceData, meta i
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("CertificateManagerCertificateMap %q", d.Id()))
@@ -265,6 +292,12 @@ func resourceCertificateManagerCertificateMapRead(d *schema.ResourceData, meta i
 		return fmt.Errorf("Error reading CertificateMap: %s", err)
 	}
 	if err := d.Set("gclb_targets", flattenCertificateManagerCertificateMapGclbTargets(res["gclbTargets"], d, config)); err != nil {
+		return fmt.Errorf("Error reading CertificateMap: %s", err)
+	}
+	if err := d.Set("terraform_labels", flattenCertificateManagerCertificateMapTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading CertificateMap: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenCertificateManagerCertificateMapEffectiveLabels(res["labels"], d, config)); err != nil {
 		return fmt.Errorf("Error reading CertificateMap: %s", err)
 	}
 
@@ -293,10 +326,10 @@ func resourceCertificateManagerCertificateMapUpdate(d *schema.ResourceData, meta
 	} else if v, ok := d.GetOkExists("description"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
 	}
-	labelsProp, err := expandCertificateManagerCertificateMapLabels(d.Get("labels"), d, config)
+	labelsProp, err := expandCertificateManagerCertificateMapEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
 		obj["labels"] = labelsProp
 	}
 
@@ -306,13 +339,14 @@ func resourceCertificateManagerCertificateMapUpdate(d *schema.ResourceData, meta
 	}
 
 	log.Printf("[DEBUG] Updating CertificateMap %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("description") {
 		updateMask = append(updateMask, "description")
 	}
 
-	if d.HasChange("labels") {
+	if d.HasChange("effective_labels") {
 		updateMask = append(updateMask, "labels")
 	}
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
@@ -327,28 +361,32 @@ func resourceCertificateManagerCertificateMapUpdate(d *schema.ResourceData, meta
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating CertificateMap %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating CertificateMap %q: %#v", d.Id(), res)
-	}
+		if err != nil {
+			return fmt.Errorf("Error updating CertificateMap %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating CertificateMap %q: %#v", d.Id(), res)
+		}
 
-	err = CertificateManagerOperationWaitTime(
-		config, res, project, "Updating CertificateMap", userAgent,
-		d.Timeout(schema.TimeoutUpdate))
+		err = CertificateManagerOperationWaitTime(
+			config, res, project, "Updating CertificateMap", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return resourceCertificateManagerCertificateMapRead(d, meta)
@@ -375,13 +413,15 @@ func resourceCertificateManagerCertificateMapDelete(d *schema.ResourceData, meta
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting CertificateMap %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting CertificateMap %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -390,6 +430,7 @@ func resourceCertificateManagerCertificateMapDelete(d *schema.ResourceData, meta
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "CertificateMap")
@@ -410,9 +451,9 @@ func resourceCertificateManagerCertificateMapDelete(d *schema.ResourceData, meta
 func resourceCertificateManagerCertificateMapImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/global/certificateMaps/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/global/certificateMaps/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -440,7 +481,18 @@ func flattenCertificateManagerCertificateMapUpdateTime(v interface{}, d *schema.
 }
 
 func flattenCertificateManagerCertificateMapLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenCertificateManagerCertificateMapGclbTargets(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -498,11 +550,30 @@ func flattenCertificateManagerCertificateMapGclbTargetsTargetSslProxy(v interfac
 	return v
 }
 
+func flattenCertificateManagerCertificateMapTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
+}
+
+func flattenCertificateManagerCertificateMapEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func expandCertificateManagerCertificateMapDescription(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
-func expandCertificateManagerCertificateMapLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+func expandCertificateManagerCertificateMapEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
 	if v == nil {
 		return map[string]string{}, nil
 	}

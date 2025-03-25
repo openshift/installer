@@ -20,22 +20,24 @@ package cloudtasks
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
 )
 
-func suppressOmittedMaxDuration(_, old, new string, _ *schema.ResourceData) bool {
+func suppressOmittedMaxDuration(k, old, new string, d *schema.ResourceData) bool {
 	if old == "" && new == "0s" {
 		log.Printf("[INFO] max retry is 0s and api omitted field, suppressing diff")
 		return true
 	}
-	return false
+	return tpgresource.DurationDiffSuppress(k, old, new, d)
 }
 
 func ResourceCloudTasksQueue() *schema.Resource {
@@ -54,6 +56,10 @@ func ResourceCloudTasksQueue() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"location": {
@@ -175,9 +181,10 @@ the default.
 -1 indicates unlimited attempts.`,
 						},
 						"max_backoff": {
-							Type:     schema.TypeString,
-							Computed: true,
-							Optional: true,
+							Type:             schema.TypeString,
+							Computed:         true,
+							Optional:         true,
+							DiffSuppressFunc: tpgresource.DurationDiffSuppress,
 							Description: `A task will be scheduled for retry between minBackoff and
 maxBackoff duration after it fails, if the queue's RetryConfig
 specifies that the task should be retried.`,
@@ -206,9 +213,10 @@ made and the task will be deleted.
 If zero, then the task age is unlimited.`,
 						},
 						"min_backoff": {
-							Type:     schema.TypeString,
-							Computed: true,
-							Optional: true,
+							Type:             schema.TypeString,
+							Computed:         true,
+							Optional:         true,
+							DiffSuppressFunc: tpgresource.DurationDiffSuppress,
 							Description: `A task will be scheduled for retry between minBackoff and
 maxBackoff duration after it fails, if the queue's RetryConfig
 specifies that the task should be retried.`,
@@ -302,6 +310,7 @@ func resourceCloudTasksQueueCreate(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -310,6 +319,7 @@ func resourceCloudTasksQueueCreate(d *schema.ResourceData, meta interface{}) err
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Queue: %s", err)
@@ -352,12 +362,14 @@ func resourceCloudTasksQueueRead(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("CloudTasksQueue %q", d.Id()))
@@ -433,6 +445,7 @@ func resourceCloudTasksQueueUpdate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	log.Printf("[DEBUG] Updating Queue %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("app_engine_routing_override") {
@@ -462,20 +475,25 @@ func resourceCloudTasksQueueUpdate(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating Queue %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating Queue %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating Queue %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating Queue %q: %#v", d.Id(), res)
+		}
+
 	}
 
 	return resourceCloudTasksQueueRead(d, meta)
@@ -502,13 +520,15 @@ func resourceCloudTasksQueueDelete(d *schema.ResourceData, meta interface{}) err
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Queue %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Queue %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -517,6 +537,7 @@ func resourceCloudTasksQueueDelete(d *schema.ResourceData, meta interface{}) err
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Queue")
@@ -529,9 +550,9 @@ func resourceCloudTasksQueueDelete(d *schema.ResourceData, meta interface{}) err
 func resourceCloudTasksQueueImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/queues/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<name>[^/]+)",
-		"(?P<location>[^/]+)/(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/queues/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<location>[^/]+)/(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

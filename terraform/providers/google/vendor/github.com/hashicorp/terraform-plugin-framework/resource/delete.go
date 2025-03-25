@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package resource
 
 import (
@@ -33,6 +36,14 @@ type DeleteResponse struct {
 	// This field is pre-populated from UpdateResourceRequest.Plan and
 	// should be set during the resource's Update operation.
 	State tfsdk.State
+
+	// Private is the private state resource data following the Delete
+	// operation. This field is pre-populated from DeleteRequest.Private and
+	// can be modified during the resource's Delete operation in cases where
+	// an error diagnostic is being returned. Otherwise if no error diagnostic
+	// is being returned, indicating that the resource was successfully deleted,
+	// this data will be automatically cleared to prevent Terraform errors.
+	Private *privatestate.ProviderData
 
 	// Diagnostics report errors or warnings related to deleting the
 	// resource. An empty slice indicates a successful operation with no

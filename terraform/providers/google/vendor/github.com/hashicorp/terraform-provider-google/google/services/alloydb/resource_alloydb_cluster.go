@@ -20,10 +20,12 @@ package alloydb
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -43,10 +45,16 @@ func ResourceAlloydbCluster() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(10 * time.Minute),
-			Update: schema.DefaultTimeout(10 * time.Minute),
-			Delete: schema.DefaultTimeout(10 * time.Minute),
+			Create: schema.DefaultTimeout(30 * time.Minute),
+			Update: schema.DefaultTimeout(30 * time.Minute),
+			Delete: schema.DefaultTimeout(30 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
+			tpgresource.SetAnnotationsDiff,
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"cluster_id": {
@@ -61,26 +69,28 @@ func ResourceAlloydbCluster() *schema.Resource {
 				ForceNew:    true,
 				Description: `The location where the alloydb cluster should reside.`,
 			},
-			"network": {
-				Type:             schema.TypeString,
-				Required:         true,
-				DiffSuppressFunc: tpgresource.ProjectNumberDiffSuppress,
-				Description: `The relative resource name of the VPC network on which the instance can be accessed. It is specified in the following form:
+			"annotations": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `Annotations to allow client tools to store small amount of arbitrary data. This is distinct from labels. https://google.aip.dev/128
+An object containing a list of "key": value pairs. Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.
 
-"projects/{projectNumber}/global/networks/{network_id}".`,
+
+**Note**: This field is non-authoritative, and will only manage the annotations present in your configuration.
+Please refer to the field 'effective_annotations' for all of the annotations present on the resource.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"automated_backup_policy": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Optional: true,
-				Description: `The automated backup policy for this cluster.
-
-If no policy is provided then the default policy will be used. The default policy takes one backup a day, has a backup window of 1 hour, and retains backups for 14 days.`,
-				MaxItems: 1,
+				Type:        schema.TypeList,
+				Computed:    true,
+				Optional:    true,
+				Description: `The automated backup policy for this cluster. AutomatedBackupPolicy is disabled by default.`,
+				MaxItems:    1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"backup_window": {
 							Type:     schema.TypeString,
+							Computed: true,
 							Optional: true,
 							Description: `The length of the time window during which a backup can be taken. If a backup does not succeed within this time window, it will be canceled and considered failed.
 
@@ -90,6 +100,7 @@ A duration in seconds with up to nine fractional digits, terminated by 's'. Exam
 						},
 						"enabled": {
 							Type:        schema.TypeBool,
+							Computed:    true,
 							Optional:    true,
 							Description: `Whether automated backups are enabled.`,
 						},
@@ -116,6 +127,7 @@ A duration in seconds with up to nine fractional digits, terminated by 's'. Exam
 						},
 						"location": {
 							Type:        schema.TypeString,
+							Computed:    true,
 							Optional:    true,
 							Description: `The location where the backup will be stored. Currently, the only supported option is to store the backup in the same region as the cluster.`,
 						},
@@ -205,6 +217,61 @@ A duration in seconds with up to nine fractional digits, terminated by 's'. Exam
 					},
 				},
 			},
+			"cluster_type": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: verify.ValidateEnum([]string{"PRIMARY", "SECONDARY", ""}),
+				Description:  `The type of cluster. If not set, defaults to PRIMARY. Default value: "PRIMARY" Possible values: ["PRIMARY", "SECONDARY"]`,
+				Default:      "PRIMARY",
+			},
+			"continuous_backup_config": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Optional: true,
+				Description: `The continuous backup config for this cluster.
+
+If no policy is provided then the default policy will be used. The default policy takes one backup a day and retains backups for 14 days.`,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"enabled": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: `Whether continuous backup recovery is enabled. If not set, defaults to true.`,
+							Default:     true,
+						},
+						"encryption_config": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `EncryptionConfig describes the encryption config of a cluster or a backup that is encrypted with a CMEK (customer-managed encryption key).`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"kms_key_name": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: `The fully-qualified resource name of the KMS key. Each Cloud KMS key is regionalized and has the following format: projects/[PROJECT]/locations/[REGION]/keyRings/[RING]/cryptoKeys/[KEY_NAME].`,
+									},
+								},
+							},
+						},
+						"recovery_window_days": {
+							Type:     schema.TypeInt,
+							Computed: true,
+							Optional: true,
+							Description: `The numbers of days that are eligible to restore from using PITR. To support the entire recovery window, backups and logs are retained for one day more than the recovery window.
+
+If not set, defaults to 14 days.`,
+						},
+					},
+				},
+			},
+			"database_version": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Optional:    true,
+				Description: `The database engine major version. This is an optional field and it's populated at the Cluster creation time. This field cannot be changed after cluster creation.`,
+			},
 			"display_name": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -225,6 +292,11 @@ A duration in seconds with up to nine fractional digits, terminated by 's'. Exam
 						},
 					},
 				},
+			},
+			"etag": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: `For Resource freshness validation (https://google.aip.dev/154)`,
 			},
 			"initial_user": {
 				Type:        schema.TypeList,
@@ -248,10 +320,177 @@ A duration in seconds with up to nine fractional digits, terminated by 's'. Exam
 				},
 			},
 			"labels": {
-				Type:        schema.TypeMap,
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `User-defined labels for the alloydb cluster.
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
+			},
+			"maintenance_update_policy": {
+				Type:        schema.TypeList,
 				Optional:    true,
-				Description: `User-defined labels for the alloydb cluster.`,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: `MaintenanceUpdatePolicy defines the policy for system updates.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"maintenance_windows": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `Preferred windows to perform maintenance. Currently limited to 1.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"day": {
+										Type:         schema.TypeString,
+										Required:     true,
+										ValidateFunc: verify.ValidateEnum([]string{"MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"}),
+										Description:  `Preferred day of the week for maintenance, e.g. MONDAY, TUESDAY, etc. Possible values: ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]`,
+									},
+									"start_time": {
+										Type:        schema.TypeList,
+										Required:    true,
+										Description: `Preferred time to start the maintenance operation on the specified day. Maintenance will start within 1 hour of this time.`,
+										MaxItems:    1,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"hours": {
+													Type:        schema.TypeInt,
+													Required:    true,
+													Description: `Hours of day in 24 hour format. Should be from 0 to 23.`,
+												},
+												"minutes": {
+													Type:        schema.TypeInt,
+													Optional:    true,
+													Description: `Minutes of hour of day. Currently, only the value 0 is supported.`,
+												},
+												"nanos": {
+													Type:        schema.TypeInt,
+													Optional:    true,
+													Description: `Fractions of seconds in nanoseconds. Currently, only the value 0 is supported.`,
+												},
+												"seconds": {
+													Type:        schema.TypeInt,
+													Optional:    true,
+													Description: `Seconds of minutes of the time. Currently, only the value 0 is supported.`,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"network": {
+				Type:             schema.TypeString,
+				Computed:         true,
+				Optional:         true,
+				Deprecated:       "`network` is deprecated and will be removed in a future major release. Instead, use `network_config` to define the network configuration.",
+				DiffSuppressFunc: tpgresource.ProjectNumberDiffSuppress,
+				Description: `The relative resource name of the VPC network on which the instance can be accessed. It is specified in the following form:
+
+"projects/{projectNumber}/global/networks/{network_id}".`,
+				ExactlyOneOf: []string{"network", "network_config.0.network", "psc_config.0.psc_enabled"},
+			},
+			"network_config": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Optional:    true,
+				Description: `Metadata related to network configuration.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"allocated_ip_range": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Description: `The name of the allocated IP range for the private IP AlloyDB cluster. For example: "google-managed-services-default".
+If set, the instance IPs for this cluster will be created in the allocated range.`,
+						},
+						"network": {
+							Type:             schema.TypeString,
+							Optional:         true,
+							DiffSuppressFunc: tpgresource.ProjectNumberDiffSuppress,
+							Description: `The resource link for the VPC network in which cluster resources are created and from which they are accessible via Private IP. The network must belong to the same project as the cluster.
+It is specified in the form: "projects/{projectNumber}/global/networks/{network_id}".`,
+							ExactlyOneOf: []string{"network", "network_config.0.network", "psc_config.0.psc_enabled"},
+						},
+					},
+				},
+			},
+			"psc_config": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `Configuration for Private Service Connect (PSC) for the cluster.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"psc_enabled": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: `Create an instance that allows connections from Private Service Connect endpoints to the instance.`,
+						},
+					},
+				},
+			},
+			"restore_backup_source": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `The source when restoring from a backup. Conflicts with 'restore_continuous_backup_source', both can't be set together.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"backup_name": {
+							Type:        schema.TypeString,
+							Required:    true,
+							ForceNew:    true,
+							Description: `The name of the backup that this cluster is restored from.`,
+						},
+					},
+				},
+				ConflictsWith: []string{"restore_continuous_backup_source"},
+			},
+			"restore_continuous_backup_source": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `The source when restoring via point in time recovery (PITR). Conflicts with 'restore_backup_source', both can't be set together.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"cluster": {
+							Type:        schema.TypeString,
+							Required:    true,
+							ForceNew:    true,
+							Description: `The name of the source cluster that this cluster is restored from.`,
+						},
+						"point_in_time": {
+							Type:        schema.TypeString,
+							Required:    true,
+							ForceNew:    true,
+							Description: `The point in time that this cluster is restored to, in RFC 3339 format.`,
+						},
+					},
+				},
+				ConflictsWith: []string{"restore_backup_source"},
+			},
+			"secondary_config": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `Configuration of the secondary cluster for Cross Region Replication. This should be set if and only if the cluster is of type SECONDARY.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"primary_cluster_name": {
+							Type:     schema.TypeString,
+							Required: true,
+							Description: `Name of the primary cluster must be in the format
+'projects/{project}/locations/{location}/clusters/{cluster_id}'`,
+						},
+					},
+				},
 			},
 			"backup_source": {
 				Type:        schema.TypeList,
@@ -267,10 +506,66 @@ A duration in seconds with up to nine fractional digits, terminated by 's'. Exam
 					},
 				},
 			},
-			"database_version": {
-				Type:        schema.TypeString,
+			"continuous_backup_info": {
+				Type:        schema.TypeList,
 				Computed:    true,
-				Description: `The database engine major version. This is an output-only field and it's populated at the Cluster creation time. This field cannot be changed after cluster creation.`,
+				Description: `ContinuousBackupInfo describes the continuous backup properties of a cluster.`,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"earliest_restorable_time": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: `The earliest restorable time that can be restored to. Output only field.`,
+						},
+						"enabled_time": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: `When ContinuousBackup was most recently enabled. Set to null if ContinuousBackup is not enabled.`,
+						},
+						"encryption_info": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: `Output only. The encryption information for the WALs and backups required for ContinuousBackup.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"encryption_type": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: `Output only. Type of encryption.`,
+									},
+									"kms_key_versions": {
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: `Output only. Cloud KMS key versions that are being used to protect the database or the backup.`,
+										Elem: &schema.Schema{
+											Type: schema.TypeString,
+										},
+									},
+								},
+							},
+						},
+						"schedule": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: `Days of the week on which a continuous backup is taken. Output only field. Ignored if passed into the request.`,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
+				},
+			},
+			"effective_annotations": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of annotations (key/value pairs) present on the resource in GCP, including the annotations configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"encryption_info": {
 				Type:        schema.TypeList,
@@ -323,10 +618,37 @@ A duration in seconds with up to nine fractional digits, terminated by 's'. Exam
 				Computed:    true,
 				Description: `The name of the cluster resource.`,
 			},
+			"reconciling": {
+				Type:     schema.TypeBool,
+				Computed: true,
+				Description: `Output only. Reconciling (https://google.aip.dev/128#reconciliation).
+Set to true if the current state of Cluster does not match the user's intended state, and the service is actively updating the resource to reconcile them.
+This can happen due to user-triggered updates or system actions like failover or maintenance.`,
+			},
+			"state": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `Output only. The current serving state of the cluster.`,
+			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
+			},
 			"uid": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `The system-generated UID of the resource.`,
+			},
+			"deletion_policy": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "DEFAULT",
+				Description: `Policy to determine if the cluster should be deleted forcefully.
+Deleting a cluster forcefully, deletes the cluster and all its associated instances within the cluster.
+Deleting a Secondary cluster with a secondary instance REQUIRES setting deletion_policy = "FORCE" otherwise an error is returned. This is needed as there is no support to delete just the secondary instance, and the only way to delete secondary instance is to delete the associated secondary cluster forcefully which also deletes the secondary instance.`,
 			},
 			"project": {
 				Type:     schema.TypeString,
@@ -347,12 +669,6 @@ func resourceAlloydbClusterCreate(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	obj := make(map[string]interface{})
-	labelsProp, err := expandAlloydbClusterLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	encryptionConfigProp, err := expandAlloydbClusterEncryptionConfig(d.Get("encryption_config"), d, config)
 	if err != nil {
 		return err
@@ -365,11 +681,35 @@ func resourceAlloydbClusterCreate(d *schema.ResourceData, meta interface{}) erro
 	} else if v, ok := d.GetOkExists("network"); !tpgresource.IsEmptyValue(reflect.ValueOf(networkProp)) && (ok || !reflect.DeepEqual(v, networkProp)) {
 		obj["network"] = networkProp
 	}
+	networkConfigProp, err := expandAlloydbClusterNetworkConfig(d.Get("network_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("network_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(networkConfigProp)) && (ok || !reflect.DeepEqual(v, networkConfigProp)) {
+		obj["networkConfig"] = networkConfigProp
+	}
 	displayNameProp, err := expandAlloydbClusterDisplayName(d.Get("display_name"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("display_name"); !tpgresource.IsEmptyValue(reflect.ValueOf(displayNameProp)) && (ok || !reflect.DeepEqual(v, displayNameProp)) {
 		obj["displayName"] = displayNameProp
+	}
+	etagProp, err := expandAlloydbClusterEtag(d.Get("etag"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("etag"); !tpgresource.IsEmptyValue(reflect.ValueOf(etagProp)) && (ok || !reflect.DeepEqual(v, etagProp)) {
+		obj["etag"] = etagProp
+	}
+	databaseVersionProp, err := expandAlloydbClusterDatabaseVersion(d.Get("database_version"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("database_version"); !tpgresource.IsEmptyValue(reflect.ValueOf(databaseVersionProp)) && (ok || !reflect.DeepEqual(v, databaseVersionProp)) {
+		obj["databaseVersion"] = databaseVersionProp
+	}
+	pscConfigProp, err := expandAlloydbClusterPscConfig(d.Get("psc_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("psc_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(pscConfigProp)) && (ok || !reflect.DeepEqual(v, pscConfigProp)) {
+		obj["pscConfig"] = pscConfigProp
 	}
 	initialUserProp, err := expandAlloydbClusterInitialUser(d.Get("initial_user"), d, config)
 	if err != nil {
@@ -377,11 +717,59 @@ func resourceAlloydbClusterCreate(d *schema.ResourceData, meta interface{}) erro
 	} else if v, ok := d.GetOkExists("initial_user"); !tpgresource.IsEmptyValue(reflect.ValueOf(initialUserProp)) && (ok || !reflect.DeepEqual(v, initialUserProp)) {
 		obj["initialUser"] = initialUserProp
 	}
+	restoreBackupSourceProp, err := expandAlloydbClusterRestoreBackupSource(d.Get("restore_backup_source"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("restore_backup_source"); !tpgresource.IsEmptyValue(reflect.ValueOf(restoreBackupSourceProp)) && (ok || !reflect.DeepEqual(v, restoreBackupSourceProp)) {
+		obj["restoreBackupSource"] = restoreBackupSourceProp
+	}
+	restoreContinuousBackupSourceProp, err := expandAlloydbClusterRestoreContinuousBackupSource(d.Get("restore_continuous_backup_source"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("restore_continuous_backup_source"); !tpgresource.IsEmptyValue(reflect.ValueOf(restoreContinuousBackupSourceProp)) && (ok || !reflect.DeepEqual(v, restoreContinuousBackupSourceProp)) {
+		obj["restoreContinuousBackupSource"] = restoreContinuousBackupSourceProp
+	}
+	continuousBackupConfigProp, err := expandAlloydbClusterContinuousBackupConfig(d.Get("continuous_backup_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("continuous_backup_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(continuousBackupConfigProp)) && (ok || !reflect.DeepEqual(v, continuousBackupConfigProp)) {
+		obj["continuousBackupConfig"] = continuousBackupConfigProp
+	}
 	automatedBackupPolicyProp, err := expandAlloydbClusterAutomatedBackupPolicy(d.Get("automated_backup_policy"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("automated_backup_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(automatedBackupPolicyProp)) && (ok || !reflect.DeepEqual(v, automatedBackupPolicyProp)) {
 		obj["automatedBackupPolicy"] = automatedBackupPolicyProp
+	}
+	clusterTypeProp, err := expandAlloydbClusterClusterType(d.Get("cluster_type"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("cluster_type"); !tpgresource.IsEmptyValue(reflect.ValueOf(clusterTypeProp)) && (ok || !reflect.DeepEqual(v, clusterTypeProp)) {
+		obj["clusterType"] = clusterTypeProp
+	}
+	secondaryConfigProp, err := expandAlloydbClusterSecondaryConfig(d.Get("secondary_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("secondary_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(secondaryConfigProp)) && (ok || !reflect.DeepEqual(v, secondaryConfigProp)) {
+		obj["secondaryConfig"] = secondaryConfigProp
+	}
+	maintenanceUpdatePolicyProp, err := expandAlloydbClusterMaintenanceUpdatePolicy(d.Get("maintenance_update_policy"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("maintenance_update_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(maintenanceUpdatePolicyProp)) && (ok || !reflect.DeepEqual(v, maintenanceUpdatePolicyProp)) {
+		obj["maintenanceUpdatePolicy"] = maintenanceUpdatePolicyProp
+	}
+	labelsProp, err := expandAlloydbClusterEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
+	annotationsProp, err := expandAlloydbClusterEffectiveAnnotations(d.Get("effective_annotations"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_annotations"); !tpgresource.IsEmptyValue(reflect.ValueOf(annotationsProp)) && (ok || !reflect.DeepEqual(v, annotationsProp)) {
+		obj["annotations"] = annotationsProp
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{AlloydbBasePath}}projects/{{project}}/locations/{{location}}/clusters?clusterId={{cluster_id}}")
@@ -403,6 +791,71 @@ func resourceAlloydbClusterCreate(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+	// Read the restore variables from obj and remove them, since they do not map to anything in the cluster
+	var backupSource interface{}
+	var continuousBackupSource interface{}
+	if val, ok := obj["restoreBackupSource"]; ok {
+		backupSource = val
+		delete(obj, "restoreBackupSource")
+	}
+	if val, ok := obj["restoreContinuousBackupSource"]; ok {
+		continuousBackupSource = val
+		delete(obj, "restoreContinuousBackupSource")
+	}
+
+	restoreClusterRequestBody := make(map[string]interface{})
+	if backupSource != nil {
+		// If restoring from a backup, set the backupSource
+		restoreClusterRequestBody["backup_source"] = backupSource
+	} else if continuousBackupSource != nil {
+		// Otherwise if restoring via PITR, set the continuousBackupSource
+		restoreClusterRequestBody["continuous_backup_source"] = continuousBackupSource
+	}
+
+	if backupSource != nil || continuousBackupSource != nil {
+		// Use restore API if this is a restore instead of a create cluster call
+		url = strings.Replace(url, "clusters?clusterId", "clusters:restore?clusterId", 1)
+
+		// Copy obj which contains the cluster into a cluster map
+		cluster := make(map[string]interface{})
+		for k, v := range obj {
+			cluster[k] = v
+		}
+		restoreClusterRequestBody["cluster"] = cluster
+		obj = restoreClusterRequestBody
+	}
+
+	// Read the secondary cluster config to call the api for creating secondary cluster
+
+	var secondaryConfig interface{}
+	var clusterType interface{}
+
+	if val, ok := obj["secondaryConfig"]; ok {
+		secondaryConfig = val
+	}
+
+	if val, ok := obj["clusterType"]; ok {
+		clusterType = val
+	}
+
+	if clusterType == "SECONDARY" {
+		if secondaryConfig != nil {
+			// Use createsecondary API if this is a secondary cluster
+			url = strings.Replace(url, "clusters?clusterId", "clusters:createsecondary?cluster_id", 1)
+
+			// Validation error if secondary_config is not defined
+		} else {
+			return fmt.Errorf("Error creating cluster. Can not create secondary cluster without secondary_config field.")
+		}
+	}
+
+	// Validation error if secondary_config is defined but, cluster type is not secondary
+	if secondaryConfig != nil {
+		if clusterType != "SECONDARY" {
+			return fmt.Errorf("Error creating cluster. Add {cluster_type: \"SECONDARY\"} if attempting to create a secondary cluster, otherwise remove the secondary_config.")
+		}
+	}
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -411,6 +864,7 @@ func resourceAlloydbClusterCreate(d *schema.ResourceData, meta interface{}) erro
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Cluster: %s", err)
@@ -463,17 +917,25 @@ func resourceAlloydbClusterRead(d *schema.ResourceData, meta interface{}) error 
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("AlloydbCluster %q", d.Id()))
 	}
 
+	// Explicitly set virtual fields to default values if unset
+	if _, ok := d.GetOkExists("deletion_policy"); !ok {
+		if err := d.Set("deletion_policy", "DEFAULT"); err != nil {
+			return fmt.Errorf("Error setting deletion_policy: %s", err)
+		}
+	}
 	if err := d.Set("project", project); err != nil {
 		return fmt.Errorf("Error reading Cluster: %s", err)
 	}
@@ -493,13 +955,37 @@ func resourceAlloydbClusterRead(d *schema.ResourceData, meta interface{}) error 
 	if err := d.Set("encryption_info", flattenAlloydbClusterEncryptionInfo(res["encryptionInfo"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Cluster: %s", err)
 	}
+	if err := d.Set("continuous_backup_info", flattenAlloydbClusterContinuousBackupInfo(res["continuousBackupInfo"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Cluster: %s", err)
+	}
 	if err := d.Set("network", flattenAlloydbClusterNetwork(res["network"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Cluster: %s", err)
+	}
+	if err := d.Set("network_config", flattenAlloydbClusterNetworkConfig(res["networkConfig"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Cluster: %s", err)
 	}
 	if err := d.Set("display_name", flattenAlloydbClusterDisplayName(res["displayName"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Cluster: %s", err)
 	}
+	if err := d.Set("etag", flattenAlloydbClusterEtag(res["etag"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Cluster: %s", err)
+	}
+	if err := d.Set("reconciling", flattenAlloydbClusterReconciling(res["reconciling"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Cluster: %s", err)
+	}
+	if err := d.Set("state", flattenAlloydbClusterState(res["state"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Cluster: %s", err)
+	}
+	if err := d.Set("annotations", flattenAlloydbClusterAnnotations(res["annotations"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Cluster: %s", err)
+	}
 	if err := d.Set("database_version", flattenAlloydbClusterDatabaseVersion(res["databaseVersion"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Cluster: %s", err)
+	}
+	if err := d.Set("psc_config", flattenAlloydbClusterPscConfig(res["pscConfig"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Cluster: %s", err)
+	}
+	if err := d.Set("continuous_backup_config", flattenAlloydbClusterContinuousBackupConfig(res["continuousBackupConfig"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Cluster: %s", err)
 	}
 	if err := d.Set("automated_backup_policy", flattenAlloydbClusterAutomatedBackupPolicy(res["automatedBackupPolicy"], d, config)); err != nil {
@@ -509,6 +995,24 @@ func resourceAlloydbClusterRead(d *schema.ResourceData, meta interface{}) error 
 		return fmt.Errorf("Error reading Cluster: %s", err)
 	}
 	if err := d.Set("migration_source", flattenAlloydbClusterMigrationSource(res["migrationSource"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Cluster: %s", err)
+	}
+	if err := d.Set("cluster_type", flattenAlloydbClusterClusterType(res["clusterType"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Cluster: %s", err)
+	}
+	if err := d.Set("secondary_config", flattenAlloydbClusterSecondaryConfig(res["secondaryConfig"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Cluster: %s", err)
+	}
+	if err := d.Set("maintenance_update_policy", flattenAlloydbClusterMaintenanceUpdatePolicy(res["maintenanceUpdatePolicy"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Cluster: %s", err)
+	}
+	if err := d.Set("terraform_labels", flattenAlloydbClusterTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Cluster: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenAlloydbClusterEffectiveLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Cluster: %s", err)
+	}
+	if err := d.Set("effective_annotations", flattenAlloydbClusterEffectiveAnnotations(res["annotations"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Cluster: %s", err)
 	}
 
@@ -531,12 +1035,6 @@ func resourceAlloydbClusterUpdate(d *schema.ResourceData, meta interface{}) erro
 	billingProject = project
 
 	obj := make(map[string]interface{})
-	labelsProp, err := expandAlloydbClusterLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	encryptionConfigProp, err := expandAlloydbClusterEncryptionConfig(d.Get("encryption_config"), d, config)
 	if err != nil {
 		return err
@@ -549,11 +1047,35 @@ func resourceAlloydbClusterUpdate(d *schema.ResourceData, meta interface{}) erro
 	} else if v, ok := d.GetOkExists("network"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, networkProp)) {
 		obj["network"] = networkProp
 	}
+	networkConfigProp, err := expandAlloydbClusterNetworkConfig(d.Get("network_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("network_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, networkConfigProp)) {
+		obj["networkConfig"] = networkConfigProp
+	}
 	displayNameProp, err := expandAlloydbClusterDisplayName(d.Get("display_name"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("display_name"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, displayNameProp)) {
 		obj["displayName"] = displayNameProp
+	}
+	etagProp, err := expandAlloydbClusterEtag(d.Get("etag"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("etag"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, etagProp)) {
+		obj["etag"] = etagProp
+	}
+	databaseVersionProp, err := expandAlloydbClusterDatabaseVersion(d.Get("database_version"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("database_version"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, databaseVersionProp)) {
+		obj["databaseVersion"] = databaseVersionProp
+	}
+	pscConfigProp, err := expandAlloydbClusterPscConfig(d.Get("psc_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("psc_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, pscConfigProp)) {
+		obj["pscConfig"] = pscConfigProp
 	}
 	initialUserProp, err := expandAlloydbClusterInitialUser(d.Get("initial_user"), d, config)
 	if err != nil {
@@ -561,11 +1083,47 @@ func resourceAlloydbClusterUpdate(d *schema.ResourceData, meta interface{}) erro
 	} else if v, ok := d.GetOkExists("initial_user"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, initialUserProp)) {
 		obj["initialUser"] = initialUserProp
 	}
+	continuousBackupConfigProp, err := expandAlloydbClusterContinuousBackupConfig(d.Get("continuous_backup_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("continuous_backup_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, continuousBackupConfigProp)) {
+		obj["continuousBackupConfig"] = continuousBackupConfigProp
+	}
 	automatedBackupPolicyProp, err := expandAlloydbClusterAutomatedBackupPolicy(d.Get("automated_backup_policy"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("automated_backup_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, automatedBackupPolicyProp)) {
 		obj["automatedBackupPolicy"] = automatedBackupPolicyProp
+	}
+	clusterTypeProp, err := expandAlloydbClusterClusterType(d.Get("cluster_type"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("cluster_type"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, clusterTypeProp)) {
+		obj["clusterType"] = clusterTypeProp
+	}
+	secondaryConfigProp, err := expandAlloydbClusterSecondaryConfig(d.Get("secondary_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("secondary_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, secondaryConfigProp)) {
+		obj["secondaryConfig"] = secondaryConfigProp
+	}
+	maintenanceUpdatePolicyProp, err := expandAlloydbClusterMaintenanceUpdatePolicy(d.Get("maintenance_update_policy"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("maintenance_update_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, maintenanceUpdatePolicyProp)) {
+		obj["maintenanceUpdatePolicy"] = maintenanceUpdatePolicyProp
+	}
+	labelsProp, err := expandAlloydbClusterEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
+	annotationsProp, err := expandAlloydbClusterEffectiveAnnotations(d.Get("effective_annotations"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_annotations"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, annotationsProp)) {
+		obj["annotations"] = annotationsProp
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{AlloydbBasePath}}projects/{{project}}/locations/{{location}}/clusters/{{cluster_id}}")
@@ -574,11 +1132,8 @@ func resourceAlloydbClusterUpdate(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	log.Printf("[DEBUG] Updating Cluster %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
-
-	if d.HasChange("labels") {
-		updateMask = append(updateMask, "labels")
-	}
 
 	if d.HasChange("encryption_config") {
 		updateMask = append(updateMask, "encryptionConfig")
@@ -588,16 +1143,56 @@ func resourceAlloydbClusterUpdate(d *schema.ResourceData, meta interface{}) erro
 		updateMask = append(updateMask, "network")
 	}
 
+	if d.HasChange("network_config") {
+		updateMask = append(updateMask, "networkConfig")
+	}
+
 	if d.HasChange("display_name") {
 		updateMask = append(updateMask, "displayName")
+	}
+
+	if d.HasChange("etag") {
+		updateMask = append(updateMask, "etag")
+	}
+
+	if d.HasChange("database_version") {
+		updateMask = append(updateMask, "databaseVersion")
+	}
+
+	if d.HasChange("psc_config") {
+		updateMask = append(updateMask, "pscConfig")
 	}
 
 	if d.HasChange("initial_user") {
 		updateMask = append(updateMask, "initialUser")
 	}
 
+	if d.HasChange("continuous_backup_config") {
+		updateMask = append(updateMask, "continuousBackupConfig")
+	}
+
 	if d.HasChange("automated_backup_policy") {
 		updateMask = append(updateMask, "automatedBackupPolicy")
+	}
+
+	if d.HasChange("cluster_type") {
+		updateMask = append(updateMask, "clusterType")
+	}
+
+	if d.HasChange("secondary_config") {
+		updateMask = append(updateMask, "secondaryConfig")
+	}
+
+	if d.HasChange("maintenance_update_policy") {
+		updateMask = append(updateMask, "maintenanceUpdatePolicy")
+	}
+
+	if d.HasChange("effective_labels") {
+		updateMask = append(updateMask, "labels")
+	}
+
+	if d.HasChange("effective_annotations") {
+		updateMask = append(updateMask, "annotations")
 	}
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
 	// won't set it
@@ -605,34 +1200,105 @@ func resourceAlloydbClusterUpdate(d *schema.ResourceData, meta interface{}) erro
 	if err != nil {
 		return err
 	}
+	// Restrict setting secondary_config if cluster_type is PRIMARY
+	if d.Get("cluster_type") == "PRIMARY" && !tpgresource.IsEmptyValue(reflect.ValueOf(d.Get("secondary_config"))) {
+		return fmt.Errorf("Can not set secondary config for primary cluster.")
+	}
+
+	// Implementation for cluster promotion
+	if d.HasChange("cluster_type") && d.Get("cluster_type") == "PRIMARY" {
+
+		if !d.HasChange("secondary_config") || !tpgresource.IsEmptyValue(reflect.ValueOf(d.Get("secondary_config"))) {
+			return fmt.Errorf("Remove the secondary_config field to promote the cluster to primary cluster.")
+		}
+
+		// If necassary precondition checks for cluster promotion is fine ONLY then
+		// Promote cluster as a separate implementation within the update logic
+
+		promoteUrl := strings.Split(url, "?updateMask=")[0] + ":promote"
+		emptyObj := make(map[string]interface{})
+
+		// Remove promote changes from obj and updateMask
+		delete(obj, "clusterType")
+		delete(obj, "secondaryConfig")
+
+		index := 0
+		for _, label := range updateMask {
+			if label != "clusterType" && label != "secondaryConfig" {
+				updateMask[index] = label
+				index++
+			}
+		}
+		updateMask = updateMask[:index]
+
+		// Update url with the new updateMask
+		url := strings.Split(url, "?updateMask=")[0]
+		url, err = transport_tpg.AddQueryParams(url, map[string]string{"updateMask": strings.Join(updateMask, ",")})
+		if err != nil {
+			return err
+		}
+
+		// err == nil indicates that the billing_project value was found
+		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+			billingProject = bp
+		}
+
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "POST",
+			Project:   billingProject,
+			RawURL:    promoteUrl,
+			UserAgent: userAgent,
+			Body:      emptyObj,
+			Timeout:   d.Timeout(schema.TimeoutCreate),
+		})
+		if err != nil {
+			return fmt.Errorf("Error promoting Cluster: %s", err)
+		}
+
+		err = AlloydbOperationWaitTime(
+			config, res, project, "Promoting Cluster", userAgent,
+			d.Timeout(schema.TimeoutCreate))
+
+		if err != nil {
+			return fmt.Errorf("Error waiting to promote Cluster: %s", err)
+		}
+
+		log.Printf("[DEBUG] Finished promoting Cluster %q: %#v", d.Id(), res)
+
+	}
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating Cluster %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating Cluster %q: %#v", d.Id(), res)
-	}
+		if err != nil {
+			return fmt.Errorf("Error updating Cluster %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating Cluster %q: %#v", d.Id(), res)
+		}
 
-	err = AlloydbOperationWaitTime(
-		config, res, project, "Updating Cluster", userAgent,
-		d.Timeout(schema.TimeoutUpdate))
+		err = AlloydbOperationWaitTime(
+			config, res, project, "Updating Cluster", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return resourceAlloydbClusterRead(d, meta)
@@ -659,13 +1325,19 @@ func resourceAlloydbClusterDelete(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Cluster %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+	// Forcefully delete the secondary cluster and the dependent instances because deletion of secondary instance is not supported.
+	if deletionPolicy := d.Get("deletion_policy"); deletionPolicy == "FORCE" {
+		url = url + "?force=true"
+	}
+
+	log.Printf("[DEBUG] Deleting Cluster %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -674,6 +1346,7 @@ func resourceAlloydbClusterDelete(d *schema.ResourceData, meta interface{}) erro
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Cluster")
@@ -694,10 +1367,10 @@ func resourceAlloydbClusterDelete(d *schema.ResourceData, meta interface{}) erro
 func resourceAlloydbClusterImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/clusters/(?P<cluster_id>[^/]+)",
-		"(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<cluster_id>[^/]+)",
-		"(?P<location>[^/]+)/(?P<cluster_id>[^/]+)",
-		"(?P<cluster_id>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/clusters/(?P<cluster_id>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<cluster_id>[^/]+)$",
+		"^(?P<location>[^/]+)/(?P<cluster_id>[^/]+)$",
+		"^(?P<cluster_id>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -708,6 +1381,11 @@ func resourceAlloydbClusterImport(d *schema.ResourceData, meta interface{}) ([]*
 		return nil, fmt.Errorf("Error constructing id: %s", err)
 	}
 	d.SetId(id)
+
+	// Explicitly set virtual fields to default values on import
+	if err := d.Set("deletion_policy", "DEFAULT"); err != nil {
+		return nil, fmt.Errorf("Error setting deletion_policy: %s", err)
+	}
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -721,7 +1399,18 @@ func flattenAlloydbClusterUid(v interface{}, d *schema.ResourceData, config *tra
 }
 
 func flattenAlloydbClusterLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenAlloydbClusterEncryptionConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -764,7 +1453,84 @@ func flattenAlloydbClusterEncryptionInfoKmsKeyVersions(v interface{}, d *schema.
 	return v
 }
 
+func flattenAlloydbClusterContinuousBackupInfo(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["enabled_time"] =
+		flattenAlloydbClusterContinuousBackupInfoEnabledTime(original["enabledTime"], d, config)
+	transformed["schedule"] =
+		flattenAlloydbClusterContinuousBackupInfoSchedule(original["schedule"], d, config)
+	transformed["earliest_restorable_time"] =
+		flattenAlloydbClusterContinuousBackupInfoEarliestRestorableTime(original["earliestRestorableTime"], d, config)
+	transformed["encryption_info"] =
+		flattenAlloydbClusterContinuousBackupInfoEncryptionInfo(original["encryptionInfo"], d, config)
+	return []interface{}{transformed}
+}
+func flattenAlloydbClusterContinuousBackupInfoEnabledTime(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbClusterContinuousBackupInfoSchedule(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbClusterContinuousBackupInfoEarliestRestorableTime(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbClusterContinuousBackupInfoEncryptionInfo(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["encryption_type"] =
+		flattenAlloydbClusterContinuousBackupInfoEncryptionInfoEncryptionType(original["encryptionType"], d, config)
+	transformed["kms_key_versions"] =
+		flattenAlloydbClusterContinuousBackupInfoEncryptionInfoKmsKeyVersions(original["kmsKeyVersions"], d, config)
+	return []interface{}{transformed}
+}
+func flattenAlloydbClusterContinuousBackupInfoEncryptionInfoEncryptionType(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbClusterContinuousBackupInfoEncryptionInfoKmsKeyVersions(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func flattenAlloydbClusterNetwork(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbClusterNetworkConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["network"] =
+		flattenAlloydbClusterNetworkConfigNetwork(original["network"], d, config)
+	transformed["allocated_ip_range"] =
+		flattenAlloydbClusterNetworkConfigAllocatedIpRange(original["allocatedIpRange"], d, config)
+	return []interface{}{transformed}
+}
+func flattenAlloydbClusterNetworkConfigNetwork(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbClusterNetworkConfigAllocatedIpRange(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -772,7 +1538,106 @@ func flattenAlloydbClusterDisplayName(v interface{}, d *schema.ResourceData, con
 	return v
 }
 
+func flattenAlloydbClusterEtag(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbClusterReconciling(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbClusterState(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbClusterAnnotations(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("annotations"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
+}
+
 func flattenAlloydbClusterDatabaseVersion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbClusterPscConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["psc_enabled"] =
+		flattenAlloydbClusterPscConfigPscEnabled(original["pscEnabled"], d, config)
+	return []interface{}{transformed}
+}
+func flattenAlloydbClusterPscConfigPscEnabled(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbClusterContinuousBackupConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["enabled"] =
+		flattenAlloydbClusterContinuousBackupConfigEnabled(original["enabled"], d, config)
+	transformed["recovery_window_days"] =
+		flattenAlloydbClusterContinuousBackupConfigRecoveryWindowDays(original["recoveryWindowDays"], d, config)
+	transformed["encryption_config"] =
+		flattenAlloydbClusterContinuousBackupConfigEncryptionConfig(original["encryptionConfig"], d, config)
+	return []interface{}{transformed}
+}
+func flattenAlloydbClusterContinuousBackupConfigEnabled(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbClusterContinuousBackupConfigRecoveryWindowDays(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenAlloydbClusterContinuousBackupConfigEncryptionConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["kms_key_name"] =
+		flattenAlloydbClusterContinuousBackupConfigEncryptionConfigKmsKeyName(original["kmsKeyName"], d, config)
+	return []interface{}{transformed}
+}
+func flattenAlloydbClusterContinuousBackupConfigEncryptionConfigKmsKeyName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1038,15 +1903,171 @@ func flattenAlloydbClusterMigrationSourceSourceType(v interface{}, d *schema.Res
 	return v
 }
 
-func expandAlloydbClusterLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+func flattenAlloydbClusterClusterType(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbClusterSecondaryConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
-		return map[string]string{}, nil
+		return nil
 	}
-	m := make(map[string]string)
-	for k, val := range v.(map[string]interface{}) {
-		m[k] = val.(string)
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
 	}
-	return m, nil
+	transformed := make(map[string]interface{})
+	transformed["primary_cluster_name"] =
+		flattenAlloydbClusterSecondaryConfigPrimaryClusterName(original["primaryClusterName"], d, config)
+	return []interface{}{transformed}
+}
+func flattenAlloydbClusterSecondaryConfigPrimaryClusterName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbClusterMaintenanceUpdatePolicy(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["maintenance_windows"] =
+		flattenAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindows(original["maintenanceWindows"], d, config)
+	return []interface{}{transformed}
+}
+func flattenAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindows(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"day":        flattenAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsDay(original["day"], d, config),
+			"start_time": flattenAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsStartTime(original["startTime"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsDay(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsStartTime(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["hours"] =
+		flattenAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsStartTimeHours(original["hours"], d, config)
+	transformed["minutes"] =
+		flattenAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsStartTimeMinutes(original["minutes"], d, config)
+	transformed["seconds"] =
+		flattenAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsStartTimeSeconds(original["seconds"], d, config)
+	transformed["nanos"] =
+		flattenAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsStartTimeNanos(original["nanos"], d, config)
+	return []interface{}{transformed}
+}
+func flattenAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsStartTimeHours(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsStartTimeMinutes(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsStartTimeSeconds(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsStartTimeNanos(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenAlloydbClusterTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
+}
+
+func flattenAlloydbClusterEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbClusterEffectiveAnnotations(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
 }
 
 func expandAlloydbClusterEncryptionConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
@@ -1076,7 +2097,72 @@ func expandAlloydbClusterNetwork(v interface{}, d tpgresource.TerraformResourceD
 	return v, nil
 }
 
+func expandAlloydbClusterNetworkConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedNetwork, err := expandAlloydbClusterNetworkConfigNetwork(original["network"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedNetwork); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["network"] = transformedNetwork
+	}
+
+	transformedAllocatedIpRange, err := expandAlloydbClusterNetworkConfigAllocatedIpRange(original["allocated_ip_range"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAllocatedIpRange); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["allocatedIpRange"] = transformedAllocatedIpRange
+	}
+
+	return transformed, nil
+}
+
+func expandAlloydbClusterNetworkConfigNetwork(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbClusterNetworkConfigAllocatedIpRange(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandAlloydbClusterDisplayName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbClusterEtag(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbClusterDatabaseVersion(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbClusterPscConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedPscEnabled, err := expandAlloydbClusterPscConfigPscEnabled(original["psc_enabled"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPscEnabled); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["pscEnabled"] = transformedPscEnabled
+	}
+
+	return transformed, nil
+}
+
+func expandAlloydbClusterPscConfigPscEnabled(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -1111,6 +2197,127 @@ func expandAlloydbClusterInitialUserUser(v interface{}, d tpgresource.TerraformR
 }
 
 func expandAlloydbClusterInitialUserPassword(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbClusterRestoreBackupSource(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedBackupName, err := expandAlloydbClusterRestoreBackupSourceBackupName(original["backup_name"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedBackupName); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["backupName"] = transformedBackupName
+	}
+
+	return transformed, nil
+}
+
+func expandAlloydbClusterRestoreBackupSourceBackupName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbClusterRestoreContinuousBackupSource(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedCluster, err := expandAlloydbClusterRestoreContinuousBackupSourceCluster(original["cluster"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedCluster); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["cluster"] = transformedCluster
+	}
+
+	transformedPointInTime, err := expandAlloydbClusterRestoreContinuousBackupSourcePointInTime(original["point_in_time"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPointInTime); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["pointInTime"] = transformedPointInTime
+	}
+
+	return transformed, nil
+}
+
+func expandAlloydbClusterRestoreContinuousBackupSourceCluster(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbClusterRestoreContinuousBackupSourcePointInTime(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbClusterContinuousBackupConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedEnabled, err := expandAlloydbClusterContinuousBackupConfigEnabled(original["enabled"], d, config)
+	if err != nil {
+		return nil, err
+	} else {
+		transformed["enabled"] = transformedEnabled
+	}
+
+	transformedRecoveryWindowDays, err := expandAlloydbClusterContinuousBackupConfigRecoveryWindowDays(original["recovery_window_days"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedRecoveryWindowDays); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["recoveryWindowDays"] = transformedRecoveryWindowDays
+	}
+
+	transformedEncryptionConfig, err := expandAlloydbClusterContinuousBackupConfigEncryptionConfig(original["encryption_config"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedEncryptionConfig); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["encryptionConfig"] = transformedEncryptionConfig
+	}
+
+	return transformed, nil
+}
+
+func expandAlloydbClusterContinuousBackupConfigEnabled(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbClusterContinuousBackupConfigRecoveryWindowDays(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbClusterContinuousBackupConfigEncryptionConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedKmsKeyName, err := expandAlloydbClusterContinuousBackupConfigEncryptionConfigKmsKeyName(original["kms_key_name"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedKmsKeyName); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["kmsKeyName"] = transformedKmsKeyName
+	}
+
+	return transformed, nil
+}
+
+func expandAlloydbClusterContinuousBackupConfigEncryptionConfigKmsKeyName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -1361,4 +2568,161 @@ func expandAlloydbClusterAutomatedBackupPolicyQuantityBasedRetentionCount(v inte
 
 func expandAlloydbClusterAutomatedBackupPolicyEnabled(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
+}
+
+func expandAlloydbClusterClusterType(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbClusterSecondaryConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedPrimaryClusterName, err := expandAlloydbClusterSecondaryConfigPrimaryClusterName(original["primary_cluster_name"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPrimaryClusterName); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["primaryClusterName"] = transformedPrimaryClusterName
+	}
+
+	return transformed, nil
+}
+
+func expandAlloydbClusterSecondaryConfigPrimaryClusterName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbClusterMaintenanceUpdatePolicy(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedMaintenanceWindows, err := expandAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindows(original["maintenance_windows"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedMaintenanceWindows); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["maintenanceWindows"] = transformedMaintenanceWindows
+	}
+
+	return transformed, nil
+}
+
+func expandAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindows(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedDay, err := expandAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsDay(original["day"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedDay); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["day"] = transformedDay
+		}
+
+		transformedStartTime, err := expandAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsStartTime(original["start_time"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedStartTime); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["startTime"] = transformedStartTime
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsDay(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsStartTime(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedHours, err := expandAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsStartTimeHours(original["hours"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedHours); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["hours"] = transformedHours
+	}
+
+	transformedMinutes, err := expandAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsStartTimeMinutes(original["minutes"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedMinutes); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["minutes"] = transformedMinutes
+	}
+
+	transformedSeconds, err := expandAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsStartTimeSeconds(original["seconds"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSeconds); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["seconds"] = transformedSeconds
+	}
+
+	transformedNanos, err := expandAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsStartTimeNanos(original["nanos"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedNanos); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["nanos"] = transformedNanos
+	}
+
+	return transformed, nil
+}
+
+func expandAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsStartTimeHours(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsStartTimeMinutes(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsStartTimeSeconds(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsStartTimeNanos(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbClusterEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
+}
+
+func expandAlloydbClusterEffectiveAnnotations(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
 }

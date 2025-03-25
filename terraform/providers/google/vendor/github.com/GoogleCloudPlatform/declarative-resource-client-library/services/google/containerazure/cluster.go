@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -124,7 +124,7 @@ func (r *ClusterAzureServicesAuthentication) String() string {
 func (r *ClusterAzureServicesAuthentication) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -176,7 +176,7 @@ func (r *ClusterNetworking) String() string {
 func (r *ClusterNetworking) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -249,7 +249,7 @@ func (r *ClusterControlPlane) String() string {
 func (r *ClusterControlPlane) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -295,7 +295,7 @@ func (r *ClusterControlPlaneSshConfig) String() string {
 func (r *ClusterControlPlaneSshConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -341,7 +341,7 @@ func (r *ClusterControlPlaneRootVolume) String() string {
 func (r *ClusterControlPlaneRootVolume) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -387,7 +387,7 @@ func (r *ClusterControlPlaneMainVolume) String() string {
 func (r *ClusterControlPlaneMainVolume) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -433,7 +433,7 @@ func (r *ClusterControlPlaneDatabaseEncryption) String() string {
 func (r *ClusterControlPlaneDatabaseEncryption) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -482,7 +482,7 @@ func (r *ClusterControlPlaneProxyConfig) String() string {
 func (r *ClusterControlPlaneProxyConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -531,13 +531,14 @@ func (r *ClusterControlPlaneReplicaPlacements) String() string {
 func (r *ClusterControlPlaneReplicaPlacements) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
 type ClusterAuthorization struct {
-	empty      bool                             `json:"-"`
-	AdminUsers []ClusterAuthorizationAdminUsers `json:"adminUsers"`
+	empty       bool                              `json:"-"`
+	AdminUsers  []ClusterAuthorizationAdminUsers  `json:"adminUsers"`
+	AdminGroups []ClusterAuthorizationAdminGroups `json:"adminGroups"`
 }
 
 type jsonClusterAuthorization ClusterAuthorization
@@ -556,6 +557,8 @@ func (r *ClusterAuthorization) UnmarshalJSON(data []byte) error {
 	} else {
 
 		r.AdminUsers = res.AdminUsers
+
+		r.AdminGroups = res.AdminGroups
 
 	}
 	return nil
@@ -577,7 +580,7 @@ func (r *ClusterAuthorization) String() string {
 func (r *ClusterAuthorization) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -623,7 +626,53 @@ func (r *ClusterAuthorizationAdminUsers) String() string {
 func (r *ClusterAuthorizationAdminUsers) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type ClusterAuthorizationAdminGroups struct {
+	empty bool    `json:"-"`
+	Group *string `json:"group"`
+}
+
+type jsonClusterAuthorizationAdminGroups ClusterAuthorizationAdminGroups
+
+func (r *ClusterAuthorizationAdminGroups) UnmarshalJSON(data []byte) error {
+	var res jsonClusterAuthorizationAdminGroups
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyClusterAuthorizationAdminGroups
+	} else {
+
+		r.Group = res.Group
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this ClusterAuthorizationAdminGroups is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyClusterAuthorizationAdminGroups *ClusterAuthorizationAdminGroups = &ClusterAuthorizationAdminGroups{empty: true}
+
+func (r *ClusterAuthorizationAdminGroups) Empty() bool {
+	return r.empty
+}
+
+func (r *ClusterAuthorizationAdminGroups) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *ClusterAuthorizationAdminGroups) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -675,7 +724,7 @@ func (r *ClusterWorkloadIdentityConfig) String() string {
 func (r *ClusterWorkloadIdentityConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -724,7 +773,7 @@ func (r *ClusterFleet) String() string {
 func (r *ClusterFleet) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 

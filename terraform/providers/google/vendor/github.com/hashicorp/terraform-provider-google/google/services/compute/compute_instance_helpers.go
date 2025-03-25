@@ -5,6 +5,7 @@ package compute
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
@@ -130,7 +131,117 @@ func expandScheduling(v interface{}) (*compute.Scheduling, error) {
 		scheduling.InstanceTerminationAction = v.(string)
 		scheduling.ForceSendFields = append(scheduling.ForceSendFields, "InstanceTerminationAction")
 	}
+	if v, ok := original["max_run_duration"]; ok {
+		transformedMaxRunDuration, err := expandComputeMaxRunDuration(v)
+		if err != nil {
+			return nil, err
+		}
+		scheduling.MaxRunDuration = transformedMaxRunDuration
+		scheduling.ForceSendFields = append(scheduling.ForceSendFields, "MaxRunDuration")
+	}
+
+	if v, ok := original["on_instance_stop_action"]; ok {
+		transformedOnInstanceStopAction, err := expandComputeOnInstanceStopAction(v)
+		if err != nil {
+			return nil, err
+		}
+		scheduling.OnInstanceStopAction = transformedOnInstanceStopAction
+		scheduling.ForceSendFields = append(scheduling.ForceSendFields, "OnInstanceStopAction")
+	}
+	if v, ok := original["local_ssd_recovery_timeout"]; ok {
+		transformedLocalSsdRecoveryTimeout, err := expandComputeLocalSsdRecoveryTimeout(v)
+		if err != nil {
+			return nil, err
+		}
+		scheduling.LocalSsdRecoveryTimeout = transformedLocalSsdRecoveryTimeout
+		scheduling.ForceSendFields = append(scheduling.ForceSendFields, "LocalSsdRecoveryTimeout")
+	}
 	return scheduling, nil
+}
+
+func expandComputeMaxRunDuration(v interface{}) (*compute.Duration, error) {
+	l := v.([]interface{})
+	duration := compute.Duration{}
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+
+	transformedNanos, err := expandComputeMaxRunDurationNanos(original["nanos"])
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedNanos); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		duration.Nanos = int64(transformedNanos.(int))
+	}
+
+	transformedSeconds, err := expandComputeMaxRunDurationSeconds(original["seconds"])
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSeconds); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		duration.Seconds = int64(transformedSeconds.(int))
+	}
+
+	return &duration, nil
+}
+
+func expandComputeMaxRunDurationNanos(v interface{}) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeMaxRunDurationSeconds(v interface{}) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeOnInstanceStopAction(v interface{}) (*compute.SchedulingOnInstanceStopAction, error) {
+	l := v.([]interface{})
+	onInstanceStopAction := compute.SchedulingOnInstanceStopAction{}
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+
+	if d, ok := original["discard_local_ssd"]; ok {
+		onInstanceStopAction.DiscardLocalSsd = d.(bool)
+	} else {
+		return nil, nil
+	}
+
+	return &onInstanceStopAction, nil
+}
+
+func expandComputeLocalSsdRecoveryTimeout(v interface{}) (*compute.Duration, error) {
+	l := v.([]interface{})
+	duration := compute.Duration{}
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+
+	transformedNanos, err := expandComputeLocalSsdRecoveryTimeoutNanos(original["nanos"])
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedNanos); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		duration.Nanos = int64(transformedNanos.(int))
+	}
+
+	transformedSeconds, err := expandComputeLocalSsdRecoveryTimeoutSeconds(original["seconds"])
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSeconds); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		duration.Seconds = int64(transformedSeconds.(int))
+	}
+	return &duration, nil
+}
+
+func expandComputeLocalSsdRecoveryTimeoutNanos(v interface{}) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeLocalSsdRecoveryTimeoutSeconds(v interface{}) (interface{}, error) {
+	return v, nil
 }
 
 func flattenScheduling(resp *compute.Scheduling) []map[string]interface{} {
@@ -146,6 +257,18 @@ func flattenScheduling(resp *compute.Scheduling) []map[string]interface{} {
 		schedulingMap["automatic_restart"] = *resp.AutomaticRestart
 	}
 
+	if resp.MaxRunDuration != nil {
+		schedulingMap["max_run_duration"] = flattenComputeMaxRunDuration(resp.MaxRunDuration)
+	}
+
+	if resp.OnInstanceStopAction != nil {
+		schedulingMap["on_instance_stop_action"] = flattenOnInstanceStopAction(resp.OnInstanceStopAction)
+	}
+
+	if resp.LocalSsdRecoveryTimeout != nil {
+		schedulingMap["local_ssd_recovery_timeout"] = flattenComputeLocalSsdRecoveryTimeout(resp.LocalSsdRecoveryTimeout)
+	}
+
 	nodeAffinities := schema.NewSet(schema.HashResource(instanceSchedulingNodeAffinitiesElemSchema()), nil)
 	for _, na := range resp.NodeAffinities {
 		nodeAffinities.Add(map[string]interface{}{
@@ -157,6 +280,35 @@ func flattenScheduling(resp *compute.Scheduling) []map[string]interface{} {
 	schedulingMap["node_affinities"] = nodeAffinities
 
 	return []map[string]interface{}{schedulingMap}
+}
+
+func flattenComputeMaxRunDuration(v *compute.Duration) []interface{} {
+	if v == nil {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["nanos"] = v.Nanos
+	transformed["seconds"] = v.Seconds
+	return []interface{}{transformed}
+}
+
+func flattenOnInstanceStopAction(v *compute.SchedulingOnInstanceStopAction) []interface{} {
+	if v == nil {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["discard_local_ssd"] = v.DiscardLocalSsd
+	return []interface{}{transformed}
+}
+
+func flattenComputeLocalSsdRecoveryTimeout(v *compute.Duration) []interface{} {
+	if v == nil {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["nanos"] = v.Nanos
+	transformed["seconds"] = v.Seconds
+	return []interface{}{transformed}
 }
 
 func flattenAccessConfigs(accessConfigs []*compute.AccessConfig) ([]map[string]interface{}, string) {
@@ -185,6 +337,8 @@ func flattenIpv6AccessConfigs(ipv6AccessConfigs []*compute.AccessConfig) []map[s
 		}
 		flattened[i]["public_ptr_domain_name"] = ac.PublicPtrDomainName
 		flattened[i]["external_ipv6"] = ac.ExternalIpv6
+		flattened[i]["external_ipv6_prefix_length"] = strconv.FormatInt(ac.ExternalIpv6PrefixLength, 10)
+		flattened[i]["name"] = ac.Name
 	}
 	return flattened
 }
@@ -213,6 +367,7 @@ func flattenNetworkInterfaces(d *schema.ResourceData, config *transport_tpg.Conf
 			"nic_type":           iface.NicType,
 			"stack_type":         iface.StackType,
 			"ipv6_access_config": flattenIpv6AccessConfigs(iface.Ipv6AccessConfigs),
+			"ipv6_address":       iface.Ipv6Address,
 			"queue_count":        iface.QueueCount,
 		}
 		// Instance template interfaces never have names, so they're absent
@@ -258,6 +413,19 @@ func expandIpv6AccessConfigs(configs []interface{}) []*compute.AccessConfig {
 			if ptr, ok := data["public_ptr_domain_name"]; ok && ptr != "" {
 				iacs[i].PublicPtrDomainName = ptr.(string)
 			}
+			if eip, ok := data["external_ipv6"]; ok && eip != "" {
+				iacs[i].ExternalIpv6 = eip.(string)
+			}
+			if eipl, ok := data["external_ipv6_prefix_length"]; ok && eipl != "" {
+				if strVal, ok := eipl.(string); ok {
+					if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+						iacs[i].ExternalIpv6PrefixLength = intVal
+					}
+				}
+			}
+			if name, ok := data["name"]; ok && name != "" {
+				iacs[i].Name = name.(string)
+			}
 			iacs[i].Type = "DIRECT_IPV6" // Currently only type supported
 		}
 	}
@@ -297,6 +465,7 @@ func expandNetworkInterfaces(d tpgresource.TerraformResourceData, config *transp
 			StackType:         data["stack_type"].(string),
 			QueueCount:        int64(data["queue_count"].(int)),
 			Ipv6AccessConfigs: expandIpv6AccessConfigs(data["ipv6_access_config"].([]interface{})),
+			Ipv6Address:       data["ipv6_address"].(string),
 		}
 	}
 	return ifaces, nil
@@ -380,16 +549,18 @@ func expandConfidentialInstanceConfig(d tpgresource.TerraformResourceData) *comp
 	prefix := "confidential_instance_config.0"
 	return &compute.ConfidentialInstanceConfig{
 		EnableConfidentialCompute: d.Get(prefix + ".enable_confidential_compute").(bool),
+		ConfidentialInstanceType:  d.Get(prefix + ".confidential_instance_type").(string),
 	}
 }
 
-func flattenConfidentialInstanceConfig(ConfidentialInstanceConfig *compute.ConfidentialInstanceConfig) []map[string]bool {
+func flattenConfidentialInstanceConfig(ConfidentialInstanceConfig *compute.ConfidentialInstanceConfig) []map[string]interface{} {
 	if ConfidentialInstanceConfig == nil {
 		return nil
 	}
 
-	return []map[string]bool{{
+	return []map[string]interface{}{{
 		"enable_confidential_compute": ConfidentialInstanceConfig.EnableConfidentialCompute,
+		"confidential_instance_type":  ConfidentialInstanceConfig.ConfidentialInstanceType,
 	}}
 }
 
@@ -453,7 +624,7 @@ func schedulingHasChangeRequiringReboot(d *schema.ResourceData) bool {
 	oScheduling := o.([]interface{})[0].(map[string]interface{})
 	newScheduling := n.([]interface{})[0].(map[string]interface{})
 
-	return hasNodeAffinitiesChanged(oScheduling, newScheduling)
+	return hasNodeAffinitiesChanged(oScheduling, newScheduling) || hasMaxRunDurationChanged(oScheduling, newScheduling)
 }
 
 // Terraform doesn't correctly calculate changes on schema.Set, so we do it manually
@@ -484,15 +655,35 @@ func schedulingHasChangeWithoutReboot(d *schema.ResourceData) bool {
 		return true
 	}
 
-	if oScheduling["min_node_cpus"] != newScheduling["min_node_cpus"] {
-		return true
-	}
-
 	if oScheduling["provisioning_model"] != newScheduling["provisioning_model"] {
 		return true
 	}
 
 	if oScheduling["instance_termination_action"] != newScheduling["instance_termination_action"] {
+		return true
+	}
+
+	return false
+}
+
+func hasMaxRunDurationChanged(oScheduling, nScheduling map[string]interface{}) bool {
+	oMrd := oScheduling["max_run_duration"].([]interface{})
+	nMrd := nScheduling["max_run_duration"].([]interface{})
+
+	if (len(oMrd) == 0 || oMrd[0] == nil) && (len(nMrd) == 0 || nMrd[0] == nil) {
+		return false
+	}
+	if (len(oMrd) == 0 || oMrd[0] == nil) || (len(nMrd) == 0 || nMrd[0] == nil) {
+		return true
+	}
+
+	oldMrd := oMrd[0].(map[string]interface{})
+	newMrd := nMrd[0].(map[string]interface{})
+
+	if oldMrd["seconds"] != newMrd["seconds"] {
+		return true
+	}
+	if oldMrd["nanos"] != newMrd["nanos"] {
 		return true
 	}
 

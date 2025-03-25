@@ -700,7 +700,7 @@
                   "type": "string"
                 },
                 "rawResourceId": {
-                  "description": "Raw Resource Id used by Google Endpoint Verification. If the user is enrolled into Google Endpoint Verification, this id will be saved as the 'device_resource_id' field in the following platform dependent files. Mac: ~/.secureConnect/context_aware_config.json Windows: C:\\Users\\%USERPROFILE%\\.secureConnect\\context_aware_config.json Linux: ~/.secureConnect/context_aware_config.json",
+                  "description": "Raw Resource Id used by Google Endpoint Verification. If the user is enrolled into Google Endpoint Verification, this id will be saved as the 'device_resource_id' field in the following platform dependent files. * macOS: ~/.secureConnect/context_aware_config.json * Windows: %USERPROFILE%\\AppData\\Local\\Google\\Endpoint Verification\\accounts.json * Linux: ~/.secureConnect/context_aware_config.json",
                   "location": "query",
                   "type": "string"
                 },
@@ -1052,7 +1052,7 @@
           "parameterOrder": [],
           "parameters": {
             "groupKey.id": {
-              "description": "The ID of the entity. For Google-managed entities, the `id` should be the email address of an existing group or user. For external-identity-mapped entities, the `id` must be a string conforming to the Identity Source's requirements. Must be unique within a `namespace`.",
+              "description": "The ID of the entity. For Google-managed entities, the `id` should be the email address of an existing group or user. Email addresses need to adhere to [name guidelines for users and groups](https://support.google.com/a/answer/9193374). For external-identity-mapped entities, the `id` must be a string conforming to the Identity Source's requirements. Must be unique within a `namespace`.",
               "location": "query",
               "type": "string"
             },
@@ -1126,7 +1126,7 @@
               "type": "string"
             },
             "query": {
-              "description": "Required. The search query. * Must be specified in [Common Expression Language](https://opensource.google/projects/cel). * Must contain equality operators on the parent, e.g. `parent == 'customers/{customer_id}'`. The `customer_id` must begin with \"C\" (for example, 'C046psxkn'). [Find your customer ID.] (https://support.google.com/cloudidentity/answer/10070793) * Can contain optional inclusion operators on `labels` such as `'cloudidentity.googleapis.com/groups.discussion_forum' in labels`). * Can contain an optional equality operator on `domain_name`. e.g. `domain_name == 'abc.com'` * Can contain optional `startsWith/contains/equality` operators on `group_key`, e.g. `group_key.startsWith('dev')`, `group_key.contains('dev'), group_key == 'dev@abc.com'` * Can contain optional `startsWith/contains/equality` operators on `display_name`, such as `display_name.startsWith('dev')` , `display_name.contains('dev')`, `display_name == 'dev'`",
+              "description": "Required. The search query. * Must be specified in [Common Expression Language](https://opensource.google/projects/cel). * Must contain equality operators on the parent, e.g. `parent == 'customers/{customer_id}'`. The `customer_id` must begin with \"C\" (for example, 'C046psxkn'). [Find your customer ID.] (https://support.google.com/cloudidentity/answer/10070793) * Can contain optional inclusion operators on `labels` such as `'cloudidentity.googleapis.com/groups.discussion_forum' in labels`). * Can contain an optional equality operator on `domain_name`. e.g. `domain_name == 'examplepetstore.com'` * Can contain optional `startsWith/contains/equality` operators on `group_key`, e.g. `group_key.startsWith('dev')`, `group_key.contains('dev'), group_key == 'dev@examplepetstore.com'` * Can contain optional `startsWith/contains/equality` operators on `display_name`, such as `display_name.startsWith('dev')` , `display_name.contains('dev')`, `display_name == 'dev'`",
               "location": "query",
               "type": "string"
             },
@@ -1404,7 +1404,7 @@
               ],
               "parameters": {
                 "memberKey.id": {
-                  "description": "The ID of the entity. For Google-managed entities, the `id` should be the email address of an existing group or user. For external-identity-mapped entities, the `id` must be a string conforming to the Identity Source's requirements. Must be unique within a `namespace`.",
+                  "description": "The ID of the entity. For Google-managed entities, the `id` should be the email address of an existing group or user. Email addresses need to adhere to [name guidelines for users and groups](https://support.google.com/a/answer/9193374). For external-identity-mapped entities, the `id` must be a string conforming to the Identity Source's requirements. Must be unique within a `namespace`.",
                   "location": "query",
                   "type": "string"
                 },
@@ -1596,7 +1596,7 @@
     "inboundSamlSsoProfiles": {
       "methods": {
         "create": {
-          "description": "Creates an InboundSamlSsoProfile for a customer.",
+          "description": "Creates an InboundSamlSsoProfile for a customer. When the target customer has enabled [Multi-party approval for sensitive actions](https://support.google.com/a/answer/13790448), the `Operation` in the response will have `\"done\": false`, it will not have a response, and the metadata will have `\"state\": \"awaiting-multi-party-approval\"`.",
           "flatPath": "v1/inboundSamlSsoProfiles",
           "httpMethod": "POST",
           "id": "cloudidentity.inboundSamlSsoProfiles.create",
@@ -1696,7 +1696,7 @@
           ]
         },
         "patch": {
-          "description": "Updates an InboundSamlSsoProfile.",
+          "description": "Updates an InboundSamlSsoProfile. When the target customer has enabled [Multi-party approval for sensitive actions](https://support.google.com/a/answer/13790448), the `Operation` in the response will have `\"done\": false`, it will not have a response, and the metadata will have `\"state\": \"awaiting-multi-party-approval\"`.",
           "flatPath": "v1/inboundSamlSsoProfiles/{inboundSamlSsoProfilesId}",
           "httpMethod": "PATCH",
           "id": "cloudidentity.inboundSamlSsoProfiles.patch",
@@ -1734,7 +1734,7 @@
         "idpCredentials": {
           "methods": {
             "add": {
-              "description": "Adds an IdpCredential. Up to 2 credentials are allowed.",
+              "description": "Adds an IdpCredential. Up to 2 credentials are allowed. When the target customer has enabled [Multi-party approval for sensitive actions](https://support.google.com/a/answer/13790448), the `Operation` in the response will have `\"done\": false`, it will not have a response, and the metadata will have `\"state\": \"awaiting-multi-party-approval\"`.",
               "flatPath": "v1/inboundSamlSsoProfiles/{inboundSamlSsoProfilesId}/idpCredentials:add",
               "httpMethod": "POST",
               "id": "cloudidentity.inboundSamlSsoProfiles.idpCredentials.add",
@@ -1990,13 +1990,18 @@
       }
     }
   },
-  "revision": "20230606",
+  "revision": "20240611",
   "rootUrl": "https://cloudidentity.googleapis.com/",
   "schemas": {
     "AddIdpCredentialOperationMetadata": {
       "description": "LRO response metadata for InboundSamlSsoProfilesService.AddIdpCredential.",
       "id": "AddIdpCredentialOperationMetadata",
-      "properties": {},
+      "properties": {
+        "state": {
+          "description": "State of this Operation Will be \"awaiting-multi-party-approval\" when the operation is deferred due to the target customer having enabled [Multi-party approval for sensitive actions](https://support.google.com/a/answer/13790448).",
+          "type": "string"
+        }
+      },
       "type": "object"
     },
     "AddIdpCredentialRequest": {
@@ -2036,7 +2041,12 @@
     "CreateInboundSamlSsoProfileOperationMetadata": {
       "description": "LRO response metadata for InboundSamlSsoProfilesService.CreateInboundSamlSsoProfile.",
       "id": "CreateInboundSamlSsoProfileOperationMetadata",
-      "properties": {},
+      "properties": {
+        "state": {
+          "description": "State of this Operation Will be \"awaiting-multi-party-approval\" when the operation is deferred due to the target customer having enabled [Multi-party approval for sensitive actions](https://support.google.com/a/answer/13790448).",
+          "type": "string"
+        }
+      },
       "type": "object"
     },
     "CreateInboundSsoAssignmentOperationMetadata": {
@@ -2098,7 +2108,7 @@
       "id": "DynamicGroupMetadata",
       "properties": {
         "queries": {
-          "description": "Memberships will be the union of all queries. Only one entry with USER resource is currently supported. Customers can create up to 100 dynamic groups.",
+          "description": "Memberships will be the union of all queries. Only one entry with USER resource is currently supported. Customers can create up to 500 dynamic groups.",
           "items": {
             "$ref": "DynamicGroupQuery"
           },
@@ -2168,7 +2178,7 @@
       "id": "EntityKey",
       "properties": {
         "id": {
-          "description": "The ID of the entity. For Google-managed entities, the `id` should be the email address of an existing group or user. For external-identity-mapped entities, the `id` must be a string conforming to the Identity Source's requirements. Must be unique within a `namespace`.",
+          "description": "The ID of the entity. For Google-managed entities, the `id` should be the email address of an existing group or user. Email addresses need to adhere to [name guidelines for users and groups](https://support.google.com/a/answer/9193374). For external-identity-mapped entities, the `id` must be a string conforming to the Identity Source's requirements. Must be unique within a `namespace`.",
           "type": "string"
         },
         "namespace": {
@@ -2324,6 +2334,128 @@
       },
       "type": "object"
     },
+    "GoogleAppsCloudidentityDevicesV1BrowserAttributes": {
+      "description": "Contains information about browser profiles reported by the [Endpoint Verification extension](https://chromewebstore.google.com/detail/endpoint-verification/callobklhcbilhphinckomhgkigmfocg?pli=1).",
+      "id": "GoogleAppsCloudidentityDevicesV1BrowserAttributes",
+      "properties": {
+        "chromeBrowserInfo": {
+          "$ref": "GoogleAppsCloudidentityDevicesV1BrowserInfo",
+          "description": "Represents the current state of the [Chrome browser attributes](https://cloud.google.com/access-context-manager/docs/browser-attributes) sent by the [Endpoint Verification extension](https://chromewebstore.google.com/detail/endpoint-verification/callobklhcbilhphinckomhgkigmfocg?pli=1)."
+        },
+        "chromeProfileId": {
+          "description": "Chrome profile ID that is exposed by the Chrome API. It is unique for each device.",
+          "type": "string"
+        },
+        "lastProfileSyncTime": {
+          "description": "Timestamp in milliseconds since Epoch when the profile/gcm id was last synced.",
+          "format": "google-datetime",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleAppsCloudidentityDevicesV1BrowserInfo": {
+      "description": "Browser-specific fields reported by the [Endpoint Verification extension](https://chromewebstore.google.com/detail/endpoint-verification/callobklhcbilhphinckomhgkigmfocg?pli=1). LINT.IfChange",
+      "id": "GoogleAppsCloudidentityDevicesV1BrowserInfo",
+      "properties": {
+        "browserManagementState": {
+          "description": "Output only. Browser's management state.",
+          "enum": [
+            "UNSPECIFIED",
+            "UNMANAGED",
+            "MANAGED_BY_OTHER_DOMAIN",
+            "PROFILE_MANAGED",
+            "BROWSER_MANAGED"
+          ],
+          "enumDescriptions": [
+            "Management state is not specified.",
+            "Browser/Profile is not managed by any customer.",
+            "Browser/Profile is managed, but by some other customer.",
+            "Profile is managed by customer.",
+            "Browser is managed by customer."
+          ],
+          "readOnly": true,
+          "type": "string"
+        },
+        "browserVersion": {
+          "description": "Version of the request initiating browser.",
+          "type": "string"
+        },
+        "isBuiltInDnsClientEnabled": {
+          "description": "Current state of [built-in DNS client](https://chromeenterprise.google/policies/#BuiltInDnsClientEnabled).",
+          "type": "boolean"
+        },
+        "isBulkDataEntryAnalysisEnabled": {
+          "description": "Current state of [bulk data analysis](https://chromeenterprise.google/policies/#OnBulkDataEntryEnterpriseConnector). Set to true if provider list from Chrome is non-empty.",
+          "type": "boolean"
+        },
+        "isChromeCleanupEnabled": {
+          "description": "Current state of [Chrome Cleanup](https://chromeenterprise.google/policies/#ChromeCleanupEnabled).",
+          "type": "boolean"
+        },
+        "isChromeRemoteDesktopAppBlocked": {
+          "description": "Current state of [Chrome Remote Desktop app](https://chromeenterprise.google/policies/#URLBlocklist).",
+          "type": "boolean"
+        },
+        "isFileDownloadAnalysisEnabled": {
+          "description": "Current state of [file download analysis](https://chromeenterprise.google/policies/#OnFileDownloadedEnterpriseConnector). Set to true if provider list from Chrome is non-empty.",
+          "type": "boolean"
+        },
+        "isFileUploadAnalysisEnabled": {
+          "description": "Current state of [file upload analysis](https://chromeenterprise.google/policies/#OnFileAttachedEnterpriseConnector). Set to true if provider list from Chrome is non-empty.",
+          "type": "boolean"
+        },
+        "isRealtimeUrlCheckEnabled": {
+          "description": "Current state of [real-time URL check](https://chromeenterprise.google/policies/#EnterpriseRealTimeUrlCheckMode). Set to true if provider list from Chrome is non-empty.",
+          "type": "boolean"
+        },
+        "isSecurityEventAnalysisEnabled": {
+          "description": "Current state of [security event analysis](https://chromeenterprise.google/policies/#OnSecurityEventEnterpriseConnector). Set to true if provider list from Chrome is non-empty.",
+          "type": "boolean"
+        },
+        "isSiteIsolationEnabled": {
+          "description": "Current state of [site isolation](https://chromeenterprise.google/policies/?policy=IsolateOrigins).",
+          "type": "boolean"
+        },
+        "isThirdPartyBlockingEnabled": {
+          "description": "Current state of [third-party blocking](https://chromeenterprise.google/policies/#ThirdPartyBlockingEnabled).",
+          "type": "boolean"
+        },
+        "passwordProtectionWarningTrigger": {
+          "description": "Current state of [password protection trigger](https://chromeenterprise.google/policies/#PasswordProtectionWarningTrigger).",
+          "enum": [
+            "PASSWORD_PROTECTION_TRIGGER_UNSPECIFIED",
+            "PROTECTION_OFF",
+            "PASSWORD_REUSE",
+            "PHISHING_REUSE"
+          ],
+          "enumDescriptions": [
+            "Password protection is not specified.",
+            "Password reuse is never detected.",
+            "Warning is shown when the user reuses their protected password on a non-allowed site.",
+            "Warning is shown when the user reuses their protected password on a phishing site."
+          ],
+          "type": "string"
+        },
+        "safeBrowsingProtectionLevel": {
+          "description": "Current state of [Safe Browsing protection level](https://chromeenterprise.google/policies/#SafeBrowsingProtectionLevel).",
+          "enum": [
+            "SAFE_BROWSING_LEVEL_UNSPECIFIED",
+            "DISABLED",
+            "STANDARD",
+            "ENHANCED"
+          ],
+          "enumDescriptions": [
+            "Browser protection level is not specified.",
+            "No protection against dangerous websites, downloads, and extensions.",
+            "Standard protection against websites, downloads, and extensions that are known to be dangerous.",
+            "Faster, proactive protection against dangerous websites, downloads, and extensions."
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "GoogleAppsCloudidentityDevicesV1CancelWipeDeviceMetadata": {
       "description": "Metadata for CancelWipeDevice LRO.",
       "id": "GoogleAppsCloudidentityDevicesV1CancelWipeDeviceMetadata",
@@ -2376,6 +2508,83 @@
         "deviceUser": {
           "$ref": "GoogleAppsCloudidentityDevicesV1DeviceUser",
           "description": "Resultant DeviceUser object for the action."
+        }
+      },
+      "type": "object"
+    },
+    "GoogleAppsCloudidentityDevicesV1CertificateAttributes": {
+      "description": "Stores information about a certificate.",
+      "id": "GoogleAppsCloudidentityDevicesV1CertificateAttributes",
+      "properties": {
+        "certificateTemplate": {
+          "$ref": "GoogleAppsCloudidentityDevicesV1CertificateTemplate",
+          "description": "The X.509 extension for CertificateTemplate."
+        },
+        "fingerprint": {
+          "description": "The encoded certificate fingerprint.",
+          "type": "string"
+        },
+        "issuer": {
+          "description": "The name of the issuer of this certificate.",
+          "type": "string"
+        },
+        "serialNumber": {
+          "description": "Serial number of the certificate, Example: \"123456789\".",
+          "type": "string"
+        },
+        "subject": {
+          "description": "The subject name of this certificate.",
+          "type": "string"
+        },
+        "thumbprint": {
+          "description": "The certificate thumbprint.",
+          "type": "string"
+        },
+        "validationState": {
+          "description": "Output only. Validation state of this certificate.",
+          "enum": [
+            "CERTIFICATE_VALIDATION_STATE_UNSPECIFIED",
+            "VALIDATION_SUCCESSFUL",
+            "VALIDATION_FAILED"
+          ],
+          "enumDescriptions": [
+            "Default value.",
+            "Certificate validation was successful.",
+            "Certificate validation failed."
+          ],
+          "readOnly": true,
+          "type": "string"
+        },
+        "validityExpirationTime": {
+          "description": "Certificate not valid at or after this timestamp.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "validityStartTime": {
+          "description": "Certificate not valid before this timestamp.",
+          "format": "google-datetime",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleAppsCloudidentityDevicesV1CertificateTemplate": {
+      "description": "CertificateTemplate (v3 Extension in X.509).",
+      "id": "GoogleAppsCloudidentityDevicesV1CertificateTemplate",
+      "properties": {
+        "id": {
+          "description": "The template id of the template. Example: \"1.3.6.1.4.1.311.21.8.15608621.11768144.5720724.16068415.6889630.81.2472537.7784047\".",
+          "type": "string"
+        },
+        "majorVersion": {
+          "description": "The Major version of the template. Example: 100.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "minorVersion": {
+          "description": "The minor version of the template. Example: 12.",
+          "format": "int32",
+          "type": "integer"
         }
       },
       "type": "object"
@@ -2641,6 +2850,15 @@
           "readOnly": true,
           "type": "string"
         },
+        "endpointVerificationSpecificAttributes": {
+          "$ref": "GoogleAppsCloudidentityDevicesV1EndpointVerificationSpecificAttributes",
+          "description": "Output only. Attributes specific to [Endpoint Verification](https://cloud.google.com/endpoint-verification/docs/overview) devices.",
+          "readOnly": true
+        },
+        "hostname": {
+          "description": "Host name of the device.",
+          "type": "string"
+        },
         "imei": {
           "description": "Output only. IMEI number of device if GSM device; empty otherwise.",
           "readOnly": true,
@@ -2747,6 +2965,11 @@
           "description": "Serial Number of device. Example: HT82V1A01076.",
           "type": "string"
         },
+        "unifiedDeviceId": {
+          "description": "Output only. Unified device id of the device.",
+          "readOnly": true,
+          "type": "string"
+        },
         "wifiMacAddresses": {
           "description": "WiFi MAC addresses of device.",
           "items": {
@@ -2847,6 +3070,35 @@
         "userEmail": {
           "description": "Email address of the user registered on the device.",
           "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleAppsCloudidentityDevicesV1EndpointVerificationSpecificAttributes": {
+      "description": "Resource representing the [Endpoint Verification-specific attributes](https://cloud.google.com/endpoint-verification/docs/device-information) of a device.",
+      "id": "GoogleAppsCloudidentityDevicesV1EndpointVerificationSpecificAttributes",
+      "properties": {
+        "additionalSignals": {
+          "additionalProperties": {
+            "description": "Properties of the object.",
+            "type": "any"
+          },
+          "description": "Additional signals reported by Endpoint Verification. It includes the following attributes: 1. Non-configurable attributes: hotfixes, av_installed, av_enabled, windows_domain_name, is_os_native_firewall_enabled, and is_secure_boot_enabled. 2. [Configurable attributes](https://cloud.google.com/endpoint-verification/docs/collect-config-attributes): file, folder, and binary attributes; registry entries; and properties in a plist.",
+          "type": "object"
+        },
+        "browserAttributes": {
+          "description": "Details of browser profiles reported by Endpoint Verification.",
+          "items": {
+            "$ref": "GoogleAppsCloudidentityDevicesV1BrowserAttributes"
+          },
+          "type": "array"
+        },
+        "certificateAttributes": {
+          "description": "Details of certificates.",
+          "items": {
+            "$ref": "GoogleAppsCloudidentityDevicesV1CertificateAttributes"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -3674,7 +3926,7 @@
             "description": "Properties of the object. Contains field @type with type URL.",
             "type": "any"
           },
-          "description": "The normal response of the operation in case of success. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.",
+          "description": "The normal, successful response of the operation. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.",
           "type": "object"
         }
       },
@@ -3940,7 +4192,12 @@
     "UpdateInboundSamlSsoProfileOperationMetadata": {
       "description": "LRO response metadata for InboundSamlSsoProfilesService.UpdateInboundSamlSsoProfile.",
       "id": "UpdateInboundSamlSsoProfileOperationMetadata",
-      "properties": {},
+      "properties": {
+        "state": {
+          "description": "State of this Operation Will be \"awaiting-multi-party-approval\" when the operation is deferred due to the target customer having enabled [Multi-party approval for sensitive actions](https://support.google.com/a/answer/13790448).",
+          "type": "string"
+        }
+      },
       "type": "object"
     },
     "UpdateInboundSsoAssignmentOperationMetadata": {

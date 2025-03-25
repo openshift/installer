@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC. All Rights Reserved.
+# Copyright 2024 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ components:
           type: string
           x-dcl-go-name: Action
           description: The Action to perform when the client connection triggers the
-            rule. Valid actions are "allow", "deny" and "goto_next".
+            rule. Valid actions are "allow", "deny", "goto_next" and "apply_security_profile_group".
         description:
           type: string
           x-dcl-go-name: Description
@@ -141,6 +141,7 @@ components:
           x-dcl-go-name: Location
           description: The location of this resource.
           x-kubernetes-immutable: true
+          x-dcl-parameter: true
         match:
           type: object
           x-dcl-go-name: Match
@@ -339,6 +340,7 @@ components:
           - resource: Cloudresourcemanager/Project
             field: name
             parent: true
+          x-dcl-parameter: true
         ruleName:
           type: string
           x-dcl-go-name: RuleName
@@ -351,6 +353,13 @@ components:
           readOnly: true
           description: Calculation of the complexity of a single firewall policy rule.
           x-kubernetes-immutable: true
+        securityProfileGroup:
+          type: string
+          x-dcl-go-name: SecurityProfileGroup
+          description: 'A fully-qualified URL of a SecurityProfileGroup resource.
+            Example: https://networksecurity.googleapis.com/v1/organizations/{organizationId}/locations/global/securityProfileGroups/my-security-profile-group.
+            It must be specified if action = ''apply_security_profile_group'' and
+            cannot be specified for other actions.'
         targetSecureTags:
           type: array
           x-dcl-go-name: TargetSecureTags
@@ -403,3 +412,9 @@ components:
             x-dcl-references:
             - resource: Iam/ServiceAccount
               field: name
+        tlsInspect:
+          type: boolean
+          x-dcl-go-name: TlsInspect
+          description: Boolean flag indicating if the traffic should be TLS decrypted.
+            It can be set only if action = 'apply_security_profile_group' and cannot
+            be set for other actions.

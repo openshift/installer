@@ -7,12 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"reflect"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/id"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
@@ -46,6 +47,21 @@ var sqlDatabaseAuthorizedNetWorkSchemaElem *schema.Resource = &schema.Resource{
 	},
 }
 
+var sqlDatabaseFlagSchemaElem *schema.Resource = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"value": {
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: `Value of the flag.`,
+		},
+		"name": {
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: `Name of the flag.`,
+		},
+	},
+}
+
 var (
 	backupConfigurationKeys = []string{
 		"settings.0.backup_configuration.0.binary_log_enabled",
@@ -64,6 +80,8 @@ var (
 		"settings.0.ip_configuration.0.private_network",
 		"settings.0.ip_configuration.0.allocated_ip_range",
 		"settings.0.ip_configuration.0.enable_private_path_for_google_cloud_services",
+		"settings.0.ip_configuration.0.psc_config",
+		"settings.0.ip_configuration.0.ssl_mode",
 	}
 
 	maintenanceWindowKeys = []string{
@@ -112,12 +130,13 @@ func ResourceSqlDatabaseInstance() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(40 * time.Minute),
-			Update: schema.DefaultTimeout(30 * time.Minute),
-			Delete: schema.DefaultTimeout(30 * time.Minute),
+			Create: schema.DefaultTimeout(90 * time.Minute),
+			Update: schema.DefaultTimeout(90 * time.Minute),
+			Delete: schema.DefaultTimeout(90 * time.Minute),
 		},
 
 		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
 			customdiff.ForceNewIfChange("settings.0.disk_size", compute.IsDiskShrinkage),
 			customdiff.ForceNewIfChange("master_instance_name", isMasterInstanceNameSet),
 			customdiff.IfValueChange("instance_type", isReplicaPromoteRequested, checkPromoteConfigurationsAndUpdateDiff),
@@ -160,6 +179,7 @@ func ResourceSqlDatabaseInstance() *schema.Resource {
 						"edition": {
 							Type:         schema.TypeString,
 							Optional:     true,
+							Default:      "ENTERPRISE",
 							ValidateFunc: validation.StringInSlice([]string{"ENTERPRISE", "ENTERPRISE_PLUS"}, false),
 							Description:  `The edition of the instance, can be ENTERPRISE or ENTERPRISE_PLUS.`,
 						},
@@ -326,7 +346,7 @@ is set to true. Defaults to ZONAL.`,
 										Computed:     true,
 										Optional:     true,
 										AtLeastOneOf: backupConfigurationKeys,
-										Description:  `The number of days of transaction logs we retain for point in time restore, from 1-7.`,
+										Description:  `The number of days of transaction logs we retain for point in time restore, from 1-7. (For PostgreSQL Enterprise Plus instances, from 1 to 35.)`,
 									},
 									"backup_retention_settings": {
 										Type:         schema.TypeList,
@@ -360,22 +380,10 @@ is set to true. Defaults to ZONAL.`,
 							Description: `The name of server instance collation.`,
 						},
 						"database_flags": {
-							Type:     schema.TypeList,
+							Type:     schema.TypeSet,
 							Optional: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"value": {
-										Type:        schema.TypeString,
-										Required:    true,
-										Description: `Value of the flag.`,
-									},
-									"name": {
-										Type:        schema.TypeString,
-										Required:    true,
-										Description: `Name of the flag.`,
-									},
-								},
-							},
+							Set:      schema.HashResource(sqlDatabaseFlagSchemaElem),
+							Elem:     sqlDatabaseFlagSchemaElem,
 						},
 						"disk_autoresize": {
 							Type:        schema.TypeBool,
@@ -388,6 +396,11 @@ is set to true. Defaults to ZONAL.`,
 							Optional:    true,
 							Default:     0,
 							Description: `The maximum size, in GB, to which storage capacity can be automatically increased. The default value is 0, which specifies that there is no limit.`,
+						},
+						"enable_google_ml_integration": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: `Enables Vertex AI Integration.`,
 						},
 						"disk_size": {
 							Type:     schema.TypeInt,
@@ -429,6 +442,8 @@ is set to true. Defaults to ZONAL.`,
 										Type:         schema.TypeBool,
 										Optional:     true,
 										AtLeastOneOf: ipConfigurationKeys,
+										Description:  `Whether SSL connections over IP are enforced or not. To change this field, also set the corresponding value in ssl_mode if it has been set too.`,
+										Deprecated:   "`require_ssl` will be fully deprecated in a future major release. For now, please use `ssl_mode` with a compatible `require_ssl` value instead.",
 									},
 									"private_network": {
 										Type:             schema.TypeString,
@@ -449,6 +464,37 @@ is set to true. Defaults to ZONAL.`,
 										Optional:     true,
 										AtLeastOneOf: ipConfigurationKeys,
 										Description:  `Whether Google Cloud services such as BigQuery are allowed to access data in this Cloud SQL instance over a private IP connection. SQLSERVER database type is not supported.`,
+									},
+									"psc_config": {
+										Type:        schema.TypeSet,
+										Optional:    true,
+										Description: `PSC settings for a Cloud SQL instance.`,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"psc_enabled": {
+													Type:        schema.TypeBool,
+													Optional:    true,
+													Description: `Whether PSC connectivity is enabled for this instance.`,
+												},
+												"allowed_consumer_projects": {
+													Type:     schema.TypeSet,
+													Optional: true,
+													Elem: &schema.Schema{
+														Type: schema.TypeString,
+													},
+													Set:         schema.HashString,
+													Description: `List of consumer projects that are allow-listed for PSC connections to this instance. This instance can be connected to with PSC from any network in these projects. Each consumer project in this list may be represented by a project number (numeric) or by a project id (alphanumeric).`,
+												},
+											},
+										},
+									},
+									"ssl_mode": {
+										Type:         schema.TypeString,
+										Optional:     true,
+										Computed:     true,
+										ValidateFunc: validation.StringInSlice([]string{"ALLOW_UNENCRYPTED_AND_ENCRYPTED", "ENCRYPTED_ONLY", "TRUSTED_CLIENT_CERTIFICATE_REQUIRED"}, false),
+										Description:  `Specify how SSL connection should be enforced in DB connections. This field provides more SSL enforcment options compared to require_ssl. To change this field, also set the correspoding value in require_ssl until next major release.`,
+										AtLeastOneOf: ipConfigurationKeys,
 									},
 								},
 							},
@@ -504,7 +550,7 @@ is set to true. Defaults to ZONAL.`,
 										Type:         schema.TypeString,
 										Optional:     true,
 										AtLeastOneOf: maintenanceWindowKeys,
-										Description:  `Receive updates earlier (canary) or later (stable)`,
+										Description:  `Receive updates after one week (canary) or after two weeks (stable) or after five weeks (week5) of notification.`,
 									},
 								},
 							},
@@ -739,7 +785,8 @@ is set to true. Defaults to ZONAL.`,
 				Optional: true,
 				MaxItems: 1,
 				// Returned from API on all replicas
-				Computed: true,
+				Computed:  true,
+				Sensitive: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"ca_certificate": {
@@ -782,7 +829,7 @@ is set to true. Defaults to ZONAL.`,
 							Optional:     true,
 							ForceNew:     true,
 							AtLeastOneOf: replicaConfigurationKeys,
-							Description:  `Specifies if the replica is the failover target. If the field is set to true the replica will be designated as a failover replica. If the master instance fails, the replica instance will be promoted as the new master instance.`,
+							Description:  `Specifies if the replica is the failover target. If the field is set to true the replica will be designated as a failover replica. If the master instance fails, the replica instance will be promoted as the new master instance. Not supported for Postgres`,
 						},
 						"master_heartbeat_period": {
 							Type:         schema.TypeInt,
@@ -825,8 +872,9 @@ is set to true. Defaults to ZONAL.`,
 				Description: `The configuration for replication.`,
 			},
 			"server_ca_cert": {
-				Type:     schema.TypeList,
-				Computed: true,
+				Type:      schema.TypeList,
+				Computed:  true,
+				Sensitive: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"cert": {
@@ -866,6 +914,16 @@ is set to true. Defaults to ZONAL.`,
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `The URI of the created resource.`,
+			},
+			"psc_service_attachment_link": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `The link to service attachment of PSC instance.`,
+			},
+			"dns_name": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `The dns name of the instance.`,
 			},
 			"restore_backup_context": {
 				Type:     schema.TypeList,
@@ -910,6 +968,11 @@ is set to true. Defaults to ZONAL.`,
 							Optional:         true,
 							DiffSuppressFunc: tpgresource.TimestampDiffSuppress(time.RFC3339Nano),
 							Description:      `The timestamp of the point in time that should be restored.`,
+						},
+						"preferred_zone": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: `(Point-in-time recovery for PostgreSQL only) Clone to an instance in the specified zone. If no zone is specified, clone to the same zone as the source instance.`,
 						},
 						"database_names": {
 							Type:     schema.TypeList,
@@ -991,7 +1054,7 @@ func resourceSqlDatabaseInstanceCreate(d *schema.ResourceData, meta interface{})
 	if v, ok := d.GetOk("name"); ok {
 		name = v.(string)
 	} else {
-		name = resource.UniqueId()
+		name = id.UniqueId()
 	}
 
 	if err := d.Set("name", name); err != nil {
@@ -1211,7 +1274,7 @@ func expandSqlDatabaseInstanceSettings(configured []interface{}, databaseVersion
 		Tier:                      _settings["tier"].(string),
 		Edition:                   _settings["edition"].(string),
 		AdvancedMachineFeatures:   expandSqlServerAdvancedMachineFeatures(_settings["advanced_machine_features"].([]interface{})),
-		ForceSendFields:           []string{"StorageAutoResize"},
+		ForceSendFields:           []string{"StorageAutoResize", "EnableGoogleMlIntegration"},
 		ActivationPolicy:          _settings["activation_policy"].(string),
 		ActiveDirectoryConfig:     expandActiveDirectoryConfig(_settings["active_directory_config"].([]interface{})),
 		DenyMaintenancePeriods:    expandDenyMaintenancePeriod(_settings["deny_maintenance_period"].([]interface{})),
@@ -1224,9 +1287,10 @@ func expandSqlDatabaseInstanceSettings(configured []interface{}, databaseVersion
 		DataDiskType:              _settings["disk_type"].(string),
 		PricingPlan:               _settings["pricing_plan"].(string),
 		DeletionProtectionEnabled: _settings["deletion_protection_enabled"].(bool),
+		EnableGoogleMlIntegration: _settings["enable_google_ml_integration"].(bool),
 		UserLabels:                tpgresource.ConvertStringMap(_settings["user_labels"].(map[string]interface{})),
 		BackupConfiguration:       expandBackupConfiguration(_settings["backup_configuration"].([]interface{})),
-		DatabaseFlags:             expandDatabaseFlags(_settings["database_flags"].([]interface{})),
+		DatabaseFlags:             expandDatabaseFlags(_settings["database_flags"].(*schema.Set).List()),
 		IpConfiguration:           expandIpConfiguration(_settings["ip_configuration"].([]interface{}), databaseVersion),
 		LocationPreference:        expandLocationPreference(_settings["location_preference"].([]interface{})),
 		MaintenanceWindow:         expandMaintenanceWindow(_settings["maintenance_window"].([]interface{})),
@@ -1282,6 +1346,7 @@ func expandCloneContext(configured []interface{}) (*sqladmin.CloneContext, strin
 
 	return &sqladmin.CloneContext{
 		PointInTime:      _cloneConfiguration["point_in_time"].(string),
+		PreferredZone:    _cloneConfiguration["preferred_zone"].(string),
 		DatabaseNames:    databaseNames,
 		AllocatedIpRange: _cloneConfiguration["allocated_ip_range"].(string),
 	}, _cloneConfiguration["source_instance_name"].(string)
@@ -1335,7 +1400,21 @@ func expandIpConfiguration(configured []interface{}, databaseVersion string) *sq
 		AuthorizedNetworks:                      expandAuthorizedNetworks(_ipConfiguration["authorized_networks"].(*schema.Set).List()),
 		EnablePrivatePathForGoogleCloudServices: _ipConfiguration["enable_private_path_for_google_cloud_services"].(bool),
 		ForceSendFields:                         forceSendFields,
+		PscConfig:                               expandPscConfig(_ipConfiguration["psc_config"].(*schema.Set).List()),
+		SslMode:                                 _ipConfiguration["ssl_mode"].(string),
 	}
+}
+
+func expandPscConfig(configured []interface{}) *sqladmin.PscConfig {
+	for _, _pscConfig := range configured {
+		_entry := _pscConfig.(map[string]interface{})
+		return &sqladmin.PscConfig{
+			PscEnabled:              _entry["psc_enabled"].(bool),
+			AllowedConsumerProjects: tpgresource.ConvertStringArr(_entry["allowed_consumer_projects"].(*schema.Set).List()),
+		}
+	}
+
+	return nil
 }
 
 func expandAuthorizedNetworks(configured []interface{}) []*sqladmin.AclEntry {
@@ -1546,7 +1625,7 @@ func resourceSqlDatabaseInstanceRead(d *schema.ResourceData, meta interface{}) e
 	if err := d.Set("instance_type", instance.InstanceType); err != nil {
 		return fmt.Errorf("Error setting instance_type: %s", err)
 	}
-	if err := d.Set("settings", flattenSettings(instance.Settings)); err != nil {
+	if err := d.Set("settings", flattenSettings(instance.Settings, d)); err != nil {
 		log.Printf("[WARN] Failed to set SQL Database Instance Settings")
 	}
 
@@ -1601,6 +1680,12 @@ func resourceSqlDatabaseInstanceRead(d *schema.ResourceData, meta interface{}) e
 	}
 	if err := d.Set("self_link", instance.SelfLink); err != nil {
 		return fmt.Errorf("Error setting self_link: %s", err)
+	}
+	if err := d.Set("psc_service_attachment_link", instance.PscServiceAttachmentLink); err != nil {
+		return fmt.Errorf("Error setting psc_service_attachment_link: %s", err)
+	}
+	if err := d.Set("dns_name", instance.DnsName); err != nil {
+		return fmt.Errorf("Error setting dns_name: %s", err)
 	}
 	d.SetId(instance.Name)
 
@@ -1803,6 +1888,34 @@ func resourceSqlDatabaseInstanceUpdate(d *schema.ResourceData, meta interface{})
 		}
 	}
 
+	// Check if the edition is being updated, because patching edition is an atomic operation and can not be
+	// performed with other fields, we first patch edition, tier and data cache config before updating the rest of the fields.
+	if d.HasChange("settings.0.edition") {
+		edition := d.Get("settings.0.edition").(string)
+		tier := d.Get("settings.0.tier").(string)
+		dataCacheConfig := expandDataCacheConfig(d.Get("settings.0.data_cache_config").([]interface{}))
+		instance = &sqladmin.DatabaseInstance{Settings: &sqladmin.Settings{Edition: edition, Tier: tier, DataCacheConfig: dataCacheConfig}}
+		err = transport_tpg.Retry(transport_tpg.RetryOptions{
+			RetryFunc: func() (rerr error) {
+				op, rerr = config.NewSqlAdminClient(userAgent).Instances.Patch(project, d.Get("name").(string), instance).Do()
+				return rerr
+			},
+			Timeout:              d.Timeout(schema.TimeoutUpdate),
+			ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsSqlOperationInProgressError},
+		})
+		if err != nil {
+			return fmt.Errorf("Error, failed to patch instance settings for %s: %s", instance.Name, err)
+		}
+		err = SqlAdminOperationWaitTime(config, op, project, "Patch Instance", userAgent, d.Timeout(schema.TimeoutUpdate))
+		if err != nil {
+			return err
+		}
+		err = resourceSqlDatabaseInstanceRead(d, meta)
+		if err != nil {
+			return err
+		}
+	}
+
 	s := d.Get("settings")
 	instance = &sqladmin.DatabaseInstance{
 		Settings: expandSqlDatabaseInstanceSettings(desiredSetting.([]interface{}), databaseVersion),
@@ -1824,6 +1937,11 @@ func resourceSqlDatabaseInstanceUpdate(d *schema.ResourceData, meta interface{})
 
 	if _, ok := d.GetOk("instance_type"); ok {
 		instance.InstanceType = d.Get("instance_type").(string)
+	}
+
+	// Database Version is required for all calls with Google ML integration enabled or it will be rejected by the API.
+	if d.Get("settings.0.enable_google_ml_integration").(bool) {
+		instance.DatabaseVersion = databaseVersion
 	}
 
 	err = transport_tpg.Retry(transport_tpg.RetryOptions{
@@ -1936,11 +2054,11 @@ func resourceSqlDatabaseInstanceImport(d *schema.ResourceData, meta interface{})
 	return []*schema.ResourceData{d}, nil
 }
 
-func flattenSettings(settings *sqladmin.Settings) []map[string]interface{} {
+func flattenSettings(settings *sqladmin.Settings, d *schema.ResourceData) []map[string]interface{} {
 	data := map[string]interface{}{
 		"version":                     settings.SettingsVersion,
 		"tier":                        settings.Tier,
-		"edition":                     settings.Edition,
+		"edition":                     flattenEdition(settings.Edition),
 		"activation_policy":           settings.ActivationPolicy,
 		"availability_type":           settings.AvailabilityType,
 		"collation":                   settings.Collation,
@@ -1975,7 +2093,7 @@ func flattenSettings(settings *sqladmin.Settings) []map[string]interface{} {
 	}
 
 	if settings.IpConfiguration != nil {
-		data["ip_configuration"] = flattenIpConfiguration(settings.IpConfiguration)
+		data["ip_configuration"] = flattenIpConfiguration(settings.IpConfiguration, d)
 	}
 
 	if settings.LocationPreference != nil {
@@ -1992,6 +2110,8 @@ func flattenSettings(settings *sqladmin.Settings) []map[string]interface{} {
 
 	data["disk_autoresize"] = settings.StorageAutoResize
 	data["disk_autoresize_limit"] = settings.StorageAutoResizeLimit
+
+	data["enable_google_ml_integration"] = settings.EnableGoogleMlIntegration
 
 	if settings.UserLabels != nil {
 		data["user_labels"] = settings.UserLabels
@@ -2115,7 +2235,7 @@ func flattenDatabaseFlags(databaseFlags []*sqladmin.DatabaseFlags) []map[string]
 	return flags
 }
 
-func flattenIpConfiguration(ipConfiguration *sqladmin.IpConfiguration) interface{} {
+func flattenIpConfiguration(ipConfiguration *sqladmin.IpConfiguration, d *schema.ResourceData) interface{} {
 	data := map[string]interface{}{
 		"ipv4_enabled":       ipConfiguration.Ipv4Enabled,
 		"private_network":    ipConfiguration.PrivateNetwork,
@@ -2126,6 +2246,24 @@ func flattenIpConfiguration(ipConfiguration *sqladmin.IpConfiguration) interface
 
 	if ipConfiguration.AuthorizedNetworks != nil {
 		data["authorized_networks"] = flattenAuthorizedNetworks(ipConfiguration.AuthorizedNetworks)
+	}
+
+	if ipConfiguration.PscConfig != nil {
+		data["psc_config"] = flattenPscConfigs(ipConfiguration.PscConfig)
+	}
+
+	// We store the ssl_mode value only if the customer already uses `ssl_mode`.
+	if _, ok := d.GetOk("settings.0.ip_configuration.0.ssl_mode"); ok {
+		data["ssl_mode"] = ipConfiguration.SslMode
+	}
+
+	return []map[string]interface{}{data}
+}
+
+func flattenPscConfigs(pscConfig *sqladmin.PscConfig) interface{} {
+	data := map[string]interface{}{
+		"psc_enabled":               pscConfig.PscEnabled,
+		"allowed_consumer_projects": schema.NewSet(schema.HashString, tpgresource.ConvertStringArrToInterface(pscConfig.AllowedConsumerProjects)),
 	}
 
 	return []map[string]interface{}{data}
@@ -2253,6 +2391,14 @@ func flattenPasswordValidationPolicy(passwordValidationPolicy *sqladmin.Password
 		"enable_password_policy":      passwordValidationPolicy.EnablePasswordPolicy,
 	}
 	return []map[string]interface{}{data}
+}
+
+func flattenEdition(v interface{}) string {
+	if v == nil || tpgresource.IsEmptyValue(reflect.ValueOf(v)) {
+		return "ENTERPRISE"
+	}
+
+	return v.(string)
 }
 
 func instanceMutexKey(project, instance_name string) string {

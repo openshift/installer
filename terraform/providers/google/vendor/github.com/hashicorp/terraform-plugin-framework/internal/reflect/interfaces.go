@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package reflect
 
 import (
@@ -304,13 +307,32 @@ func NewAttributeValue(ctx context.Context, typ attr.Type, val tftypes.Value, ta
 }
 
 // FromAttributeValue creates an attr.Value from an attr.Value. It just returns
-// the attr.Value it is passed, but reserves the right in the future to do some
-// validation on that attr.Value to make sure it matches the type produced by
-// `typ`.
+// the attr.Value it is passed or an error if there is an unexpected mismatch
+// between the attr.Type and attr.Value.
 //
 // It is meant to be called through FromValue, not directly.
 func FromAttributeValue(ctx context.Context, typ attr.Type, val attr.Value, path path.Path) (attr.Value, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	// Since the reflection logic is a generic Go type implementation with
+	// user input, it is possible to get into awkward situations where
+	// the logic is expecting a certain type while a value may not be
+	// compatible. This check will ensure the framework raises its own
+	// error is there is a mismatch, rather than a terraform-plugin-go
+	// error or worse a panic.
+	if !typ.TerraformType(ctx).Equal(val.Type(ctx).TerraformType(ctx)) {
+		diags.AddAttributeError(
+			path,
+			"Value Conversion Error",
+			"An unexpected error was encountered while verifying an attribute value matched its expected type to prevent unexpected behavior or panics. "+
+				"This is always an error in the provider. Please report the following to the provider developer:\n\n"+
+				fmt.Sprintf("Expected framework type from provider logic: %s / underlying type: %s\n", typ, typ.TerraformType(ctx))+
+				fmt.Sprintf("Received framework type from provider logic: %s / underlying type: %s\n", val.Type(ctx), val.Type(ctx).TerraformType(ctx))+
+				fmt.Sprintf("Path: %s", path),
+		)
+
+		return nil, diags
+	}
 
 	if typeWithValidate, ok := typ.(xattr.TypeWithValidate); ok {
 		tfVal, err := val.ToTerraformValue(ctx)

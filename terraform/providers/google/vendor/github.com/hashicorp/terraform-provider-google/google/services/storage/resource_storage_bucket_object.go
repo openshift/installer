@@ -1,5 +1,6 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: MPL-2.0
 package storage
 
 import (
@@ -90,9 +91,9 @@ func ResourceStorageBucketObject() *schema.Resource {
 			"content": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ForceNew:     true,
 				ExactlyOneOf: []string{"source"},
 				Sensitive:    true,
+				Computed:     true,
 				Description:  `Data as string to be uploaded. Must be defined if source is not. Note: The content field is marked as sensitive. To view the raw contents of the object, please define an output.`,
 			},
 
@@ -121,7 +122,6 @@ func ResourceStorageBucketObject() *schema.Resource {
 				Type: schema.TypeString,
 				// This field is not Computed because it needs to trigger a diff.
 				Optional: true,
-				ForceNew: true,
 				// Makes the diff message nicer:
 				// detect_md5hash:       "1XcnP/iFw/hNrbhXi7QTmQ==" => "different hash" (forces new resource)
 				// Instead of the more confusing:
@@ -208,10 +208,33 @@ func ResourceStorageBucketObject() *schema.Resource {
 				},
 			},
 
+			"retention": {
+				Type:          schema.TypeList,
+				MaxItems:      1,
+				Optional:      true,
+				ConflictsWith: []string{"event_based_hold"},
+				Description:   `Object level retention configuration.`,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"retain_until_time": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: `Time in RFC 3339 (e.g. 2030-01-01T02:03:04Z) until which object retention protects this object.`,
+						},
+						"mode": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: `The object retention mode. Supported values include: "Unlocked", "Locked".`,
+						},
+					},
+				},
+			},
+
 			"event_based_hold": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Description: `Whether an object is under event-based hold. Event-based hold is a way to retain objects until an event occurs, which is signified by the hold's release (i.e. this value is set to false). After being released (set to false), such objects will be subject to bucket-level retention (if any).`,
+				Type:          schema.TypeBool,
+				Optional:      true,
+				ConflictsWith: []string{"retention"},
+				Description:   `Whether an object is under event-based hold. Event-based hold is a way to retain objects until an event occurs, which is signified by the hold's release (i.e. this value is set to false). After being released (set to false), such objects will be subject to bucket-level retention (if any).`,
 			},
 
 			"temporary_hold": {
@@ -313,6 +336,10 @@ func resourceStorageBucketObjectCreate(d *schema.ResourceData, meta interface{})
 		object.KmsKeyName = v.(string)
 	}
 
+	if v, ok := d.GetOk("retention"); ok {
+		object.Retention = expandObjectRetention(v)
+	}
+
 	if v, ok := d.GetOk("event_based_hold"); ok {
 		object.EventBasedHold = v.(bool)
 	}
@@ -350,32 +377,53 @@ func resourceStorageBucketObjectUpdate(d *schema.ResourceData, meta interface{})
 	bucket := d.Get("bucket").(string)
 	name := d.Get("name").(string)
 
-	objectsService := storage.NewObjectsService(config.NewStorageClientWithTimeoutOverride(userAgent, d.Timeout(schema.TimeoutUpdate)))
-	getCall := objectsService.Get(bucket, name)
+	if d.HasChange("content") || d.HasChange("detect_md5hash") {
+		// The KMS key name are not able to be set on create :
+		// or you get error: Error uploading object test-maarc: googleapi: Error 400: Malformed Cloud KMS crypto key: projects/myproject/locations/myregion/keyRings/mykeyring/cryptoKeys/mykeyname/cryptoKeyVersions/1, invalid
+		d.Set("kms_key_name", nil)
+		return resourceStorageBucketObjectCreate(d, meta)
+	} else {
 
-	res, err := getCall.Do()
-	if err != nil {
-		return fmt.Errorf("Error retrieving object during update %s: %s", name, err)
+		objectsService := storage.NewObjectsService(config.NewStorageClientWithTimeoutOverride(userAgent, d.Timeout(schema.TimeoutUpdate)))
+		getCall := objectsService.Get(bucket, name)
+
+		res, err := getCall.Do()
+		if err != nil {
+			return fmt.Errorf("Error retrieving object during update %s: %s", name, err)
+		}
+
+		hasRetentionChanges := d.HasChange("retention")
+		if hasRetentionChanges {
+			if v, ok := d.GetOk("retention"); ok {
+				res.Retention = expandObjectRetention(v)
+			} else {
+				res.Retention = nil
+				res.NullFields = append(res.NullFields, "Retention")
+			}
+		}
+
+		if d.HasChange("event_based_hold") {
+			v := d.Get("event_based_hold")
+			res.EventBasedHold = v.(bool)
+		}
+
+		if d.HasChange("temporary_hold") {
+			v := d.Get("temporary_hold")
+			res.TemporaryHold = v.(bool)
+		}
+
+		updateCall := objectsService.Update(bucket, name, res)
+		if hasRetentionChanges {
+			updateCall.OverrideUnlockedRetention(true)
+		}
+		_, err = updateCall.Do()
+
+		if err != nil {
+			return fmt.Errorf("Error updating object %s: %s", name, err)
+		}
+
+		return nil
 	}
-
-	if d.HasChange("event_based_hold") {
-		v := d.Get("event_based_hold")
-		res.EventBasedHold = v.(bool)
-	}
-
-	if d.HasChange("temporary_hold") {
-		v := d.Get("temporary_hold")
-		res.TemporaryHold = v.(bool)
-	}
-
-	updateCall := objectsService.Update(bucket, name, res)
-	_, err = updateCall.Do()
-
-	if err != nil {
-		return fmt.Errorf("Error updating object %s: %s", name, err)
-	}
-
-	return nil
 }
 
 func resourceStorageBucketObjectRead(d *schema.ResourceData, meta interface{}) error {
@@ -443,6 +491,9 @@ func resourceStorageBucketObjectRead(d *schema.ResourceData, meta interface{}) e
 	}
 	if err := d.Set("media_link", res.MediaLink); err != nil {
 		return fmt.Errorf("Error setting media_link: %s", err)
+	}
+	if err := d.Set("retention", flattenObjectRetention(res.Retention)); err != nil {
+		return fmt.Errorf("Error setting retention: %s", err)
 	}
 	if err := d.Set("event_based_hold", res.EventBasedHold); err != nil {
 		return fmt.Errorf("Error setting event_based_hold: %s", err)
@@ -513,4 +564,35 @@ func expandCustomerEncryption(input []interface{}) map[string]string {
 		expanded["encryption_algorithm"] = original["encryption_algorithm"].(string)
 	}
 	return expanded
+}
+
+func expandObjectRetention(configured interface{}) *storage.ObjectRetention {
+	retentions := configured.([]interface{})
+	if len(retentions) == 0 {
+		return nil
+	}
+	retention := retentions[0].(map[string]interface{})
+
+	objectRetention := &storage.ObjectRetention{
+		RetainUntilTime: retention["retain_until_time"].(string),
+		Mode:            retention["mode"].(string),
+	}
+
+	return objectRetention
+}
+
+func flattenObjectRetention(objectRetention *storage.ObjectRetention) []map[string]interface{} {
+	retentions := make([]map[string]interface{}, 0, 1)
+
+	if objectRetention == nil {
+		return retentions
+	}
+
+	retention := map[string]interface{}{
+		"mode":              objectRetention.Mode,
+		"retain_until_time": objectRetention.RetainUntilTime,
+	}
+
+	retentions = append(retentions, retention)
+	return retentions
 }
