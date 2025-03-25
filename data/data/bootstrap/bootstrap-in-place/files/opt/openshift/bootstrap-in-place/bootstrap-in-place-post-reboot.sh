@@ -13,13 +13,28 @@ function wait_for_api {
 }
 
 # This is required since the progress service (https://github.com/openshift/installer/blob/dd9047c4c119e942331f702a4b7da85c60042da5/data/data/bootstrap/files/usr/local/bin/report-progress.sh#L22-L33),
-# usually dedicated to creating the bootstrap ConfigMap, will fail to create this configmap in case of bootstrap-in-place single node deployment, 
+# usually dedicated to creating the bootstrap ConfigMap, will fail to create this configmap in case of bootstrap-in-place single node deployment,
 # due to the lack of a control plane when bootkube is complete
 function signal_bootstrap_complete {
   until oc get cm bootstrap -n kube-system &> /dev/null
   do
     echo "Creating bootstrap configmap ..."
     oc create cm bootstrap -n kube-system --from-literal status=complete || true
+    sleep 5
+  done
+}
+
+function create_bmc_verify_ca_cm {
+  local ca_storage_dir="/tmp/cert/ca/bmc"
+  local name="bmc-verify-ca"
+  local ns="openshift-machine-api"
+
+  [[ -d "$ca_storage_dir" ]] || return
+
+  until [ "$(oc get cm "${name}" -n "${ns}")" -eq 0 ];
+  do
+    echo "Creating bmc verify ca configmap ..."
+    oc create cm "${name}" -n "${ns}" --from-file="${ca_storage_dir}" || true
     sleep 5
   done
 }
@@ -130,6 +145,7 @@ function clean {
 
 wait_for_api
 signal_bootstrap_complete
+create_bmc_verify_ca_cm
 release_cvo_lease
 release_cpc_lease
 restore_cvo_overrides

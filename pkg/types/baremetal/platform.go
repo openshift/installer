@@ -250,4 +250,6 @@ type Platform struct {
 	// +kubebuilder:validation:UniqueItems=true
 	//  +optional
 	AdditionalNTPServers []string `json:"additionalNTPServers,omitempty"`
+
+	BMCVerifyCA string `json:"bmcVerifyCA,omitempty"`
 }

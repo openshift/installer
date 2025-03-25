@@ -23,6 +23,11 @@ build_ironic_env() {
     printf 'CUSTOMIZATION_IMAGE="%s"\n' "$(image_for machine-image-customization-controller)"
     printf 'MACHINE_OS_IMAGES_IMAGE="%s"\n' "$(image_for machine-os-images)"
 
+    if [[ "$BMC_VERIFY_CA" ]]; then
+        mkdir -p /tmp/cert/ca/bmc
+        echo "$BMC_VERIFY_CA" > /tmp/cert/ca/bmc/verify_ca.crt
+    fi
+
     # set password for ironic basic auth
     # The ironic container contains httpd (and thus httpd-tools), so rely on it
     # to supply the htpasswd command

@@ -89,6 +89,8 @@ type TemplateData struct {
 
 	// AdditionalNTPServers holds a list of additional NTP servers to be used for provisioning
 	AdditionalNTPServers []string
+
+	BMCVerifyCA string
 }
 
 func externalURLs(apiVIPs []string, protocol string) (externalURLv4 string, externalURLv6 string) {
@@ -126,6 +128,7 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 	templateData.ExternalStaticGateway = config.BootstrapExternalStaticGateway
 	templateData.ExternalStaticDNS = config.BootstrapExternalStaticDNS
 	templateData.ExternalMACAddress = config.ExternalMACAddress
+	templateData.BMCVerifyCA = config.BMCVerifyCA
 
 	if len(config.AdditionalNTPServers) > 0 {
 		templateData.AdditionalNTPServers = config.AdditionalNTPServers
