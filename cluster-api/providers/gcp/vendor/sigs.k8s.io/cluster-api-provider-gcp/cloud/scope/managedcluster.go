@@ -52,7 +52,7 @@ func NewManagedClusterScope(ctx context.Context, params ManagedClusterScopeParam
 	}
 
 	if params.GCPServices.Compute == nil {
-		computeSvc, err := newComputeService(ctx, params.GCPManagedCluster.Spec.CredentialsRef, params.Client)
+		computeSvc, err := newComputeService(ctx, params.GCPManagedCluster.Spec.CredentialsRef, params.Client, params.GCPManagedCluster.Spec.ServiceEndpoints)
 		if err != nil {
 			return nil, errors.Errorf("failed to create gcp compute client: %v", err)
 		}
@@ -247,6 +247,7 @@ func (s *ManagedClusterScope) SubnetSpecs() []*compute.Subnetwork {
 			Network:               s.NetworkLink(),
 			Purpose:               ptr.Deref(subnetwork.Purpose, "PRIVATE_RFC_1918"),
 			Role:                  "ACTIVE",
+			StackType:             subnetwork.StackType,
 		})
 	}
 

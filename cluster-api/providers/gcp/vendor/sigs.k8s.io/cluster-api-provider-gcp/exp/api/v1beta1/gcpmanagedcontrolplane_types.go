@@ -17,7 +17,11 @@ limitations under the License.
 package v1beta1
 
 import (
+	"fmt"
+	"strings"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/strings/slices"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
@@ -133,6 +137,9 @@ type GCPManagedControlPlaneSpec struct {
 	// EnableAutopilot indicates whether to enable autopilot for this GKE cluster.
 	// +optional
 	EnableAutopilot bool `json:"enableAutopilot"`
+	// EnableIdentityService indicates whether to enable Identity Service component for this GKE cluster.
+	// +optional
+	EnableIdentityService bool `json:"enableIdentityService"`
 	// ReleaseChannel represents the release channel of the GKE cluster.
 	// +optional
 	ReleaseChannel *ReleaseChannel `json:"releaseChannel,omitempty"`
@@ -148,6 +155,16 @@ type GCPManagedControlPlaneSpec struct {
 	// This feature is disabled if this field is not specified.
 	// +optional
 	MasterAuthorizedNetworksConfig *MasterAuthorizedNetworksConfig `json:"master_authorized_networks_config,omitempty"`
+	// LoggingService represents configuration of logging service feature of the GKE cluster.
+	// Possible values: none, logging.googleapis.com/kubernetes (default).
+	// Value is ignored when enableAutopilot = true.
+	// +optional
+	LoggingService *LoggingService `json:"loggingService,omitempty"`
+	// MonitoringService represents configuration of monitoring service feature of the GKE cluster.
+	// Possible values: none, monitoring.googleapis.com/kubernetes (default).
+	// Value is ignored when enableAutopilot = true.
+	// +optional
+	MonitoringService *MonitoringService `json:"monitoringService,omitempty"`
 }
 
 // GCPManagedControlPlaneStatus defines the observed state of GCPManagedControlPlane.
@@ -231,6 +248,42 @@ type MasterAuthorizedNetworksConfigCidrBlock struct {
 	// cidr_block must be specified in CIDR notation.
 	// +kubebuilder:validation:Pattern=`^(?:[0-9]{1,3}\.){3}[0-9]{1,3}(?:\/([0-9]|[1-2][0-9]|3[0-2]))?$|^([a-fA-F0-9:]+:+)+[a-fA-F0-9]+\/[0-9]{1,3}$`
 	CidrBlock string `json:"cidr_block,omitempty"`
+}
+
+// LoggingService is GKE logging service configuration.
+type LoggingService string
+
+// Validate validates LoggingService value.
+func (l LoggingService) Validate() error {
+	validValues := []string{"none", "logging.googleapis.com/kubernetes"}
+	if !slices.Contains(validValues, l.String()) {
+		return fmt.Errorf("invalid value; expect one of : %s", strings.Join(validValues, ","))
+	}
+
+	return nil
+}
+
+// String returns a string from LoggingService.
+func (l LoggingService) String() string {
+	return string(l)
+}
+
+// MonitoringService is GKE logging service configuration.
+type MonitoringService string
+
+// Validate validates MonitoringService value.
+func (m MonitoringService) Validate() error {
+	validValues := []string{"none", "monitoring.googleapis.com/kubernetes"}
+	if !slices.Contains(validValues, m.String()) {
+		return fmt.Errorf("invalid value; expect one of : %s", strings.Join(validValues, ","))
+	}
+
+	return nil
+}
+
+// String returns a string from MonitoringService.
+func (m MonitoringService) String() string {
+	return string(m)
 }
 
 // GetConditions returns the control planes conditions.

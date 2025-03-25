@@ -14,7 +14,7 @@ linters:
     - errcheck
     - errchkjson
     - errname
-    - exportloopref
+    - copyloopvar
     - fatcontext
     - ginkgolinter
     - gocheckcompilerdirectives
@@ -148,6 +148,12 @@ issues:
     - linters:
         - gosec
       text: "G108: Profiling endpoint is automatically exposed on /debug/pprof"
+    - linters:
+        - gosec
+      text: "G115: integer overflow conversion int -> int32"
+    - linters:
+        - govet
+      text: "printf: non-constant format string in call to sigs.k8s.io/cluster-api/util/conditions.MarkFalse"
     - linters:
         - revive
       text: "exported: exported method .*\\.(Reconcile|SetupWithManager|SetupWebhookWithManager) should have comment or be unexported"
