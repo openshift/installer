@@ -19,6 +19,7 @@ RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build-node-joiner.sh
 
 FROM registry.ci.openshift.org/ocp/4.19:base-rhel9
 
+COPY --from=builder /go/src/github.com/openshift/installer/images/baremetal/manifests /manifests
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 
 RUN dnf upgrade -y && \
@@ -35,4 +36,6 @@ RUN mkdir /output && chown 1000:1000 /output
 USER 1000:1000
 ENV HOME /output
 WORKDIR /output
+# We're not really an operator, we're just getting some data into the release image.
+LABEL io.openshift.release.operator=true
 ENTRYPOINT ["/bin/openshift-install"]
