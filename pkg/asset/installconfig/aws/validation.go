@@ -788,17 +788,13 @@ func validateZoneLocal(ctx context.Context, meta *Metadata, fldPath *field.Path,
 }
 
 func validateEndpointAccessibility(endpointURL string) error {
-	// For each provided service endpoint, verify we can resolve and connect with net.Dial.
-	// Ignore e2e.local from unit tests.
-	if endpointURL == "e2e.local" {
-		return nil
+	if _, err := url.Parse(endpointURL); err != nil {
+		return fmt.Errorf("failed to parse service endpoint url: %w", err)
 	}
-	_, err := url.Parse(endpointURL)
-	if err != nil {
-		return err
+	if _, err := http.Head(endpointURL); err != nil { //nolint:gosec
+		return fmt.Errorf("failed to connect to service endpoint url: %w", err)
 	}
-	_, err = http.Head(endpointURL)
-	return err
+	return nil
 }
 
 var requiredServices = []string{
