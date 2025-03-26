@@ -468,9 +468,13 @@ func ResourceIBMCISDnsRecordRead(d *schema.ResourceData, meta interface{}) error
 	}
 
 	d.Set(cisID, crn)
-	d.Set(cisDomainID, *result.Result.ZoneID)
+	if result.Result.ZoneID != nil {
+		d.Set(cisDomainID, *result.Result.ZoneID)
+	}
 	d.Set(cisDNSRecordID, *result.Result.ID)
-	d.Set(cisZoneName, *result.Result.ZoneName)
+	if result.Result.ZoneName != nil {
+		d.Set(cisZoneName, *result.Result.ZoneName)
+	}
 	d.Set(cisDNSRecordCreatedOn, *result.Result.CreatedOn)
 	d.Set(cisDNSRecordModifiedOn, *result.Result.ModifiedOn)
 	d.Set(cisDNSRecordName, *result.Result.Name)
@@ -485,7 +489,11 @@ func ResourceIBMCISDnsRecordRead(d *schema.ResourceData, meta interface{}) error
 		d.Set(cisDNSRecordPriority, *result.Result.Priority)
 	}
 	if result.Result.Data != nil {
-		d.Set(cisDNSRecordData, flattenData(result.Result.Data, *result.Result.ZoneName))
+		zoneName := ""
+		if result.Result.ZoneName != nil {
+			zoneName = *result.Result.ZoneName
+		}
+		d.Set(cisDNSRecordData, flattenData(result.Result.Data, zoneName))
 	}
 	return nil
 }
@@ -906,7 +914,7 @@ func flattenData(inVal interface{}, zone string) map[string]string {
 	}
 	for k, v := range inVal.(map[string]interface{}) {
 		strValue := fmt.Sprintf("%v", v)
-		if k == "name" {
+		if k == "name" && zone != "" {
 			strValue = strings.Replace(strValue, "."+zone, "", -1)
 		}
 		outVal[k] = strValue
