@@ -50,7 +50,7 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 
 	allErrs = append(allErrs, validateAMI(ctx, meta, config)...)
 	allErrs = append(allErrs, validatePublicIpv4Pool(ctx, meta, field.NewPath("platform", "aws", "publicIpv4PoolId"), config)...)
-	allErrs = append(allErrs, validatePlatform(ctx, meta, field.NewPath("platform", "aws"), config.Platform.AWS, config.Networking, config.Publish, config.ObjectMeta.Name)...)
+	allErrs = append(allErrs, validatePlatform(ctx, meta, field.NewPath("platform", "aws"), config.Platform.AWS, config.Networking, config.Publish)...)
 
 	if awstypes.IsPublicOnlySubnetsEnabled() {
 		logrus.Warnln("Public-only subnets install. Please be warned this is not supported")
@@ -98,7 +98,7 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 	return allErrs.ToAggregate()
 }
 
-func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, platform *awstypes.Platform, networking *types.Networking, publish types.PublishingStrategy, clusterName string) field.ErrorList {
+func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, platform *awstypes.Platform, networking *types.Networking, publish types.PublishingStrategy) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, validateServiceEndpoints(fldPath.Child("serviceEndpoints"), platform.Region, platform.ServiceEndpoints)...)
@@ -109,7 +109,7 @@ func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, 
 	}
 
 	if len(platform.VPC.Subnets) > 0 {
-		allErrs = append(allErrs, validateSubnets(ctx, meta, fldPath.Child("vpc").Child("subnets"), platform.VPC.Subnets, networking, publish, clusterName)...)
+		allErrs = append(allErrs, validateSubnets(ctx, meta, fldPath.Child("vpc").Child("subnets"), platform.VPC.Subnets, networking, publish)...)
 	} else if awstypes.IsPublicOnlySubnetsEnabled() {
 		allErrs = append(allErrs, field.Required(fldPath.Child("subnets"), "subnets must be specified for public-only subnets clusters"))
 	}
@@ -298,7 +298,7 @@ func (sdg *subnetDataGroups) From(ctx context.Context, meta *Metadata, providedS
 }
 
 // validateSubnets ensures BYO subnets are valid.
-func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, providedSubnets []awstypes.Subnet, networking *types.Networking, publish types.PublishingStrategy, clusterName string) field.ErrorList {
+func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, providedSubnets []awstypes.Subnet, networking *types.Networking, publish types.PublishingStrategy) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	subnetDataGroups := subnetDataGroups{}
@@ -760,17 +760,13 @@ func validateZoneLocal(ctx context.Context, meta *Metadata, fldPath *field.Path,
 }
 
 func validateEndpointAccessibility(endpointURL string) error {
-	// For each provided service endpoint, verify we can resolve and connect with net.Dial.
-	// Ignore e2e.local from unit tests.
-	if endpointURL == "e2e.local" {
-		return nil
+	if _, err := url.Parse(endpointURL); err != nil {
+		return fmt.Errorf("failed to parse service endpoint url: %w", err)
 	}
-	_, err := url.Parse(endpointURL)
-	if err != nil {
-		return err
+	if _, err := http.Head(endpointURL); err != nil { //nolint:gosec
+		return fmt.Errorf("failed to connect to service endpoint url: %w", err)
 	}
-	_, err = http.Head(endpointURL)
-	return err
+	return nil
 }
 
 var requiredServices = []string{
