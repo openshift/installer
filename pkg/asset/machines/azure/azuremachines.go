@@ -199,6 +199,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 					},
 				},
 			}
+			azureMachine.Spec.FailureDomain = nil
 		}
 		azureMachine.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureMachine"))
 		result = append(result, &asset.RuntimeFile{
@@ -272,6 +273,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 				},
 			},
 		}
+		bootstrapAzureMachine.Spec.FailureDomain = nil
 	}
 	bootstrapAzureMachine.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureMachine"))
 
