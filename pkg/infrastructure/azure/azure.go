@@ -55,7 +55,6 @@ type Provider struct {
 	Tags                  map[string]*string
 }
 
-var _ clusterapi.PreProvider = (*Provider)(nil)
 var _ clusterapi.InfraReadyProvider = (*Provider)(nil)
 var _ clusterapi.PostProvider = (*Provider)(nil)
 var _ clusterapi.IgnitionProvider = (*Provider)(nil)
@@ -83,23 +82,6 @@ func (p Provider) ProvisionTimeout() time.Duration {
 // in the status and should use the API load balancer when gathering bootstrap log bundles.
 func (*Provider) PublicGatherEndpoint() clusterapi.GatherEndpoint { return clusterapi.APILoadBalancer }
 
-// PreProvision is called before provisioning using CAPI controllers has begun.
-func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionInput) error {
-	installConfig := in.InstallConfig.Config
-	platform := installConfig.Platform.Azure
-	p.ResourceGroupName = platform.ClusterResourceGroupName(in.InfraID)
-
-	userTags := platform.UserTags
-	tags := make(map[string]*string, len(userTags)+1)
-	tags[fmt.Sprintf("kubernetes.io_cluster.%s", in.InfraID)] = ptr.To("owned")
-	for k, v := range userTags {
-		tags[k] = ptr.To(v)
-	}
-	p.Tags = tags
-
-	return nil
-}
-
 // InfraReady is called once the installer infrastructure is ready.
 func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) error {
 	session, err := in.InstallConfig.Azure.Session()
@@ -112,6 +94,15 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	subscriptionID := session.Credentials.SubscriptionID
 	cloudConfiguration := session.CloudConfig
 	tokenCredential := session.TokenCreds
+	p.ResourceGroupName = platform.ClusterResourceGroupName(in.InfraID)
+
+	userTags := platform.UserTags
+	tags := make(map[string]*string, len(userTags)+1)
+	tags[fmt.Sprintf("kubernetes.io_cluster.%s", in.InfraID)] = ptr.To("owned")
+	for k, v := range userTags {
+		tags[k] = ptr.To(v)
+	}
+	p.Tags = tags
 
 	// Creating a dummy nsg for existing vnets installation to appease the ingress operator.
 	if in.InstallConfig.Config.Azure.VirtualNetwork != "" {
@@ -190,13 +181,6 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	imageLength := headResponse.ContentLength
 	if imageLength%512 != 0 {
 		return fmt.Errorf("image length is not aligned on a 512 byte boundary")
-	}
-
-	userTags := platform.UserTags
-	tags := make(map[string]*string, len(userTags)+1)
-	tags[fmt.Sprintf("kubernetes.io_cluster.%s", in.InfraID)] = ptr.To("owned")
-	for k, v := range userTags {
-		tags[k] = ptr.To(v)
 	}
 
 	storageURL := fmt.Sprintf("https://%s.blob.%s", storageAccountName, session.Environment.StorageEndpointSuffix)
