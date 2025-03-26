@@ -164,7 +164,7 @@ func resourceIBMCloudShellAccountSettingsCreate(context context.Context, d *sche
 	}
 
 	accountSettings, response, err := ibmCloudShellClient.UpdateAccountSettingsWithContext(context, updateAccountSettingsOptions)
-	if err != nil {
+	if err != nil || accountSettings == nil {
 		log.Printf("[DEBUG] UpdateAccountSettingsWithContext failed %s\n%s", err, response)
 		return diag.FromErr(fmt.Errorf("UpdateAccountSettingsWithContext failed %s\n%s", err, response))
 	}
@@ -211,7 +211,7 @@ func resourceIBMCloudShellAccountSettingsRead(context context.Context, d *schema
 	getAccountSettingsOptions.SetAccountID(strings.TrimPrefix(d.Id(), "ac-"))
 
 	accountSettings, response, err := ibmCloudShellClient.GetAccountSettingsWithContext(context, getAccountSettingsOptions)
-	if err != nil {
+	if err != nil || accountSettings == nil {
 		if response != nil && response.StatusCode == 404 {
 			d.SetId("")
 			return nil
@@ -345,8 +345,8 @@ func resourceIBMCloudShellAccountSettingsUpdate(context context.Context, d *sche
 	}
 
 	if hasChange {
-		_, response, err := ibmCloudShellClient.UpdateAccountSettingsWithContext(context, updateAccountSettingsOptions)
-		if err != nil {
+		accountSettings, response, err := ibmCloudShellClient.UpdateAccountSettingsWithContext(context, updateAccountSettingsOptions)
+		if err != nil || accountSettings == nil {
 			log.Printf("[DEBUG] UpdateAccountSettingsWithContext failed %s\n%s", err, response)
 			return diag.FromErr(fmt.Errorf("UpdateAccountSettingsWithContext failed %s\n%s", err, response))
 		}

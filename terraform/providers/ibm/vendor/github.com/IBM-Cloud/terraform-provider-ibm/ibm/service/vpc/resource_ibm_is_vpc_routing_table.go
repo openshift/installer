@@ -334,26 +334,37 @@ func resourceIBMISVPCRoutingTableUpdate(d *schema.ResourceData, meta interface{}
 		routingTablePatchModel.Name = core.StringPtr(name)
 		hasChange = true
 	}
+	removeAcceptRoutesFromFilter := false
 	if d.HasChange("accept_routes_from_resource_type") {
 		var aroutes []vpcv1.ResourceFilter
 		acptRoutes := d.Get("accept_routes_from_resource_type").(*schema.Set)
-		for _, val := range acptRoutes.List() {
-			value := val.(string)
-			resourceFilter := vpcv1.ResourceFilter{
-				ResourceType: &value,
+		if len(acptRoutes.List()) == 0 {
+			removeAcceptRoutesFromFilter = true
+		} else {
+			for _, val := range acptRoutes.List() {
+				value := val.(string)
+				resourceFilter := vpcv1.ResourceFilter{
+					ResourceType: &value,
+				}
+				aroutes = append(aroutes, resourceFilter)
 			}
-			aroutes = append(aroutes, resourceFilter)
 		}
 		routingTablePatchModel.AcceptRoutesFrom = aroutes
 		hasChange = true
 	}
+	removeAdvertiseRoutesTo := false
 	if d.HasChange("advertise_routes_to") {
 		var advertiseRoutesToList []string
 		advertiseRoutesTo := d.Get("advertise_routes_to").(*schema.Set)
 
-		for _, val := range advertiseRoutesTo.List() {
-			advertiseRoutesToList = append(advertiseRoutesToList, val.(string))
+		if len(advertiseRoutesTo.List()) == 0 {
+			removeAdvertiseRoutesTo = true
+		} else {
+			for _, val := range advertiseRoutesTo.List() {
+				advertiseRoutesToList = append(advertiseRoutesToList, val.(string))
+			}
 		}
+
 		routingTablePatchModel.AdvertiseRoutesTo = advertiseRoutesToList
 		hasChange = true
 	}
@@ -385,6 +396,12 @@ func resourceIBMISVPCRoutingTableUpdate(d *schema.ResourceData, meta interface{}
 		return fmt.Errorf("[ERROR] Error calling asPatch for RoutingTablePatchModel: %s", asPatchErr)
 	}
 
+	if removeAdvertiseRoutesTo {
+		routingTablePatchModelAsPatch["advertise_routes_to"] = []string{}
+	}
+	if removeAcceptRoutesFromFilter {
+		routingTablePatchModelAsPatch["accept_routes_from"] = []vpcv1.ResourceFilter{}
+	}
 	updateVpcRoutingTableOptions.RoutingTablePatch = routingTablePatchModelAsPatch
 	_, response, err := sess.UpdateVPCRoutingTable(updateVpcRoutingTableOptions)
 	if err != nil {

@@ -13,47 +13,44 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-const (
-	Datacenters = "datacenters"
-)
-
 func DataSourceIBMPIDatacenters() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceIBMPIDatacentersRead,
 		Schema: map[string]*schema.Schema{
-			Datacenters: {
-				Type:     schema.TypeList,
-				Computed: true,
+			// Attributes
+			Attr_Datacenters: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "List of Datacenters",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-
 						Attr_DatacenterCapabilities: {
-							Type:        schema.TypeMap,
 							Computed:    true,
 							Description: "Datacenter Capabilities",
 							Elem: &schema.Schema{
 								Type: schema.TypeBool,
 							},
+							Type: schema.TypeMap,
 						},
 						Attr_DatacenterHref: {
-							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Datacenter href",
+							Type:        schema.TypeString,
 						},
 						Attr_DatacenterLocation: {
-							Type:        schema.TypeMap,
 							Computed:    true,
 							Description: "Datacenter location",
+							Type:        schema.TypeMap,
 						},
 						Attr_DatacenterStatus: {
-							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Datacenter status",
+							Type:        schema.TypeString,
 						},
 						Attr_DatacenterType: {
-							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Datacenter type",
+							Type:        schema.TypeString,
 						},
 					},
 				},
@@ -61,8 +58,8 @@ func DataSourceIBMPIDatacenters() *schema.Resource {
 		},
 	}
 }
+
 func dataSourceIBMPIDatacentersRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	// session
 	sess, err := meta.(conns.ClientSession).IBMPISession()
 	if err != nil {
 		return diag.FromErr(err)
@@ -77,21 +74,20 @@ func dataSourceIBMPIDatacentersRead(ctx context.Context, d *schema.ResourceData,
 		if datacenter != nil {
 			dc := map[string]interface{}{
 				Attr_DatacenterCapabilities: datacenter.Capabilities,
+				Attr_DatacenterHref:         datacenter.Href,
 				Attr_DatacenterLocation: map[string]interface{}{
-					DatacenterRegion: datacenter.Location.Region,
-					DatacenterType:   datacenter.Location.Type,
-					DatacenterUrl:    datacenter.Location.URL,
+					Attr_Region: datacenter.Location.Region,
+					Attr_Type:   datacenter.Location.Type,
+					Attr_URL:    datacenter.Location.URL,
 				},
 				Attr_DatacenterStatus: datacenter.Status,
 				Attr_DatacenterType:   datacenter.Type,
-				Attr_DatacenterHref:   datacenter.Href,
 			}
 			datacenters = append(datacenters, dc)
 		}
-
 	}
 	var clientgenU, _ = uuid.GenerateUUID()
 	d.SetId(clientgenU)
-	d.Set(Datacenters, datacenters)
+	d.Set(Attr_Datacenters, datacenters)
 	return nil
 }

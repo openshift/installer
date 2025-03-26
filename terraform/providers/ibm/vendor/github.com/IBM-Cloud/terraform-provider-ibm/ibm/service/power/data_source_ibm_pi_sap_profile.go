@@ -7,49 +7,51 @@ import (
 	"context"
 	"log"
 
+	"github.com/IBM-Cloud/power-go-client/clients/instance"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-
-	"github.com/IBM-Cloud/power-go-client/clients/instance"
-	"github.com/IBM-Cloud/power-go-client/helpers"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 )
 
 func DataSourceIBMPISAPProfile() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceIBMPISAPProfileRead,
 		Schema: map[string]*schema.Schema{
-			helpers.PICloudInstanceId: {
-				Type:         schema.TypeString,
+			// Arguments
+			Arg_CloudInstanceID: {
+				Description:  "The GUID of the service instance associated with an account.",
 				Required:     true,
+				Type:         schema.TypeString,
 				ValidateFunc: validation.NoZeroValues,
 			},
-			PISAPInstanceProfileID: {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "SAP Profile ID",
+			Arg_SAPProfileID: {
+				Description:  "SAP Profile ID",
+				Required:     true,
+				Type:         schema.TypeString,
+				ValidateFunc: validation.NoZeroValues,
 			},
-			// Computed Attributes
-			PISAPProfileCertified: {
+
+			// Attributes
+			Attr_Certified: {
+				Computed:    true,
+				Description: "Has certification been performed on profile.",
 				Type:        schema.TypeBool,
-				Computed:    true,
-				Description: "Has certification been performed on profile",
 			},
-			PISAPProfileCores: {
+			Attr_Cores: {
+				Computed:    true,
+				Description: "Amount of cores.",
 				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "Amount of cores",
 			},
-			PISAPProfileMemory: {
+			Attr_Memory: {
+				Computed:    true,
+				Description: "Amount of memory (in GB).",
 				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "Amount of memory (in GB)",
 			},
-			PISAPProfileType: {
+			Attr_Type: {
+				Computed:    true,
+				Description: "Type of profile.",
 				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Type of profile",
 			},
 		},
 	}
@@ -61,8 +63,8 @@ func dataSourceIBMPISAPProfileRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
-	profileID := d.Get(PISAPInstanceProfileID).(string)
+	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
+	profileID := d.Get(Arg_SAPProfileID).(string)
 
 	client := instance.NewIBMPISAPInstanceClient(ctx, sess, cloudInstanceID)
 	sapProfile, err := client.GetSAPProfile(profileID)
@@ -72,10 +74,10 @@ func dataSourceIBMPISAPProfileRead(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	d.SetId(*sapProfile.ProfileID)
-	d.Set(PISAPProfileCertified, *sapProfile.Certified)
-	d.Set(PISAPProfileCores, *sapProfile.Cores)
-	d.Set(PISAPProfileMemory, *sapProfile.Memory)
-	d.Set(PISAPProfileType, *sapProfile.Type)
+	d.Set(Attr_Certified, *sapProfile.Certified)
+	d.Set(Attr_Cores, *sapProfile.Cores)
+	d.Set(Attr_Memory, *sapProfile.Memory)
+	d.Set(Attr_Type, *sapProfile.Type)
 
 	return nil
 }

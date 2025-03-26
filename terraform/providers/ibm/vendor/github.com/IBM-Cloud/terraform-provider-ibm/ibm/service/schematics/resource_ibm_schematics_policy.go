@@ -38,10 +38,11 @@ func ResourceIbmSchematicsPolicy() *schema.Resource {
 				Description: "The description of Schematics customization policy.",
 			},
 			"resource_group": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				Description: "The resource group name for the policy.  By default, Policy will be created in `default` Resource Group.",
+				Type:             schema.TypeString,
+				Optional:         true,
+				Computed:         true,
+				DiffSuppressFunc: flex.ApplyOnce,
+				Description:      "The resource group name for the policy.  By default, Policy will be created in `default` Resource Group.",
 			},
 			"tags": &schema.Schema{
 				Type:        schema.TypeList,
@@ -53,6 +54,7 @@ func ResourceIbmSchematicsPolicy() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
+				ForceNew:    true,
 				Description: "List of locations supported by IBM Cloud Schematics service.  While creating your workspace or action, choose the right region, since it cannot be changed.  Note, this does not limit the location of the IBM Cloud resources, provisioned using Schematics.",
 			},
 			"state": &schema.Schema{
@@ -303,7 +305,7 @@ func resourceIbmSchematicsPolicyCreate(context context.Context, d *schema.Resour
 		createPolicyOptions.SetResourceGroup(d.Get("resource_group").(string))
 	}
 	if _, ok := d.GetOk("tags"); ok {
-		createPolicyOptions.SetTags(d.Get("tags").([]string))
+		createPolicyOptions.SetTags(flex.ExpandStringList(d.Get("tags").([]interface{})))
 	}
 	if _, ok := d.GetOk("location"); ok {
 		createPolicyOptions.SetLocation(d.Get("location").(string))
@@ -480,11 +482,7 @@ func resourceIbmSchematicsPolicyUpdate(context context.Context, d *schema.Resour
 		hasChange = true
 	}
 	if d.HasChange("tags") {
-		// TODO: handle Tags of type TypeList -- not primitive, not model
-		hasChange = true
-	}
-	if d.HasChange("location") {
-		updatePolicyOptions.SetLocation(d.Get("location").(string))
+		updatePolicyOptions.SetTags(flex.ExpandStringList(d.Get("tags").([]interface{})))
 		hasChange = true
 	}
 	if d.HasChange("state") {

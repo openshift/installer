@@ -164,6 +164,10 @@ func resourceIBMIAMAccessGroupMembersRead(context context.Context, d *schema.Res
 	listAccessGroupMembersOptions.SetLimit(limit)
 	members, detailedResponse, err := iamAccessGroupsClient.ListAccessGroupMembers(listAccessGroupMembersOptions)
 	if err != nil {
+		if detailedResponse != nil && detailedResponse.StatusCode == 404 {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(fmt.Errorf("[ERROR] Error retrieving access group members: %s. API Response: %s", err, detailedResponse))
 	}
 	allMembers := members.Members

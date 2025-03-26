@@ -45,6 +45,11 @@ func DataSourceIBMEnCFDestination() *schema.Resource {
 				Computed:    true,
 				Description: "Destination type ibmcf.",
 			},
+			"collect_failed_events": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Whether to collect the failed event in Cloud Object Storage bucket",
+			},
 			"config": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -91,6 +96,7 @@ func DataSourceIBMEnCFDestination() *schema.Resource {
 				},
 			},
 		},
+		DeprecationMessage: "datasource is depreacted due to cloud function servie depreaction",
 	}
 }
 
@@ -124,6 +130,10 @@ func dataSourceIBMEnCFDestinationRead(context context.Context, d *schema.Resourc
 
 	if err = d.Set("type", result.Type); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting type: %s", err))
+	}
+
+	if err = d.Set("collect_failed_events", result.CollectFailedEvents); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting CollectFailedEvents: %s", err))
 	}
 
 	if result.Config != nil {
@@ -184,5 +194,6 @@ func enCFDestinationConfigParamsToMap(paramsItem en.DestinationConfigOneOfIntf) 
 	if params.APIKey != nil {
 		paramsMap["api_key"] = params.APIKey
 	}
+
 	return paramsMap
 }

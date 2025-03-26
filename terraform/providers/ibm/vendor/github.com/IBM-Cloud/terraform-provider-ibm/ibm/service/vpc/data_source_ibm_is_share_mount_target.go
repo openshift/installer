@@ -80,6 +80,54 @@ func DataSourceIBMIsShareTarget() *schema.Resource {
 				Computed:    true,
 				Description: "The type of resource referenced.",
 			},
+			"primary_ip": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The primary IP address of the virtual network interface for the share mount target.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"address": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The IP address..",
+						},
+						"deleted": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "If present, this property indicates the referenced resource has been deleted and providessome supplementary information.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"more_info": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about deleted resources.",
+									},
+								},
+							},
+						},
+						"href": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The URL for this reserved IP.",
+						},
+						"id": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The unique identifier for this reserved IP.",
+						},
+						"name": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The user-defined name for this reserved IP.",
+						},
+						"resource_type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The resource type.",
+						},
+					},
+				},
+			},
 			"subnet": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -311,6 +359,13 @@ func dataSourceIBMIsShareTargetRead(context context.Context, d *schema.ResourceD
 		}
 	}
 
+	if shareTarget.PrimaryIP != nil {
+		err = d.Set("primary_ip", dataSourceShareMountTargetFlattenPrimaryIP(*shareTarget.PrimaryIP))
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("Error setting vpc %s", err))
+		}
+	}
+
 	if shareTarget.VPC != nil {
 		err = d.Set("vpc", dataSourceShareMountTargetFlattenVpc(*shareTarget.VPC))
 		if err != nil {
@@ -372,7 +427,54 @@ func dataSourceShareMountTargetVpcToMap(vpcItem vpcv1.VPCReference) (vpcMap map[
 	return vpcMap
 }
 
-func dataSourceShareMountTargetVpcDeletedToMap(deletedItem vpcv1.VPCReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceShareMountTargetVpcDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
+	deletedMap = map[string]interface{}{}
+
+	if deletedItem.MoreInfo != nil {
+		deletedMap["more_info"] = deletedItem.MoreInfo
+	}
+
+	return deletedMap
+}
+
+func dataSourceShareMountTargetFlattenPrimaryIP(result vpcv1.ReservedIPReference) (finalList []map[string]interface{}) {
+	finalList = []map[string]interface{}{}
+	finalMap := dataSourceShareTargetPrimaryIPToMap(result)
+	finalList = append(finalList, finalMap)
+
+	return finalList
+}
+
+func dataSourceShareTargetPrimaryIPToMap(primaryIPItem vpcv1.ReservedIPReference) (primaryIPMap map[string]interface{}) {
+	primaryIPMap = map[string]interface{}{}
+
+	if primaryIPItem.Address != nil {
+		primaryIPMap["address"] = primaryIPItem.Address
+	}
+	if primaryIPItem.Deleted != nil {
+		deletedList := []map[string]interface{}{}
+		deletedMap := dataSourceShareTargetPrimaryIPDeletedToMap(*primaryIPItem.Deleted)
+		deletedList = append(deletedList, deletedMap)
+		primaryIPMap["deleted"] = deletedList
+	}
+	if primaryIPItem.Href != nil {
+		primaryIPMap["href"] = primaryIPItem.Href
+	}
+	if primaryIPItem.ID != nil {
+		primaryIPMap["id"] = primaryIPItem.ID
+	}
+	if primaryIPItem.Name != nil {
+		primaryIPMap["name"] = primaryIPItem.Name
+	}
+
+	if primaryIPItem.ResourceType != nil {
+		primaryIPMap["resource_type"] = primaryIPItem.ResourceType
+	}
+
+	return primaryIPMap
+}
+
+func dataSourceShareTargetPrimaryIPDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {
@@ -419,7 +521,7 @@ func dataSourceShareTargetSubnetToMap(subnetItem vpcv1.SubnetReference) (subnetM
 	return subnetMap
 }
 
-func dataSourceShareTargetSubnetDeletedToMap(deletedItem vpcv1.SubnetReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceShareTargetSubnetDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {

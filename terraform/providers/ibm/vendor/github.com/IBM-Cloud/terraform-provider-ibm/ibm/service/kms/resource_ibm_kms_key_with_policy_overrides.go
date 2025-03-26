@@ -157,6 +157,30 @@ func ResourceIBMKmsKeyWithPolicyOverrides() *schema.Resource {
 					},
 				},
 			},
+			"registrations": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "Registrations of the key across different services",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"key_id": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The id of the key being used in the registration",
+						},
+						"resource_crn": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The CRN of the resource tied to the key registration",
+						},
+						"prevent_key_deletion": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Determines if the registration of the key prevents a deletion.",
+						},
+					},
+				},
+			},
 			flex.ResourceName: {
 				Type:        schema.TypeString,
 				Computed:    true,

@@ -242,21 +242,21 @@ func dataSourceIbmSccProfileAttachmentRead(context context.Context, d *schema.Re
 	attachmentItem, response, err := securityandcompliancecenterapiClient.GetProfileAttachmentWithContext(context, getProfileAttachmentOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetProfileAttachmentWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetProfileAttachmentWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("GetProfileAttachmentWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *getProfileAttachmentOptions.AttachmentID, *getProfileAttachmentOptions.ProfileID))
 
 	if err = d.Set("attachment_item_id", attachmentItem.ID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting attachment_item_id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting attachment_item_id: %s", err))
 	}
 
 	if err = d.Set("account_id", attachmentItem.AccountID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting account_id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting account_id: %s", err))
 	}
 
 	if err = d.Set("instance_id", attachmentItem.InstanceID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting instance_id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting instance_id: %s", err))
 	}
 
 	scope := []map[string]interface{}{}
@@ -270,31 +270,31 @@ func dataSourceIbmSccProfileAttachmentRead(context context.Context, d *schema.Re
 		}
 	}
 	if err = d.Set("scope", scope); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting scope %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting scope %s", err))
 	}
 
 	if err = d.Set("created_on", flex.DateTimeToString(attachmentItem.CreatedOn)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_on: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting created_on: %s", err))
 	}
 
 	if err = d.Set("created_by", attachmentItem.CreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_by: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting created_by: %s", err))
 	}
 
 	if err = d.Set("updated_on", flex.DateTimeToString(attachmentItem.UpdatedOn)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_on: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting updated_on: %s", err))
 	}
 
 	if err = d.Set("updated_by", attachmentItem.UpdatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_by: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting updated_by: %s", err))
 	}
 
 	if err = d.Set("status", attachmentItem.Status); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting status: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting status: %s", err))
 	}
 
 	if err = d.Set("schedule", attachmentItem.Schedule); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting schedule: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting schedule: %s", err))
 	}
 
 	notifications := []map[string]interface{}{}
@@ -306,7 +306,7 @@ func dataSourceIbmSccProfileAttachmentRead(context context.Context, d *schema.Re
 		notifications = append(notifications, modelMap)
 	}
 	if err = d.Set("notifications", notifications); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting notifications %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting notifications %s", err))
 	}
 
 	attachmentParameters := []map[string]interface{}{}
@@ -320,7 +320,7 @@ func dataSourceIbmSccProfileAttachmentRead(context context.Context, d *schema.Re
 		}
 	}
 	if err = d.Set("attachment_parameters", attachmentParameters); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting attachment_parameters %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting attachment_parameters %s", err))
 	}
 
 	lastScan := []map[string]interface{}{}
@@ -332,19 +332,19 @@ func dataSourceIbmSccProfileAttachmentRead(context context.Context, d *schema.Re
 		lastScan = append(lastScan, modelMap)
 	}
 	if err = d.Set("last_scan", lastScan); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting last_scan %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting last_scan %s", err))
 	}
 
 	if err = d.Set("next_scan_time", flex.DateTimeToString(attachmentItem.NextScanTime)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting next_scan_time: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting next_scan_time: %s", err))
 	}
 
 	if err = d.Set("name", attachmentItem.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting name: %s", err))
 	}
 
 	if err = d.Set("description", attachmentItem.Description); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting description: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting description: %s", err))
 	}
 
 	return nil

@@ -6,13 +6,14 @@ package iamaccessgroup
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/platform-services-go-sdk/iamaccessgroupsv2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"time"
 )
 
 func ResourceIBMIAMAccessGroup() *schema.Resource {
@@ -101,7 +102,11 @@ func resourceIBMIAMAccessGroupRead(context context.Context, d *schema.ResourceDa
 	if conns.IsResourceTimeoutError(err) {
 		agrp, detailedResponse, err = iamAccessGroupsClient.GetAccessGroup(getAccessGroupOptions)
 	}
-	if err != nil || agrp == nil || detailedResponse == nil {
+	if err != nil || agrp == nil {
+		if detailedResponse != nil && detailedResponse.StatusCode == 404 {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(fmt.Errorf("[ERROR] Error retrieving access group: %s. API Response: %s", err, detailedResponse))
 	}
 	version := detailedResponse.GetHeaders().Get("etag")

@@ -6,6 +6,7 @@ package p_cloud_disaster_recovery
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -109,11 +110,13 @@ func (o *PcloudLocationsDisasterrecoveryGetallOK) Code() int {
 }
 
 func (o *PcloudLocationsDisasterrecoveryGetallOK) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallOK %s", 200, payload)
 }
 
 func (o *PcloudLocationsDisasterrecoveryGetallOK) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallOK %s", 200, payload)
 }
 
 func (o *PcloudLocationsDisasterrecoveryGetallOK) GetPayload() *models.DisasterRecoveryLocations {
@@ -177,11 +180,13 @@ func (o *PcloudLocationsDisasterrecoveryGetallBadRequest) Code() int {
 }
 
 func (o *PcloudLocationsDisasterrecoveryGetallBadRequest) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallBadRequest %s", 400, payload)
 }
 
 func (o *PcloudLocationsDisasterrecoveryGetallBadRequest) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallBadRequest %s", 400, payload)
 }
 
 func (o *PcloudLocationsDisasterrecoveryGetallBadRequest) GetPayload() *models.Error {
@@ -245,11 +250,13 @@ func (o *PcloudLocationsDisasterrecoveryGetallUnauthorized) Code() int {
 }
 
 func (o *PcloudLocationsDisasterrecoveryGetallUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudLocationsDisasterrecoveryGetallUnauthorized) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudLocationsDisasterrecoveryGetallUnauthorized) GetPayload() *models.Error {
@@ -313,11 +320,13 @@ func (o *PcloudLocationsDisasterrecoveryGetallForbidden) Code() int {
 }
 
 func (o *PcloudLocationsDisasterrecoveryGetallForbidden) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallForbidden %s", 403, payload)
 }
 
 func (o *PcloudLocationsDisasterrecoveryGetallForbidden) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallForbidden %s", 403, payload)
 }
 
 func (o *PcloudLocationsDisasterrecoveryGetallForbidden) GetPayload() *models.Error {
@@ -381,11 +390,13 @@ func (o *PcloudLocationsDisasterrecoveryGetallNotFound) Code() int {
 }
 
 func (o *PcloudLocationsDisasterrecoveryGetallNotFound) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallNotFound %s", 404, payload)
 }
 
 func (o *PcloudLocationsDisasterrecoveryGetallNotFound) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallNotFound %s", 404, payload)
 }
 
 func (o *PcloudLocationsDisasterrecoveryGetallNotFound) GetPayload() *models.Error {
@@ -449,11 +460,13 @@ func (o *PcloudLocationsDisasterrecoveryGetallInternalServerError) Code() int {
 }
 
 func (o *PcloudLocationsDisasterrecoveryGetallInternalServerError) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudLocationsDisasterrecoveryGetallInternalServerError) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudLocationsDisasterrecoveryGetallInternalServerError) GetPayload() *models.Error {

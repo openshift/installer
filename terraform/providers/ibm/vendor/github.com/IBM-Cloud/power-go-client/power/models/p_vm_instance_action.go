@@ -20,9 +20,9 @@ import (
 // swagger:model PVMInstanceAction
 type PVMInstanceAction struct {
 
-	// Name of the action to take; can be start, stop, hard-reboot, soft-reboot, immediate-shutdown, reset-state
+	// Name of the action to take; can be start, stop, hard-reboot, soft-reboot, immediate-shutdown, reset-state, dhcp-ip-sync (on-prem only)
 	// Required: true
-	// Enum: [start stop immediate-shutdown hard-reboot soft-reboot reset-state]
+	// Enum: ["start","stop","immediate-shutdown","hard-reboot","soft-reboot","reset-state","dhcp-ip-sync"]
 	Action *string `json:"action"`
 }
 
@@ -44,7 +44,7 @@ var pVmInstanceActionTypeActionPropEnum []interface{}
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["start","stop","immediate-shutdown","hard-reboot","soft-reboot","reset-state"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["start","stop","immediate-shutdown","hard-reboot","soft-reboot","reset-state","dhcp-ip-sync"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -71,6 +71,9 @@ const (
 
 	// PVMInstanceActionActionResetDashState captures enum value "reset-state"
 	PVMInstanceActionActionResetDashState string = "reset-state"
+
+	// PVMInstanceActionActionDhcpDashIPDashSync captures enum value "dhcp-ip-sync"
+	PVMInstanceActionActionDhcpDashIPDashSync string = "dhcp-ip-sync"
 )
 
 // prop value enum

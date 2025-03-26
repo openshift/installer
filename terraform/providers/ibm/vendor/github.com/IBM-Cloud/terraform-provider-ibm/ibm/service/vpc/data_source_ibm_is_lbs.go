@@ -399,7 +399,9 @@ func getLbs(d *schema.ResourceData, meta interface{}) error {
 				if subnet.CRN != nil {
 					sub[CRN] = *subnet.CRN
 				}
-				sub[name] = *subnet.Name
+				if subnet.Name != nil && *subnet.Name != "" {
+					sub[name] = *subnet.Name
+				}
 				subnetList = append(subnetList, sub)
 
 			}

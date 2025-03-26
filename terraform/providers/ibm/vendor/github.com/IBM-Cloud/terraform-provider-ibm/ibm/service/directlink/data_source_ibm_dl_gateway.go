@@ -424,7 +424,9 @@ func dataSourceIBMDLGatewayRead(d *schema.ResourceData, meta interface{}) error 
 	}
 	var found bool
 
-	for _, instance := range listGateways.Gateways {
+	for _, gwIntf := range listGateways.Gateways {
+
+		instance := gwIntf.(*directlinkv1.GatewayCollectionGatewaysItem)
 
 		if *instance.Name == dlGatewayName {
 			found = true

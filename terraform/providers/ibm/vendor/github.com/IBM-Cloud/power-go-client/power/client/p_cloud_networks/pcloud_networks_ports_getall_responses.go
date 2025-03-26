@@ -6,6 +6,7 @@ package p_cloud_networks
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -109,11 +110,13 @@ func (o *PcloudNetworksPortsGetallOK) Code() int {
 }
 
 func (o *PcloudNetworksPortsGetallOK) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsGetallOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsGetallOK %s", 200, payload)
 }
 
 func (o *PcloudNetworksPortsGetallOK) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsGetallOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsGetallOK %s", 200, payload)
 }
 
 func (o *PcloudNetworksPortsGetallOK) GetPayload() *models.NetworkPorts {
@@ -177,11 +180,13 @@ func (o *PcloudNetworksPortsGetallBadRequest) Code() int {
 }
 
 func (o *PcloudNetworksPortsGetallBadRequest) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsGetallBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsGetallBadRequest %s", 400, payload)
 }
 
 func (o *PcloudNetworksPortsGetallBadRequest) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsGetallBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsGetallBadRequest %s", 400, payload)
 }
 
 func (o *PcloudNetworksPortsGetallBadRequest) GetPayload() *models.Error {
@@ -245,11 +250,13 @@ func (o *PcloudNetworksPortsGetallUnauthorized) Code() int {
 }
 
 func (o *PcloudNetworksPortsGetallUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsGetallUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsGetallUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudNetworksPortsGetallUnauthorized) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsGetallUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsGetallUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudNetworksPortsGetallUnauthorized) GetPayload() *models.Error {
@@ -313,11 +320,13 @@ func (o *PcloudNetworksPortsGetallForbidden) Code() int {
 }
 
 func (o *PcloudNetworksPortsGetallForbidden) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsGetallForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsGetallForbidden %s", 403, payload)
 }
 
 func (o *PcloudNetworksPortsGetallForbidden) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsGetallForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsGetallForbidden %s", 403, payload)
 }
 
 func (o *PcloudNetworksPortsGetallForbidden) GetPayload() *models.Error {
@@ -381,11 +390,13 @@ func (o *PcloudNetworksPortsGetallNotFound) Code() int {
 }
 
 func (o *PcloudNetworksPortsGetallNotFound) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsGetallNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsGetallNotFound %s", 404, payload)
 }
 
 func (o *PcloudNetworksPortsGetallNotFound) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsGetallNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsGetallNotFound %s", 404, payload)
 }
 
 func (o *PcloudNetworksPortsGetallNotFound) GetPayload() *models.Error {
@@ -449,11 +460,13 @@ func (o *PcloudNetworksPortsGetallInternalServerError) Code() int {
 }
 
 func (o *PcloudNetworksPortsGetallInternalServerError) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsGetallInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsGetallInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudNetworksPortsGetallInternalServerError) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsGetallInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsGetallInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudNetworksPortsGetallInternalServerError) GetPayload() *models.Error {

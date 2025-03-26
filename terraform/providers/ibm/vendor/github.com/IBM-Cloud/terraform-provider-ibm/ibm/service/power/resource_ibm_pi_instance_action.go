@@ -6,6 +6,7 @@ package power
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	st "github.com/IBM-Cloud/power-go-client/clients/instance"
 
@@ -13,7 +14,7 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"log"
@@ -36,45 +37,44 @@ func ResourceIBMPIInstanceAction() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			// Arguments
+			Arg_Action: {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validate.ValidateAllowedStringValues([]string{Action_HardReboot, Action_ImmediateShutdown, Action_ResetState, Action_Start, Action_Stop, Action_SoftReboot}),
+				Description:  "PVM instance action type",
+			},
 			Arg_CloudInstanceID: {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "PI Cloud instance id",
 			},
-			Arg_PVMInstanceId: {
+			Arg_HealthStatus: {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validate.ValidateAllowedStringValues([]string{OK, Warning}),
+				Default:      OK,
+				Description:  "Set the health status of the PVM instance to connect it faster",
+			},
+			Arg_InstanceID: {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "PVM instance ID",
 			},
-			Arg_PVMInstanceActionType: {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validate.ValidateAllowedStringValues([]string{"start", "stop", "hard-reboot", "soft-reboot", "immediate-shutdown", "reset-state"}),
-				Description:  "PVM instance action type",
-			},
-			Arg_PVMInstanceHealthStatus: {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validate.ValidateAllowedStringValues([]string{PVMInstanceHealthOk, PVMInstanceHealthWarning}),
-				Default:      PVMInstanceHealthOk,
-				Description:  "Set the health status of the PVM instance to connect it faster",
-			},
-
-			// Computed
-			Attr_Status: {
+			// Attributes
+			Attr_HealthStatus: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The status of the PVM instance",
+				Description: "The PVM's health status value",
 			},
 			Attr_Progress: {
 				Type:        schema.TypeFloat,
 				Computed:    true,
 				Description: "The progress of an operation",
 			},
-			Attr_HealthStatus: {
+			Attr_Status: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The PVM's health status value",
+				Description: "The status of the PVM instance",
 			},
 		},
 	}
@@ -88,7 +88,7 @@ func resourceIBMPIInstanceActionCreate(ctx context.Context, d *schema.ResourceDa
 	}
 
 	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
-	id := d.Get(Arg_PVMInstanceId).(string)
+	id := d.Get(Arg_InstanceID).(string)
 	d.SetId(fmt.Sprintf("%s/%s", cloudInstanceID, id))
 
 	return resourceIBMPIInstanceActionRead(ctx, d, meta)
@@ -122,7 +122,7 @@ func resourceIBMPIInstanceActionRead(ctx context.Context, d *schema.ResourceData
 
 func resourceIBMPIInstanceActionUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
-	if d.HasChange(Arg_PVMInstanceActionType) {
+	if d.HasChange(Arg_Action) {
 		adiag := takeInstanceAction(ctx, d, meta, d.Timeout(schema.TimeoutUpdate))
 		if adiag != nil {
 			return adiag
@@ -145,32 +145,32 @@ func takeInstanceAction(ctx context.Context, d *schema.ResourceData, meta interf
 	}
 
 	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
-	id := d.Get(Arg_PVMInstanceId).(string)
-	action := d.Get(Arg_PVMInstanceActionType).(string)
-	targetHealthStatus := d.Get(Arg_PVMInstanceHealthStatus).(string)
+	id := d.Get(Arg_InstanceID).(string)
+	action := d.Get(Arg_Action).(string)
+	targetHealthStatus := d.Get(Arg_HealthStatus).(string)
 
 	var targetStatus string
-	if action == "stop" || action == "immediate-shutdown" {
-		targetStatus = "SHUTOFF"
-	} else if action == "reset-state" {
-		targetStatus = "ACTIVE"
-		targetHealthStatus = "CRITICAL"
+	if action == Action_Stop || action == Action_ImmediateShutdown {
+		targetStatus = State_Shutoff
+	} else if action == Action_ResetState {
+		targetStatus = State_Active
+		targetHealthStatus = Critical
 	} else {
 		// action is "start" or "soft-reboot" or "hard-reboot"
-		targetStatus = "ACTIVE"
+		targetStatus = State_Active
 	}
 
 	client := st.NewIBMPIInstanceClient(ctx, sess, cloudInstanceID)
 
 	// special case for action "start", "stop", "immediate-shutdown"
 	// skip calling action if instance is already in desired state
-	if action == "start" || action == "stop" || action == "immediate-shutdown" {
+	if action == Action_Start || action == Action_Stop || action == Action_ImmediateShutdown {
 		pvm, err := client.Get(id)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-		if *pvm.Status == targetStatus && pvm.Health != nil && (pvm.Health.Status == targetHealthStatus || pvm.Health.Status == PVMInstanceHealthOk) {
+		if strings.ToLower(*pvm.Status) == targetStatus && pvm.Health != nil && (pvm.Health.Status == targetHealthStatus || pvm.Health.Status == OK) {
 			log.Printf("[DEBUG] skipping as action %s not needed on the instance %s", action, id)
 			return nil
 		}
@@ -199,9 +199,9 @@ func takeInstanceAction(ctx context.Context, d *schema.ResourceData, meta interf
 func isWaitForPIInstanceActionStatus(ctx context.Context, client *st.IBMPIInstanceClient, id string, timeout time.Duration, targetStatus, targetHealthStatus string) (interface{}, error) {
 	log.Printf("Waiting for the action to be performed on the instance %s", id)
 
-	stateConf := &resource.StateChangeConf{
-		Pending:    []string{StatusPending},
-		Target:     []string{targetStatus, StatusError, ""},
+	stateConf := &retry.StateChangeConf{
+		Pending:    []string{State_Pending},
+		Target:     []string{targetStatus, State_Error, ""},
 		Refresh:    isPIActionRefreshFunc(client, id, targetStatus, targetHealthStatus),
 		Delay:      30 * time.Second,
 		MinTimeout: 2 * time.Minute,
@@ -211,7 +211,7 @@ func isWaitForPIInstanceActionStatus(ctx context.Context, client *st.IBMPIInstan
 	return stateConf.WaitForStateContext(ctx)
 }
 
-func isPIActionRefreshFunc(client *st.IBMPIInstanceClient, id, targetStatus, targetHealthStatus string) resource.StateRefreshFunc {
+func isPIActionRefreshFunc(client *st.IBMPIInstanceClient, id, targetStatus, targetHealthStatus string) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		log.Printf("Waiting for the target status to be [ %s ]", targetStatus)
 		pvm, err := client.Get(id)
@@ -219,12 +219,12 @@ func isPIActionRefreshFunc(client *st.IBMPIInstanceClient, id, targetStatus, tar
 			return nil, "", err
 		}
 
-		if *pvm.Status == targetStatus && (pvm.Health.Status == targetHealthStatus || pvm.Health.Status == PVMInstanceHealthOk) {
+		if strings.ToLower(*pvm.Status) == targetStatus && (pvm.Health.Status == targetHealthStatus || pvm.Health.Status == OK) {
 			log.Printf("The health status is now %s", pvm.Health.Status)
 			return pvm, targetStatus, nil
 		}
 
-		if *pvm.Status == "ERROR" {
+		if strings.ToLower(*pvm.Status) == State_Error {
 			if pvm.Fault != nil {
 				err = fmt.Errorf("failed to perform the action on the instance: %s", pvm.Fault.Message)
 			} else {
@@ -233,6 +233,6 @@ func isPIActionRefreshFunc(client *st.IBMPIInstanceClient, id, targetStatus, tar
 			return pvm, *pvm.Status, err
 		}
 
-		return pvm, StatusPending, nil
+		return pvm, State_Pending, nil
 	}
 }

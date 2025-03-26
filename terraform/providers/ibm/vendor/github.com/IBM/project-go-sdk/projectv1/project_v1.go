@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2023.
+ * (C) Copyright IBM Corp. 2024.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.83.0-adaf0721-20231212-210453
+ * IBM OpenAPI SDK Code Generator Version: 3.92.1-44330004-20240620-143510
  */
 
 // Package projectv1 : Operations and models for the ProjectV1 service
@@ -63,22 +63,26 @@ func NewProjectV1UsingExternalConfig(options *ProjectV1Options) (project *Projec
 	if options.Authenticator == nil {
 		options.Authenticator, err = core.GetAuthenticatorFromEnvironment(options.ServiceName)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "env-auth-error", common.GetComponentInfo())
 			return
 		}
 	}
 
 	project, err = NewProjectV1(options)
+	err = core.RepurposeSDKProblem(err, "new-client-error")
 	if err != nil {
 		return
 	}
 
 	err = project.Service.ConfigureService(options.ServiceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client-config-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = project.Service.SetServiceURL(options.URL)
+		err = core.RepurposeSDKProblem(err, "url-set-error")
 	}
 	return
 }
@@ -92,12 +96,14 @@ func NewProjectV1(options *ProjectV1Options) (service *ProjectV1, err error) {
 
 	baseService, err := core.NewBaseService(serviceOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "new-base-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = baseService.SetServiceURL(options.URL)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "set-url-error", common.GetComponentInfo())
 			return
 		}
 	}
@@ -111,7 +117,7 @@ func NewProjectV1(options *ProjectV1Options) (service *ProjectV1, err error) {
 
 // GetServiceURLForRegion returns the service URL to be used for the specified region
 func GetServiceURLForRegion(region string) (string, error) {
-	return "", fmt.Errorf("service does not support regional URLs")
+	return "", core.SDKErrorf(nil, "service does not support regional URLs", "no-regional-support", common.GetComponentInfo())
 }
 
 // Clone makes a copy of "project" suitable for processing requests.
@@ -126,7 +132,11 @@ func (project *ProjectV1) Clone() *ProjectV1 {
 
 // SetServiceURL sets the service URL
 func (project *ProjectV1) SetServiceURL(url string) error {
-	return project.Service.SetServiceURL(url)
+	err := project.Service.SetServiceURL(url)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-set-error", common.GetComponentInfo())
+	}
+	return err
 }
 
 // GetServiceURL returns the service URL
@@ -163,18 +173,24 @@ func (project *ProjectV1) DisableRetries() {
 // CreateProject : Create a project
 // Create a new project and asynchronously setup the tools to manage it. Add a deployable architecture by customizing
 // the configuration. After the changes are validated and approved, deploy the resources that the project configures.
+// For more information, see [Creating a
+// project](/docs/secure-enterprise?topic=secure-enterprise-setup-project&interface=ui/docs-draft/secure-enterprise?topic=secure-enterprise-setup-project).
 func (project *ProjectV1) CreateProject(createProjectOptions *CreateProjectOptions) (result *Project, response *core.DetailedResponse, err error) {
-	return project.CreateProjectWithContext(context.Background(), createProjectOptions)
+	result, response, err = project.CreateProjectWithContext(context.Background(), createProjectOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateProjectWithContext is an alternate form of the CreateProject method which supports a Context parameter
 func (project *ProjectV1) CreateProjectWithContext(ctx context.Context, createProjectOptions *CreateProjectOptions) (result *Project, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createProjectOptions, "createProjectOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createProjectOptions, "createProjectOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -183,6 +199,7 @@ func (project *ProjectV1) CreateProjectWithContext(ctx context.Context, createPr
 	builder.EnableGzipCompression = project.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -215,22 +232,27 @@ func (project *ProjectV1) CreateProjectWithContext(ctx context.Context, createPr
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = project.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_project", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProject)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -242,13 +264,16 @@ func (project *ProjectV1) CreateProjectWithContext(ctx context.Context, createPr
 // ListProjects : List projects
 // List existing projects. Projects are sorted by ID.
 func (project *ProjectV1) ListProjects(listProjectsOptions *ListProjectsOptions) (result *ProjectCollection, response *core.DetailedResponse, err error) {
-	return project.ListProjectsWithContext(context.Background(), listProjectsOptions)
+	result, response, err = project.ListProjectsWithContext(context.Background(), listProjectsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListProjectsWithContext is an alternate form of the ListProjects method which supports a Context parameter
 func (project *ProjectV1) ListProjectsWithContext(ctx context.Context, listProjectsOptions *ListProjectsOptions) (result *ProjectCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(listProjectsOptions, "listProjectsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -257,6 +282,7 @@ func (project *ProjectV1) ListProjectsWithContext(ctx context.Context, listProje
 	builder.EnableGzipCompression = project.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -270,8 +296,8 @@ func (project *ProjectV1) ListProjectsWithContext(ctx context.Context, listProje
 	}
 	builder.AddHeader("Accept", "application/json")
 
-	if listProjectsOptions.Start != nil {
-		builder.AddQuery("start", fmt.Sprint(*listProjectsOptions.Start))
+	if listProjectsOptions.Token != nil {
+		builder.AddQuery("token", fmt.Sprint(*listProjectsOptions.Token))
 	}
 	if listProjectsOptions.Limit != nil {
 		builder.AddQuery("limit", fmt.Sprint(*listProjectsOptions.Limit))
@@ -279,17 +305,21 @@ func (project *ProjectV1) ListProjectsWithContext(ctx context.Context, listProje
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = project.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_projects", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProjectCollection)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -301,17 +331,21 @@ func (project *ProjectV1) ListProjectsWithContext(ctx context.Context, listProje
 // GetProject : Get a project
 // Get information about a project.
 func (project *ProjectV1) GetProject(getProjectOptions *GetProjectOptions) (result *Project, response *core.DetailedResponse, err error) {
-	return project.GetProjectWithContext(context.Background(), getProjectOptions)
+	result, response, err = project.GetProjectWithContext(context.Background(), getProjectOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetProjectWithContext is an alternate form of the GetProject method which supports a Context parameter
 func (project *ProjectV1) GetProjectWithContext(ctx context.Context, getProjectOptions *GetProjectOptions) (result *Project, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getProjectOptions, "getProjectOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getProjectOptions, "getProjectOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -324,6 +358,7 @@ func (project *ProjectV1) GetProjectWithContext(ctx context.Context, getProjectO
 	builder.EnableGzipCompression = project.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -339,17 +374,21 @@ func (project *ProjectV1) GetProjectWithContext(ctx context.Context, getProjectO
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = project.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_project", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProject)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -359,19 +398,23 @@ func (project *ProjectV1) GetProjectWithContext(ctx context.Context, getProjectO
 }
 
 // UpdateProject : Update a project
-// Update a project by the ID.
+// Update a project by specifying its ID.
 func (project *ProjectV1) UpdateProject(updateProjectOptions *UpdateProjectOptions) (result *Project, response *core.DetailedResponse, err error) {
-	return project.UpdateProjectWithContext(context.Background(), updateProjectOptions)
+	result, response, err = project.UpdateProjectWithContext(context.Background(), updateProjectOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateProjectWithContext is an alternate form of the UpdateProject method which supports a Context parameter
 func (project *ProjectV1) UpdateProjectWithContext(ctx context.Context, updateProjectOptions *UpdateProjectOptions) (result *Project, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateProjectOptions, "updateProjectOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateProjectOptions, "updateProjectOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -384,6 +427,7 @@ func (project *ProjectV1) UpdateProjectWithContext(ctx context.Context, updatePr
 	builder.EnableGzipCompression = project.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -404,22 +448,27 @@ func (project *ProjectV1) UpdateProjectWithContext(ctx context.Context, updatePr
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = project.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_project", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProject)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -429,19 +478,23 @@ func (project *ProjectV1) UpdateProjectWithContext(ctx context.Context, updatePr
 }
 
 // DeleteProject : Delete a project
-// Delete a project document by the ID. A project can only be deleted after deleting all of its resources.
-func (project *ProjectV1) DeleteProject(deleteProjectOptions *DeleteProjectOptions) (response *core.DetailedResponse, err error) {
-	return project.DeleteProjectWithContext(context.Background(), deleteProjectOptions)
+// Delete a project document by specifying the ID. A project can be deleted only after you delete all of its resources.
+func (project *ProjectV1) DeleteProject(deleteProjectOptions *DeleteProjectOptions) (result *ProjectDeleteResponse, response *core.DetailedResponse, err error) {
+	result, response, err = project.DeleteProjectWithContext(context.Background(), deleteProjectOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteProjectWithContext is an alternate form of the DeleteProject method which supports a Context parameter
-func (project *ProjectV1) DeleteProjectWithContext(ctx context.Context, deleteProjectOptions *DeleteProjectOptions) (response *core.DetailedResponse, err error) {
+func (project *ProjectV1) DeleteProjectWithContext(ctx context.Context, deleteProjectOptions *DeleteProjectOptions) (result *ProjectDeleteResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteProjectOptions, "deleteProjectOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteProjectOptions, "deleteProjectOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -454,6 +507,7 @@ func (project *ProjectV1) DeleteProjectWithContext(ctx context.Context, deletePr
 	builder.EnableGzipCompression = project.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -465,31 +519,52 @@ func (project *ProjectV1) DeleteProjectWithContext(ctx context.Context, deletePr
 	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
+	builder.AddHeader("Accept", "application/json")
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
-	response, err = project.Service.Request(request, nil)
+	var rawResponse map[string]json.RawMessage
+	response, err = project.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_project", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProjectDeleteResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
 
 	return
 }
 
 // CreateProjectEnvironment : Create an environment
-// Create an environment.
+// Create an environment to group related configurations together and share values across them for easier deployment.
+// For more information, see [Creating an environment](/docs/secure-enterprise?topic=secure-enterprise-create-env).
 func (project *ProjectV1) CreateProjectEnvironment(createProjectEnvironmentOptions *CreateProjectEnvironmentOptions) (result *Environment, response *core.DetailedResponse, err error) {
-	return project.CreateProjectEnvironmentWithContext(context.Background(), createProjectEnvironmentOptions)
+	result, response, err = project.CreateProjectEnvironmentWithContext(context.Background(), createProjectEnvironmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateProjectEnvironmentWithContext is an alternate form of the CreateProjectEnvironment method which supports a Context parameter
 func (project *ProjectV1) CreateProjectEnvironmentWithContext(ctx context.Context, createProjectEnvironmentOptions *CreateProjectEnvironmentOptions) (result *Environment, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createProjectEnvironmentOptions, "createProjectEnvironmentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createProjectEnvironmentOptions, "createProjectEnvironmentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -502,6 +577,7 @@ func (project *ProjectV1) CreateProjectEnvironmentWithContext(ctx context.Contex
 	builder.EnableGzipCompression = project.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{project_id}/environments`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -522,22 +598,27 @@ func (project *ProjectV1) CreateProjectEnvironmentWithContext(ctx context.Contex
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = project.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_project_environment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalEnvironment)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -547,19 +628,24 @@ func (project *ProjectV1) CreateProjectEnvironmentWithContext(ctx context.Contex
 }
 
 // ListProjectEnvironments : List environments
-// Returns all environments.
+// List all available environments. For more information, see [Creating an
+// environment](/docs/secure-enterprise?topic=secure-enterprise-create-env).
 func (project *ProjectV1) ListProjectEnvironments(listProjectEnvironmentsOptions *ListProjectEnvironmentsOptions) (result *EnvironmentCollection, response *core.DetailedResponse, err error) {
-	return project.ListProjectEnvironmentsWithContext(context.Background(), listProjectEnvironmentsOptions)
+	result, response, err = project.ListProjectEnvironmentsWithContext(context.Background(), listProjectEnvironmentsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListProjectEnvironmentsWithContext is an alternate form of the ListProjectEnvironments method which supports a Context parameter
 func (project *ProjectV1) ListProjectEnvironmentsWithContext(ctx context.Context, listProjectEnvironmentsOptions *ListProjectEnvironmentsOptions) (result *EnvironmentCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listProjectEnvironmentsOptions, "listProjectEnvironmentsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listProjectEnvironmentsOptions, "listProjectEnvironmentsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -572,6 +658,7 @@ func (project *ProjectV1) ListProjectEnvironmentsWithContext(ctx context.Context
 	builder.EnableGzipCompression = project.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{project_id}/environments`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -585,19 +672,30 @@ func (project *ProjectV1) ListProjectEnvironmentsWithContext(ctx context.Context
 	}
 	builder.AddHeader("Accept", "application/json")
 
+	if listProjectEnvironmentsOptions.Token != nil {
+		builder.AddQuery("token", fmt.Sprint(*listProjectEnvironmentsOptions.Token))
+	}
+	if listProjectEnvironmentsOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listProjectEnvironmentsOptions.Limit))
+	}
+
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = project.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_project_environments", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalEnvironmentCollection)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -607,19 +705,23 @@ func (project *ProjectV1) ListProjectEnvironmentsWithContext(ctx context.Context
 }
 
 // GetProjectEnvironment : Get an environment
-// Returns an environment.
+// Get an environment. [Learn more](/docs/secure-enterprise?topic=secure-enterprise-create-env).
 func (project *ProjectV1) GetProjectEnvironment(getProjectEnvironmentOptions *GetProjectEnvironmentOptions) (result *Environment, response *core.DetailedResponse, err error) {
-	return project.GetProjectEnvironmentWithContext(context.Background(), getProjectEnvironmentOptions)
+	result, response, err = project.GetProjectEnvironmentWithContext(context.Background(), getProjectEnvironmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetProjectEnvironmentWithContext is an alternate form of the GetProjectEnvironment method which supports a Context parameter
 func (project *ProjectV1) GetProjectEnvironmentWithContext(ctx context.Context, getProjectEnvironmentOptions *GetProjectEnvironmentOptions) (result *Environment, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getProjectEnvironmentOptions, "getProjectEnvironmentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getProjectEnvironmentOptions, "getProjectEnvironmentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -633,6 +735,7 @@ func (project *ProjectV1) GetProjectEnvironmentWithContext(ctx context.Context, 
 	builder.EnableGzipCompression = project.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{project_id}/environments/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -648,17 +751,21 @@ func (project *ProjectV1) GetProjectEnvironmentWithContext(ctx context.Context, 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = project.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_project_environment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalEnvironment)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -668,19 +775,23 @@ func (project *ProjectV1) GetProjectEnvironmentWithContext(ctx context.Context, 
 }
 
 // UpdateProjectEnvironment : Update an environment
-// Update an environment by the ID.
+// Update an environment by specifying its ID. [Learn more](/docs/secure-enterprise?topic=secure-enterprise-create-env).
 func (project *ProjectV1) UpdateProjectEnvironment(updateProjectEnvironmentOptions *UpdateProjectEnvironmentOptions) (result *Environment, response *core.DetailedResponse, err error) {
-	return project.UpdateProjectEnvironmentWithContext(context.Background(), updateProjectEnvironmentOptions)
+	result, response, err = project.UpdateProjectEnvironmentWithContext(context.Background(), updateProjectEnvironmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateProjectEnvironmentWithContext is an alternate form of the UpdateProjectEnvironment method which supports a Context parameter
 func (project *ProjectV1) UpdateProjectEnvironmentWithContext(ctx context.Context, updateProjectEnvironmentOptions *UpdateProjectEnvironmentOptions) (result *Environment, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateProjectEnvironmentOptions, "updateProjectEnvironmentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateProjectEnvironmentOptions, "updateProjectEnvironmentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -694,6 +805,7 @@ func (project *ProjectV1) UpdateProjectEnvironmentWithContext(ctx context.Contex
 	builder.EnableGzipCompression = project.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{project_id}/environments/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -714,22 +826,27 @@ func (project *ProjectV1) UpdateProjectEnvironmentWithContext(ctx context.Contex
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = project.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_project_environment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalEnvironment)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -739,19 +856,23 @@ func (project *ProjectV1) UpdateProjectEnvironmentWithContext(ctx context.Contex
 }
 
 // DeleteProjectEnvironment : Delete an environment
-// Delete an environment in a project by ID.
+// Delete an environment in a project by specifying its ID.
 func (project *ProjectV1) DeleteProjectEnvironment(deleteProjectEnvironmentOptions *DeleteProjectEnvironmentOptions) (result *EnvironmentDeleteResponse, response *core.DetailedResponse, err error) {
-	return project.DeleteProjectEnvironmentWithContext(context.Background(), deleteProjectEnvironmentOptions)
+	result, response, err = project.DeleteProjectEnvironmentWithContext(context.Background(), deleteProjectEnvironmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteProjectEnvironmentWithContext is an alternate form of the DeleteProjectEnvironment method which supports a Context parameter
 func (project *ProjectV1) DeleteProjectEnvironmentWithContext(ctx context.Context, deleteProjectEnvironmentOptions *DeleteProjectEnvironmentOptions) (result *EnvironmentDeleteResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteProjectEnvironmentOptions, "deleteProjectEnvironmentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteProjectEnvironmentOptions, "deleteProjectEnvironmentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -765,6 +886,7 @@ func (project *ProjectV1) DeleteProjectEnvironmentWithContext(ctx context.Contex
 	builder.EnableGzipCompression = project.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{project_id}/environments/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -780,17 +902,21 @@ func (project *ProjectV1) DeleteProjectEnvironmentWithContext(ctx context.Contex
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = project.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_project_environment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalEnvironmentDeleteResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -802,17 +928,21 @@ func (project *ProjectV1) DeleteProjectEnvironmentWithContext(ctx context.Contex
 // CreateConfig : Add a new configuration
 // Add a new configuration to a project.
 func (project *ProjectV1) CreateConfig(createConfigOptions *CreateConfigOptions) (result *ProjectConfig, response *core.DetailedResponse, err error) {
-	return project.CreateConfigWithContext(context.Background(), createConfigOptions)
+	result, response, err = project.CreateConfigWithContext(context.Background(), createConfigOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateConfigWithContext is an alternate form of the CreateConfig method which supports a Context parameter
 func (project *ProjectV1) CreateConfigWithContext(ctx context.Context, createConfigOptions *CreateConfigOptions) (result *ProjectConfig, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createConfigOptions, "createConfigOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createConfigOptions, "createConfigOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -825,6 +955,7 @@ func (project *ProjectV1) CreateConfigWithContext(ctx context.Context, createCon
 	builder.EnableGzipCompression = project.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{project_id}/configs`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -848,22 +979,27 @@ func (project *ProjectV1) CreateConfigWithContext(ctx context.Context, createCon
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = project.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_config", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProjectConfig)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -873,19 +1009,23 @@ func (project *ProjectV1) CreateConfigWithContext(ctx context.Context, createCon
 }
 
 // ListConfigs : List all project configurations
-// The collection of configurations that are returned.
+// Retrieve the collection of configurations.
 func (project *ProjectV1) ListConfigs(listConfigsOptions *ListConfigsOptions) (result *ProjectConfigCollection, response *core.DetailedResponse, err error) {
-	return project.ListConfigsWithContext(context.Background(), listConfigsOptions)
+	result, response, err = project.ListConfigsWithContext(context.Background(), listConfigsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListConfigsWithContext is an alternate form of the ListConfigs method which supports a Context parameter
 func (project *ProjectV1) ListConfigsWithContext(ctx context.Context, listConfigsOptions *ListConfigsOptions) (result *ProjectConfigCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listConfigsOptions, "listConfigsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listConfigsOptions, "listConfigsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -898,6 +1038,7 @@ func (project *ProjectV1) ListConfigsWithContext(ctx context.Context, listConfig
 	builder.EnableGzipCompression = project.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{project_id}/configs`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -911,19 +1052,30 @@ func (project *ProjectV1) ListConfigsWithContext(ctx context.Context, listConfig
 	}
 	builder.AddHeader("Accept", "application/json")
 
+	if listConfigsOptions.Token != nil {
+		builder.AddQuery("token", fmt.Sprint(*listConfigsOptions.Token))
+	}
+	if listConfigsOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listConfigsOptions.Limit))
+	}
+
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = project.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_configs", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProjectConfigCollection)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -933,19 +1085,25 @@ func (project *ProjectV1) ListConfigsWithContext(ctx context.Context, listConfig
 }
 
 // GetConfig : Get a project configuration
-// Returns the specified project configuration in a specific project.
+// Retrieve the specified project configuration in a specific project. For more information about project
+// configurations, see [Monitoring the status of a configuration and its
+// resources](/docs/secure-enterprise?topic=secure-enterprise-monitor-status-projects).
 func (project *ProjectV1) GetConfig(getConfigOptions *GetConfigOptions) (result *ProjectConfig, response *core.DetailedResponse, err error) {
-	return project.GetConfigWithContext(context.Background(), getConfigOptions)
+	result, response, err = project.GetConfigWithContext(context.Background(), getConfigOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetConfigWithContext is an alternate form of the GetConfig method which supports a Context parameter
 func (project *ProjectV1) GetConfigWithContext(ctx context.Context, getConfigOptions *GetConfigOptions) (result *ProjectConfig, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getConfigOptions, "getConfigOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getConfigOptions, "getConfigOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -959,6 +1117,7 @@ func (project *ProjectV1) GetConfigWithContext(ctx context.Context, getConfigOpt
 	builder.EnableGzipCompression = project.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{project_id}/configs/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -974,17 +1133,21 @@ func (project *ProjectV1) GetConfigWithContext(ctx context.Context, getConfigOpt
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = project.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_config", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProjectConfig)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -994,19 +1157,24 @@ func (project *ProjectV1) GetConfigWithContext(ctx context.Context, getConfigOpt
 }
 
 // UpdateConfig : Update a configuration
-// Update a configuration in a project by the ID.
+// Update a configuration in a project by specifying the ID. [Learn
+// more](/docs/secure-enterprise?topic=secure-enterprise-config-project).
 func (project *ProjectV1) UpdateConfig(updateConfigOptions *UpdateConfigOptions) (result *ProjectConfig, response *core.DetailedResponse, err error) {
-	return project.UpdateConfigWithContext(context.Background(), updateConfigOptions)
+	result, response, err = project.UpdateConfigWithContext(context.Background(), updateConfigOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateConfigWithContext is an alternate form of the UpdateConfig method which supports a Context parameter
 func (project *ProjectV1) UpdateConfigWithContext(ctx context.Context, updateConfigOptions *UpdateConfigOptions) (result *ProjectConfig, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateConfigOptions, "updateConfigOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateConfigOptions, "updateConfigOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1020,6 +1188,7 @@ func (project *ProjectV1) UpdateConfigWithContext(ctx context.Context, updateCon
 	builder.EnableGzipCompression = project.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{project_id}/configs/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1040,22 +1209,27 @@ func (project *ProjectV1) UpdateConfigWithContext(ctx context.Context, updateCon
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = project.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_config", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProjectConfig)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1064,20 +1238,24 @@ func (project *ProjectV1) UpdateConfigWithContext(ctx context.Context, updateCon
 	return
 }
 
-// DeleteConfig : Delete a configuration in a project by ID
-// Delete a configuration in a project.
+// DeleteConfig : Delete a configuration
+// Delete a configuration in a project by specifying its ID.
 func (project *ProjectV1) DeleteConfig(deleteConfigOptions *DeleteConfigOptions) (result *ProjectConfigDelete, response *core.DetailedResponse, err error) {
-	return project.DeleteConfigWithContext(context.Background(), deleteConfigOptions)
+	result, response, err = project.DeleteConfigWithContext(context.Background(), deleteConfigOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteConfigWithContext is an alternate form of the DeleteConfig method which supports a Context parameter
 func (project *ProjectV1) DeleteConfigWithContext(ctx context.Context, deleteConfigOptions *DeleteConfigOptions) (result *ProjectConfigDelete, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteConfigOptions, "deleteConfigOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteConfigOptions, "deleteConfigOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1091,6 +1269,7 @@ func (project *ProjectV1) DeleteConfigWithContext(ctx context.Context, deleteCon
 	builder.EnableGzipCompression = project.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{project_id}/configs/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1106,17 +1285,21 @@ func (project *ProjectV1) DeleteConfigWithContext(ctx context.Context, deleteCon
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = project.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_config", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProjectConfigDelete)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1125,20 +1308,24 @@ func (project *ProjectV1) DeleteConfigWithContext(ctx context.Context, deleteCon
 	return
 }
 
-// ForceApprove : Force approve project configuration
+// ForceApprove : Force approve a project configuration
 // Force approve configuration edits to the main configuration with an approving comment.
 func (project *ProjectV1) ForceApprove(forceApproveOptions *ForceApproveOptions) (result *ProjectConfigVersion, response *core.DetailedResponse, err error) {
-	return project.ForceApproveWithContext(context.Background(), forceApproveOptions)
+	result, response, err = project.ForceApproveWithContext(context.Background(), forceApproveOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ForceApproveWithContext is an alternate form of the ForceApprove method which supports a Context parameter
 func (project *ProjectV1) ForceApproveWithContext(ctx context.Context, forceApproveOptions *ForceApproveOptions) (result *ProjectConfigVersion, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(forceApproveOptions, "forceApproveOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(forceApproveOptions, "forceApproveOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1152,6 +1339,7 @@ func (project *ProjectV1) ForceApproveWithContext(ctx context.Context, forceAppr
 	builder.EnableGzipCompression = project.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{project_id}/configs/{id}/force_approve`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1172,22 +1360,27 @@ func (project *ProjectV1) ForceApproveWithContext(ctx context.Context, forceAppr
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = project.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "force_approve", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProjectConfigVersion)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1199,17 +1392,21 @@ func (project *ProjectV1) ForceApproveWithContext(ctx context.Context, forceAppr
 // Approve : Approve and merge a configuration draft
 // Approve and merge configuration edits to the main configuration.
 func (project *ProjectV1) Approve(approveOptions *ApproveOptions) (result *ProjectConfigVersion, response *core.DetailedResponse, err error) {
-	return project.ApproveWithContext(context.Background(), approveOptions)
+	result, response, err = project.ApproveWithContext(context.Background(), approveOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ApproveWithContext is an alternate form of the Approve method which supports a Context parameter
 func (project *ProjectV1) ApproveWithContext(ctx context.Context, approveOptions *ApproveOptions) (result *ProjectConfigVersion, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(approveOptions, "approveOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(approveOptions, "approveOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1223,6 +1420,7 @@ func (project *ProjectV1) ApproveWithContext(ctx context.Context, approveOptions
 	builder.EnableGzipCompression = project.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{project_id}/configs/{id}/approve`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1243,22 +1441,27 @@ func (project *ProjectV1) ApproveWithContext(ctx context.Context, approveOptions
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = project.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "approve", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProjectConfigVersion)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1268,20 +1471,24 @@ func (project *ProjectV1) ApproveWithContext(ctx context.Context, approveOptions
 }
 
 // ValidateConfig : Run a validation check
-// Run a validation check on a given configuration in project. The check includes creating or updating the associated
-// schematics workspace with a plan job, running the CRA scans, and cost estimatation.
+// Run a validation check on a specific configuration in the project. The check includes creating or updating the
+// associated Schematics workspace with a plan job, running the CRA scans, and cost estimation.
 func (project *ProjectV1) ValidateConfig(validateConfigOptions *ValidateConfigOptions) (result *ProjectConfigVersion, response *core.DetailedResponse, err error) {
-	return project.ValidateConfigWithContext(context.Background(), validateConfigOptions)
+	result, response, err = project.ValidateConfigWithContext(context.Background(), validateConfigOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ValidateConfigWithContext is an alternate form of the ValidateConfig method which supports a Context parameter
 func (project *ProjectV1) ValidateConfigWithContext(ctx context.Context, validateConfigOptions *ValidateConfigOptions) (result *ProjectConfigVersion, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(validateConfigOptions, "validateConfigOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(validateConfigOptions, "validateConfigOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1295,6 +1502,7 @@ func (project *ProjectV1) ValidateConfigWithContext(ctx context.Context, validat
 	builder.EnableGzipCompression = project.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{project_id}/configs/{id}/validate`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1310,17 +1518,21 @@ func (project *ProjectV1) ValidateConfigWithContext(ctx context.Context, validat
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = project.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "validate_config", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProjectConfigVersion)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1330,20 +1542,24 @@ func (project *ProjectV1) ValidateConfigWithContext(ctx context.Context, validat
 }
 
 // DeployConfig : Deploy a configuration
-// Deploy a project's configuration. It's an asynchronous operation that can be tracked using the get project
+// Deploy a project's configuration. This operation is asynchronous and can be tracked by using the get project
 // configuration API with full metadata.
 func (project *ProjectV1) DeployConfig(deployConfigOptions *DeployConfigOptions) (result *ProjectConfigVersion, response *core.DetailedResponse, err error) {
-	return project.DeployConfigWithContext(context.Background(), deployConfigOptions)
+	result, response, err = project.DeployConfigWithContext(context.Background(), deployConfigOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeployConfigWithContext is an alternate form of the DeployConfig method which supports a Context parameter
 func (project *ProjectV1) DeployConfigWithContext(ctx context.Context, deployConfigOptions *DeployConfigOptions) (result *ProjectConfigVersion, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deployConfigOptions, "deployConfigOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deployConfigOptions, "deployConfigOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1357,6 +1573,7 @@ func (project *ProjectV1) DeployConfigWithContext(ctx context.Context, deployCon
 	builder.EnableGzipCompression = project.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{project_id}/configs/{id}/deploy`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1372,17 +1589,21 @@ func (project *ProjectV1) DeployConfigWithContext(ctx context.Context, deployCon
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = project.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "deploy_config", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProjectConfigVersion)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1394,18 +1615,22 @@ func (project *ProjectV1) DeployConfigWithContext(ctx context.Context, deployCon
 // UndeployConfig : Undeploy configuration resources
 // Undeploy a project's configuration resources. The operation undeploys all the resources that are deployed with the
 // specific configuration. You can track it by using the get project configuration API with full metadata.
-func (project *ProjectV1) UndeployConfig(undeployConfigOptions *UndeployConfigOptions) (response *core.DetailedResponse, err error) {
-	return project.UndeployConfigWithContext(context.Background(), undeployConfigOptions)
+func (project *ProjectV1) UndeployConfig(undeployConfigOptions *UndeployConfigOptions) (result *ProjectConfigVersion, response *core.DetailedResponse, err error) {
+	result, response, err = project.UndeployConfigWithContext(context.Background(), undeployConfigOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UndeployConfigWithContext is an alternate form of the UndeployConfig method which supports a Context parameter
-func (project *ProjectV1) UndeployConfigWithContext(ctx context.Context, undeployConfigOptions *UndeployConfigOptions) (response *core.DetailedResponse, err error) {
+func (project *ProjectV1) UndeployConfigWithContext(ctx context.Context, undeployConfigOptions *UndeployConfigOptions) (result *ProjectConfigVersion, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(undeployConfigOptions, "undeployConfigOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(undeployConfigOptions, "undeployConfigOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1419,6 +1644,7 @@ func (project *ProjectV1) UndeployConfigWithContext(ctx context.Context, undeplo
 	builder.EnableGzipCompression = project.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{project_id}/configs/{id}/undeploy`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1430,32 +1656,52 @@ func (project *ProjectV1) UndeployConfigWithContext(ctx context.Context, undeplo
 	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
+	builder.AddHeader("Accept", "application/json")
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
-	response, err = project.Service.Request(request, nil)
+	var rawResponse map[string]json.RawMessage
+	response, err = project.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "undeploy_config", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProjectConfigVersion)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
 
 	return
 }
 
 // SyncConfig : Sync a project configuration
-// Sync a project configuration by analyzing the associated pipeline runs and schematics workspace logs to get the
+// Sync a project configuration by analyzing the associated pipeline runs and Schematics workspace logs to get the
 // configuration back to a working state.
 func (project *ProjectV1) SyncConfig(syncConfigOptions *SyncConfigOptions) (response *core.DetailedResponse, err error) {
-	return project.SyncConfigWithContext(context.Background(), syncConfigOptions)
+	response, err = project.SyncConfigWithContext(context.Background(), syncConfigOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // SyncConfigWithContext is an alternate form of the SyncConfig method which supports a Context parameter
 func (project *ProjectV1) SyncConfigWithContext(ctx context.Context, syncConfigOptions *SyncConfigOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(syncConfigOptions, "syncConfigOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(syncConfigOptions, "syncConfigOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1469,6 +1715,7 @@ func (project *ProjectV1) SyncConfigWithContext(ctx context.Context, syncConfigO
 	builder.EnableGzipCompression = project.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{project_id}/configs/{id}/sync`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1488,33 +1735,44 @@ func (project *ProjectV1) SyncConfigWithContext(ctx context.Context, syncConfigO
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = project.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "sync_config", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
 
-// ListConfigResources : List the resources deployed by a configuration
-// A list of resources deployed by a configuraton.
+// ListConfigResources : List all deployed resources
+// List resources that are deployed by a configuration.
 func (project *ProjectV1) ListConfigResources(listConfigResourcesOptions *ListConfigResourcesOptions) (result *ProjectConfigResourceCollection, response *core.DetailedResponse, err error) {
-	return project.ListConfigResourcesWithContext(context.Background(), listConfigResourcesOptions)
+	result, response, err = project.ListConfigResourcesWithContext(context.Background(), listConfigResourcesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListConfigResourcesWithContext is an alternate form of the ListConfigResources method which supports a Context parameter
 func (project *ProjectV1) ListConfigResourcesWithContext(ctx context.Context, listConfigResourcesOptions *ListConfigResourcesOptions) (result *ProjectConfigResourceCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listConfigResourcesOptions, "listConfigResourcesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listConfigResourcesOptions, "listConfigResourcesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1528,6 +1786,7 @@ func (project *ProjectV1) ListConfigResourcesWithContext(ctx context.Context, li
 	builder.EnableGzipCompression = project.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{project_id}/configs/{id}/resources`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1543,17 +1802,21 @@ func (project *ProjectV1) ListConfigResourcesWithContext(ctx context.Context, li
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = project.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_config_resources", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProjectConfigResourceCollection)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1562,20 +1825,338 @@ func (project *ProjectV1) ListConfigResourcesWithContext(ctx context.Context, li
 	return
 }
 
-// ListConfigVersions : Get a list of versions of a project configuration
-// Returns a list of previous and current versions of a project configuration in a specific project.
+// CreateStackDefinition : Create a stack definition
+// Defines inputs at the stack level that users need to configure along with input values at the member level. These
+// values are included in the catalog entry when the deployable architecture stack is exported to a private catalog and
+// are required for the deployable architecture stack to deploy. You can add a reference to a value, or add the value
+// explicitly at the member level.
+func (project *ProjectV1) CreateStackDefinition(createStackDefinitionOptions *CreateStackDefinitionOptions) (result *StackDefinition, response *core.DetailedResponse, err error) {
+	result, response, err = project.CreateStackDefinitionWithContext(context.Background(), createStackDefinitionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// CreateStackDefinitionWithContext is an alternate form of the CreateStackDefinition method which supports a Context parameter
+func (project *ProjectV1) CreateStackDefinitionWithContext(ctx context.Context, createStackDefinitionOptions *CreateStackDefinitionOptions) (result *StackDefinition, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createStackDefinitionOptions, "createStackDefinitionOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(createStackDefinitionOptions, "createStackDefinitionOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"project_id": *createStackDefinitionOptions.ProjectID,
+		"id": *createStackDefinitionOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = project.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{project_id}/configs/{id}/stack_definition`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range createStackDefinitionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("project", "V1", "CreateStackDefinition")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if createStackDefinitionOptions.StackDefinition != nil {
+		body["stack_definition"] = createStackDefinitionOptions.StackDefinition
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = project.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "create_stack_definition", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalStackDefinition)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetStackDefinition : Get a stack definition
+// Retrieve the stack definition that is associated to the configuration.
+func (project *ProjectV1) GetStackDefinition(getStackDefinitionOptions *GetStackDefinitionOptions) (result *StackDefinition, response *core.DetailedResponse, err error) {
+	result, response, err = project.GetStackDefinitionWithContext(context.Background(), getStackDefinitionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetStackDefinitionWithContext is an alternate form of the GetStackDefinition method which supports a Context parameter
+func (project *ProjectV1) GetStackDefinitionWithContext(ctx context.Context, getStackDefinitionOptions *GetStackDefinitionOptions) (result *StackDefinition, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getStackDefinitionOptions, "getStackDefinitionOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getStackDefinitionOptions, "getStackDefinitionOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"project_id": *getStackDefinitionOptions.ProjectID,
+		"id": *getStackDefinitionOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = project.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{project_id}/configs/{id}/stack_definition`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getStackDefinitionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("project", "V1", "GetStackDefinition")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = project.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_stack_definition", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalStackDefinition)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// UpdateStackDefinition : Update a stack definition
+// Update the stack definition that is associated with the configuration.
+func (project *ProjectV1) UpdateStackDefinition(updateStackDefinitionOptions *UpdateStackDefinitionOptions) (result *StackDefinition, response *core.DetailedResponse, err error) {
+	result, response, err = project.UpdateStackDefinitionWithContext(context.Background(), updateStackDefinitionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// UpdateStackDefinitionWithContext is an alternate form of the UpdateStackDefinition method which supports a Context parameter
+func (project *ProjectV1) UpdateStackDefinitionWithContext(ctx context.Context, updateStackDefinitionOptions *UpdateStackDefinitionOptions) (result *StackDefinition, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updateStackDefinitionOptions, "updateStackDefinitionOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(updateStackDefinitionOptions, "updateStackDefinitionOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"project_id": *updateStackDefinitionOptions.ProjectID,
+		"id": *updateStackDefinitionOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.PATCH)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = project.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{project_id}/configs/{id}/stack_definition`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range updateStackDefinitionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("project", "V1", "UpdateStackDefinition")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if updateStackDefinitionOptions.StackDefinition != nil {
+		body["stack_definition"] = updateStackDefinitionOptions.StackDefinition
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = project.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_stack_definition", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalStackDefinition)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// ExportStackDefinition : Export a deployable architecture stack to the private catalog
+// Exports the deployable architecture stack to a private catalog. All member deployable architectures within the stack
+// must be validated and deployed before the stack is exported. The stack definition must also exist before the stack is
+// exported. You can export the stack as a new product, or as a new version of an existing product.
+func (project *ProjectV1) ExportStackDefinition(exportStackDefinitionOptions *ExportStackDefinitionOptions) (result *StackDefinitionExportResponse, response *core.DetailedResponse, err error) {
+	result, response, err = project.ExportStackDefinitionWithContext(context.Background(), exportStackDefinitionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ExportStackDefinitionWithContext is an alternate form of the ExportStackDefinition method which supports a Context parameter
+func (project *ProjectV1) ExportStackDefinitionWithContext(ctx context.Context, exportStackDefinitionOptions *ExportStackDefinitionOptions) (result *StackDefinitionExportResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(exportStackDefinitionOptions, "exportStackDefinitionOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(exportStackDefinitionOptions, "exportStackDefinitionOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"project_id": *exportStackDefinitionOptions.ProjectID,
+		"id": *exportStackDefinitionOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = project.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{project_id}/configs/{id}/stack_definition/export`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range exportStackDefinitionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("project", "V1", "ExportStackDefinition")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	_, err = builder.SetBodyContentJSON(exportStackDefinitionOptions.Settings)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = project.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "export_stack_definition", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalStackDefinitionExportResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// ListConfigVersions : Get a list of project configuration versions
+// Retrieve a list of previous and current versions of a project configuration in a specific project.
 func (project *ProjectV1) ListConfigVersions(listConfigVersionsOptions *ListConfigVersionsOptions) (result *ProjectConfigVersionSummaryCollection, response *core.DetailedResponse, err error) {
-	return project.ListConfigVersionsWithContext(context.Background(), listConfigVersionsOptions)
+	result, response, err = project.ListConfigVersionsWithContext(context.Background(), listConfigVersionsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListConfigVersionsWithContext is an alternate form of the ListConfigVersions method which supports a Context parameter
 func (project *ProjectV1) ListConfigVersionsWithContext(ctx context.Context, listConfigVersionsOptions *ListConfigVersionsOptions) (result *ProjectConfigVersionSummaryCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listConfigVersionsOptions, "listConfigVersionsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listConfigVersionsOptions, "listConfigVersionsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1589,6 +2170,7 @@ func (project *ProjectV1) ListConfigVersionsWithContext(ctx context.Context, lis
 	builder.EnableGzipCompression = project.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{project_id}/configs/{id}/versions`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1604,17 +2186,21 @@ func (project *ProjectV1) ListConfigVersionsWithContext(ctx context.Context, lis
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = project.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_config_versions", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProjectConfigVersionSummaryCollection)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1623,20 +2209,24 @@ func (project *ProjectV1) ListConfigVersionsWithContext(ctx context.Context, lis
 	return
 }
 
-// GetConfigVersion : Get a specific version of a project configuration
-// Returns a specific version of a project configuration in a specific project.
+// GetConfigVersion : Get a specific project configuration version
+// Retrieve a specific version of a configuration in a project.
 func (project *ProjectV1) GetConfigVersion(getConfigVersionOptions *GetConfigVersionOptions) (result *ProjectConfigVersion, response *core.DetailedResponse, err error) {
-	return project.GetConfigVersionWithContext(context.Background(), getConfigVersionOptions)
+	result, response, err = project.GetConfigVersionWithContext(context.Background(), getConfigVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetConfigVersionWithContext is an alternate form of the GetConfigVersion method which supports a Context parameter
 func (project *ProjectV1) GetConfigVersionWithContext(ctx context.Context, getConfigVersionOptions *GetConfigVersionOptions) (result *ProjectConfigVersion, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getConfigVersionOptions, "getConfigVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getConfigVersionOptions, "getConfigVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1651,6 +2241,7 @@ func (project *ProjectV1) GetConfigVersionWithContext(ctx context.Context, getCo
 	builder.EnableGzipCompression = project.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{project_id}/configs/{id}/versions/{version}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1666,17 +2257,21 @@ func (project *ProjectV1) GetConfigVersionWithContext(ctx context.Context, getCo
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = project.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_config_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProjectConfigVersion)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1685,20 +2280,24 @@ func (project *ProjectV1) GetConfigVersionWithContext(ctx context.Context, getCo
 	return
 }
 
-// DeleteConfigVersion : Delete a configuration for the specified project ID and version
-// Delete a configuration in a project.
+// DeleteConfigVersion : Delete a project configuration version
+// Delete a configuration version by specifying the project ID.
 func (project *ProjectV1) DeleteConfigVersion(deleteConfigVersionOptions *DeleteConfigVersionOptions) (result *ProjectConfigDelete, response *core.DetailedResponse, err error) {
-	return project.DeleteConfigVersionWithContext(context.Background(), deleteConfigVersionOptions)
+	result, response, err = project.DeleteConfigVersionWithContext(context.Background(), deleteConfigVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteConfigVersionWithContext is an alternate form of the DeleteConfigVersion method which supports a Context parameter
 func (project *ProjectV1) DeleteConfigVersionWithContext(ctx context.Context, deleteConfigVersionOptions *DeleteConfigVersionOptions) (result *ProjectConfigDelete, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteConfigVersionOptions, "deleteConfigVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteConfigVersionOptions, "deleteConfigVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1713,6 +2312,7 @@ func (project *ProjectV1) DeleteConfigVersionWithContext(ctx context.Context, de
 	builder.EnableGzipCompression = project.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(project.Service.Options.URL, `/v1/projects/{project_id}/configs/{id}/versions/{version}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1728,17 +2328,21 @@ func (project *ProjectV1) DeleteConfigVersionWithContext(ctx context.Context, de
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = project.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_config_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProjectConfigDelete)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1746,14 +2350,17 @@ func (project *ProjectV1) DeleteConfigVersionWithContext(ctx context.Context, de
 
 	return
 }
+func getServiceComponentInfo() *core.ProblemComponent {
+	return core.NewProblemComponent(DefaultServiceName, "1.0.0")
+}
 
 // ActionJobApplyMessagesSummary : The messages of apply jobs on the configuration.
 type ActionJobApplyMessagesSummary struct {
-	// The collection of error messages.
+	// The collection of error messages. This property is reported only if Schematics triggered a Terraform apply job.
 	ErrorMessages []TerraformLogAnalyzerErrorMessage `json:"error_messages,omitempty"`
 
-	// The collection of success messages.
-	SucessMessage []TerraformLogAnalyzerSuccessMessage `json:"sucess_message,omitempty"`
+	// The collection of success messages. This property is reported only if Schematics triggered a Terraform apply job.
+	SuccessMessages []TerraformLogAnalyzerSuccessMessage `json:"success_messages,omitempty"`
 }
 
 // UnmarshalActionJobApplyMessagesSummary unmarshals an instance of ActionJobApplyMessagesSummary from the specified map of raw messages.
@@ -1761,10 +2368,12 @@ func UnmarshalActionJobApplyMessagesSummary(m map[string]json.RawMessage, result
 	obj := new(ActionJobApplyMessagesSummary)
 	err = core.UnmarshalModel(m, "error_messages", &obj.ErrorMessages, UnmarshalTerraformLogAnalyzerErrorMessage)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "error_messages-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "sucess_message", &obj.SucessMessage, UnmarshalTerraformLogAnalyzerSuccessMessage)
+	err = core.UnmarshalModel(m, "success_messages", &obj.SuccessMessages, UnmarshalTerraformLogAnalyzerSuccessMessage)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success_messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1773,16 +2382,19 @@ func UnmarshalActionJobApplyMessagesSummary(m map[string]json.RawMessage, result
 
 // ActionJobApplySummary : The summary of the apply jobs on the configuration.
 type ActionJobApplySummary struct {
-	// The number of applied resources.
+	// The number of applied resources. This property is reported only if Schematics triggered a Terraform apply job.
 	Success *int64 `json:"success,omitempty"`
 
-	// The number of failed resources.
+	// The number of failed applied resources. This property is reported only if Schematics triggered a Terraform apply
+	// job.
 	Failed *int64 `json:"failed,omitempty"`
 
-	// The collection of successfully applied resources.
+	// The collection of successfully applied resources. This property is reported only if Schematics triggered a Terraform
+	// apply job.
 	SuccessResources []string `json:"success_resources,omitempty"`
 
-	// The collection of failed applied resources.
+	// The collection of failed applied resources. This property is reported only if Schematics triggered a Terraform apply
+	// job.
 	FailedResources []string `json:"failed_resources,omitempty"`
 }
 
@@ -1791,18 +2403,22 @@ func UnmarshalActionJobApplySummary(m map[string]json.RawMessage, result interfa
 	obj := new(ActionJobApplySummary)
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "failed", &obj.Failed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "failed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success_resources", &obj.SuccessResources)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success_resources-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "failed_resources", &obj.FailedResources)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "failed_resources-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1811,7 +2427,7 @@ func UnmarshalActionJobApplySummary(m map[string]json.RawMessage, result interfa
 
 // ActionJobDestroyMessagesSummary : The messages of destroy jobs on the configuration.
 type ActionJobDestroyMessagesSummary struct {
-	// The collection of error messages.
+	// The collection of error messages. This property is reported only if Schematics triggered a Terraform destroy job.
 	ErrorMessages []TerraformLogAnalyzerErrorMessage `json:"error_messages,omitempty"`
 }
 
@@ -1820,6 +2436,7 @@ func UnmarshalActionJobDestroyMessagesSummary(m map[string]json.RawMessage, resu
 	obj := new(ActionJobDestroyMessagesSummary)
 	err = core.UnmarshalModel(m, "error_messages", &obj.ErrorMessages, UnmarshalTerraformLogAnalyzerErrorMessage)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "error_messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1828,16 +2445,17 @@ func UnmarshalActionJobDestroyMessagesSummary(m map[string]json.RawMessage, resu
 
 // ActionJobDestroySummary : The summary of the destroy jobs on the configuration.
 type ActionJobDestroySummary struct {
-	// The number of destroyed resources.
+	// The number of destroyed resources. This property is reported only if Schematics triggered a Terraform destroy job.
 	Success *int64 `json:"success,omitempty"`
 
-	// The number of failed resources.
+	// The number of failed resources. This property is reported only if Schematics triggered a Terraform destroy job.
 	Failed *int64 `json:"failed,omitempty"`
 
-	// The number of tainted resources.
+	// The number of tainted resources. This property is reported only if Schematics triggered a Terraform destroy job.
 	Tainted *int64 `json:"tainted,omitempty"`
 
-	// The destroy resources results from the job.
+	// The summary of results from destroyed resources from the job. This property is reported only if Schematics triggered
+	// a Terraform destroy job.
 	Resources *ActionJobDestroySummaryResources `json:"resources,omitempty"`
 }
 
@@ -1846,33 +2464,39 @@ func UnmarshalActionJobDestroySummary(m map[string]json.RawMessage, result inter
 	obj := new(ActionJobDestroySummary)
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "failed", &obj.Failed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "failed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "tainted", &obj.Tainted)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tainted-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalActionJobDestroySummaryResources)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// ActionJobDestroySummaryResources : The destroy resources results from the job.
+// ActionJobDestroySummaryResources : The summary of results from destroyed resources from the job. This property is reported only if Schematics triggered
+// a Terraform destroy job.
 type ActionJobDestroySummaryResources struct {
-	// The collection of destroyed resources.
+	// The collection of destroyed resources. This property is reported only if Schematics triggered a Terraform destroy
+	// job.
 	Success []string `json:"success,omitempty"`
 
-	// The collection of failed resources.
+	// The collection of failed resources. This property is reported only if Schematics triggered a Terraform destroy job.
 	Failed []string `json:"failed,omitempty"`
 
-	// The collection of tainted resources.
+	// The collection of tainted resources. This property is reported only if Schematics triggered a Terraform destroy job.
 	Tainted []string `json:"tainted,omitempty"`
 }
 
@@ -1881,14 +2505,17 @@ func UnmarshalActionJobDestroySummaryResources(m map[string]json.RawMessage, res
 	obj := new(ActionJobDestroySummaryResources)
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "failed", &obj.Failed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "failed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "tainted", &obj.Tainted)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tainted-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1897,13 +2524,13 @@ func UnmarshalActionJobDestroySummaryResources(m map[string]json.RawMessage, res
 
 // ActionJobMessageSummary : The message summaries of jobs on the configuration.
 type ActionJobMessageSummary struct {
-	// The number of info messages.
+	// The number of information messages. This property is reported only if Schematics triggered a Terraform job.
 	Info *int64 `json:"info,omitempty"`
 
-	// The number of debug messages.
+	// The number of debug messages. This property is reported only if Schematics triggered a Terraform job.
 	Debug *int64 `json:"debug,omitempty"`
 
-	// The number of error messages.
+	// The number of error messages. This property is reported only if Schematics triggered a Terraform job.
 	Error *int64 `json:"error,omitempty"`
 }
 
@@ -1912,14 +2539,17 @@ func UnmarshalActionJobMessageSummary(m map[string]json.RawMessage, result inter
 	obj := new(ActionJobMessageSummary)
 	err = core.UnmarshalPrimitive(m, "info", &obj.Info)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "info-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "debug", &obj.Debug)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "debug-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "error", &obj.Error)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "error-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1928,17 +2558,17 @@ func UnmarshalActionJobMessageSummary(m map[string]json.RawMessage, result inter
 
 // ActionJobPlanMessagesSummary : The plan messages on the configuration.
 type ActionJobPlanMessagesSummary struct {
-	// The collection of error messages.
+	// The collection of error messages. This property is reported only if Schematics triggered a Terraform plan job.
 	ErrorMessages []TerraformLogAnalyzerErrorMessage `json:"error_messages,omitempty"`
 
-	// The collection of success messages.
-	SucessMessage []string `json:"sucess_message,omitempty"`
+	// The collection of success messages. This property is reported only if Schematics triggered a Terraform plan job.
+	SuccessMessages []string `json:"success_messages,omitempty"`
 
-	// The collection of update messages.
-	UpdateMessage []string `json:"update_message,omitempty"`
+	// The collection of update messages. This property is reported only if Schematics triggered a Terraform plan job.
+	UpdateMessages []string `json:"update_messages,omitempty"`
 
-	// The collection of destroy messages.
-	DestroyMessage []string `json:"destroy_message,omitempty"`
+	// The collection of destroy messages. This property is reported only if Schematics triggered a Terraform plan job.
+	DestroyMessages []string `json:"destroy_messages,omitempty"`
 }
 
 // UnmarshalActionJobPlanMessagesSummary unmarshals an instance of ActionJobPlanMessagesSummary from the specified map of raw messages.
@@ -1946,18 +2576,22 @@ func UnmarshalActionJobPlanMessagesSummary(m map[string]json.RawMessage, result 
 	obj := new(ActionJobPlanMessagesSummary)
 	err = core.UnmarshalModel(m, "error_messages", &obj.ErrorMessages, UnmarshalTerraformLogAnalyzerErrorMessage)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "error_messages-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "sucess_message", &obj.SucessMessage)
+	err = core.UnmarshalPrimitive(m, "success_messages", &obj.SuccessMessages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success_messages-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "update_message", &obj.UpdateMessage)
+	err = core.UnmarshalPrimitive(m, "update_messages", &obj.UpdateMessages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "update_messages-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "destroy_message", &obj.DestroyMessage)
+	err = core.UnmarshalPrimitive(m, "destroy_messages", &obj.DestroyMessages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "destroy_messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1966,28 +2600,34 @@ func UnmarshalActionJobPlanMessagesSummary(m map[string]json.RawMessage, result 
 
 // ActionJobPlanSummary : The summary of the plan jobs on the configuration.
 type ActionJobPlanSummary struct {
-	// The number of resources to be added.
+	// The number of resources to be added. This property is reported only if Schematics triggered a terraform plan job.
 	Add *int64 `json:"add,omitempty"`
 
-	// The number of resources that failed during the plan job.
+	// The number of resources that failed during the plan job. This property is reported only if Schematics triggered a
+	// Terraform plan job.
 	Failed *int64 `json:"failed,omitempty"`
 
-	// The number of resources to be updated.
+	// The number of resources to be updated. This property is reported only if Schematics triggered a Terraform plan job.
 	Update *int64 `json:"update,omitempty"`
 
-	// The number of resources to be destroyed.
+	// The number of resources to be destroyed. This property is reported only if Schematics triggered a Terraform plan
+	// job.
 	Destroy *int64 `json:"destroy,omitempty"`
 
-	// The collection of planned added resources.
+	// The collection of planned added resources. This property is reported only if Schematics triggered a Terraform plan
+	// job.
 	AddResources []string `json:"add_resources,omitempty"`
 
-	// The collection of failed planned resources.
+	// The collection of failed planned resources. This property is reported only if Schematics triggered a Terraform plan
+	// job.
 	FailedResources []string `json:"failed_resources,omitempty"`
 
-	// The collection of planned updated resources.
+	// The collection of planned updated resources. This property is reported only if Schematics triggered a Terraform plan
+	// job.
 	UpdatedResources []string `json:"updated_resources,omitempty"`
 
-	// The collection of planned destroy resources.
+	// The collection of planned destroy resources. This property is reported only if Schematics triggered a Terraform plan
+	// job.
 	DestroyResources []string `json:"destroy_resources,omitempty"`
 }
 
@@ -1996,34 +2636,42 @@ func UnmarshalActionJobPlanSummary(m map[string]json.RawMessage, result interfac
 	obj := new(ActionJobPlanSummary)
 	err = core.UnmarshalPrimitive(m, "add", &obj.Add)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "add-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "failed", &obj.Failed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "failed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "update", &obj.Update)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "update-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "destroy", &obj.Destroy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "destroy-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "add_resources", &obj.AddResources)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "add_resources-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "failed_resources", &obj.FailedResources)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "failed_resources-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_resources", &obj.UpdatedResources)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_resources-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "destroy_resources", &obj.DestroyResources)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "destroy_resources-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2032,6 +2680,9 @@ func UnmarshalActionJobPlanSummary(m map[string]json.RawMessage, result interfac
 
 // ActionJobSummary : The summaries of jobs that were performed on the configuration.
 type ActionJobSummary struct {
+	// The version of the job summary.
+	Version *string `json:"version" validate:"required"`
+
 	// The summary of the plan jobs on the configuration.
 	PlanSummary *ActionJobPlanSummary `json:"plan_summary" validate:"required"`
 
@@ -2057,32 +2708,44 @@ type ActionJobSummary struct {
 // UnmarshalActionJobSummary unmarshals an instance of ActionJobSummary from the specified map of raw messages.
 func UnmarshalActionJobSummary(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(ActionJobSummary)
+	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "plan_summary", &obj.PlanSummary, UnmarshalActionJobPlanSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "plan_summary-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "apply_summary", &obj.ApplySummary, UnmarshalActionJobApplySummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "apply_summary-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "destroy_summary", &obj.DestroySummary, UnmarshalActionJobDestroySummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "destroy_summary-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "message_summary", &obj.MessageSummary, UnmarshalActionJobMessageSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "message_summary-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "plan_messages", &obj.PlanMessages, UnmarshalActionJobPlanMessagesSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "plan_messages-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "apply_messages", &obj.ApplyMessages, UnmarshalActionJobApplyMessagesSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "apply_messages-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "destroy_messages", &obj.DestroyMessages, UnmarshalActionJobDestroyMessagesSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "destroy_messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2103,10 +2766,12 @@ func UnmarshalActionJobWithIdAndSummary(m map[string]json.RawMessage, result int
 	obj := new(ActionJobWithIdAndSummary)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "summary", &obj.Summary, UnmarshalActionJobSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "summary-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2118,11 +2783,11 @@ type ApproveOptions struct {
 	// The unique project ID.
 	ProjectID *string `json:"project_id" validate:"required,ne="`
 
-	// The unique config ID.
+	// The unique configuration ID.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// Notes on the project draft action. If this is a forced approve on the draft configuration, a non-empty comment is
-	// required.
+	// Notes on the project draft action. If this action is a force approve on the draft configuration, you must include a
+	// nonempty comment.
 	Comment *string `json:"comment,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -2161,7 +2826,7 @@ func (options *ApproveOptions) SetHeaders(param map[string]string) *ApproveOptio
 	return options
 }
 
-// CodeRiskAnalyzerLogsSummary : The Code Risk Analyzer logs summary of the configuration.
+// CodeRiskAnalyzerLogsSummary : The Code Risk Analyzer logs a summary of the configuration.
 type CodeRiskAnalyzerLogsSummary struct {
 	// The total number of Code Risk Analyzer rules that were applied in the scan.
 	Total *string `json:"total,omitempty"`
@@ -2181,18 +2846,40 @@ func UnmarshalCodeRiskAnalyzerLogsSummary(m map[string]json.RawMessage, result i
 	obj := new(CodeRiskAnalyzerLogsSummary)
 	err = core.UnmarshalPrimitive(m, "total", &obj.Total)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "passed", &obj.Passed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "passed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "failed", &obj.Failed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "failed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "skipped", &obj.Skipped)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "skipped-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ConfigDefinitionReference : The definition of the config reference.
+type ConfigDefinitionReference struct {
+	// The name of the configuration.
+	Name *string `json:"name" validate:"required"`
+}
+
+// UnmarshalConfigDefinitionReference unmarshals an instance of ConfigDefinitionReference from the specified map of raw messages.
+func UnmarshalConfigDefinitionReference(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ConfigDefinitionReference)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2204,10 +2891,22 @@ type CreateConfigOptions struct {
 	// The unique project ID.
 	ProjectID *string `json:"project_id" validate:"required,ne="`
 
-	Definition ProjectConfigPrototypeDefinitionBlockIntf `json:"definition" validate:"required"`
+	Definition ProjectConfigDefinitionPrototypeIntf `json:"definition" validate:"required"`
 
-	// A Schematics workspace to use for deploying this configuration.
-	// Either schematics.workspace_crn, definition.locator_id, or both must be specified.
+	// A Schematics workspace to use for deploying this deployable architecture.
+	// > If you are importing data from an existing Schematics workspace that is not backed by cart, then you must provide
+	// a `locator_id`. If you are using a Schematics workspace that is backed by cart, a `locator_id` is not required
+	// because the Schematics workspace has one.
+	// >
+	// There are 3 scenarios:
+	// > 1. If only a `locator_id` is specified, a new Schematics workspace is instantiated with that `locator_id`.
+	// > 2. If only a schematics `workspace_crn` is specified, a `400` is returned if a `locator_id` is not found in the
+	// existing schematics workspace.
+	// > 3. If both a Schematics `workspace_crn` and a `locator_id` are specified, a `400`code  is returned if the
+	// specified `locator_id` does not agree with the `locator_id` in the existing Schematics workspace.
+	// >
+	// For more information, see [Creating workspaces and importing your Terraform
+	// template](/docs/schematics?topic=schematics-sch-create-wks).
 	Schematics *SchematicsWorkspace `json:"schematics,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -2215,7 +2914,7 @@ type CreateConfigOptions struct {
 }
 
 // NewCreateConfigOptions : Instantiate CreateConfigOptions
-func (*ProjectV1) NewCreateConfigOptions(projectID string, definition ProjectConfigPrototypeDefinitionBlockIntf) *CreateConfigOptions {
+func (*ProjectV1) NewCreateConfigOptions(projectID string, definition ProjectConfigDefinitionPrototypeIntf) *CreateConfigOptions {
 	return &CreateConfigOptions{
 		ProjectID: core.StringPtr(projectID),
 		Definition: definition,
@@ -2229,7 +2928,7 @@ func (_options *CreateConfigOptions) SetProjectID(projectID string) *CreateConfi
 }
 
 // SetDefinition : Allow user to set Definition
-func (_options *CreateConfigOptions) SetDefinition(definition ProjectConfigPrototypeDefinitionBlockIntf) *CreateConfigOptions {
+func (_options *CreateConfigOptions) SetDefinition(definition ProjectConfigDefinitionPrototypeIntf) *CreateConfigOptions {
 	_options.Definition = definition
 	return _options
 }
@@ -2295,17 +2994,27 @@ type CreateProjectOptions struct {
 	// The resource group name where the project's data and tools are created.
 	ResourceGroup *string `json:"resource_group" validate:"required"`
 
-	// The project configurations. These configurations are only included in the response of creating a project if a
-	// configs array is specified in the request payload.
+	// The project configurations. These configurations are included in the response of creating a project only if a
+	// configuration array is specified in the request payload.
 	Configs []ProjectConfigPrototype `json:"configs,omitempty"`
 
-	// The project environments. These environments are only included in the response of creating a project if a
-	// environments array is specified in the request payload.
+	// The project environment. These environments are included in the response of creating a project only if an
+	// environment array is specified in the request payload.
 	Environments []EnvironmentPrototype `json:"environments,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
+
+// Constants associated with the CreateProjectOptions.Location property.
+// The IBM Cloud location where a resource is deployed.
+const (
+	CreateProjectOptions_Location_CaTor = "ca-tor"
+	CreateProjectOptions_Location_EuDe = "eu-de"
+	CreateProjectOptions_Location_EuGb = "eu-gb"
+	CreateProjectOptions_Location_UsEast = "us-east"
+	CreateProjectOptions_Location_UsSouth = "us-south"
+)
 
 // NewCreateProjectOptions : Instantiate CreateProjectOptions
 func (*ProjectV1) NewCreateProjectOptions(definition *ProjectPrototypeDefinition, location string, resourceGroup string) *CreateProjectOptions {
@@ -2352,12 +3061,60 @@ func (options *CreateProjectOptions) SetHeaders(param map[string]string) *Create
 	return options
 }
 
+// CreateStackDefinitionOptions : The CreateStackDefinition options.
+type CreateStackDefinitionOptions struct {
+	// The unique project ID.
+	ProjectID *string `json:"project_id" validate:"required,ne="`
+
+	// The unique configuration ID.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// The definition block for a stack definition.
+	StackDefinition *StackDefinitionBlockPrototype `json:"stack_definition" validate:"required"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewCreateStackDefinitionOptions : Instantiate CreateStackDefinitionOptions
+func (*ProjectV1) NewCreateStackDefinitionOptions(projectID string, id string, stackDefinition *StackDefinitionBlockPrototype) *CreateStackDefinitionOptions {
+	return &CreateStackDefinitionOptions{
+		ProjectID: core.StringPtr(projectID),
+		ID: core.StringPtr(id),
+		StackDefinition: stackDefinition,
+	}
+}
+
+// SetProjectID : Allow user to set ProjectID
+func (_options *CreateStackDefinitionOptions) SetProjectID(projectID string) *CreateStackDefinitionOptions {
+	_options.ProjectID = core.StringPtr(projectID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *CreateStackDefinitionOptions) SetID(id string) *CreateStackDefinitionOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetStackDefinition : Allow user to set StackDefinition
+func (_options *CreateStackDefinitionOptions) SetStackDefinition(stackDefinition *StackDefinitionBlockPrototype) *CreateStackDefinitionOptions {
+	_options.StackDefinition = stackDefinition
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CreateStackDefinitionOptions) SetHeaders(param map[string]string) *CreateStackDefinitionOptions {
+	options.Headers = param
+	return options
+}
+
 // CumulativeNeedsAttention : CumulativeNeedsAttention struct
 type CumulativeNeedsAttention struct {
 	// The event name.
 	Event *string `json:"event,omitempty"`
 
-	// A unique ID for that individual event.
+	// A unique ID for this individual event.
 	EventID *string `json:"event_id,omitempty"`
 
 	// A unique ID for the configuration.
@@ -2372,18 +3129,22 @@ func UnmarshalCumulativeNeedsAttention(m map[string]json.RawMessage, result inte
 	obj := new(CumulativeNeedsAttention)
 	err = core.UnmarshalPrimitive(m, "event", &obj.Event)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "event-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "event_id", &obj.EventID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "event_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "config_id", &obj.ConfigID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "config_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "config_version", &obj.ConfigVersion)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "config_version-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2395,7 +3156,7 @@ type DeleteConfigOptions struct {
 	// The unique project ID.
 	ProjectID *string `json:"project_id" validate:"required,ne="`
 
-	// The unique config ID.
+	// The unique configuration ID.
 	ID *string `json:"id" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
@@ -2433,7 +3194,7 @@ type DeleteConfigVersionOptions struct {
 	// The unique project ID.
 	ProjectID *string `json:"project_id" validate:"required,ne="`
 
-	// The unique config ID.
+	// The unique configuration ID.
 	ID *string `json:"id" validate:"required,ne="`
 
 	// The configuration version.
@@ -2547,7 +3308,7 @@ type DeployConfigOptions struct {
 	// The unique project ID.
 	ProjectID *string `json:"project_id" validate:"required,ne="`
 
-	// The unique config ID.
+	// The unique configuration ID.
 	ID *string `json:"id" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
@@ -2582,20 +3343,21 @@ func (options *DeployConfigOptions) SetHeaders(param map[string]string) *DeployC
 
 // Environment : The definition of a project environment.
 type Environment struct {
-	// The environment id as a friendly name.
+	// The environment ID as a friendly name.
 	ID *string `json:"id" validate:"required"`
 
-	// The project referenced by this resource.
+	// The project that is referenced by this resource.
 	Project *ProjectReference `json:"project" validate:"required"`
 
-	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ, matching the date and time
+	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ to match the date and time
 	// format as specified by RFC 3339.
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
-	// The target account ID derived from the authentication block values.
+	// The target account ID derived from the authentication block values. The target account exists only if the
+	// environment currently has an authorization block.
 	TargetAccount *string `json:"target_account,omitempty"`
 
-	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ, matching the date and time
+	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ to match the date and time
 	// format as specified by RFC 3339.
 	ModifiedAt *strfmt.DateTime `json:"modified_at" validate:"required"`
 
@@ -2603,7 +3365,7 @@ type Environment struct {
 	Href *string `json:"href" validate:"required"`
 
 	// The environment definition.
-	Definition *EnvironmentDefinitionRequiredProperties `json:"definition" validate:"required"`
+	Definition *EnvironmentDefinitionRequiredPropertiesResponse `json:"definition" validate:"required"`
 }
 
 // UnmarshalEnvironment unmarshals an instance of Environment from the specified map of raw messages.
@@ -2611,30 +3373,37 @@ func UnmarshalEnvironment(m map[string]json.RawMessage, result interface{}) (err
 	obj := new(Environment)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "project", &obj.Project, UnmarshalProjectReference)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "project-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target_account", &obj.TargetAccount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target_account-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_at", &obj.ModifiedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "definition", &obj.Definition, UnmarshalEnvironmentDefinitionRequiredProperties)
+	err = core.UnmarshalModel(m, "definition", &obj.Definition, UnmarshalEnvironmentDefinitionRequiredPropertiesResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "definition-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2643,84 +3412,105 @@ func UnmarshalEnvironment(m map[string]json.RawMessage, result interface{}) (err
 
 // EnvironmentCollection : The list environment response.
 type EnvironmentCollection struct {
-	// The environments.
+	// A pagination limit.
+	Limit *int64 `json:"limit" validate:"required"`
+
+	// A pagination link.
+	First *PaginationLink `json:"first" validate:"required"`
+
+	// A pagination link.
+	Next *PaginationLink `json:"next,omitempty"`
+
+	// The environment.
 	Environments []Environment `json:"environments,omitempty"`
 }
 
 // UnmarshalEnvironmentCollection unmarshals an instance of EnvironmentCollection from the specified map of raw messages.
 func UnmarshalEnvironmentCollection(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(EnvironmentCollection)
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPaginationLink)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPaginationLink)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "environments", &obj.Environments, UnmarshalEnvironment)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "environments-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// EnvironmentDefinitionNameDescription : The environment definition used in the project collection.
-type EnvironmentDefinitionNameDescription struct {
-	// The name of the environment.  It is unique within the account across projects and regions.
-	Name *string `json:"name,omitempty"`
-
-	// The description of the environment.
-	Description *string `json:"description,omitempty"`
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *EnvironmentCollection) GetNextToken() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	token, err := core.GetQueryParam(resp.Next.Href, "token")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
+		return nil, err
+	} else if token == nil {
+		return nil, nil
+	}
+	return token, nil
 }
 
-// UnmarshalEnvironmentDefinitionNameDescription unmarshals an instance of EnvironmentDefinitionNameDescription from the specified map of raw messages.
-func UnmarshalEnvironmentDefinitionNameDescription(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(EnvironmentDefinitionNameDescription)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// EnvironmentDefinitionProperties : The environment definition used for updates.
-type EnvironmentDefinitionProperties struct {
-	// The name of the environment.  It is unique within the account across projects and regions.
-	Name *string `json:"name,omitempty"`
-
+// EnvironmentDefinitionPropertiesPatch : The environment definition that is used for updates.
+type EnvironmentDefinitionPropertiesPatch struct {
 	// The description of the environment.
 	Description *string `json:"description,omitempty"`
+
+	// The name of the environment. It's unique within the account across projects and regions.
+	Name *string `json:"name,omitempty"`
 
 	// The authorization details. You can authorize by using a trusted profile or an API key in Secrets Manager.
 	Authorizations *ProjectConfigAuth `json:"authorizations,omitempty"`
 
-	// The input variables for configuration definition and environment.
+	// The input variables that are used for configuration definition and environment.
 	Inputs map[string]interface{} `json:"inputs,omitempty"`
 
-	// The profile required for compliance.
+	// The profile that is required for compliance.
 	ComplianceProfile *ProjectComplianceProfile `json:"compliance_profile,omitempty"`
 }
 
-// UnmarshalEnvironmentDefinitionProperties unmarshals an instance of EnvironmentDefinitionProperties from the specified map of raw messages.
-func UnmarshalEnvironmentDefinitionProperties(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(EnvironmentDefinitionProperties)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
+// UnmarshalEnvironmentDefinitionPropertiesPatch unmarshals an instance of EnvironmentDefinitionPropertiesPatch from the specified map of raw messages.
+func UnmarshalEnvironmentDefinitionPropertiesPatch(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EnvironmentDefinitionPropertiesPatch)
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "authorizations", &obj.Authorizations, UnmarshalProjectConfigAuth)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "authorizations-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "inputs", &obj.Inputs)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "inputs-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "compliance_profile", &obj.ComplianceProfile, UnmarshalProjectComplianceProfile)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "compliance_profile-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2729,19 +3519,19 @@ func UnmarshalEnvironmentDefinitionProperties(m map[string]json.RawMessage, resu
 
 // EnvironmentDefinitionRequiredProperties : The environment definition.
 type EnvironmentDefinitionRequiredProperties struct {
-	// The name of the environment.  It is unique within the account across projects and regions.
-	Name *string `json:"name" validate:"required"`
-
 	// The description of the environment.
 	Description *string `json:"description,omitempty"`
+
+	// The name of the environment. It's unique within the account across projects and regions.
+	Name *string `json:"name" validate:"required"`
 
 	// The authorization details. You can authorize by using a trusted profile or an API key in Secrets Manager.
 	Authorizations *ProjectConfigAuth `json:"authorizations,omitempty"`
 
-	// The input variables for configuration definition and environment.
+	// The input variables that are used for configuration definition and environment.
 	Inputs map[string]interface{} `json:"inputs,omitempty"`
 
-	// The profile required for compliance.
+	// The profile that is required for compliance.
 	ComplianceProfile *ProjectComplianceProfile `json:"compliance_profile,omitempty"`
 }
 
@@ -2751,39 +3541,97 @@ func (*ProjectV1) NewEnvironmentDefinitionRequiredProperties(name string) (_mode
 		Name: core.StringPtr(name),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
 // UnmarshalEnvironmentDefinitionRequiredProperties unmarshals an instance of EnvironmentDefinitionRequiredProperties from the specified map of raw messages.
 func UnmarshalEnvironmentDefinitionRequiredProperties(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(EnvironmentDefinitionRequiredProperties)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "authorizations", &obj.Authorizations, UnmarshalProjectConfigAuth)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "authorizations-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "inputs", &obj.Inputs)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "inputs-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "compliance_profile", &obj.ComplianceProfile, UnmarshalProjectComplianceProfile)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "compliance_profile-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// EnvironmentDeleteResponse : The delete environment response.
+// EnvironmentDefinitionRequiredPropertiesResponse : The environment definition.
+type EnvironmentDefinitionRequiredPropertiesResponse struct {
+	// The description of the environment.
+	Description *string `json:"description" validate:"required"`
+
+	// The name of the environment. It's unique within the account across projects and regions.
+	Name *string `json:"name" validate:"required"`
+
+	// The authorization details. You can authorize by using a trusted profile or an API key in Secrets Manager.
+	Authorizations *ProjectConfigAuth `json:"authorizations,omitempty"`
+
+	// The input variables that are used for configuration definition and environment.
+	Inputs map[string]interface{} `json:"inputs,omitempty"`
+
+	// The profile that is required for compliance.
+	ComplianceProfile *ProjectComplianceProfile `json:"compliance_profile,omitempty"`
+}
+
+// UnmarshalEnvironmentDefinitionRequiredPropertiesResponse unmarshals an instance of EnvironmentDefinitionRequiredPropertiesResponse from the specified map of raw messages.
+func UnmarshalEnvironmentDefinitionRequiredPropertiesResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EnvironmentDefinitionRequiredPropertiesResponse)
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "authorizations", &obj.Authorizations, UnmarshalProjectConfigAuth)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "authorizations-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "inputs", &obj.Inputs)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "inputs-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "compliance_profile", &obj.ComplianceProfile, UnmarshalProjectComplianceProfile)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "compliance_profile-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// EnvironmentDeleteResponse : The response to a request to delete an environment.
 type EnvironmentDeleteResponse struct {
-	// The environment id as a friendly name.
+	// The environment ID as a friendly name.
 	ID *string `json:"id" validate:"required"`
 }
 
@@ -2792,6 +3640,7 @@ func UnmarshalEnvironmentDeleteResponse(m map[string]json.RawMessage, result int
 	obj := new(EnvironmentDeleteResponse)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2810,6 +3659,9 @@ func (*ProjectV1) NewEnvironmentPrototype(definition *EnvironmentDefinitionRequi
 		Definition: definition,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -2818,10 +3670,59 @@ func UnmarshalEnvironmentPrototype(m map[string]json.RawMessage, result interfac
 	obj := new(EnvironmentPrototype)
 	err = core.UnmarshalModel(m, "definition", &obj.Definition, UnmarshalEnvironmentDefinitionRequiredProperties)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "definition-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// ExportStackDefinitionOptions : The ExportStackDefinition options.
+type ExportStackDefinitionOptions struct {
+	// The unique project ID.
+	ProjectID *string `json:"project_id" validate:"required,ne="`
+
+	// The unique configuration ID.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// The payload for the private catalog export request.
+	Settings StackDefinitionExportRequestIntf `json:"settings" validate:"required"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewExportStackDefinitionOptions : Instantiate ExportStackDefinitionOptions
+func (*ProjectV1) NewExportStackDefinitionOptions(projectID string, id string, settings StackDefinitionExportRequestIntf) *ExportStackDefinitionOptions {
+	return &ExportStackDefinitionOptions{
+		ProjectID: core.StringPtr(projectID),
+		ID: core.StringPtr(id),
+		Settings: settings,
+	}
+}
+
+// SetProjectID : Allow user to set ProjectID
+func (_options *ExportStackDefinitionOptions) SetProjectID(projectID string) *ExportStackDefinitionOptions {
+	_options.ProjectID = core.StringPtr(projectID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *ExportStackDefinitionOptions) SetID(id string) *ExportStackDefinitionOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetSettings : Allow user to set Settings
+func (_options *ExportStackDefinitionOptions) SetSettings(settings StackDefinitionExportRequestIntf) *ExportStackDefinitionOptions {
+	_options.Settings = settings
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ExportStackDefinitionOptions) SetHeaders(param map[string]string) *ExportStackDefinitionOptions {
+	options.Headers = param
+	return options
 }
 
 // ForceApproveOptions : The ForceApprove options.
@@ -2829,11 +3730,11 @@ type ForceApproveOptions struct {
 	// The unique project ID.
 	ProjectID *string `json:"project_id" validate:"required,ne="`
 
-	// The unique config ID.
+	// The unique configuration ID.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// Notes on the project draft action. If this is a forced approve on the draft configuration, a non-empty comment is
-	// required.
+	// Notes on the project draft action. If this action is a force approve on the draft configuration, you must include a
+	// nonempty comment.
 	Comment *string `json:"comment" validate:"required"`
 
 	// Allows users to set headers on API requests
@@ -2878,7 +3779,7 @@ type GetConfigOptions struct {
 	// The unique project ID.
 	ProjectID *string `json:"project_id" validate:"required,ne="`
 
-	// The unique config ID.
+	// The unique configuration ID.
 	ID *string `json:"id" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
@@ -2916,7 +3817,7 @@ type GetConfigVersionOptions struct {
 	// The unique project ID.
 	ProjectID *string `json:"project_id" validate:"required,ne="`
 
-	// The unique config ID.
+	// The unique configuration ID.
 	ID *string `json:"id" validate:"required,ne="`
 
 	// The configuration version.
@@ -3025,7 +3926,45 @@ func (options *GetProjectOptions) SetHeaders(param map[string]string) *GetProjec
 	return options
 }
 
-// LastActionWithSummary : The action job performed on the project configuration.
+// GetStackDefinitionOptions : The GetStackDefinition options.
+type GetStackDefinitionOptions struct {
+	// The unique project ID.
+	ProjectID *string `json:"project_id" validate:"required,ne="`
+
+	// The unique configuration ID.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewGetStackDefinitionOptions : Instantiate GetStackDefinitionOptions
+func (*ProjectV1) NewGetStackDefinitionOptions(projectID string, id string) *GetStackDefinitionOptions {
+	return &GetStackDefinitionOptions{
+		ProjectID: core.StringPtr(projectID),
+		ID: core.StringPtr(id),
+	}
+}
+
+// SetProjectID : Allow user to set ProjectID
+func (_options *GetStackDefinitionOptions) SetProjectID(projectID string) *GetStackDefinitionOptions {
+	_options.ProjectID = core.StringPtr(projectID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *GetStackDefinitionOptions) SetID(id string) *GetStackDefinitionOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetStackDefinitionOptions) SetHeaders(param map[string]string) *GetStackDefinitionOptions {
+	options.Headers = param
+	return options
+}
+
+// LastActionWithSummary : The href and results from the last action job that is performed on the project configuration.
 type LastActionWithSummary struct {
 	// A URL.
 	Href *string `json:"href" validate:"required"`
@@ -3033,14 +3972,14 @@ type LastActionWithSummary struct {
 	// The result of the last action.
 	Result *string `json:"result,omitempty"`
 
-	// A brief summary of a pre/post action.
-	PreJob *PrePostActionJobWithIdAndSummary `json:"pre_job,omitempty"`
-
-	// A brief summary of a pre/post action.
-	PostJob *PrePostActionJobWithIdAndSummary `json:"post_job,omitempty"`
-
 	// A brief summary of an action.
 	Job *ActionJobWithIdAndSummary `json:"job,omitempty"`
+
+	// A brief summary of a pre- and post-action.
+	PreJob *PrePostActionJobWithIdAndSummary `json:"pre_job,omitempty"`
+
+	// A brief summary of a pre- and post-action.
+	PostJob *PrePostActionJobWithIdAndSummary `json:"post_job,omitempty"`
 }
 
 // Constants associated with the LastActionWithSummary.Result property.
@@ -3055,29 +3994,93 @@ func UnmarshalLastActionWithSummary(m map[string]json.RawMessage, result interfa
 	obj := new(LastActionWithSummary)
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "result", &obj.Result)
 	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "pre_job", &obj.PreJob, UnmarshalPrePostActionJobWithIdAndSummary)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "post_job", &obj.PostJob, UnmarshalPrePostActionJobWithIdAndSummary)
-	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "job", &obj.Job, UnmarshalActionJobWithIdAndSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "job-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "pre_job", &obj.PreJob, UnmarshalPrePostActionJobWithIdAndSummary)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "pre_job-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "post_job", &obj.PostJob, UnmarshalPrePostActionJobWithIdAndSummary)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "post_job-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// LastValidatedActionWithSummary : The action job performed on the project configuration.
+// LastDriftDetectionJobSummary : The summary for drift detection jobs that are performed as part of the last monitoring action.
+type LastDriftDetectionJobSummary struct {
+	// A brief summary of an action.
+	Job *ActionJobWithIdAndSummary `json:"job,omitempty"`
+}
+
+// UnmarshalLastDriftDetectionJobSummary unmarshals an instance of LastDriftDetectionJobSummary from the specified map of raw messages.
+func UnmarshalLastDriftDetectionJobSummary(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(LastDriftDetectionJobSummary)
+	err = core.UnmarshalModel(m, "job", &obj.Job, UnmarshalActionJobWithIdAndSummary)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "job-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// LastMonitoringActionWithSummary : The summary from the last monitoring action job that is performed on the project configuration.
+type LastMonitoringActionWithSummary struct {
+	// A URL.
+	Href *string `json:"href" validate:"required"`
+
+	// The result of the last action.
+	Result *string `json:"result,omitempty"`
+
+	// The summary for drift detection jobs that are performed as part of the last monitoring action.
+	DriftDetection *LastDriftDetectionJobSummary `json:"drift_detection,omitempty"`
+}
+
+// Constants associated with the LastMonitoringActionWithSummary.Result property.
+// The result of the last action.
+const (
+	LastMonitoringActionWithSummary_Result_Failed = "failed"
+	LastMonitoringActionWithSummary_Result_Passed = "passed"
+)
+
+// UnmarshalLastMonitoringActionWithSummary unmarshals an instance of LastMonitoringActionWithSummary from the specified map of raw messages.
+func UnmarshalLastMonitoringActionWithSummary(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(LastMonitoringActionWithSummary)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "result", &obj.Result)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "drift_detection", &obj.DriftDetection, UnmarshalLastDriftDetectionJobSummary)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "drift_detection-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// LastValidatedActionWithSummary : The href and results from the last action job that is performed on the project configuration.
 type LastValidatedActionWithSummary struct {
 	// A URL.
 	Href *string `json:"href" validate:"required"`
@@ -3085,21 +4088,22 @@ type LastValidatedActionWithSummary struct {
 	// The result of the last action.
 	Result *string `json:"result,omitempty"`
 
-	// A brief summary of a pre/post action.
-	PreJob *PrePostActionJobWithIdAndSummary `json:"pre_job,omitempty"`
-
-	// A brief summary of a pre/post action.
-	PostJob *PrePostActionJobWithIdAndSummary `json:"post_job,omitempty"`
-
 	// A brief summary of an action.
 	Job *ActionJobWithIdAndSummary `json:"job,omitempty"`
 
+	// A brief summary of a pre- and post-action.
+	PreJob *PrePostActionJobWithIdAndSummary `json:"pre_job,omitempty"`
+
+	// A brief summary of a pre- and post-action.
+	PostJob *PrePostActionJobWithIdAndSummary `json:"post_job,omitempty"`
+
 	// The cost estimate of the configuration.
-	// It only exists after the first configuration validation.
+	// This property exists only after the first configuration validation.
 	CostEstimate *ProjectConfigMetadataCostEstimate `json:"cost_estimate,omitempty"`
 
-	// The Code Risk Analyzer logs of the configuration.
-	CraLogs *ProjectConfigMetadataCodeRiskAnalyzerLogs `json:"cra_logs,omitempty"`
+	// The Code Risk Analyzer logs of the configuration. This property is populated only after the validation step when the
+	// Code Risk Analyzer is run. Note: `cra` is the abbreviated form of Code Risk Analyzer.
+	CraLogs ProjectConfigMetadataCodeRiskAnalyzerLogsIntf `json:"cra_logs,omitempty"`
 }
 
 // Constants associated with the LastValidatedActionWithSummary.Result property.
@@ -3114,30 +4118,37 @@ func UnmarshalLastValidatedActionWithSummary(m map[string]json.RawMessage, resul
 	obj := new(LastValidatedActionWithSummary)
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "result", &obj.Result)
 	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "pre_job", &obj.PreJob, UnmarshalPrePostActionJobWithIdAndSummary)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "post_job", &obj.PostJob, UnmarshalPrePostActionJobWithIdAndSummary)
-	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "job", &obj.Job, UnmarshalActionJobWithIdAndSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "job-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "pre_job", &obj.PreJob, UnmarshalPrePostActionJobWithIdAndSummary)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "pre_job-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "post_job", &obj.PostJob, UnmarshalPrePostActionJobWithIdAndSummary)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "post_job-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "cost_estimate", &obj.CostEstimate, UnmarshalProjectConfigMetadataCostEstimate)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cost_estimate-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "cra_logs", &obj.CraLogs, UnmarshalProjectConfigMetadataCodeRiskAnalyzerLogs)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cra_logs-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3149,7 +4160,7 @@ type ListConfigResourcesOptions struct {
 	// The unique project ID.
 	ProjectID *string `json:"project_id" validate:"required,ne="`
 
-	// The unique config ID.
+	// The unique configuration ID.
 	ID *string `json:"id" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
@@ -3187,7 +4198,7 @@ type ListConfigVersionsOptions struct {
 	// The unique project ID.
 	ProjectID *string `json:"project_id" validate:"required,ne="`
 
-	// The unique config ID.
+	// The unique configuration ID.
 	ID *string `json:"id" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
@@ -3225,6 +4236,14 @@ type ListConfigsOptions struct {
 	// The unique project ID.
 	ProjectID *string `json:"project_id" validate:"required,ne="`
 
+	// The server uses this parameter to determine the first entry that is returned on the next page. If this parameter is
+	// not specified, the logical first page is returned.
+	Token *string `json:"token,omitempty"`
+
+	// The maximum number of resources to return. The number of resources that are returned is the same, except for the
+	// last page.
+	Limit *int64 `json:"limit,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
@@ -3242,6 +4261,18 @@ func (_options *ListConfigsOptions) SetProjectID(projectID string) *ListConfigsO
 	return _options
 }
 
+// SetToken : Allow user to set Token
+func (_options *ListConfigsOptions) SetToken(token string) *ListConfigsOptions {
+	_options.Token = core.StringPtr(token)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListConfigsOptions) SetLimit(limit int64) *ListConfigsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *ListConfigsOptions) SetHeaders(param map[string]string) *ListConfigsOptions {
 	options.Headers = param
@@ -3252,6 +4283,14 @@ func (options *ListConfigsOptions) SetHeaders(param map[string]string) *ListConf
 type ListProjectEnvironmentsOptions struct {
 	// The unique project ID.
 	ProjectID *string `json:"project_id" validate:"required,ne="`
+
+	// The server uses this parameter to determine the first entry that is returned on the next page. If this parameter is
+	// not specified, the logical first page is returned.
+	Token *string `json:"token,omitempty"`
+
+	// The maximum number of resources to return. The number of resources that are returned is the same, except for the
+	// last page.
+	Limit *int64 `json:"limit,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -3270,6 +4309,18 @@ func (_options *ListProjectEnvironmentsOptions) SetProjectID(projectID string) *
 	return _options
 }
 
+// SetToken : Allow user to set Token
+func (_options *ListProjectEnvironmentsOptions) SetToken(token string) *ListProjectEnvironmentsOptions {
+	_options.Token = core.StringPtr(token)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListProjectEnvironmentsOptions) SetLimit(limit int64) *ListProjectEnvironmentsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *ListProjectEnvironmentsOptions) SetHeaders(param map[string]string) *ListProjectEnvironmentsOptions {
 	options.Headers = param
@@ -3278,12 +4329,12 @@ func (options *ListProjectEnvironmentsOptions) SetHeaders(param map[string]strin
 
 // ListProjectsOptions : The ListProjects options.
 type ListProjectsOptions struct {
-	// Marks the last entry that is returned on the page. The server uses this parameter to determine the first entry that
-	// is returned on the next page. If this parameter is not specified, the logical first page is returned.
-	Start *string `json:"start,omitempty"`
+	// The server uses this parameter to determine the first entry that is returned on the next page. If this parameter is
+	// not specified, the logical first page is returned.
+	Token *string `json:"token,omitempty"`
 
-	// Determine the maximum number of resources to return. The number of resources that are returned is the same, with the
-	// exception of the last page.
+	// The maximum number of resources to return. The number of resources that are returned is the same, except for the
+	// last page.
 	Limit *int64 `json:"limit,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -3295,9 +4346,9 @@ func (*ProjectV1) NewListProjectsOptions() *ListProjectsOptions {
 	return &ListProjectsOptions{}
 }
 
-// SetStart : Allow user to set Start
-func (_options *ListProjectsOptions) SetStart(start string) *ListProjectsOptions {
-	_options.Start = core.StringPtr(start)
+// SetToken : Allow user to set Token
+func (_options *ListProjectsOptions) SetToken(token string) *ListProjectsOptions {
+	_options.Token = core.StringPtr(token)
 	return _options
 }
 
@@ -3313,6 +4364,48 @@ func (options *ListProjectsOptions) SetHeaders(param map[string]string) *ListPro
 	return options
 }
 
+// MemberOfDefinition : The stack config parent of which this configuration is a member of.
+type MemberOfDefinition struct {
+	// The unique ID.
+	ID *string `json:"id" validate:"required"`
+
+	// The definition summary of the stack configuration.
+	Definition *StackConfigDefinitionSummary `json:"definition" validate:"required"`
+
+	// The version of the stack configuration.
+	Version *int64 `json:"version" validate:"required"`
+
+	// A URL.
+	Href *string `json:"href" validate:"required"`
+}
+
+// UnmarshalMemberOfDefinition unmarshals an instance of MemberOfDefinition from the specified map of raw messages.
+func UnmarshalMemberOfDefinition(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(MemberOfDefinition)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "definition", &obj.Definition, UnmarshalStackConfigDefinitionSummary)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "definition-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // OutputValue : OutputValue struct
 type OutputValue struct {
 	// The variable name.
@@ -3321,8 +4414,8 @@ type OutputValue struct {
 	// A short explanation of the output value.
 	Description *string `json:"description,omitempty"`
 
-	// Can be any value - a string, number, boolean, array, or object.
-	Value map[string]interface{} `json:"value,omitempty"`
+	// This property can be any value - a string, number, boolean, array, or object.
+	Value interface{} `json:"value,omitempty"`
 }
 
 // UnmarshalOutputValue unmarshals an instance of OutputValue from the specified map of raw messages.
@@ -3330,14 +4423,17 @@ func UnmarshalOutputValue(m map[string]json.RawMessage, result interface{}) (err
 	obj := new(OutputValue)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3355,26 +4451,28 @@ func UnmarshalPaginationLink(m map[string]json.RawMessage, result interface{}) (
 	obj := new(PaginationLink)
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// PrePostActionJobSummary : A brief summary of a pre/post action job.
+// PrePostActionJobSummary : A brief summary of a pre- and post-action job. This property is populated only after an action is run as part of a
+// validation, deployment, or undeployment.
 type PrePostActionJobSummary struct {
-	// The ID of the Schematics action job that ran as part of the pre/post job.
+	// The ID of the Schematics action job that ran as part of the pre- and post-job.
 	JobID *string `json:"job_id" validate:"required"`
 
-	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ, matching the date and time
+	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ to match the date and time
 	// format as specified by RFC 3339.
 	StartTime *strfmt.DateTime `json:"start_time,omitempty"`
 
-	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ, matching the date and time
+	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ to match the date and time
 	// format as specified by RFC 3339.
 	EndTime *strfmt.DateTime `json:"end_time,omitempty"`
 
-	// The number of tasks run in the job.
+	// The number of tasks that were run in the job.
 	Tasks *int64 `json:"tasks,omitempty"`
 
 	// The number of tasks that successfully ran in the job.
@@ -3398,60 +4496,69 @@ func UnmarshalPrePostActionJobSummary(m map[string]json.RawMessage, result inter
 	obj := new(PrePostActionJobSummary)
 	err = core.UnmarshalPrimitive(m, "job_id", &obj.JobID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "job_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "start_time", &obj.StartTime)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "start_time-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "end_time", &obj.EndTime)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "end_time-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "tasks", &obj.Tasks)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tasks-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ok", &obj.Ok)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ok-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "failed", &obj.Failed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "failed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "skipped", &obj.Skipped)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "skipped-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "changed", &obj.Changed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "changed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "project_error", &obj.ProjectError, UnmarshalPrePostActionJobSystemError)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "project_error-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// PrePostActionJobSystemError : System level error captured in the Projects Pipelines for pre/post job.
+// PrePostActionJobSystemError : The system-level error that OS captured in the project pipelines for the pre- and post-job.
 type PrePostActionJobSystemError struct {
-	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ, matching the date and time
+	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ to match the date and time
 	// format as specified by RFC 3339.
 	Timestamp *strfmt.DateTime `json:"timestamp" validate:"required"`
 
-	// Id of user that triggered pipeline that ran pre/post job.
+	// The ID of the user that triggered the pipeline that ran the pre- and post-job.
 	UserID *string `json:"user_id" validate:"required"`
 
-	// HTTP status code for the error.
+	// The HTTP status code for the error.
 	StatusCode *string `json:"status_code" validate:"required"`
 
-	// Summary description of the error.
+	// The summary description of the error.
 	Description *string `json:"description" validate:"required"`
 
-	// Detailed message from the source error.
+	// The detailed message from the source error.
 	ErrorResponse *string `json:"error_response,omitempty"`
 }
 
@@ -3460,34 +4567,40 @@ func UnmarshalPrePostActionJobSystemError(m map[string]json.RawMessage, result i
 	obj := new(PrePostActionJobSystemError)
 	err = core.UnmarshalPrimitive(m, "timestamp", &obj.Timestamp)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "timestamp-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "user_id", &obj.UserID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "user_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status_code", &obj.StatusCode)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status_code-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "error_response", &obj.ErrorResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "error_response-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// PrePostActionJobWithIdAndSummary : A brief summary of a pre/post action.
+// PrePostActionJobWithIdAndSummary : A brief summary of a pre- and post-action.
 type PrePostActionJobWithIdAndSummary struct {
 	// The unique ID.
 	ID *string `json:"id" validate:"required"`
 
-	// A brief summary of a pre/post action job.
+	// A brief summary of a pre- and post-action job. This property is populated only after an action is run as part of a
+	// validation, deployment, or undeployment.
 	Summary *PrePostActionJobSummary `json:"summary" validate:"required"`
 }
 
@@ -3496,31 +4609,33 @@ func UnmarshalPrePostActionJobWithIdAndSummary(m map[string]json.RawMessage, res
 	obj := new(PrePostActionJobWithIdAndSummary)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "summary", &obj.Summary, UnmarshalPrePostActionJobSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "summary-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// Project : The canonical schema of a project.
+// Project : The standard schema of a project.
 type Project struct {
-	// An IBM Cloud resource name, which uniquely identifies a resource.
+	// An IBM Cloud resource name that uniquely identifies a resource.
 	Crn *string `json:"crn" validate:"required"`
 
-	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ, matching the date and time
+	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ to match the date and time
 	// format as specified by RFC 3339.
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
-	// The cumulative list of needs attention items for a project. If the view is successfully retrieved, an array which
-	// could be empty is returned.
-	CumulativeNeedsAttentionView []CumulativeNeedsAttention `json:"cumulative_needs_attention_view,omitempty"`
+	// The cumulative list of needs attention items for a project. If the view is successfully retrieved, an empty or
+	// nonempty array is returned.
+	CumulativeNeedsAttentionView []CumulativeNeedsAttention `json:"cumulative_needs_attention_view" validate:"required"`
 
-	// True indicates that the fetch of the needs attention items failed. It only exists if there was an error while
-	// retrieving the cumulative needs attention view.
+	// A value of `true` indicates that the fetch of the needs attention items failed. This property only exists if there
+	// was an error when you retrieved the cumulative needs attention view.
 	CumulativeNeedsAttentionViewError *bool `json:"cumulative_needs_attention_view_error,omitempty"`
 
 	// The unique project ID.
@@ -3529,7 +4644,7 @@ type Project struct {
 	// The IBM Cloud location where a resource is deployed.
 	Location *string `json:"location" validate:"required"`
 
-	// The resource group id where the project's data and tools are created.
+	// The resource group ID where the project's data and tools are created.
 	ResourceGroupID *string `json:"resource_group_id" validate:"required"`
 
 	// The project status value.
@@ -3541,16 +4656,16 @@ type Project struct {
 	// The resource group name where the project's data and tools are created.
 	ResourceGroup *string `json:"resource_group" validate:"required"`
 
-	// The CRN of the event notifications instance if one is connected to this project.
+	// The CRN of the Event Notifications instance if one is connected to this project.
 	EventNotificationsCrn *string `json:"event_notifications_crn,omitempty"`
 
 	// The project configurations. These configurations are only included in the response of creating a project if a
-	// configs array is specified in the request payload.
-	Configs []ProjectConfigSummary `json:"configs,omitempty"`
+	// configuration array is specified in the request payload.
+	Configs []ProjectConfigSummary `json:"configs" validate:"required"`
 
-	// The project environments. These environments are only included in the response if project environments were created
+	// The project environment. These environments are only included in the response if project environments were created
 	// on the project.
-	Environments []ProjectEnvironmentSummary `json:"environments,omitempty"`
+	Environments []ProjectEnvironmentSummary `json:"environments" validate:"required"`
 
 	// The definition of the project.
 	Definition *ProjectDefinitionProperties `json:"definition" validate:"required"`
@@ -3569,58 +4684,72 @@ func UnmarshalProject(m map[string]json.RawMessage, result interface{}) (err err
 	obj := new(Project)
 	err = core.UnmarshalPrimitive(m, "crn", &obj.Crn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "cumulative_needs_attention_view", &obj.CumulativeNeedsAttentionView, UnmarshalCumulativeNeedsAttention)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cumulative_needs_attention_view-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cumulative_needs_attention_view_error", &obj.CumulativeNeedsAttentionViewError)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cumulative_needs_attention_view_error-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "location", &obj.Location)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "location-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_group_id", &obj.ResourceGroupID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_group_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "state", &obj.State)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_group", &obj.ResourceGroup)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_group-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "event_notifications_crn", &obj.EventNotificationsCrn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "event_notifications_crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "configs", &obj.Configs, UnmarshalProjectConfigSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "configs-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "environments", &obj.Environments, UnmarshalProjectEnvironmentSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "environments-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "definition", &obj.Definition, UnmarshalProjectDefinitionProperties)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "definition-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3647,18 +4776,22 @@ func UnmarshalProjectCollection(m map[string]json.RawMessage, result interface{}
 	obj := new(ProjectCollection)
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPaginationLink)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPaginationLink)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "projects", &obj.Projects, UnmarshalProjectSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "projects-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3666,23 +4799,26 @@ func UnmarshalProjectCollection(m map[string]json.RawMessage, result interface{}
 }
 
 // Retrieve the value to be passed to a request to access the next page of results
-func (resp *ProjectCollection) GetNextStart() (*string, error) {
+func (resp *ProjectCollection) GetNextToken() (*string, error) {
 	if core.IsNil(resp.Next) {
 		return nil, nil
 	}
-	start, err := core.GetQueryParam(resp.Next.Href, "start")
-	if err != nil || start == nil {
+	token, err := core.GetQueryParam(resp.Next.Href, "token")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if token == nil {
+		return nil, nil
 	}
-	return start, nil
+	return token, nil
 }
 
-// ProjectComplianceProfile : The profile required for compliance.
+// ProjectComplianceProfile : The profile that is required for compliance.
 type ProjectComplianceProfile struct {
-	// The unique ID for that compliance profile.
+	// The unique ID for the compliance profile.
 	ID *string `json:"id,omitempty"`
 
-	// A unique ID for an instance of a compliance profile.
+	// A unique ID for the instance of a compliance profile.
 	InstanceID *string `json:"instance_id,omitempty"`
 
 	// The location of the compliance instance.
@@ -3695,34 +4831,49 @@ type ProjectComplianceProfile struct {
 	ProfileName *string `json:"profile_name,omitempty"`
 }
 
+// Constants associated with the ProjectComplianceProfile.InstanceLocation property.
+// The location of the compliance instance.
+const (
+	ProjectComplianceProfile_InstanceLocation_CaTor = "ca-tor"
+	ProjectComplianceProfile_InstanceLocation_EuDe = "eu-de"
+	ProjectComplianceProfile_InstanceLocation_EuGb = "eu-gb"
+	ProjectComplianceProfile_InstanceLocation_UsEast = "us-east"
+	ProjectComplianceProfile_InstanceLocation_UsSouth = "us-south"
+)
+
 // UnmarshalProjectComplianceProfile unmarshals an instance of ProjectComplianceProfile from the specified map of raw messages.
 func UnmarshalProjectComplianceProfile(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(ProjectComplianceProfile)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "instance_id", &obj.InstanceID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "instance_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "instance_location", &obj.InstanceLocation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "instance_location-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "attachment_id", &obj.AttachmentID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "attachment_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "profile_name", &obj.ProfileName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "profile_name-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// ProjectConfig : The canonical schema of a project configuration.
+// ProjectConfig : The standard schema of a project configuration.
 type ProjectConfig struct {
 	// The ID of the configuration. If this parameter is empty, an ID is automatically created for the configuration.
 	ID *string `json:"id" validate:"required"`
@@ -3734,42 +4885,45 @@ type ProjectConfig struct {
 	IsDraft *bool `json:"is_draft" validate:"required"`
 
 	// The needs attention state of a configuration.
-	NeedsAttentionState []map[string]interface{} `json:"needs_attention_state,omitempty"`
+	NeedsAttentionState []ProjectConfigNeedsAttentionState `json:"needs_attention_state" validate:"required"`
 
-	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ, matching the date and time
+	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ to match the date and time
 	// format as specified by RFC 3339.
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
-	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ, matching the date and time
+	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ to match the date and time
 	// format as specified by RFC 3339.
 	ModifiedAt *strfmt.DateTime `json:"modified_at" validate:"required"`
 
 	// The last approved metadata of the configuration.
 	LastApproved *ProjectConfigMetadataLastApproved `json:"last_approved,omitempty"`
 
-	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ, matching the date and time
+	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ to match the date and time
 	// format as specified by RFC 3339.
 	LastSavedAt *strfmt.DateTime `json:"last_saved_at,omitempty"`
 
-	// The action job performed on the project configuration.
+	// The href and results from the last action job that is performed on the project configuration.
 	LastValidated *LastValidatedActionWithSummary `json:"last_validated,omitempty"`
 
-	// The action job performed on the project configuration.
+	// The href and results from the last action job that is performed on the project configuration.
 	LastDeployed *LastActionWithSummary `json:"last_deployed,omitempty"`
 
-	// The action job performed on the project configuration.
+	// The href and results from the last action job that is performed on the project configuration.
 	LastUndeployed *LastActionWithSummary `json:"last_undeployed,omitempty"`
 
-	// The outputs of a Schematics template property.
-	Outputs []OutputValue `json:"outputs,omitempty"`
+	// The summary from the last monitoring action job that is performed on the project configuration.
+	LastMonitoring *LastMonitoringActionWithSummary `json:"last_monitoring,omitempty"`
 
-	// The project referenced by this resource.
+	// The outputs of a Schematics template property.
+	Outputs []OutputValue `json:"outputs" validate:"required"`
+
+	// The project that is referenced by this resource.
 	Project *ProjectReference `json:"project" validate:"required"`
 
-	// The references used in the config to resolve input values.
+	// The references that are used in the configuration to resolve input values.
 	References map[string]interface{} `json:"references,omitempty"`
 
-	// A schematics workspace associated to a project configuration, with scripts.
+	// A Schematics workspace that is associated to a project configuration, with scripts.
 	Schematics *SchematicsMetadata `json:"schematics,omitempty"`
 
 	// The state of the configuration.
@@ -3778,15 +4932,27 @@ type ProjectConfig struct {
 	// The flag that indicates whether a configuration update is available.
 	UpdateAvailable *bool `json:"update_available,omitempty"`
 
+	// The stack definition identifier.
+	TemplateID *string `json:"template_id,omitempty"`
+
+	// The stack config parent of which this configuration is a member of.
+	MemberOf *MemberOfDefinition `json:"member_of,omitempty"`
+
 	// A URL.
 	Href *string `json:"href" validate:"required"`
 
-	Definition ProjectConfigResponseDefinitionIntf `json:"definition" validate:"required"`
+	// The configuration type.
+	DeploymentModel *string `json:"deployment_model,omitempty"`
 
-	// The project configuration version.
+	// Computed state code clarifying the prerequisites for validation for the configuration.
+	StateCode *string `json:"state_code,omitempty"`
+
+	Definition ProjectConfigDefinitionResponseIntf `json:"definition" validate:"required"`
+
+	// A summary of a project configuration version.
 	ApprovedVersion *ProjectConfigVersionSummary `json:"approved_version,omitempty"`
 
-	// The project configuration version.
+	// A summary of a project configuration version.
 	DeployedVersion *ProjectConfigVersionSummary `json:"deployed_version,omitempty"`
 }
 
@@ -3812,91 +4978,155 @@ const (
 	ProjectConfig_State_ValidatingFailed = "validating_failed"
 )
 
+// Constants associated with the ProjectConfig.DeploymentModel property.
+// The configuration type.
+const (
+	ProjectConfig_DeploymentModel_ProjectDeployed = "project_deployed"
+	ProjectConfig_DeploymentModel_Stack = "stack"
+	ProjectConfig_DeploymentModel_UserDeployed = "user_deployed"
+)
+
+// Constants associated with the ProjectConfig.StateCode property.
+// Computed state code clarifying the prerequisites for validation for the configuration.
+const (
+	ProjectConfig_StateCode_AwaitingInput = "awaiting_input"
+	ProjectConfig_StateCode_AwaitingMemberDeployment = "awaiting_member_deployment"
+	ProjectConfig_StateCode_AwaitingPrerequisite = "awaiting_prerequisite"
+	ProjectConfig_StateCode_AwaitingStackSetup = "awaiting_stack_setup"
+	ProjectConfig_StateCode_AwaitingValidation = "awaiting_validation"
+)
+
 // UnmarshalProjectConfig unmarshals an instance of ProjectConfig from the specified map of raw messages.
 func UnmarshalProjectConfig(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(ProjectConfig)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "is_draft", &obj.IsDraft)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "is_draft-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "needs_attention_state", &obj.NeedsAttentionState)
+	err = core.UnmarshalModel(m, "needs_attention_state", &obj.NeedsAttentionState, UnmarshalProjectConfigNeedsAttentionState)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "needs_attention_state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_at", &obj.ModifiedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "last_approved", &obj.LastApproved, UnmarshalProjectConfigMetadataLastApproved)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_approved-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_saved_at", &obj.LastSavedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_saved_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "last_validated", &obj.LastValidated, UnmarshalLastValidatedActionWithSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_validated-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "last_deployed", &obj.LastDeployed, UnmarshalLastActionWithSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_deployed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "last_undeployed", &obj.LastUndeployed, UnmarshalLastActionWithSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_undeployed-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "last_monitoring", &obj.LastMonitoring, UnmarshalLastMonitoringActionWithSummary)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "last_monitoring-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "outputs", &obj.Outputs, UnmarshalOutputValue)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "outputs-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "project", &obj.Project, UnmarshalProjectReference)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "project-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "references", &obj.References)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "references-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "schematics", &obj.Schematics, UnmarshalSchematicsMetadata)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "schematics-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "state", &obj.State)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "update_available", &obj.UpdateAvailable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "update_available-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "template_id", &obj.TemplateID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "member_of", &obj.MemberOf, UnmarshalMemberOfDefinition)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "member_of-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "definition", &obj.Definition, UnmarshalProjectConfigResponseDefinition)
+	err = core.UnmarshalPrimitive(m, "deployment_model", &obj.DeploymentModel)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deployment_model-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "state_code", &obj.StateCode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "state_code-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "definition", &obj.Definition, UnmarshalProjectConfigDefinitionResponse)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "definition-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "approved_version", &obj.ApprovedVersion, UnmarshalProjectConfigVersionSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "approved_version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "deployed_version", &obj.DeployedVersion, UnmarshalProjectConfigVersionSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deployed_version-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3911,7 +5141,7 @@ type ProjectConfigAuth struct {
 	// The authorization method. You can authorize by using a trusted profile or an API key in Secrets Manager.
 	Method *string `json:"method,omitempty"`
 
-	// The IBM Cloud API Key.
+	// The IBM Cloud API Key. It can be either raw or pulled from the catalog via a `CRN` or `JSON` blob.
 	ApiKey *string `json:"api_key,omitempty"`
 }
 
@@ -3927,14 +5157,17 @@ func UnmarshalProjectConfigAuth(m map[string]json.RawMessage, result interface{}
 	obj := new(ProjectConfigAuth)
 	err = core.UnmarshalPrimitive(m, "trusted_profile_id", &obj.TrustedProfileID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "trusted_profile_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "method", &obj.Method)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "method-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "api_key", &obj.ApiKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "api_key-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3943,48 +5176,403 @@ func UnmarshalProjectConfigAuth(m map[string]json.RawMessage, result interface{}
 
 // ProjectConfigCollection : The project configuration list.
 type ProjectConfigCollection struct {
-	// The collection list operation response schema that should define the array property with the name "configs".
+	// A pagination limit.
+	Limit *int64 `json:"limit" validate:"required"`
+
+	// A pagination link.
+	First *PaginationLink `json:"first" validate:"required"`
+
+	// A pagination link.
+	Next *PaginationLink `json:"next,omitempty"`
+
+	// The response schema of the collection list operation that defines the array property with the name `configs`.
 	Configs []ProjectConfigSummary `json:"configs,omitempty"`
 }
 
 // UnmarshalProjectConfigCollection unmarshals an instance of ProjectConfigCollection from the specified map of raw messages.
 func UnmarshalProjectConfigCollection(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(ProjectConfigCollection)
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPaginationLink)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPaginationLink)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "configs", &obj.Configs, UnmarshalProjectConfigSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "configs-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// ProjectConfigDefinitionNameDescription : The name and description of a project configuration.
-type ProjectConfigDefinitionNameDescription struct {
-	// The configuration name. It is unique within the account across projects and regions.
-	Name *string `json:"name,omitempty"`
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *ProjectConfigCollection) GetNextToken() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	token, err := core.GetQueryParam(resp.Next.Href, "token")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
+		return nil, err
+	} else if token == nil {
+		return nil, nil
+	}
+	return token, nil
+}
+
+// ProjectConfigDefinitionPatch : ProjectConfigDefinitionPatch struct
+// Models which "extend" this model:
+// - ProjectConfigDefinitionPatchDAConfigDefinitionPropertiesPatch
+// - ProjectConfigDefinitionPatchResourceConfigDefinitionPropertiesPatch
+// - ProjectConfigDefinitionPatchStackConfigDefinitionPropertiesPatch
+type ProjectConfigDefinitionPatch struct {
+	// The profile that is required for compliance.
+	ComplianceProfile *ProjectComplianceProfile `json:"compliance_profile,omitempty"`
+
+	// A unique concatenation of the catalog ID and the version ID that identify the deployable architecture in the
+	// catalog. I you're importing from an existing Schematics workspace that is not backed by cart, a `locator_id` is
+	// required. If you're using a Schematics workspace that is backed by cart, a `locator_id` is not necessary because the
+	// Schematics workspace has one.
+	// > There are 3 scenarios:
+	// > 1. If only a `locator_id` is specified, a new Schematics workspace is instantiated with that `locator_id`.
+	// > 2. If only a schematics `workspace_crn` is specified, a `400` is returned if a `locator_id` is not found in the
+	// existing schematics workspace.
+	// > 3. If both a Schematics `workspace_crn` and a `locator_id` are specified, a `400` message is returned if the
+	// specified `locator_id` does not agree with the `locator_id` in the existing Schematics workspace.
+	// > For more information of creating a Schematics workspace, see [Creating workspaces and importing your Terraform
+	// template](/docs/schematics?topic=schematics-sch-create-wks).
+	LocatorID *string `json:"locator_id,omitempty"`
 
 	// A project configuration description.
 	Description *string `json:"description,omitempty"`
+
+	// The configuration name. It's unique within the account across projects and regions.
+	Name *string `json:"name,omitempty"`
+
+	// The ID of the project environment.
+	EnvironmentID *string `json:"environment_id,omitempty"`
+
+	// The authorization details. You can authorize by using a trusted profile or an API key in Secrets Manager.
+	Authorizations *ProjectConfigAuth `json:"authorizations,omitempty"`
+
+	// The input variables that are used for configuration definition and environment.
+	Inputs map[string]interface{} `json:"inputs,omitempty"`
+
+	// The Schematics environment variables to use to deploy the configuration. Settings are only available if they are
+	// specified when the configuration is initially created.
+	Settings map[string]interface{} `json:"settings,omitempty"`
+
+	// The CRNs of the resources that are associated with this configuration.
+	ResourceCrns []string `json:"resource_crns,omitempty"`
+
+	// The member deployabe architectures that are included in your stack.
+	Members []StackConfigMember `json:"members,omitempty"`
+}
+func (*ProjectConfigDefinitionPatch) isaProjectConfigDefinitionPatch() bool {
+	return true
 }
 
-// UnmarshalProjectConfigDefinitionNameDescription unmarshals an instance of ProjectConfigDefinitionNameDescription from the specified map of raw messages.
-func UnmarshalProjectConfigDefinitionNameDescription(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ProjectConfigDefinitionNameDescription)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+type ProjectConfigDefinitionPatchIntf interface {
+	isaProjectConfigDefinitionPatch() bool
+}
+
+// UnmarshalProjectConfigDefinitionPatch unmarshals an instance of ProjectConfigDefinitionPatch from the specified map of raw messages.
+func UnmarshalProjectConfigDefinitionPatch(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ProjectConfigDefinitionPatch)
+	err = core.UnmarshalModel(m, "compliance_profile", &obj.ComplianceProfile, UnmarshalProjectComplianceProfile)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "compliance_profile-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "locator_id", &obj.LocatorID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "locator_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "environment_id", &obj.EnvironmentID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "environment_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "authorizations", &obj.Authorizations, UnmarshalProjectConfigAuth)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "authorizations-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "inputs", &obj.Inputs)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "inputs-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "settings", &obj.Settings)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "settings-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_crns", &obj.ResourceCrns)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_crns-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "members", &obj.Members, UnmarshalStackConfigMember)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "members-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// ProjectConfigDelete : Deletes the configuration response.
+// ProjectConfigDefinitionPrototype : ProjectConfigDefinitionPrototype struct
+// Models which "extend" this model:
+// - ProjectConfigDefinitionPrototypeDAConfigDefinitionPropertiesPrototype
+// - ProjectConfigDefinitionPrototypeStackConfigDefinitionProperties
+// - ProjectConfigDefinitionPrototypeResourceConfigDefinitionPropertiesPrototype
+type ProjectConfigDefinitionPrototype struct {
+	// The profile that is required for compliance.
+	ComplianceProfile *ProjectComplianceProfile `json:"compliance_profile,omitempty"`
+
+	// A unique concatenation of the catalog ID and the version ID that identify the deployable architecture in the
+	// catalog. I you're importing from an existing Schematics workspace that is not backed by cart, a `locator_id` is
+	// required. If you're using a Schematics workspace that is backed by cart, a `locator_id` is not necessary because the
+	// Schematics workspace has one.
+	// > There are 3 scenarios:
+	// > 1. If only a `locator_id` is specified, a new Schematics workspace is instantiated with that `locator_id`.
+	// > 2. If only a schematics `workspace_crn` is specified, a `400` is returned if a `locator_id` is not found in the
+	// existing schematics workspace.
+	// > 3. If both a Schematics `workspace_crn` and a `locator_id` are specified, a `400` message is returned if the
+	// specified `locator_id` does not agree with the `locator_id` in the existing Schematics workspace.
+	// > For more information of creating a Schematics workspace, see [Creating workspaces and importing your Terraform
+	// template](/docs/schematics?topic=schematics-sch-create-wks).
+	LocatorID *string `json:"locator_id,omitempty"`
+
+	// A project configuration description.
+	Description *string `json:"description,omitempty"`
+
+	// The configuration name. It's unique within the account across projects and regions.
+	Name *string `json:"name,omitempty"`
+
+	// The ID of the project environment.
+	EnvironmentID *string `json:"environment_id,omitempty"`
+
+	// The authorization details. You can authorize by using a trusted profile or an API key in Secrets Manager.
+	Authorizations *ProjectConfigAuth `json:"authorizations,omitempty"`
+
+	// The input variables that are used for configuration definition and environment.
+	Inputs map[string]interface{} `json:"inputs,omitempty"`
+
+	// The Schematics environment variables to use to deploy the configuration. Settings are only available if they are
+	// specified when the configuration is initially created.
+	Settings map[string]interface{} `json:"settings,omitempty"`
+
+	// The member deployabe architectures that are included in your stack.
+	Members []StackConfigMember `json:"members,omitempty"`
+
+	// The CRNs of the resources that are associated with this configuration.
+	ResourceCrns []string `json:"resource_crns,omitempty"`
+}
+func (*ProjectConfigDefinitionPrototype) isaProjectConfigDefinitionPrototype() bool {
+	return true
+}
+
+type ProjectConfigDefinitionPrototypeIntf interface {
+	isaProjectConfigDefinitionPrototype() bool
+}
+
+// UnmarshalProjectConfigDefinitionPrototype unmarshals an instance of ProjectConfigDefinitionPrototype from the specified map of raw messages.
+func UnmarshalProjectConfigDefinitionPrototype(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ProjectConfigDefinitionPrototype)
+	err = core.UnmarshalModel(m, "compliance_profile", &obj.ComplianceProfile, UnmarshalProjectComplianceProfile)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "compliance_profile-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "locator_id", &obj.LocatorID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "locator_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "environment_id", &obj.EnvironmentID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "environment_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "authorizations", &obj.Authorizations, UnmarshalProjectConfigAuth)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "authorizations-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "inputs", &obj.Inputs)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "inputs-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "settings", &obj.Settings)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "settings-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "members", &obj.Members, UnmarshalStackConfigMember)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "members-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_crns", &obj.ResourceCrns)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_crns-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ProjectConfigDefinitionResponse : ProjectConfigDefinitionResponse struct
+// Models which "extend" this model:
+// - ProjectConfigDefinitionResponseDAConfigDefinitionPropertiesResponse
+// - ProjectConfigDefinitionResponseResourceConfigDefinitionPropertiesResponse
+// - ProjectConfigDefinitionResponseStackConfigDefinitionProperties
+type ProjectConfigDefinitionResponse struct {
+	// The profile that is required for compliance.
+	ComplianceProfile *ProjectComplianceProfile `json:"compliance_profile,omitempty"`
+
+	// A unique concatenation of the catalog ID and the version ID that identify the deployable architecture in the
+	// catalog. I you're importing from an existing Schematics workspace that is not backed by cart, a `locator_id` is
+	// required. If you're using a Schematics workspace that is backed by cart, a `locator_id` is not necessary because the
+	// Schematics workspace has one.
+	// > There are 3 scenarios:
+	// > 1. If only a `locator_id` is specified, a new Schematics workspace is instantiated with that `locator_id`.
+	// > 2. If only a schematics `workspace_crn` is specified, a `400` is returned if a `locator_id` is not found in the
+	// existing schematics workspace.
+	// > 3. If both a Schematics `workspace_crn` and a `locator_id` are specified, a `400` message is returned if the
+	// specified `locator_id` does not agree with the `locator_id` in the existing Schematics workspace.
+	// > For more information of creating a Schematics workspace, see [Creating workspaces and importing your Terraform
+	// template](/docs/schematics?topic=schematics-sch-create-wks).
+	LocatorID *string `json:"locator_id,omitempty"`
+
+	// A project configuration description.
+	Description *string `json:"description,omitempty"`
+
+	// The configuration name. It's unique within the account across projects and regions.
+	Name *string `json:"name,omitempty"`
+
+	// The ID of the project environment.
+	EnvironmentID *string `json:"environment_id,omitempty"`
+
+	// The authorization details. You can authorize by using a trusted profile or an API key in Secrets Manager.
+	Authorizations *ProjectConfigAuth `json:"authorizations,omitempty"`
+
+	// The input variables that are used for configuration definition and environment.
+	Inputs map[string]interface{} `json:"inputs,omitempty"`
+
+	// The Schematics environment variables to use to deploy the configuration. Settings are only available if they are
+	// specified when the configuration is initially created.
+	Settings map[string]interface{} `json:"settings,omitempty"`
+
+	// The CRNs of the resources that are associated with this configuration.
+	ResourceCrns []string `json:"resource_crns,omitempty"`
+
+	// The member deployabe architectures that are included in your stack.
+	Members []StackConfigMember `json:"members,omitempty"`
+}
+func (*ProjectConfigDefinitionResponse) isaProjectConfigDefinitionResponse() bool {
+	return true
+}
+
+type ProjectConfigDefinitionResponseIntf interface {
+	isaProjectConfigDefinitionResponse() bool
+}
+
+// UnmarshalProjectConfigDefinitionResponse unmarshals an instance of ProjectConfigDefinitionResponse from the specified map of raw messages.
+func UnmarshalProjectConfigDefinitionResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ProjectConfigDefinitionResponse)
+	err = core.UnmarshalModel(m, "compliance_profile", &obj.ComplianceProfile, UnmarshalProjectComplianceProfile)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "compliance_profile-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "locator_id", &obj.LocatorID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "locator_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "environment_id", &obj.EnvironmentID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "environment_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "authorizations", &obj.Authorizations, UnmarshalProjectConfigAuth)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "authorizations-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "inputs", &obj.Inputs)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "inputs-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "settings", &obj.Settings)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "settings-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_crns", &obj.ResourceCrns)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_crns-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "members", &obj.Members, UnmarshalStackConfigMember)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "members-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ProjectConfigDelete : The ID of the deleted configuration.
 type ProjectConfigDelete struct {
-	// The unique configuration ID.
+	// The ID of the deleted project or configuration.
 	ID *string `json:"id" validate:"required"`
 }
 
@@ -3993,16 +5581,20 @@ func UnmarshalProjectConfigDelete(m map[string]json.RawMessage, result interface
 	obj := new(ProjectConfigDelete)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// ProjectConfigMetadataCodeRiskAnalyzerLogs : The Code Risk Analyzer logs of the configuration.
+// ProjectConfigMetadataCodeRiskAnalyzerLogs : The Code Risk Analyzer logs of the configuration. This property is populated only after the validation step when the
+// Code Risk Analyzer is run. Note: `cra` is the abbreviated form of Code Risk Analyzer.
+// Models which "extend" this model:
+// - ProjectConfigMetadataCodeRiskAnalyzerLogsVersion204
 type ProjectConfigMetadataCodeRiskAnalyzerLogs struct {
-	// The version of the Code Risk Analyzer logs of the configuration. This will change as the Code Risk Analyzer is
-	// updated.
+	// The version of the Code Risk Analyzer logs of the configuration. The metadata for this schema is specific to Code
+	// Risk Analyzer version 2.0.4.
 	CraVersion *string `json:"cra_version,omitempty"`
 
 	// The schema version of Code Risk Analyzer logs of the configuration.
@@ -4011,10 +5603,10 @@ type ProjectConfigMetadataCodeRiskAnalyzerLogs struct {
 	// The status of the Code Risk Analyzer logs of the configuration.
 	Status *string `json:"status,omitempty"`
 
-	// The Code Risk Analyzer logs summary of the configuration.
+	// The Code Risk Analyzer logs a summary of the configuration.
 	Summary *CodeRiskAnalyzerLogsSummary `json:"summary,omitempty"`
 
-	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ, matching the date and time
+	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ to match the date and time
 	// format as specified by RFC 3339.
 	Timestamp *strfmt.DateTime `json:"timestamp,omitempty"`
 }
@@ -4025,35 +5617,47 @@ const (
 	ProjectConfigMetadataCodeRiskAnalyzerLogs_Status_Failed = "failed"
 	ProjectConfigMetadataCodeRiskAnalyzerLogs_Status_Passed = "passed"
 )
+func (*ProjectConfigMetadataCodeRiskAnalyzerLogs) isaProjectConfigMetadataCodeRiskAnalyzerLogs() bool {
+	return true
+}
+
+type ProjectConfigMetadataCodeRiskAnalyzerLogsIntf interface {
+	isaProjectConfigMetadataCodeRiskAnalyzerLogs() bool
+}
 
 // UnmarshalProjectConfigMetadataCodeRiskAnalyzerLogs unmarshals an instance of ProjectConfigMetadataCodeRiskAnalyzerLogs from the specified map of raw messages.
 func UnmarshalProjectConfigMetadataCodeRiskAnalyzerLogs(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(ProjectConfigMetadataCodeRiskAnalyzerLogs)
 	err = core.UnmarshalPrimitive(m, "cra_version", &obj.CraVersion)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cra_version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "schema_version", &obj.SchemaVersion)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "schema_version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "summary", &obj.Summary, UnmarshalCodeRiskAnalyzerLogsSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "summary-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "timestamp", &obj.Timestamp)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "timestamp-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// ProjectConfigMetadataCostEstimate : The cost estimate of the configuration. It only exists after the first configuration validation.
+// ProjectConfigMetadataCostEstimate : The cost estimate of the configuration. This property exists only after the first configuration validation.
 type ProjectConfigMetadataCostEstimate struct {
 	// The version of the cost estimate of the configuration.
 	Version *string `json:"version,omitempty"`
@@ -4073,13 +5677,13 @@ type ProjectConfigMetadataCostEstimate struct {
 	// The past total monthly cost estimate of the configuration.
 	PastTotalMonthlyCost *string `json:"pastTotalMonthlyCost,omitempty"`
 
-	// The difference between current and past total hourly cost estimates of the configuration.
+	// The difference between the current and past total hourly cost estimates of the configuration.
 	DiffTotalHourlyCost *string `json:"diffTotalHourlyCost,omitempty"`
 
-	// The difference between current and past total monthly cost estimates of the configuration.
+	// The difference between the current and past total monthly cost estimates of the configuration.
 	DiffTotalMonthlyCost *string `json:"diffTotalMonthlyCost,omitempty"`
 
-	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ, matching the date and time
+	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ to match the date and time
 	// format as specified by RFC 3339.
 	TimeGenerated *strfmt.DateTime `json:"timeGenerated,omitempty"`
 
@@ -4092,42 +5696,52 @@ func UnmarshalProjectConfigMetadataCostEstimate(m map[string]json.RawMessage, re
 	obj := new(ProjectConfigMetadataCostEstimate)
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "currency", &obj.Currency)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "currency-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "totalHourlyCost", &obj.TotalHourlyCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "totalHourlyCost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "totalMonthlyCost", &obj.TotalMonthlyCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "totalMonthlyCost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pastTotalHourlyCost", &obj.PastTotalHourlyCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pastTotalHourlyCost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pastTotalMonthlyCost", &obj.PastTotalMonthlyCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pastTotalMonthlyCost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "diffTotalHourlyCost", &obj.DiffTotalHourlyCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "diffTotalHourlyCost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "diffTotalMonthlyCost", &obj.DiffTotalMonthlyCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "diffTotalMonthlyCost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "timeGenerated", &obj.TimeGenerated)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "timeGenerated-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "user_id", &obj.UserID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "user_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4136,11 +5750,11 @@ func UnmarshalProjectConfigMetadataCostEstimate(m map[string]json.RawMessage, re
 
 // ProjectConfigMetadataLastApproved : The last approved metadata of the configuration.
 type ProjectConfigMetadataLastApproved struct {
-	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ, matching the date and time
+	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ to match the date and time
 	// format as specified by RFC 3339.
 	At *strfmt.DateTime `json:"at" validate:"required"`
 
-	// The comment left by the user who approved the configuration.
+	// The comment that is left by the user who approved the configuration.
 	Comment *string `json:"comment,omitempty"`
 
 	// The flag that indicates whether the approval was forced approved.
@@ -4155,103 +5769,100 @@ func UnmarshalProjectConfigMetadataLastApproved(m map[string]json.RawMessage, re
 	obj := new(ProjectConfigMetadataLastApproved)
 	err = core.UnmarshalPrimitive(m, "at", &obj.At)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "comment", &obj.Comment)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "comment-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "is_forced", &obj.IsForced)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "is_forced-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "user_id", &obj.UserID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "user_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// ProjectConfigPatchDefinitionBlock : ProjectConfigPatchDefinitionBlock struct
-// Models which "extend" this model:
-// - ProjectConfigPatchDefinitionBlockDAConfigDefinitionProperties
-// - ProjectConfigPatchDefinitionBlockResourceConfigDefinitionProperties
-type ProjectConfigPatchDefinitionBlock struct {
-	// The configuration name. It is unique within the account across projects and regions.
-	Name *string `json:"name,omitempty"`
+// ProjectConfigNeedsAttentionState : A needs attention state item shown to users is a specific actionable event that occurs during the lifecycle of a
+// configuration.
+type ProjectConfigNeedsAttentionState struct {
+	// The id of the event.
+	EventID *string `json:"event_id" validate:"required"`
 
-	// A project configuration description.
-	Description *string `json:"description,omitempty"`
+	// The name of the event.
+	Event *string `json:"event" validate:"required"`
 
-	// The ID of the project environment.
-	EnvironmentID *string `json:"environment_id,omitempty"`
+	// The severity of the event. This is a system generated field. For user triggered events the field is not present.
+	Severity *string `json:"severity,omitempty"`
 
-	// The authorization details. You can authorize by using a trusted profile or an API key in Secrets Manager.
-	Authorizations *ProjectConfigAuth `json:"authorizations,omitempty"`
+	// An actionable URL that users can access in response to the event. This is a system generated field. For user
+	// triggered events the field is not present.
+	ActionURL *string `json:"action_url,omitempty"`
 
-	// The input variables for configuration definition and environment.
-	Inputs map[string]interface{} `json:"inputs,omitempty"`
+	// The configuration id and version for which the event occurred. This field is only available for user generated
+	// events. For system triggered events the field is not present.
+	Target *string `json:"target,omitempty"`
 
-	// Schematics environment variables to use to deploy the configuration. Settings are only available if they were
-	// specified when the configuration was initially created.
-	Settings map[string]interface{} `json:"settings,omitempty"`
+	// The IAM id of the user that triggered the event. This field is only available for user generated events. For system
+	// triggered events the field is not present.
+	TriggeredBy *string `json:"triggered_by,omitempty"`
 
-	// The profile required for compliance.
-	ComplianceProfile *ProjectComplianceProfile `json:"compliance_profile,omitempty"`
-
-	// A unique concatenation of catalogID.versionID that identifies the DA in the catalog. Either
-	// schematics.workspace_crn, definition.locator_id, or both must be specified.
-	LocatorID *string `json:"locator_id,omitempty"`
-
-	// The CRNs of resources associated with this configuration.
-	ResourceCrns []string `json:"resource_crns,omitempty"`
-}
-func (*ProjectConfigPatchDefinitionBlock) isaProjectConfigPatchDefinitionBlock() bool {
-	return true
+	// The timestamp of the event.
+	Timestamp *string `json:"timestamp" validate:"required"`
 }
 
-type ProjectConfigPatchDefinitionBlockIntf interface {
-	isaProjectConfigPatchDefinitionBlock() bool
-}
+// Constants associated with the ProjectConfigNeedsAttentionState.Severity property.
+// The severity of the event. This is a system generated field. For user triggered events the field is not present.
+const (
+	ProjectConfigNeedsAttentionState_Severity_Error = "ERROR"
+	ProjectConfigNeedsAttentionState_Severity_Info = "INFO"
+	ProjectConfigNeedsAttentionState_Severity_Warning = "WARNING"
+)
 
-// UnmarshalProjectConfigPatchDefinitionBlock unmarshals an instance of ProjectConfigPatchDefinitionBlock from the specified map of raw messages.
-func UnmarshalProjectConfigPatchDefinitionBlock(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ProjectConfigPatchDefinitionBlock)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+// UnmarshalProjectConfigNeedsAttentionState unmarshals an instance of ProjectConfigNeedsAttentionState from the specified map of raw messages.
+func UnmarshalProjectConfigNeedsAttentionState(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ProjectConfigNeedsAttentionState)
+	err = core.UnmarshalPrimitive(m, "event_id", &obj.EventID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "event_id-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	err = core.UnmarshalPrimitive(m, "event", &obj.Event)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "event-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "environment_id", &obj.EnvironmentID)
+	err = core.UnmarshalPrimitive(m, "severity", &obj.Severity)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "severity-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "authorizations", &obj.Authorizations, UnmarshalProjectConfigAuth)
+	err = core.UnmarshalPrimitive(m, "action_url", &obj.ActionURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "action_url-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "inputs", &obj.Inputs)
+	err = core.UnmarshalPrimitive(m, "target", &obj.Target)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "settings", &obj.Settings)
+	err = core.UnmarshalPrimitive(m, "triggered_by", &obj.TriggeredBy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "triggered_by-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "compliance_profile", &obj.ComplianceProfile, UnmarshalProjectComplianceProfile)
+	err = core.UnmarshalPrimitive(m, "timestamp", &obj.Timestamp)
 	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "locator_id", &obj.LocatorID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "resource_crns", &obj.ResourceCrns)
-	if err != nil {
+		err = core.SDKErrorf(err, "", "timestamp-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4260,116 +5871,48 @@ func UnmarshalProjectConfigPatchDefinitionBlock(m map[string]json.RawMessage, re
 
 // ProjectConfigPrototype : The input of a project configuration.
 type ProjectConfigPrototype struct {
-	Definition ProjectConfigPrototypeDefinitionBlockIntf `json:"definition" validate:"required"`
+	Definition ProjectConfigDefinitionPrototypeIntf `json:"definition" validate:"required"`
 
-	// A Schematics workspace to use for deploying this configuration.
-	// Either schematics.workspace_crn, definition.locator_id, or both must be specified.
+	// A Schematics workspace to use for deploying this deployable architecture.
+	// > If you are importing data from an existing Schematics workspace that is not backed by cart, then you must provide
+	// a `locator_id`. If you are using a Schematics workspace that is backed by cart, a `locator_id` is not required
+	// because the Schematics workspace has one.
+	// >
+	// There are 3 scenarios:
+	// > 1. If only a `locator_id` is specified, a new Schematics workspace is instantiated with that `locator_id`.
+	// > 2. If only a schematics `workspace_crn` is specified, a `400` is returned if a `locator_id` is not found in the
+	// existing schematics workspace.
+	// > 3. If both a Schematics `workspace_crn` and a `locator_id` are specified, a `400`code  is returned if the
+	// specified `locator_id` does not agree with the `locator_id` in the existing Schematics workspace.
+	// >
+	// For more information, see [Creating workspaces and importing your Terraform
+	// template](/docs/schematics?topic=schematics-sch-create-wks).
 	Schematics *SchematicsWorkspace `json:"schematics,omitempty"`
 }
 
 // NewProjectConfigPrototype : Instantiate ProjectConfigPrototype (Generic Model Constructor)
-func (*ProjectV1) NewProjectConfigPrototype(definition ProjectConfigPrototypeDefinitionBlockIntf) (_model *ProjectConfigPrototype, err error) {
+func (*ProjectV1) NewProjectConfigPrototype(definition ProjectConfigDefinitionPrototypeIntf) (_model *ProjectConfigPrototype, err error) {
 	_model = &ProjectConfigPrototype{
 		Definition: definition,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
 // UnmarshalProjectConfigPrototype unmarshals an instance of ProjectConfigPrototype from the specified map of raw messages.
 func UnmarshalProjectConfigPrototype(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(ProjectConfigPrototype)
-	err = core.UnmarshalModel(m, "definition", &obj.Definition, UnmarshalProjectConfigPrototypeDefinitionBlock)
+	err = core.UnmarshalModel(m, "definition", &obj.Definition, UnmarshalProjectConfigDefinitionPrototype)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "definition-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "schematics", &obj.Schematics, UnmarshalSchematicsWorkspace)
 	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// ProjectConfigPrototypeDefinitionBlock : ProjectConfigPrototypeDefinitionBlock struct
-// Models which "extend" this model:
-// - ProjectConfigPrototypeDefinitionBlockDAConfigDefinitionProperties
-// - ProjectConfigPrototypeDefinitionBlockResourceConfigDefinitionProperties
-type ProjectConfigPrototypeDefinitionBlock struct {
-	// The configuration name. It is unique within the account across projects and regions.
-	Name *string `json:"name" validate:"required"`
-
-	// A project configuration description.
-	Description *string `json:"description,omitempty"`
-
-	// The ID of the project environment.
-	EnvironmentID *string `json:"environment_id,omitempty"`
-
-	// The authorization details. You can authorize by using a trusted profile or an API key in Secrets Manager.
-	Authorizations *ProjectConfigAuth `json:"authorizations,omitempty"`
-
-	// The input variables for configuration definition and environment.
-	Inputs map[string]interface{} `json:"inputs,omitempty"`
-
-	// Schematics environment variables to use to deploy the configuration. Settings are only available if they were
-	// specified when the configuration was initially created.
-	Settings map[string]interface{} `json:"settings,omitempty"`
-
-	// The profile required for compliance.
-	ComplianceProfile *ProjectComplianceProfile `json:"compliance_profile,omitempty"`
-
-	// A unique concatenation of catalogID.versionID that identifies the DA in the catalog. Either
-	// schematics.workspace_crn, definition.locator_id, or both must be specified.
-	LocatorID *string `json:"locator_id,omitempty"`
-
-	// The CRNs of resources associated with this configuration.
-	ResourceCrns []string `json:"resource_crns,omitempty"`
-}
-func (*ProjectConfigPrototypeDefinitionBlock) isaProjectConfigPrototypeDefinitionBlock() bool {
-	return true
-}
-
-type ProjectConfigPrototypeDefinitionBlockIntf interface {
-	isaProjectConfigPrototypeDefinitionBlock() bool
-}
-
-// UnmarshalProjectConfigPrototypeDefinitionBlock unmarshals an instance of ProjectConfigPrototypeDefinitionBlock from the specified map of raw messages.
-func UnmarshalProjectConfigPrototypeDefinitionBlock(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ProjectConfigPrototypeDefinitionBlock)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "environment_id", &obj.EnvironmentID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "authorizations", &obj.Authorizations, UnmarshalProjectConfigAuth)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "inputs", &obj.Inputs)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "settings", &obj.Settings)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "compliance_profile", &obj.ComplianceProfile, UnmarshalProjectComplianceProfile)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "locator_id", &obj.LocatorID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "resource_crns", &obj.ResourceCrns)
-	if err != nil {
+		err = core.SDKErrorf(err, "", "schematics-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4378,7 +5921,7 @@ func UnmarshalProjectConfigPrototypeDefinitionBlock(m map[string]json.RawMessage
 
 // ProjectConfigResource : ProjectConfigResource struct
 type ProjectConfigResource struct {
-	// An IBM Cloud resource name, which uniquely identifies a resource.
+	// An IBM Cloud resource name that uniquely identifies a resource.
 	ResourceCrn *string `json:"resource_crn,omitempty"`
 
 	// The name of the resource.
@@ -4399,22 +5942,27 @@ func UnmarshalProjectConfigResource(m map[string]json.RawMessage, result interfa
 	obj := new(ProjectConfigResource)
 	err = core.UnmarshalPrimitive(m, "resource_crn", &obj.ResourceCrn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_name", &obj.ResourceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_tainted", &obj.ResourceTainted)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_tainted-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_group_name", &obj.ResourceGroupName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_group_name-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4424,9 +5972,9 @@ func UnmarshalProjectConfigResource(m map[string]json.RawMessage, result interfa
 // ProjectConfigResourceCollection : The project configuration resource list.
 type ProjectConfigResourceCollection struct {
 	// The collection list operation response schema that defines the array property with the name `resources`.
-	Resources []ProjectConfigResource `json:"resources,omitempty"`
+	Resources []ProjectConfigResource `json:"resources" validate:"required"`
 
-	// The total number of resources deployed by the configuration.
+	// The total number of resources that are deployed by the configuration.
 	ResourcesCount *int64 `json:"resources_count" validate:"required"`
 }
 
@@ -4435,95 +5983,12 @@ func UnmarshalProjectConfigResourceCollection(m map[string]json.RawMessage, resu
 	obj := new(ProjectConfigResourceCollection)
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalProjectConfigResource)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resources_count", &obj.ResourcesCount)
 	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// ProjectConfigResponseDefinition : ProjectConfigResponseDefinition struct
-// Models which "extend" this model:
-// - ProjectConfigResponseDefinitionDAConfigDefinitionProperties
-// - ProjectConfigResponseDefinitionResourceConfigDefinitionProperties
-type ProjectConfigResponseDefinition struct {
-	// The configuration name. It is unique within the account across projects and regions.
-	Name *string `json:"name" validate:"required"`
-
-	// A project configuration description.
-	Description *string `json:"description,omitempty"`
-
-	// The ID of the project environment.
-	EnvironmentID *string `json:"environment_id,omitempty"`
-
-	// The authorization details. You can authorize by using a trusted profile or an API key in Secrets Manager.
-	Authorizations *ProjectConfigAuth `json:"authorizations,omitempty"`
-
-	// The input variables for configuration definition and environment.
-	Inputs map[string]interface{} `json:"inputs,omitempty"`
-
-	// Schematics environment variables to use to deploy the configuration. Settings are only available if they were
-	// specified when the configuration was initially created.
-	Settings map[string]interface{} `json:"settings,omitempty"`
-
-	// The profile required for compliance.
-	ComplianceProfile *ProjectComplianceProfile `json:"compliance_profile,omitempty"`
-
-	// A unique concatenation of catalogID.versionID that identifies the DA in the catalog. Either
-	// schematics.workspace_crn, definition.locator_id, or both must be specified.
-	LocatorID *string `json:"locator_id,omitempty"`
-
-	// The CRNs of resources associated with this configuration.
-	ResourceCrns []string `json:"resource_crns,omitempty"`
-}
-func (*ProjectConfigResponseDefinition) isaProjectConfigResponseDefinition() bool {
-	return true
-}
-
-type ProjectConfigResponseDefinitionIntf interface {
-	isaProjectConfigResponseDefinition() bool
-}
-
-// UnmarshalProjectConfigResponseDefinition unmarshals an instance of ProjectConfigResponseDefinition from the specified map of raw messages.
-func UnmarshalProjectConfigResponseDefinition(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ProjectConfigResponseDefinition)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "environment_id", &obj.EnvironmentID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "authorizations", &obj.Authorizations, UnmarshalProjectConfigAuth)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "inputs", &obj.Inputs)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "settings", &obj.Settings)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "compliance_profile", &obj.ComplianceProfile, UnmarshalProjectComplianceProfile)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "locator_id", &obj.LocatorID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "resource_crns", &obj.ResourceCrns)
-	if err != nil {
+		err = core.SDKErrorf(err, "", "resources_count-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4532,10 +5997,10 @@ func UnmarshalProjectConfigResponseDefinition(m map[string]json.RawMessage, resu
 
 // ProjectConfigSummary : ProjectConfigSummary struct
 type ProjectConfigSummary struct {
-	// The project configuration version.
+	// A summary of a project configuration version.
 	ApprovedVersion *ProjectConfigVersionSummary `json:"approved_version,omitempty"`
 
-	// The project configuration version.
+	// A summary of a project configuration version.
 	DeployedVersion *ProjectConfigVersionSummary `json:"deployed_version,omitempty"`
 
 	// The ID of the configuration. If this parameter is empty, an ID is automatically created for the configuration.
@@ -4547,21 +6012,21 @@ type ProjectConfigSummary struct {
 	// The state of the configuration.
 	State *string `json:"state" validate:"required"`
 
-	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ, matching the date and time
+	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ to match the date and time
 	// format as specified by RFC 3339.
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
-	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ, matching the date and time
+	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ to match the date and time
 	// format as specified by RFC 3339.
 	ModifiedAt *strfmt.DateTime `json:"modified_at" validate:"required"`
 
 	// A URL.
 	Href *string `json:"href" validate:"required"`
 
-	// The name and description of a project configuration.
-	Definition *ProjectConfigDefinitionNameDescription `json:"definition" validate:"required"`
+	// The description of a project configuration.
+	Definition *ProjectConfigSummaryDefinition `json:"definition" validate:"required"`
 
-	// The project referenced by this resource.
+	// The project that is referenced by this resource.
 	Project *ProjectReference `json:"project" validate:"required"`
 
 	// The configuration type.
@@ -4594,6 +6059,7 @@ const (
 // The configuration type.
 const (
 	ProjectConfigSummary_DeploymentModel_ProjectDeployed = "project_deployed"
+	ProjectConfigSummary_DeploymentModel_Stack = "stack"
 	ProjectConfigSummary_DeploymentModel_UserDeployed = "user_deployed"
 )
 
@@ -4602,46 +6068,102 @@ func UnmarshalProjectConfigSummary(m map[string]json.RawMessage, result interfac
 	obj := new(ProjectConfigSummary)
 	err = core.UnmarshalModel(m, "approved_version", &obj.ApprovedVersion, UnmarshalProjectConfigVersionSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "approved_version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "deployed_version", &obj.DeployedVersion, UnmarshalProjectConfigVersionSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deployed_version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "state", &obj.State)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_at", &obj.ModifiedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "definition", &obj.Definition, UnmarshalProjectConfigDefinitionNameDescription)
+	err = core.UnmarshalModel(m, "definition", &obj.Definition, UnmarshalProjectConfigSummaryDefinition)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "definition-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "project", &obj.Project, UnmarshalProjectReference)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "project-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "deployment_model", &obj.DeploymentModel)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deployment_model-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ProjectConfigSummaryDefinition : The description of a project configuration.
+type ProjectConfigSummaryDefinition struct {
+	// A project configuration description.
+	Description *string `json:"description" validate:"required"`
+
+	// The configuration name. It's unique within the account across projects and regions.
+	Name *string `json:"name" validate:"required"`
+
+	// A unique concatenation of the catalog ID and the version ID that identify the deployable architecture in the
+	// catalog. I you're importing from an existing Schematics workspace that is not backed by cart, a `locator_id` is
+	// required. If you're using a Schematics workspace that is backed by cart, a `locator_id` is not necessary because the
+	// Schematics workspace has one.
+	// > There are 3 scenarios:
+	// > 1. If only a `locator_id` is specified, a new Schematics workspace is instantiated with that `locator_id`.
+	// > 2. If only a schematics `workspace_crn` is specified, a `400` is returned if a `locator_id` is not found in the
+	// existing schematics workspace.
+	// > 3. If both a Schematics `workspace_crn` and a `locator_id` are specified, a `400` message is returned if the
+	// specified `locator_id` does not agree with the `locator_id` in the existing Schematics workspace.
+	// > For more information of creating a Schematics workspace, see [Creating workspaces and importing your Terraform
+	// template](/docs/schematics?topic=schematics-sch-create-wks).
+	LocatorID *string `json:"locator_id,omitempty"`
+}
+
+// UnmarshalProjectConfigSummaryDefinition unmarshals an instance of ProjectConfigSummaryDefinition from the specified map of raw messages.
+func UnmarshalProjectConfigSummaryDefinition(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ProjectConfigSummaryDefinition)
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "locator_id", &obj.LocatorID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "locator_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4660,42 +6182,45 @@ type ProjectConfigVersion struct {
 	IsDraft *bool `json:"is_draft" validate:"required"`
 
 	// The needs attention state of a configuration.
-	NeedsAttentionState []map[string]interface{} `json:"needs_attention_state,omitempty"`
+	NeedsAttentionState []ProjectConfigNeedsAttentionState `json:"needs_attention_state" validate:"required"`
 
-	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ, matching the date and time
+	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ to match the date and time
 	// format as specified by RFC 3339.
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
-	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ, matching the date and time
+	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ to match the date and time
 	// format as specified by RFC 3339.
 	ModifiedAt *strfmt.DateTime `json:"modified_at" validate:"required"`
 
 	// The last approved metadata of the configuration.
 	LastApproved *ProjectConfigMetadataLastApproved `json:"last_approved,omitempty"`
 
-	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ, matching the date and time
+	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ to match the date and time
 	// format as specified by RFC 3339.
 	LastSavedAt *strfmt.DateTime `json:"last_saved_at,omitempty"`
 
-	// The action job performed on the project configuration.
+	// The href and results from the last action job that is performed on the project configuration.
 	LastValidated *LastValidatedActionWithSummary `json:"last_validated,omitempty"`
 
-	// The action job performed on the project configuration.
+	// The href and results from the last action job that is performed on the project configuration.
 	LastDeployed *LastActionWithSummary `json:"last_deployed,omitempty"`
 
-	// The action job performed on the project configuration.
+	// The href and results from the last action job that is performed on the project configuration.
 	LastUndeployed *LastActionWithSummary `json:"last_undeployed,omitempty"`
 
-	// The outputs of a Schematics template property.
-	Outputs []OutputValue `json:"outputs,omitempty"`
+	// The summary from the last monitoring action job that is performed on the project configuration.
+	LastMonitoring *LastMonitoringActionWithSummary `json:"last_monitoring,omitempty"`
 
-	// The project referenced by this resource.
+	// The outputs of a Schematics template property.
+	Outputs []OutputValue `json:"outputs" validate:"required"`
+
+	// The project that is referenced by this resource.
 	Project *ProjectReference `json:"project" validate:"required"`
 
-	// The references used in the config to resolve input values.
+	// The references that are used in the configuration to resolve input values.
 	References map[string]interface{} `json:"references,omitempty"`
 
-	// A schematics workspace associated to a project configuration, with scripts.
+	// A Schematics workspace that is associated to a project configuration, with scripts.
 	Schematics *SchematicsMetadata `json:"schematics,omitempty"`
 
 	// The state of the configuration.
@@ -4704,10 +6229,22 @@ type ProjectConfigVersion struct {
 	// The flag that indicates whether a configuration update is available.
 	UpdateAvailable *bool `json:"update_available,omitempty"`
 
+	// The stack definition identifier.
+	TemplateID *string `json:"template_id,omitempty"`
+
+	// The stack config parent of which this configuration is a member of.
+	MemberOf *MemberOfDefinition `json:"member_of,omitempty"`
+
 	// A URL.
 	Href *string `json:"href" validate:"required"`
 
-	Definition ProjectConfigResponseDefinitionIntf `json:"definition" validate:"required"`
+	// The configuration type.
+	DeploymentModel *string `json:"deployment_model,omitempty"`
+
+	// Computed state code clarifying the prerequisites for validation for the configuration.
+	StateCode *string `json:"state_code,omitempty"`
+
+	Definition ProjectConfigDefinitionResponseIntf `json:"definition" validate:"required"`
 }
 
 // Constants associated with the ProjectConfigVersion.State property.
@@ -4732,93 +6269,198 @@ const (
 	ProjectConfigVersion_State_ValidatingFailed = "validating_failed"
 )
 
+// Constants associated with the ProjectConfigVersion.DeploymentModel property.
+// The configuration type.
+const (
+	ProjectConfigVersion_DeploymentModel_ProjectDeployed = "project_deployed"
+	ProjectConfigVersion_DeploymentModel_Stack = "stack"
+	ProjectConfigVersion_DeploymentModel_UserDeployed = "user_deployed"
+)
+
+// Constants associated with the ProjectConfigVersion.StateCode property.
+// Computed state code clarifying the prerequisites for validation for the configuration.
+const (
+	ProjectConfigVersion_StateCode_AwaitingInput = "awaiting_input"
+	ProjectConfigVersion_StateCode_AwaitingMemberDeployment = "awaiting_member_deployment"
+	ProjectConfigVersion_StateCode_AwaitingPrerequisite = "awaiting_prerequisite"
+	ProjectConfigVersion_StateCode_AwaitingStackSetup = "awaiting_stack_setup"
+	ProjectConfigVersion_StateCode_AwaitingValidation = "awaiting_validation"
+)
+
 // UnmarshalProjectConfigVersion unmarshals an instance of ProjectConfigVersion from the specified map of raw messages.
 func UnmarshalProjectConfigVersion(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(ProjectConfigVersion)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "is_draft", &obj.IsDraft)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "is_draft-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "needs_attention_state", &obj.NeedsAttentionState)
+	err = core.UnmarshalModel(m, "needs_attention_state", &obj.NeedsAttentionState, UnmarshalProjectConfigNeedsAttentionState)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "needs_attention_state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_at", &obj.ModifiedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "last_approved", &obj.LastApproved, UnmarshalProjectConfigMetadataLastApproved)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_approved-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_saved_at", &obj.LastSavedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_saved_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "last_validated", &obj.LastValidated, UnmarshalLastValidatedActionWithSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_validated-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "last_deployed", &obj.LastDeployed, UnmarshalLastActionWithSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_deployed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "last_undeployed", &obj.LastUndeployed, UnmarshalLastActionWithSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_undeployed-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "last_monitoring", &obj.LastMonitoring, UnmarshalLastMonitoringActionWithSummary)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "last_monitoring-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "outputs", &obj.Outputs, UnmarshalOutputValue)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "outputs-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "project", &obj.Project, UnmarshalProjectReference)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "project-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "references", &obj.References)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "references-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "schematics", &obj.Schematics, UnmarshalSchematicsMetadata)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "schematics-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "state", &obj.State)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "update_available", &obj.UpdateAvailable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "update_available-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "template_id", &obj.TemplateID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "member_of", &obj.MemberOf, UnmarshalMemberOfDefinition)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "member_of-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "definition", &obj.Definition, UnmarshalProjectConfigResponseDefinition)
+	err = core.UnmarshalPrimitive(m, "deployment_model", &obj.DeploymentModel)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deployment_model-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "state_code", &obj.StateCode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "state_code-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "definition", &obj.Definition, UnmarshalProjectConfigDefinitionResponse)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "definition-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// ProjectConfigVersionSummary : The project configuration version.
+// ProjectConfigVersionDefinitionSummary : A summary of the definition in a project configuration version.
+type ProjectConfigVersionDefinitionSummary struct {
+	// The ID of the project environment.
+	EnvironmentID *string `json:"environment_id,omitempty"`
+
+	// A unique concatenation of the catalog ID and the version ID that identify the deployable architecture in the
+	// catalog. I you're importing from an existing Schematics workspace that is not backed by cart, a `locator_id` is
+	// required. If you're using a Schematics workspace that is backed by cart, a `locator_id` is not necessary because the
+	// Schematics workspace has one.
+	// > There are 3 scenarios:
+	// > 1. If only a `locator_id` is specified, a new Schematics workspace is instantiated with that `locator_id`.
+	// > 2. If only a schematics `workspace_crn` is specified, a `400` is returned if a `locator_id` is not found in the
+	// existing schematics workspace.
+	// > 3. If both a Schematics `workspace_crn` and a `locator_id` are specified, a `400` message is returned if the
+	// specified `locator_id` does not agree with the `locator_id` in the existing Schematics workspace.
+	// > For more information of creating a Schematics workspace, see [Creating workspaces and importing your Terraform
+	// template](/docs/schematics?topic=schematics-sch-create-wks).
+	LocatorID *string `json:"locator_id,omitempty"`
+}
+
+// UnmarshalProjectConfigVersionDefinitionSummary unmarshals an instance of ProjectConfigVersionDefinitionSummary from the specified map of raw messages.
+func UnmarshalProjectConfigVersionDefinitionSummary(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ProjectConfigVersionDefinitionSummary)
+	err = core.UnmarshalPrimitive(m, "environment_id", &obj.EnvironmentID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "environment_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "locator_id", &obj.LocatorID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "locator_id-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ProjectConfigVersionSummary : A summary of a project configuration version.
 type ProjectConfigVersionSummary struct {
+	// A summary of the definition in a project configuration version.
+	Definition *ProjectConfigVersionDefinitionSummary `json:"definition" validate:"required"`
+
 	// The state of the configuration.
 	State *string `json:"state" validate:"required"`
+
+	// Computed state code clarifying the prerequisites for validation for the configuration.
+	StateCode *string `json:"state_code,omitempty"`
 
 	// The version number of the configuration.
 	Version *int64 `json:"version" validate:"required"`
@@ -4849,19 +6491,42 @@ const (
 	ProjectConfigVersionSummary_State_ValidatingFailed = "validating_failed"
 )
 
+// Constants associated with the ProjectConfigVersionSummary.StateCode property.
+// Computed state code clarifying the prerequisites for validation for the configuration.
+const (
+	ProjectConfigVersionSummary_StateCode_AwaitingInput = "awaiting_input"
+	ProjectConfigVersionSummary_StateCode_AwaitingMemberDeployment = "awaiting_member_deployment"
+	ProjectConfigVersionSummary_StateCode_AwaitingPrerequisite = "awaiting_prerequisite"
+	ProjectConfigVersionSummary_StateCode_AwaitingStackSetup = "awaiting_stack_setup"
+	ProjectConfigVersionSummary_StateCode_AwaitingValidation = "awaiting_validation"
+)
+
 // UnmarshalProjectConfigVersionSummary unmarshals an instance of ProjectConfigVersionSummary from the specified map of raw messages.
 func UnmarshalProjectConfigVersionSummary(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(ProjectConfigVersionSummary)
+	err = core.UnmarshalModel(m, "definition", &obj.Definition, UnmarshalProjectConfigVersionDefinitionSummary)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "definition-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "state", &obj.State)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "state_code", &obj.StateCode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "state_code-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4871,7 +6536,7 @@ func UnmarshalProjectConfigVersionSummary(m map[string]json.RawMessage, result i
 // ProjectConfigVersionSummaryCollection : The project configuration version list.
 type ProjectConfigVersionSummaryCollection struct {
 	// The collection list operation response schema that defines the array property with the name `versions`.
-	Versions []ProjectConfigVersionSummary `json:"versions,omitempty"`
+	Versions []ProjectConfigVersionSummary `json:"versions" validate:"required"`
 }
 
 // UnmarshalProjectConfigVersionSummaryCollection unmarshals an instance of ProjectConfigVersionSummaryCollection from the specified map of raw messages.
@@ -4879,6 +6544,7 @@ func UnmarshalProjectConfigVersionSummaryCollection(m map[string]json.RawMessage
 	obj := new(ProjectConfigVersionSummaryCollection)
 	err = core.UnmarshalModel(m, "versions", &obj.Versions, UnmarshalProjectConfigVersionSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "versions-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4887,15 +6553,22 @@ func UnmarshalProjectConfigVersionSummaryCollection(m map[string]json.RawMessage
 
 // ProjectDefinitionProperties : The definition of the project.
 type ProjectDefinitionProperties struct {
-	// The name of the project.  It is unique within the account across regions.
+	// The name of the project.  It's unique within the account across regions.
 	Name *string `json:"name" validate:"required"`
-
-	// A brief explanation of the project's use in the configuration of a deployable architecture. It is possible to create
-	// a project without providing a description.
-	Description *string `json:"description,omitempty"`
 
 	// The policy that indicates whether the resources are destroyed or not when a project is deleted.
 	DestroyOnDelete *bool `json:"destroy_on_delete" validate:"required"`
+
+	// A brief explanation of the project's use in the configuration of a deployable architecture. You can create a project
+	// without providing a description.
+	Description *string `json:"description" validate:"required"`
+
+	// A boolean flag to enable auto deploy.
+	AutoDeploy *bool `json:"auto_deploy,omitempty"`
+
+	// A boolean flag to enable automatic drift detection. Use this field to run a daily check to compare your
+	// configurations to your deployed resources to detect any difference.
+	MonitoringEnabled *bool `json:"monitoring_enabled,omitempty"`
 }
 
 // UnmarshalProjectDefinitionProperties unmarshals an instance of ProjectDefinitionProperties from the specified map of raw messages.
@@ -4903,14 +6576,27 @@ func UnmarshalProjectDefinitionProperties(m map[string]json.RawMessage, result i
 	obj := new(ProjectDefinitionProperties)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
-	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "destroy_on_delete", &obj.DestroyOnDelete)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "destroy_on_delete-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "auto_deploy", &obj.AutoDeploy)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "auto_deploy-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "monitoring_enabled", &obj.MonitoringEnabled)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "monitoring_enabled-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4928,6 +6614,60 @@ func UnmarshalProjectDefinitionReference(m map[string]json.RawMessage, result in
 	obj := new(ProjectDefinitionReference)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ProjectDefinitionSummary : The definition of the project.
+type ProjectDefinitionSummary struct {
+	// The name of the project.  It's unique within the account across regions.
+	Name *string `json:"name" validate:"required"`
+
+	// The policy that indicates whether the resources are destroyed or not when a project is deleted.
+	DestroyOnDelete *bool `json:"destroy_on_delete" validate:"required"`
+
+	// A brief explanation of the project's use in the configuration of a deployable architecture. You can create a project
+	// without providing a description.
+	Description *string `json:"description" validate:"required"`
+}
+
+// UnmarshalProjectDefinitionSummary unmarshals an instance of ProjectDefinitionSummary from the specified map of raw messages.
+func UnmarshalProjectDefinitionSummary(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ProjectDefinitionSummary)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "destroy_on_delete", &obj.DestroyOnDelete)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "destroy_on_delete-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ProjectDeleteResponse : The ID of the deleted project.
+type ProjectDeleteResponse struct {
+	// The ID of the deleted project or configuration.
+	ID *string `json:"id" validate:"required"`
+}
+
+// UnmarshalProjectDeleteResponse unmarshals an instance of ProjectDeleteResponse from the specified map of raw messages.
+func UnmarshalProjectDeleteResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ProjectDeleteResponse)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4936,21 +6676,21 @@ func UnmarshalProjectDefinitionReference(m map[string]json.RawMessage, result in
 
 // ProjectEnvironmentSummary : The environment metadata.
 type ProjectEnvironmentSummary struct {
-	// The environment id as a friendly name.
+	// The environment ID as a friendly name.
 	ID *string `json:"id" validate:"required"`
 
-	// The project referenced by this resource.
+	// The project that is referenced by this resource.
 	Project *ProjectReference `json:"project" validate:"required"`
 
-	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ, matching the date and time
+	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ to match the date and time
 	// format as specified by RFC 3339.
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
 	// A URL.
 	Href *string `json:"href" validate:"required"`
 
-	// The environment definition used in the project collection.
-	Definition *EnvironmentDefinitionNameDescription `json:"definition" validate:"required"`
+	// The environment definition that is used in the project collection.
+	Definition *ProjectEnvironmentSummaryDefinition `json:"definition" validate:"required"`
 }
 
 // UnmarshalProjectEnvironmentSummary unmarshals an instance of ProjectEnvironmentSummary from the specified map of raw messages.
@@ -4958,22 +6698,53 @@ func UnmarshalProjectEnvironmentSummary(m map[string]json.RawMessage, result int
 	obj := new(ProjectEnvironmentSummary)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "project", &obj.Project, UnmarshalProjectReference)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "project-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "definition", &obj.Definition, UnmarshalEnvironmentDefinitionNameDescription)
+	err = core.UnmarshalModel(m, "definition", &obj.Definition, UnmarshalProjectEnvironmentSummaryDefinition)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "definition-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ProjectEnvironmentSummaryDefinition : The environment definition that is used in the project collection.
+type ProjectEnvironmentSummaryDefinition struct {
+	// The description of the environment.
+	Description *string `json:"description" validate:"required"`
+
+	// The name of the environment. It's unique within the account across projects and regions.
+	Name *string `json:"name" validate:"required"`
+}
+
+// UnmarshalProjectEnvironmentSummaryDefinition unmarshals an instance of ProjectEnvironmentSummaryDefinition from the specified map of raw messages.
+func UnmarshalProjectEnvironmentSummaryDefinition(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ProjectEnvironmentSummaryDefinition)
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4982,15 +6753,22 @@ func UnmarshalProjectEnvironmentSummary(m map[string]json.RawMessage, result int
 
 // ProjectPatchDefinitionBlock : The definition of the project.
 type ProjectPatchDefinitionBlock struct {
-	// The name of the project.  It is unique within the account across regions.
+	// The name of the project.  It's unique within the account across regions.
 	Name *string `json:"name,omitempty"`
-
-	// A brief explanation of the project's use in the configuration of a deployable architecture. It is possible to create
-	// a project without providing a description.
-	Description *string `json:"description,omitempty"`
 
 	// The policy that indicates whether the resources are destroyed or not when a project is deleted.
 	DestroyOnDelete *bool `json:"destroy_on_delete,omitempty"`
+
+	// A boolean flag to enable auto deploy.
+	AutoDeploy *bool `json:"auto_deploy,omitempty"`
+
+	// A brief explanation of the project's use in the configuration of a deployable architecture. You can create a project
+	// without providing a description.
+	Description *string `json:"description,omitempty"`
+
+	// A boolean flag to enable automatic drift detection. Use this field to run a daily check to compare your
+	// configurations to your deployed resources to detect any difference.
+	MonitoringEnabled *bool `json:"monitoring_enabled,omitempty"`
 }
 
 // UnmarshalProjectPatchDefinitionBlock unmarshals an instance of ProjectPatchDefinitionBlock from the specified map of raw messages.
@@ -4998,14 +6776,27 @@ func UnmarshalProjectPatchDefinitionBlock(m map[string]json.RawMessage, result i
 	obj := new(ProjectPatchDefinitionBlock)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
-	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "destroy_on_delete", &obj.DestroyOnDelete)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "destroy_on_delete-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "auto_deploy", &obj.AutoDeploy)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "auto_deploy-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "monitoring_enabled", &obj.MonitoringEnabled)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "monitoring_enabled-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5014,15 +6805,22 @@ func UnmarshalProjectPatchDefinitionBlock(m map[string]json.RawMessage, result i
 
 // ProjectPrototypeDefinition : The definition of the project.
 type ProjectPrototypeDefinition struct {
-	// The name of the project.  It is unique within the account across regions.
+	// The name of the project.  It's unique within the account across regions.
 	Name *string `json:"name" validate:"required"`
-
-	// A brief explanation of the project's use in the configuration of a deployable architecture. It is possible to create
-	// a project without providing a description.
-	Description *string `json:"description,omitempty"`
 
 	// The policy that indicates whether the resources are undeployed or not when a project is deleted.
 	DestroyOnDelete *bool `json:"destroy_on_delete,omitempty"`
+
+	// A brief explanation of the project's use in the configuration of a deployable architecture. You can create a project
+	// without providing a description.
+	Description *string `json:"description,omitempty"`
+
+	// A boolean flag to enable auto deploy.
+	AutoDeploy *bool `json:"auto_deploy,omitempty"`
+
+	// A boolean flag to enable automatic drift detection. Use this field to run a daily check to compare your
+	// configurations to your deployed resources to detect any difference.
+	MonitoringEnabled *bool `json:"monitoring_enabled,omitempty"`
 }
 
 // NewProjectPrototypeDefinition : Instantiate ProjectPrototypeDefinition (Generic Model Constructor)
@@ -5031,6 +6829,9 @@ func (*ProjectV1) NewProjectPrototypeDefinition(name string) (_model *ProjectPro
 		Name: core.StringPtr(name),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -5039,33 +6840,46 @@ func UnmarshalProjectPrototypeDefinition(m map[string]json.RawMessage, result in
 	obj := new(ProjectPrototypeDefinition)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
-	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "destroy_on_delete", &obj.DestroyOnDelete)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "destroy_on_delete-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "auto_deploy", &obj.AutoDeploy)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "auto_deploy-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "monitoring_enabled", &obj.MonitoringEnabled)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "monitoring_enabled-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// ProjectReference : The project referenced by this resource.
+// ProjectReference : The project that is referenced by this resource.
 type ProjectReference struct {
 	// The unique ID.
 	ID *string `json:"id" validate:"required"`
 
+	// A URL.
+	Href *string `json:"href" validate:"required"`
+
 	// The definition of the project reference.
 	Definition *ProjectDefinitionReference `json:"definition" validate:"required"`
 
-	// An IBM Cloud resource name, which uniquely identifies a resource.
+	// An IBM Cloud resource name that uniquely identifies a resource.
 	Crn *string `json:"crn" validate:"required"`
-
-	// A URL.
-	Href *string `json:"href" validate:"required"`
 }
 
 // UnmarshalProjectReference unmarshals an instance of ProjectReference from the specified map of raw messages.
@@ -5073,18 +6887,22 @@ func UnmarshalProjectReference(m map[string]json.RawMessage, result interface{})
 	obj := new(ProjectReference)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "definition", &obj.Definition, UnmarshalProjectDefinitionReference)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "crn", &obj.Crn)
-	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "definition", &obj.Definition, UnmarshalProjectDefinitionReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "definition-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "crn", &obj.Crn)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5093,19 +6911,19 @@ func UnmarshalProjectReference(m map[string]json.RawMessage, result interface{})
 
 // ProjectSummary : ProjectSummary struct
 type ProjectSummary struct {
-	// An IBM Cloud resource name, which uniquely identifies a resource.
+	// An IBM Cloud resource name that uniquely identifies a resource.
 	Crn *string `json:"crn" validate:"required"`
 
-	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ, matching the date and time
+	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ to match the date and time
 	// format as specified by RFC 3339.
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
-	// The cumulative list of needs attention items for a project. If the view is successfully retrieved, an array which
-	// could be empty is returned.
-	CumulativeNeedsAttentionView []CumulativeNeedsAttention `json:"cumulative_needs_attention_view,omitempty"`
+	// The cumulative list of needs attention items for a project. If the view is successfully retrieved, an empty or
+	// nonempty array is returned.
+	CumulativeNeedsAttentionView []CumulativeNeedsAttention `json:"cumulative_needs_attention_view" validate:"required"`
 
-	// True indicates that the fetch of the needs attention items failed. It only exists if there was an error while
-	// retrieving the cumulative needs attention view.
+	// A value of `true` indicates that the fetch of the needs attention items failed. This property only exists if there
+	// was an error when you retrieved the cumulative needs attention view.
 	CumulativeNeedsAttentionViewError *bool `json:"cumulative_needs_attention_view_error,omitempty"`
 
 	// The unique project ID.
@@ -5114,7 +6932,7 @@ type ProjectSummary struct {
 	// The IBM Cloud location where a resource is deployed.
 	Location *string `json:"location" validate:"required"`
 
-	// The resource group id where the project's data and tools are created.
+	// The resource group ID where the project's data and tools are created.
 	ResourceGroupID *string `json:"resource_group_id" validate:"required"`
 
 	// The project status value.
@@ -5124,7 +6942,7 @@ type ProjectSummary struct {
 	Href *string `json:"href" validate:"required"`
 
 	// The definition of the project.
-	Definition *ProjectDefinitionProperties `json:"definition" validate:"required"`
+	Definition *ProjectDefinitionSummary `json:"definition" validate:"required"`
 }
 
 // Constants associated with the ProjectSummary.State property.
@@ -5140,75 +6958,85 @@ func UnmarshalProjectSummary(m map[string]json.RawMessage, result interface{}) (
 	obj := new(ProjectSummary)
 	err = core.UnmarshalPrimitive(m, "crn", &obj.Crn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "cumulative_needs_attention_view", &obj.CumulativeNeedsAttentionView, UnmarshalCumulativeNeedsAttention)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cumulative_needs_attention_view-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cumulative_needs_attention_view_error", &obj.CumulativeNeedsAttentionViewError)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cumulative_needs_attention_view_error-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "location", &obj.Location)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "location-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_group_id", &obj.ResourceGroupID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_group_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "state", &obj.State)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "definition", &obj.Definition, UnmarshalProjectDefinitionProperties)
+	err = core.UnmarshalModel(m, "definition", &obj.Definition, UnmarshalProjectDefinitionSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "definition-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// SchematicsMetadata : A schematics workspace associated to a project configuration, with scripts.
+// SchematicsMetadata : A Schematics workspace that is associated to a project configuration, with scripts.
 type SchematicsMetadata struct {
-	// An IBM Cloud resource name, which uniquely identifies a resource.
+	// An IBM Cloud resource name that uniquely identifies a resource.
 	WorkspaceCrn *string `json:"workspace_crn,omitempty"`
 
-	// A script to be run as part of a Project configuration, for a given stage (pre, post) and action (validate, deploy,
-	// undeploy).
+	// A script to be run as part of a project configuration for a specific stage (pre or post) and action (validate,
+	// deploy, or undeploy).
 	ValidatePreScript *Script `json:"validate_pre_script,omitempty"`
 
-	// A script to be run as part of a Project configuration, for a given stage (pre, post) and action (validate, deploy,
-	// undeploy).
+	// A script to be run as part of a project configuration for a specific stage (pre or post) and action (validate,
+	// deploy, or undeploy).
 	ValidatePostScript *Script `json:"validate_post_script,omitempty"`
 
-	// A script to be run as part of a Project configuration, for a given stage (pre, post) and action (validate, deploy,
-	// undeploy).
+	// A script to be run as part of a project configuration for a specific stage (pre or post) and action (validate,
+	// deploy, or undeploy).
 	DeployPreScript *Script `json:"deploy_pre_script,omitempty"`
 
-	// A script to be run as part of a Project configuration, for a given stage (pre, post) and action (validate, deploy,
-	// undeploy).
+	// A script to be run as part of a project configuration for a specific stage (pre or post) and action (validate,
+	// deploy, or undeploy).
 	DeployPostScript *Script `json:"deploy_post_script,omitempty"`
 
-	// A script to be run as part of a Project configuration, for a given stage (pre, post) and action (validate, deploy,
-	// undeploy).
+	// A script to be run as part of a project configuration for a specific stage (pre or post) and action (validate,
+	// deploy, or undeploy).
 	UndeployPreScript *Script `json:"undeploy_pre_script,omitempty"`
 
-	// A script to be run as part of a Project configuration, for a given stage (pre, post) and action (validate, deploy,
-	// undeploy).
+	// A script to be run as part of a project configuration for a specific stage (pre or post) and action (validate,
+	// deploy, or undeploy).
 	UndeployPostScript *Script `json:"undeploy_post_script,omitempty"`
 }
 
@@ -5217,40 +7045,57 @@ func UnmarshalSchematicsMetadata(m map[string]json.RawMessage, result interface{
 	obj := new(SchematicsMetadata)
 	err = core.UnmarshalPrimitive(m, "workspace_crn", &obj.WorkspaceCrn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "workspace_crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "validate_pre_script", &obj.ValidatePreScript, UnmarshalScript)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "validate_pre_script-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "validate_post_script", &obj.ValidatePostScript, UnmarshalScript)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "validate_post_script-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "deploy_pre_script", &obj.DeployPreScript, UnmarshalScript)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deploy_pre_script-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "deploy_post_script", &obj.DeployPostScript, UnmarshalScript)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deploy_post_script-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "undeploy_pre_script", &obj.UndeployPreScript, UnmarshalScript)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "undeploy_pre_script-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "undeploy_post_script", &obj.UndeployPostScript, UnmarshalScript)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "undeploy_post_script-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// SchematicsWorkspace : A Schematics workspace to use for deploying this configuration. Either schematics.workspace_crn,
-// definition.locator_id, or both must be specified.
+// SchematicsWorkspace : A Schematics workspace to use for deploying this deployable architecture.
+// > If you are importing data from an existing Schematics workspace that is not backed by cart, then you must provide a
+// `locator_id`. If you are using a Schematics workspace that is backed by cart, a `locator_id` is not required because
+// the Schematics workspace has one.
+// > There are 3 scenarios:
+// > 1. If only a `locator_id` is specified, a new Schematics workspace is instantiated with that `locator_id`.
+// > 2. If only a schematics `workspace_crn` is specified, a `400` is returned if a `locator_id` is not found in the
+// existing schematics workspace.
+// > 3. If both a Schematics `workspace_crn` and a `locator_id` are specified, a `400`code  is returned if the specified
+// `locator_id` does not agree with the `locator_id` in the existing Schematics workspace.
+// > For more information, see [Creating workspaces and importing your Terraform
+// template](/docs/schematics?topic=schematics-sch-create-wks).
 type SchematicsWorkspace struct {
-	// An IBM Cloud resource name, which uniquely identifies a resource.
+	// An IBM Cloud resource name that uniquely identifies a resource.
 	WorkspaceCrn *string `json:"workspace_crn,omitempty"`
 }
 
@@ -5259,19 +7104,20 @@ func UnmarshalSchematicsWorkspace(m map[string]json.RawMessage, result interface
 	obj := new(SchematicsWorkspace)
 	err = core.UnmarshalPrimitive(m, "workspace_crn", &obj.WorkspaceCrn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "workspace_crn-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// Script : A script to be run as part of a Project configuration, for a given stage (pre, post) and action (validate, deploy,
-// undeploy).
+// Script : A script to be run as part of a project configuration for a specific stage (pre or post) and action (validate,
+// deploy, or undeploy).
 type Script struct {
 	// The type of the script.
 	Type *string `json:"type,omitempty"`
 
-	// The path to this script within the current version source.
+	// The path to this script is within the current version source.
 	Path *string `json:"path,omitempty"`
 
 	// The short description for this script.
@@ -5283,14 +7129,555 @@ func UnmarshalScript(m map[string]json.RawMessage, result interface{}) (err erro
 	obj := new(Script)
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "path", &obj.Path)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "path-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "short_description", &obj.ShortDescription)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "short_description-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// StackConfigDefinitionSummary : The definition summary of the stack configuration.
+type StackConfigDefinitionSummary struct {
+	// The configuration name. It's unique within the account across projects and regions.
+	Name *string `json:"name" validate:"required"`
+
+	// The member deployabe architectures that are included in your stack.
+	Members []StackConfigMember `json:"members" validate:"required"`
+}
+
+// UnmarshalStackConfigDefinitionSummary unmarshals an instance of StackConfigDefinitionSummary from the specified map of raw messages.
+func UnmarshalStackConfigDefinitionSummary(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(StackConfigDefinitionSummary)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "members", &obj.Members, UnmarshalStackConfigMember)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "members-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// StackConfigMember : A member deployable architecture that is included in your stack.
+type StackConfigMember struct {
+	// The name matching the alias in the stack definition.
+	Name *string `json:"name" validate:"required"`
+
+	// The unique ID.
+	ConfigID *string `json:"config_id" validate:"required"`
+}
+
+// NewStackConfigMember : Instantiate StackConfigMember (Generic Model Constructor)
+func (*ProjectV1) NewStackConfigMember(name string, configID string) (_model *StackConfigMember, err error) {
+	_model = &StackConfigMember{
+		Name: core.StringPtr(name),
+		ConfigID: core.StringPtr(configID),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalStackConfigMember unmarshals an instance of StackConfigMember from the specified map of raw messages.
+func UnmarshalStackConfigMember(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(StackConfigMember)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "config_id", &obj.ConfigID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "config_id-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// StackDefinition : The stack definition.
+type StackDefinition struct {
+	// The ID of the stack definition.
+	ID *string `json:"id" validate:"required"`
+
+	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ to match the date and time
+	// format as specified by RFC 3339.
+	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
+
+	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ to match the date and time
+	// format as specified by RFC 3339.
+	ModifiedAt *strfmt.DateTime `json:"modified_at" validate:"required"`
+
+	// The state for the stack definition.
+	State *string `json:"state" validate:"required"`
+
+	// The configuration reference.
+	Configuration *StackDefinitionMetadataConfiguration `json:"configuration" validate:"required"`
+
+	// A URL.
+	Href *string `json:"href" validate:"required"`
+
+	// The definition block for a stack definition.
+	StackDefinition *StackDefinitionBlock `json:"stack_definition" validate:"required"`
+}
+
+// Constants associated with the StackDefinition.State property.
+// The state for the stack definition.
+const (
+	StackDefinition_State_Draft = "draft"
+	StackDefinition_State_Published = "published"
+)
+
+// UnmarshalStackDefinition unmarshals an instance of StackDefinition from the specified map of raw messages.
+func UnmarshalStackDefinition(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(StackDefinition)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "modified_at", &obj.ModifiedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "state", &obj.State)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "configuration", &obj.Configuration, UnmarshalStackDefinitionMetadataConfiguration)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "configuration-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "stack_definition", &obj.StackDefinition, UnmarshalStackDefinitionBlock)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "stack_definition-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// StackDefinitionBlock : The definition block for a stack definition.
+type StackDefinitionBlock struct {
+	// Defines the inputs that users need to configure at the stack level. These inputs are included in the catalog entry
+	// when the deployable architecture stack is exported to a private catalog.
+	Inputs []StackDefinitionInputVariable `json:"inputs,omitempty"`
+
+	// The outputs associated with this stack definition.
+	Outputs []StackDefinitionOutputVariable `json:"outputs,omitempty"`
+
+	// The member deployabe architectures that are included in your stack.
+	Members []StackDefinitionMember `json:"members,omitempty"`
+}
+
+// UnmarshalStackDefinitionBlock unmarshals an instance of StackDefinitionBlock from the specified map of raw messages.
+func UnmarshalStackDefinitionBlock(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(StackDefinitionBlock)
+	err = core.UnmarshalModel(m, "inputs", &obj.Inputs, UnmarshalStackDefinitionInputVariable)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "inputs-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "outputs", &obj.Outputs, UnmarshalStackDefinitionOutputVariable)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "outputs-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "members", &obj.Members, UnmarshalStackDefinitionMember)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "members-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// StackDefinitionBlockPrototype : The definition block for a stack definition.
+type StackDefinitionBlockPrototype struct {
+	// Defines the inputs that users need to configure at the stack level. These inputs are included in the catalog entry
+	// when the deployable architecture stack is exported to a private catalog.
+	Inputs []StackDefinitionInputVariable `json:"inputs,omitempty"`
+
+	// The outputs associated with this stack definition.
+	Outputs []StackDefinitionOutputVariable `json:"outputs,omitempty"`
+}
+
+// UnmarshalStackDefinitionBlockPrototype unmarshals an instance of StackDefinitionBlockPrototype from the specified map of raw messages.
+func UnmarshalStackDefinitionBlockPrototype(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(StackDefinitionBlockPrototype)
+	err = core.UnmarshalModel(m, "inputs", &obj.Inputs, UnmarshalStackDefinitionInputVariable)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "inputs-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "outputs", &obj.Outputs, UnmarshalStackDefinitionOutputVariable)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "outputs-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// StackDefinitionExportRequest : The payload for the stack definition export request.
+// Models which "extend" this model:
+// - StackDefinitionExportRequestStackDefinitionExportCatalogRequest
+// - StackDefinitionExportRequestStackDefinitionExportProductRequest
+type StackDefinitionExportRequest struct {
+	// The catalog ID to publish.
+	CatalogID *string `json:"catalog_id,omitempty"`
+
+	// The semver value of this new version of the product.
+	TargetVersion *string `json:"target_version,omitempty"`
+
+	// The variation of this new version of the product.
+	Variation *string `json:"variation,omitempty"`
+
+	// The product label.
+	Label *string `json:"label,omitempty"`
+
+	// Tags associated with the catalog product.
+	Tags []string `json:"tags,omitempty"`
+
+	// The product ID to publish.
+	ProductID *string `json:"product_id,omitempty"`
+}
+func (*StackDefinitionExportRequest) isaStackDefinitionExportRequest() bool {
+	return true
+}
+
+type StackDefinitionExportRequestIntf interface {
+	isaStackDefinitionExportRequest() bool
+}
+
+// UnmarshalStackDefinitionExportRequest unmarshals an instance of StackDefinitionExportRequest from the specified map of raw messages.
+func UnmarshalStackDefinitionExportRequest(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(StackDefinitionExportRequest)
+	err = core.UnmarshalPrimitive(m, "catalog_id", &obj.CatalogID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "target_version", &obj.TargetVersion)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "target_version-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "variation", &obj.Variation)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "variation-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "label", &obj.Label)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "label-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "tags", &obj.Tags)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "tags-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "product_id", &obj.ProductID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "product_id-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// StackDefinitionExportResponse : The payload for the stack definition export response.
+type StackDefinitionExportResponse struct {
+	// The catalog ID to publish.
+	CatalogID *string `json:"catalog_id,omitempty"`
+
+	// The product ID to publish.
+	ProductID *string `json:"product_id,omitempty"`
+
+	// The version locator of the created deployable architecture.
+	VersionLocator *string `json:"version_locator,omitempty"`
+
+	// The product target kind value.
+	Kind *string `json:"kind,omitempty"`
+
+	// The product format kind value.
+	Format *string `json:"format,omitempty"`
+}
+
+// UnmarshalStackDefinitionExportResponse unmarshals an instance of StackDefinitionExportResponse from the specified map of raw messages.
+func UnmarshalStackDefinitionExportResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(StackDefinitionExportResponse)
+	err = core.UnmarshalPrimitive(m, "catalog_id", &obj.CatalogID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "product_id", &obj.ProductID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "product_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "version_locator", &obj.VersionLocator)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "version_locator-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "kind", &obj.Kind)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "kind-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "format", &obj.Format)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "format-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// StackDefinitionInputVariable : The input variables for a stack definition.
+type StackDefinitionInputVariable struct {
+	// The stack definition input name.
+	Name *string `json:"name" validate:"required"`
+
+	// The variable type.
+	Type *string `json:"type" validate:"required"`
+
+	// The description of the variable.
+	Description *string `json:"description,omitempty"`
+
+	// This property can be any value - a string, number, boolean, array, or object.
+	Default interface{} `json:"default" validate:"required"`
+
+	// A boolean value to denote if the property is required.
+	Required *bool `json:"required,omitempty"`
+
+	// A boolean value to denote whether the property is hidden, as in not exposed to the user.
+	Hidden *bool `json:"hidden,omitempty"`
+}
+
+// Constants associated with the StackDefinitionInputVariable.Type property.
+// The variable type.
+const (
+	StackDefinitionInputVariable_Type_Array = "array"
+	StackDefinitionInputVariable_Type_Boolean = "boolean"
+	StackDefinitionInputVariable_Type_Float = "float"
+	StackDefinitionInputVariable_Type_Int = "int"
+	StackDefinitionInputVariable_Type_Number = "number"
+	StackDefinitionInputVariable_Type_Object = "object"
+	StackDefinitionInputVariable_Type_Password = "password"
+	StackDefinitionInputVariable_Type_String = "string"
+)
+
+// NewStackDefinitionInputVariable : Instantiate StackDefinitionInputVariable (Generic Model Constructor)
+func (*ProjectV1) NewStackDefinitionInputVariable(name string, typeVar string, defaultVar interface{}) (_model *StackDefinitionInputVariable, err error) {
+	_model = &StackDefinitionInputVariable{
+		Name: core.StringPtr(name),
+		Type: core.StringPtr(typeVar),
+		Default: defaultVar,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalStackDefinitionInputVariable unmarshals an instance of StackDefinitionInputVariable from the specified map of raw messages.
+func UnmarshalStackDefinitionInputVariable(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(StackDefinitionInputVariable)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "default-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "required", &obj.Required)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "required-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "hidden", &obj.Hidden)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "hidden-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// StackDefinitionMember : The member definition associated with this stack definition.
+type StackDefinitionMember struct {
+	// The name matching the alias in the stack definition.
+	Name *string `json:"name" validate:"required"`
+
+	// The version locator of the member deployable architecture.
+	VersionLocator *string `json:"version_locator" validate:"required"`
+
+	// The member inputs to use for the stack definition.
+	Inputs []StackDefinitionMemberInput `json:"inputs,omitempty"`
+}
+
+// UnmarshalStackDefinitionMember unmarshals an instance of StackDefinitionMember from the specified map of raw messages.
+func UnmarshalStackDefinitionMember(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(StackDefinitionMember)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "version_locator", &obj.VersionLocator)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "version_locator-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "inputs", &obj.Inputs, UnmarshalStackDefinitionMemberInput)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "inputs-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// StackDefinitionMemberInput : StackDefinitionMemberInput struct
+type StackDefinitionMemberInput struct {
+	// The member input name to use.
+	Name *string `json:"name" validate:"required"`
+
+	// The value of the stack definition output.
+	Value interface{} `json:"value" validate:"required"`
+}
+
+// UnmarshalStackDefinitionMemberInput unmarshals an instance of StackDefinitionMemberInput from the specified map of raw messages.
+func UnmarshalStackDefinitionMemberInput(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(StackDefinitionMemberInput)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// StackDefinitionMetadataConfiguration : The configuration reference.
+type StackDefinitionMetadataConfiguration struct {
+	// The unique ID.
+	ID *string `json:"id" validate:"required"`
+
+	// A URL.
+	Href *string `json:"href" validate:"required"`
+
+	// The definition of the config reference.
+	Definition *ConfigDefinitionReference `json:"definition" validate:"required"`
+}
+
+// UnmarshalStackDefinitionMetadataConfiguration unmarshals an instance of StackDefinitionMetadataConfiguration from the specified map of raw messages.
+func UnmarshalStackDefinitionMetadataConfiguration(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(StackDefinitionMetadataConfiguration)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "definition", &obj.Definition, UnmarshalConfigDefinitionReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "definition-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// StackDefinitionOutputVariable : The output variables for a stack definition.
+type StackDefinitionOutputVariable struct {
+	// The stack definition output name.
+	Name *string `json:"name" validate:"required"`
+
+	// The value of the stack definition output.
+	Value interface{} `json:"value" validate:"required"`
+}
+
+// NewStackDefinitionOutputVariable : Instantiate StackDefinitionOutputVariable (Generic Model Constructor)
+func (*ProjectV1) NewStackDefinitionOutputVariable(name string, value interface{}) (_model *StackDefinitionOutputVariable, err error) {
+	_model = &StackDefinitionOutputVariable{
+		Name: core.StringPtr(name),
+		Value: value,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalStackDefinitionOutputVariable unmarshals an instance of StackDefinitionOutputVariable from the specified map of raw messages.
+func UnmarshalStackDefinitionOutputVariable(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(StackDefinitionOutputVariable)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5302,11 +7689,23 @@ type SyncConfigOptions struct {
 	// The unique project ID.
 	ProjectID *string `json:"project_id" validate:"required,ne="`
 
-	// The unique config ID.
+	// The unique configuration ID.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// A Schematics workspace to use for deploying this configuration.
-	// Either schematics.workspace_crn, definition.locator_id, or both must be specified.
+	// A Schematics workspace to use for deploying this deployable architecture.
+	// > If you are importing data from an existing Schematics workspace that is not backed by cart, then you must provide
+	// a `locator_id`. If you are using a Schematics workspace that is backed by cart, a `locator_id` is not required
+	// because the Schematics workspace has one.
+	// >
+	// There are 3 scenarios:
+	// > 1. If only a `locator_id` is specified, a new Schematics workspace is instantiated with that `locator_id`.
+	// > 2. If only a schematics `workspace_crn` is specified, a `400` is returned if a `locator_id` is not found in the
+	// existing schematics workspace.
+	// > 3. If both a Schematics `workspace_crn` and a `locator_id` are specified, a `400`code  is returned if the
+	// specified `locator_id` does not agree with the `locator_id` in the existing Schematics workspace.
+	// >
+	// For more information, see [Creating workspaces and importing your Terraform
+	// template](/docs/schematics?topic=schematics-sch-create-wks).
 	Schematics *SchematicsWorkspace `json:"schematics,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -5345,7 +7744,7 @@ func (options *SyncConfigOptions) SetHeaders(param map[string]string) *SyncConfi
 	return options
 }
 
-// TerraformLogAnalyzerErrorMessage : The error message parsed by the Terraform Log Analyzer.
+// TerraformLogAnalyzerErrorMessage : The error message that is parsed by the Terraform log analyzer.
 type TerraformLogAnalyzerErrorMessage struct {
 
 	// Allows users to set arbitrary properties
@@ -5387,6 +7786,9 @@ func (o *TerraformLogAnalyzerErrorMessage) MarshalJSON() (buffer []byte, err err
 		}
 	}
 	buffer, err = json.Marshal(m)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-marshal", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -5397,7 +7799,7 @@ func UnmarshalTerraformLogAnalyzerErrorMessage(m map[string]json.RawMessage, res
 		var v interface{}
 		e := core.UnmarshalPrimitive(m, k, &v)
 		if e != nil {
-			err = e
+			err = core.SDKErrorf(e, "", "additional-properties-error", common.GetComponentInfo())
 			return
 		}
 		obj.SetProperty(k, v)
@@ -5406,15 +7808,15 @@ func UnmarshalTerraformLogAnalyzerErrorMessage(m map[string]json.RawMessage, res
 	return
 }
 
-// TerraformLogAnalyzerSuccessMessage : The success message parsed by the Terraform Log Analyzer.
+// TerraformLogAnalyzerSuccessMessage : The success message that is parsed by the terraform log analyzer.
 type TerraformLogAnalyzerSuccessMessage struct {
 	// The resource type.
 	ResourceType *string `json:"resource_type,omitempty"`
 
-	// The time taken.
+	// The time that is taken.
 	TimeTaken *string `json:"time-taken,omitempty"`
 
-	// The id.
+	// The ID.
 	ID *string `json:"id,omitempty"`
 }
 
@@ -5423,14 +7825,17 @@ func UnmarshalTerraformLogAnalyzerSuccessMessage(m map[string]json.RawMessage, r
 	obj := new(TerraformLogAnalyzerSuccessMessage)
 	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "time-taken", &obj.TimeTaken)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "time-taken-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5442,7 +7847,7 @@ type UndeployConfigOptions struct {
 	// The unique project ID.
 	ProjectID *string `json:"project_id" validate:"required,ne="`
 
-	// The unique config ID.
+	// The unique configuration ID.
 	ID *string `json:"id" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
@@ -5480,17 +7885,17 @@ type UpdateConfigOptions struct {
 	// The unique project ID.
 	ProjectID *string `json:"project_id" validate:"required,ne="`
 
-	// The unique config ID.
+	// The unique configuration ID.
 	ID *string `json:"id" validate:"required,ne="`
 
-	Definition ProjectConfigPatchDefinitionBlockIntf `json:"definition" validate:"required"`
+	Definition ProjectConfigDefinitionPatchIntf `json:"definition" validate:"required"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
 
 // NewUpdateConfigOptions : Instantiate UpdateConfigOptions
-func (*ProjectV1) NewUpdateConfigOptions(projectID string, id string, definition ProjectConfigPatchDefinitionBlockIntf) *UpdateConfigOptions {
+func (*ProjectV1) NewUpdateConfigOptions(projectID string, id string, definition ProjectConfigDefinitionPatchIntf) *UpdateConfigOptions {
 	return &UpdateConfigOptions{
 		ProjectID: core.StringPtr(projectID),
 		ID: core.StringPtr(id),
@@ -5511,7 +7916,7 @@ func (_options *UpdateConfigOptions) SetID(id string) *UpdateConfigOptions {
 }
 
 // SetDefinition : Allow user to set Definition
-func (_options *UpdateConfigOptions) SetDefinition(definition ProjectConfigPatchDefinitionBlockIntf) *UpdateConfigOptions {
+func (_options *UpdateConfigOptions) SetDefinition(definition ProjectConfigDefinitionPatchIntf) *UpdateConfigOptions {
 	_options.Definition = definition
 	return _options
 }
@@ -5530,15 +7935,15 @@ type UpdateProjectEnvironmentOptions struct {
 	// The environment ID.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// The environment definition used for updates.
-	Definition *EnvironmentDefinitionProperties `json:"definition" validate:"required"`
+	// The environment definition that is used for updates.
+	Definition *EnvironmentDefinitionPropertiesPatch `json:"definition" validate:"required"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
 
 // NewUpdateProjectEnvironmentOptions : Instantiate UpdateProjectEnvironmentOptions
-func (*ProjectV1) NewUpdateProjectEnvironmentOptions(projectID string, id string, definition *EnvironmentDefinitionProperties) *UpdateProjectEnvironmentOptions {
+func (*ProjectV1) NewUpdateProjectEnvironmentOptions(projectID string, id string, definition *EnvironmentDefinitionPropertiesPatch) *UpdateProjectEnvironmentOptions {
 	return &UpdateProjectEnvironmentOptions{
 		ProjectID: core.StringPtr(projectID),
 		ID: core.StringPtr(id),
@@ -5559,7 +7964,7 @@ func (_options *UpdateProjectEnvironmentOptions) SetID(id string) *UpdateProject
 }
 
 // SetDefinition : Allow user to set Definition
-func (_options *UpdateProjectEnvironmentOptions) SetDefinition(definition *EnvironmentDefinitionProperties) *UpdateProjectEnvironmentOptions {
+func (_options *UpdateProjectEnvironmentOptions) SetDefinition(definition *EnvironmentDefinitionPropertiesPatch) *UpdateProjectEnvironmentOptions {
 	_options.Definition = definition
 	return _options
 }
@@ -5608,12 +8013,60 @@ func (options *UpdateProjectOptions) SetHeaders(param map[string]string) *Update
 	return options
 }
 
+// UpdateStackDefinitionOptions : The UpdateStackDefinition options.
+type UpdateStackDefinitionOptions struct {
+	// The unique project ID.
+	ProjectID *string `json:"project_id" validate:"required,ne="`
+
+	// The unique configuration ID.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// The definition block for a stack definition.
+	StackDefinition *StackDefinitionBlockPrototype `json:"stack_definition" validate:"required"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewUpdateStackDefinitionOptions : Instantiate UpdateStackDefinitionOptions
+func (*ProjectV1) NewUpdateStackDefinitionOptions(projectID string, id string, stackDefinition *StackDefinitionBlockPrototype) *UpdateStackDefinitionOptions {
+	return &UpdateStackDefinitionOptions{
+		ProjectID: core.StringPtr(projectID),
+		ID: core.StringPtr(id),
+		StackDefinition: stackDefinition,
+	}
+}
+
+// SetProjectID : Allow user to set ProjectID
+func (_options *UpdateStackDefinitionOptions) SetProjectID(projectID string) *UpdateStackDefinitionOptions {
+	_options.ProjectID = core.StringPtr(projectID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *UpdateStackDefinitionOptions) SetID(id string) *UpdateStackDefinitionOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetStackDefinition : Allow user to set StackDefinition
+func (_options *UpdateStackDefinitionOptions) SetStackDefinition(stackDefinition *StackDefinitionBlockPrototype) *UpdateStackDefinitionOptions {
+	_options.StackDefinition = stackDefinition
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdateStackDefinitionOptions) SetHeaders(param map[string]string) *UpdateStackDefinitionOptions {
+	options.Headers = param
+	return options
+}
+
 // ValidateConfigOptions : The ValidateConfig options.
 type ValidateConfigOptions struct {
 	// The unique project ID.
 	ProjectID *string `json:"project_id" validate:"required,ne="`
 
-	// The unique config ID.
+	// The unique configuration ID.
 	ID *string `json:"id" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
@@ -5646,14 +8099,31 @@ func (options *ValidateConfigOptions) SetHeaders(param map[string]string) *Valid
 	return options
 }
 
-// ProjectConfigPatchDefinitionBlockDAConfigDefinitionProperties : The name and description of a project configuration.
-// This model "extends" ProjectConfigPatchDefinitionBlock
-type ProjectConfigPatchDefinitionBlockDAConfigDefinitionProperties struct {
-	// The configuration name. It is unique within the account across projects and regions.
-	Name *string `json:"name,omitempty"`
+// ProjectConfigDefinitionPatchDAConfigDefinitionPropertiesPatch : The name and description of a project configuration.
+// This model "extends" ProjectConfigDefinitionPatch
+type ProjectConfigDefinitionPatchDAConfigDefinitionPropertiesPatch struct {
+	// The profile that is required for compliance.
+	ComplianceProfile *ProjectComplianceProfile `json:"compliance_profile,omitempty"`
+
+	// A unique concatenation of the catalog ID and the version ID that identify the deployable architecture in the
+	// catalog. I you're importing from an existing Schematics workspace that is not backed by cart, a `locator_id` is
+	// required. If you're using a Schematics workspace that is backed by cart, a `locator_id` is not necessary because the
+	// Schematics workspace has one.
+	// > There are 3 scenarios:
+	// > 1. If only a `locator_id` is specified, a new Schematics workspace is instantiated with that `locator_id`.
+	// > 2. If only a schematics `workspace_crn` is specified, a `400` is returned if a `locator_id` is not found in the
+	// existing schematics workspace.
+	// > 3. If both a Schematics `workspace_crn` and a `locator_id` are specified, a `400` message is returned if the
+	// specified `locator_id` does not agree with the `locator_id` in the existing Schematics workspace.
+	// > For more information of creating a Schematics workspace, see [Creating workspaces and importing your Terraform
+	// template](/docs/schematics?topic=schematics-sch-create-wks).
+	LocatorID *string `json:"locator_id,omitempty"`
 
 	// A project configuration description.
 	Description *string `json:"description,omitempty"`
+
+	// The configuration name. It's unique within the account across projects and regions.
+	Name *string `json:"name,omitempty"`
 
 	// The ID of the project environment.
 	EnvironmentID *string `json:"environment_id,omitempty"`
@@ -5661,72 +8131,76 @@ type ProjectConfigPatchDefinitionBlockDAConfigDefinitionProperties struct {
 	// The authorization details. You can authorize by using a trusted profile or an API key in Secrets Manager.
 	Authorizations *ProjectConfigAuth `json:"authorizations,omitempty"`
 
-	// The input variables for configuration definition and environment.
+	// The input variables that are used for configuration definition and environment.
 	Inputs map[string]interface{} `json:"inputs,omitempty"`
 
-	// Schematics environment variables to use to deploy the configuration. Settings are only available if they were
-	// specified when the configuration was initially created.
+	// The Schematics environment variables to use to deploy the configuration. Settings are only available if they are
+	// specified when the configuration is initially created.
 	Settings map[string]interface{} `json:"settings,omitempty"`
-
-	// The profile required for compliance.
-	ComplianceProfile *ProjectComplianceProfile `json:"compliance_profile,omitempty"`
-
-	// A unique concatenation of catalogID.versionID that identifies the DA in the catalog. Either
-	// schematics.workspace_crn, definition.locator_id, or both must be specified.
-	LocatorID *string `json:"locator_id,omitempty"`
 }
 
-func (*ProjectConfigPatchDefinitionBlockDAConfigDefinitionProperties) isaProjectConfigPatchDefinitionBlock() bool {
+func (*ProjectConfigDefinitionPatchDAConfigDefinitionPropertiesPatch) isaProjectConfigDefinitionPatch() bool {
 	return true
 }
 
-// UnmarshalProjectConfigPatchDefinitionBlockDAConfigDefinitionProperties unmarshals an instance of ProjectConfigPatchDefinitionBlockDAConfigDefinitionProperties from the specified map of raw messages.
-func UnmarshalProjectConfigPatchDefinitionBlockDAConfigDefinitionProperties(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ProjectConfigPatchDefinitionBlockDAConfigDefinitionProperties)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "environment_id", &obj.EnvironmentID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "authorizations", &obj.Authorizations, UnmarshalProjectConfigAuth)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "inputs", &obj.Inputs)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "settings", &obj.Settings)
-	if err != nil {
-		return
-	}
+// UnmarshalProjectConfigDefinitionPatchDAConfigDefinitionPropertiesPatch unmarshals an instance of ProjectConfigDefinitionPatchDAConfigDefinitionPropertiesPatch from the specified map of raw messages.
+func UnmarshalProjectConfigDefinitionPatchDAConfigDefinitionPropertiesPatch(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ProjectConfigDefinitionPatchDAConfigDefinitionPropertiesPatch)
 	err = core.UnmarshalModel(m, "compliance_profile", &obj.ComplianceProfile, UnmarshalProjectComplianceProfile)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "compliance_profile-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "locator_id", &obj.LocatorID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "locator_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "environment_id", &obj.EnvironmentID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "environment_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "authorizations", &obj.Authorizations, UnmarshalProjectConfigAuth)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "authorizations-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "inputs", &obj.Inputs)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "inputs-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "settings", &obj.Settings)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "settings-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// ProjectConfigPatchDefinitionBlockResourceConfigDefinitionProperties : The name and description of a project configuration.
-// This model "extends" ProjectConfigPatchDefinitionBlock
-type ProjectConfigPatchDefinitionBlockResourceConfigDefinitionProperties struct {
-	// The configuration name. It is unique within the account across projects and regions.
-	Name *string `json:"name,omitempty"`
+// ProjectConfigDefinitionPatchResourceConfigDefinitionPropertiesPatch : The name and description of a project configuration.
+// This model "extends" ProjectConfigDefinitionPatch
+type ProjectConfigDefinitionPatchResourceConfigDefinitionPropertiesPatch struct {
+	// The CRNs of the resources that are associated with this configuration.
+	ResourceCrns []string `json:"resource_crns,omitempty"`
 
 	// A project configuration description.
 	Description *string `json:"description,omitempty"`
+
+	// The configuration name. It's unique within the account across projects and regions.
+	Name *string `json:"name,omitempty"`
 
 	// The ID of the project environment.
 	EnvironmentID *string `json:"environment_id,omitempty"`
@@ -5734,64 +8208,88 @@ type ProjectConfigPatchDefinitionBlockResourceConfigDefinitionProperties struct 
 	// The authorization details. You can authorize by using a trusted profile or an API key in Secrets Manager.
 	Authorizations *ProjectConfigAuth `json:"authorizations,omitempty"`
 
-	// The input variables for configuration definition and environment.
+	// The input variables that are used for configuration definition and environment.
 	Inputs map[string]interface{} `json:"inputs,omitempty"`
 
-	// Schematics environment variables to use to deploy the configuration. Settings are only available if they were
-	// specified when the configuration was initially created.
+	// The Schematics environment variables to use to deploy the configuration. Settings are only available if they are
+	// specified when the configuration is initially created.
 	Settings map[string]interface{} `json:"settings,omitempty"`
-
-	// The CRNs of resources associated with this configuration.
-	ResourceCrns []string `json:"resource_crns,omitempty"`
 }
 
-func (*ProjectConfigPatchDefinitionBlockResourceConfigDefinitionProperties) isaProjectConfigPatchDefinitionBlock() bool {
+func (*ProjectConfigDefinitionPatchResourceConfigDefinitionPropertiesPatch) isaProjectConfigDefinitionPatch() bool {
 	return true
 }
 
-// UnmarshalProjectConfigPatchDefinitionBlockResourceConfigDefinitionProperties unmarshals an instance of ProjectConfigPatchDefinitionBlockResourceConfigDefinitionProperties from the specified map of raw messages.
-func UnmarshalProjectConfigPatchDefinitionBlockResourceConfigDefinitionProperties(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ProjectConfigPatchDefinitionBlockResourceConfigDefinitionProperties)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "environment_id", &obj.EnvironmentID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "authorizations", &obj.Authorizations, UnmarshalProjectConfigAuth)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "inputs", &obj.Inputs)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "settings", &obj.Settings)
-	if err != nil {
-		return
-	}
+// UnmarshalProjectConfigDefinitionPatchResourceConfigDefinitionPropertiesPatch unmarshals an instance of ProjectConfigDefinitionPatchResourceConfigDefinitionPropertiesPatch from the specified map of raw messages.
+func UnmarshalProjectConfigDefinitionPatchResourceConfigDefinitionPropertiesPatch(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ProjectConfigDefinitionPatchResourceConfigDefinitionPropertiesPatch)
 	err = core.UnmarshalPrimitive(m, "resource_crns", &obj.ResourceCrns)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_crns-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "environment_id", &obj.EnvironmentID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "environment_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "authorizations", &obj.Authorizations, UnmarshalProjectConfigAuth)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "authorizations-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "inputs", &obj.Inputs)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "inputs-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "settings", &obj.Settings)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "settings-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// ProjectConfigPrototypeDefinitionBlockDAConfigDefinitionProperties : The name and description of a project configuration.
-// This model "extends" ProjectConfigPrototypeDefinitionBlock
-type ProjectConfigPrototypeDefinitionBlockDAConfigDefinitionProperties struct {
-	// The configuration name. It is unique within the account across projects and regions.
-	Name *string `json:"name,omitempty"`
+// ProjectConfigDefinitionPatchStackConfigDefinitionPropertiesPatch : The name and description of a project configuration.
+// This model "extends" ProjectConfigDefinitionPatch
+type ProjectConfigDefinitionPatchStackConfigDefinitionPropertiesPatch struct {
+	// The profile that is required for compliance.
+	ComplianceProfile *ProjectComplianceProfile `json:"compliance_profile,omitempty"`
+
+	// A unique concatenation of the catalog ID and the version ID that identify the deployable architecture in the
+	// catalog. I you're importing from an existing Schematics workspace that is not backed by cart, a `locator_id` is
+	// required. If you're using a Schematics workspace that is backed by cart, a `locator_id` is not necessary because the
+	// Schematics workspace has one.
+	// > There are 3 scenarios:
+	// > 1. If only a `locator_id` is specified, a new Schematics workspace is instantiated with that `locator_id`.
+	// > 2. If only a schematics `workspace_crn` is specified, a `400` is returned if a `locator_id` is not found in the
+	// existing schematics workspace.
+	// > 3. If both a Schematics `workspace_crn` and a `locator_id` are specified, a `400` message is returned if the
+	// specified `locator_id` does not agree with the `locator_id` in the existing Schematics workspace.
+	// > For more information of creating a Schematics workspace, see [Creating workspaces and importing your Terraform
+	// template](/docs/schematics?topic=schematics-sch-create-wks).
+	LocatorID *string `json:"locator_id,omitempty"`
+
+	// The member deployabe architectures that are included in your stack.
+	Members []StackConfigMember `json:"members,omitempty"`
 
 	// A project configuration description.
 	Description *string `json:"description,omitempty"`
+
+	// The configuration name. It's unique within the account across projects and regions.
+	Name *string `json:"name,omitempty"`
 
 	// The ID of the project environment.
 	EnvironmentID *string `json:"environment_id,omitempty"`
@@ -5799,210 +8297,184 @@ type ProjectConfigPrototypeDefinitionBlockDAConfigDefinitionProperties struct {
 	// The authorization details. You can authorize by using a trusted profile or an API key in Secrets Manager.
 	Authorizations *ProjectConfigAuth `json:"authorizations,omitempty"`
 
-	// The input variables for configuration definition and environment.
+	// The input variables that are used for configuration definition and environment.
 	Inputs map[string]interface{} `json:"inputs,omitempty"`
 
-	// Schematics environment variables to use to deploy the configuration. Settings are only available if they were
-	// specified when the configuration was initially created.
+	// The Schematics environment variables to use to deploy the configuration. Settings are only available if they are
+	// specified when the configuration is initially created.
 	Settings map[string]interface{} `json:"settings,omitempty"`
-
-	// The profile required for compliance.
-	ComplianceProfile *ProjectComplianceProfile `json:"compliance_profile,omitempty"`
-
-	// A unique concatenation of catalogID.versionID that identifies the DA in the catalog. Either
-	// schematics.workspace_crn, definition.locator_id, or both must be specified.
-	LocatorID *string `json:"locator_id,omitempty"`
 }
 
-func (*ProjectConfigPrototypeDefinitionBlockDAConfigDefinitionProperties) isaProjectConfigPrototypeDefinitionBlock() bool {
+func (*ProjectConfigDefinitionPatchStackConfigDefinitionPropertiesPatch) isaProjectConfigDefinitionPatch() bool {
 	return true
 }
 
-// UnmarshalProjectConfigPrototypeDefinitionBlockDAConfigDefinitionProperties unmarshals an instance of ProjectConfigPrototypeDefinitionBlockDAConfigDefinitionProperties from the specified map of raw messages.
-func UnmarshalProjectConfigPrototypeDefinitionBlockDAConfigDefinitionProperties(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ProjectConfigPrototypeDefinitionBlockDAConfigDefinitionProperties)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "environment_id", &obj.EnvironmentID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "authorizations", &obj.Authorizations, UnmarshalProjectConfigAuth)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "inputs", &obj.Inputs)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "settings", &obj.Settings)
-	if err != nil {
-		return
-	}
+// UnmarshalProjectConfigDefinitionPatchStackConfigDefinitionPropertiesPatch unmarshals an instance of ProjectConfigDefinitionPatchStackConfigDefinitionPropertiesPatch from the specified map of raw messages.
+func UnmarshalProjectConfigDefinitionPatchStackConfigDefinitionPropertiesPatch(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ProjectConfigDefinitionPatchStackConfigDefinitionPropertiesPatch)
 	err = core.UnmarshalModel(m, "compliance_profile", &obj.ComplianceProfile, UnmarshalProjectComplianceProfile)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "compliance_profile-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "locator_id", &obj.LocatorID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "locator_id-error", common.GetComponentInfo())
 		return
 	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// ProjectConfigPrototypeDefinitionBlockResourceConfigDefinitionProperties : The name and description of a project configuration.
-// This model "extends" ProjectConfigPrototypeDefinitionBlock
-type ProjectConfigPrototypeDefinitionBlockResourceConfigDefinitionProperties struct {
-	// The configuration name. It is unique within the account across projects and regions.
-	Name *string `json:"name,omitempty"`
-
-	// A project configuration description.
-	Description *string `json:"description,omitempty"`
-
-	// The ID of the project environment.
-	EnvironmentID *string `json:"environment_id,omitempty"`
-
-	// The authorization details. You can authorize by using a trusted profile or an API key in Secrets Manager.
-	Authorizations *ProjectConfigAuth `json:"authorizations,omitempty"`
-
-	// The input variables for configuration definition and environment.
-	Inputs map[string]interface{} `json:"inputs,omitempty"`
-
-	// Schematics environment variables to use to deploy the configuration. Settings are only available if they were
-	// specified when the configuration was initially created.
-	Settings map[string]interface{} `json:"settings,omitempty"`
-
-	// The CRNs of resources associated with this configuration.
-	ResourceCrns []string `json:"resource_crns,omitempty"`
-}
-
-func (*ProjectConfigPrototypeDefinitionBlockResourceConfigDefinitionProperties) isaProjectConfigPrototypeDefinitionBlock() bool {
-	return true
-}
-
-// UnmarshalProjectConfigPrototypeDefinitionBlockResourceConfigDefinitionProperties unmarshals an instance of ProjectConfigPrototypeDefinitionBlockResourceConfigDefinitionProperties from the specified map of raw messages.
-func UnmarshalProjectConfigPrototypeDefinitionBlockResourceConfigDefinitionProperties(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ProjectConfigPrototypeDefinitionBlockResourceConfigDefinitionProperties)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	err = core.UnmarshalModel(m, "members", &obj.Members, UnmarshalStackConfigMember)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "members-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "environment_id", &obj.EnvironmentID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "environment_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "authorizations", &obj.Authorizations, UnmarshalProjectConfigAuth)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "authorizations-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "inputs", &obj.Inputs)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "inputs-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "settings", &obj.Settings)
 	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "resource_crns", &obj.ResourceCrns)
-	if err != nil {
+		err = core.SDKErrorf(err, "", "settings-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// ProjectConfigResponseDefinitionDAConfigDefinitionProperties : The name and description of a project configuration.
-// This model "extends" ProjectConfigResponseDefinition
-type ProjectConfigResponseDefinitionDAConfigDefinitionProperties struct {
-	// The configuration name. It is unique within the account across projects and regions.
-	Name *string `json:"name,omitempty"`
-
-	// A project configuration description.
-	Description *string `json:"description,omitempty"`
-
-	// The ID of the project environment.
-	EnvironmentID *string `json:"environment_id,omitempty"`
-
-	// The authorization details. You can authorize by using a trusted profile or an API key in Secrets Manager.
-	Authorizations *ProjectConfigAuth `json:"authorizations,omitempty"`
-
-	// The input variables for configuration definition and environment.
-	Inputs map[string]interface{} `json:"inputs,omitempty"`
-
-	// Schematics environment variables to use to deploy the configuration. Settings are only available if they were
-	// specified when the configuration was initially created.
-	Settings map[string]interface{} `json:"settings,omitempty"`
-
-	// The profile required for compliance.
+// ProjectConfigDefinitionPrototypeDAConfigDefinitionPropertiesPrototype : The description of a project configuration.
+// This model "extends" ProjectConfigDefinitionPrototype
+type ProjectConfigDefinitionPrototypeDAConfigDefinitionPropertiesPrototype struct {
+	// The profile that is required for compliance.
 	ComplianceProfile *ProjectComplianceProfile `json:"compliance_profile,omitempty"`
 
-	// A unique concatenation of catalogID.versionID that identifies the DA in the catalog. Either
-	// schematics.workspace_crn, definition.locator_id, or both must be specified.
+	// A unique concatenation of the catalog ID and the version ID that identify the deployable architecture in the
+	// catalog. I you're importing from an existing Schematics workspace that is not backed by cart, a `locator_id` is
+	// required. If you're using a Schematics workspace that is backed by cart, a `locator_id` is not necessary because the
+	// Schematics workspace has one.
+	// > There are 3 scenarios:
+	// > 1. If only a `locator_id` is specified, a new Schematics workspace is instantiated with that `locator_id`.
+	// > 2. If only a schematics `workspace_crn` is specified, a `400` is returned if a `locator_id` is not found in the
+	// existing schematics workspace.
+	// > 3. If both a Schematics `workspace_crn` and a `locator_id` are specified, a `400` message is returned if the
+	// specified `locator_id` does not agree with the `locator_id` in the existing Schematics workspace.
+	// > For more information of creating a Schematics workspace, see [Creating workspaces and importing your Terraform
+	// template](/docs/schematics?topic=schematics-sch-create-wks).
 	LocatorID *string `json:"locator_id,omitempty"`
+
+	// A project configuration description.
+	Description *string `json:"description,omitempty"`
+
+	// The configuration name. It's unique within the account across projects and regions.
+	Name *string `json:"name" validate:"required"`
+
+	// The ID of the project environment.
+	EnvironmentID *string `json:"environment_id,omitempty"`
+
+	// The authorization details. You can authorize by using a trusted profile or an API key in Secrets Manager.
+	Authorizations *ProjectConfigAuth `json:"authorizations,omitempty"`
+
+	// The input variables that are used for configuration definition and environment.
+	Inputs map[string]interface{} `json:"inputs,omitempty"`
+
+	// The Schematics environment variables to use to deploy the configuration. Settings are only available if they are
+	// specified when the configuration is initially created.
+	Settings map[string]interface{} `json:"settings,omitempty"`
 }
 
-func (*ProjectConfigResponseDefinitionDAConfigDefinitionProperties) isaProjectConfigResponseDefinition() bool {
+// NewProjectConfigDefinitionPrototypeDAConfigDefinitionPropertiesPrototype : Instantiate ProjectConfigDefinitionPrototypeDAConfigDefinitionPropertiesPrototype (Generic Model Constructor)
+func (*ProjectV1) NewProjectConfigDefinitionPrototypeDAConfigDefinitionPropertiesPrototype(name string) (_model *ProjectConfigDefinitionPrototypeDAConfigDefinitionPropertiesPrototype, err error) {
+	_model = &ProjectConfigDefinitionPrototypeDAConfigDefinitionPropertiesPrototype{
+		Name: core.StringPtr(name),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*ProjectConfigDefinitionPrototypeDAConfigDefinitionPropertiesPrototype) isaProjectConfigDefinitionPrototype() bool {
 	return true
 }
 
-// UnmarshalProjectConfigResponseDefinitionDAConfigDefinitionProperties unmarshals an instance of ProjectConfigResponseDefinitionDAConfigDefinitionProperties from the specified map of raw messages.
-func UnmarshalProjectConfigResponseDefinitionDAConfigDefinitionProperties(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ProjectConfigResponseDefinitionDAConfigDefinitionProperties)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "environment_id", &obj.EnvironmentID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "authorizations", &obj.Authorizations, UnmarshalProjectConfigAuth)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "inputs", &obj.Inputs)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "settings", &obj.Settings)
-	if err != nil {
-		return
-	}
+// UnmarshalProjectConfigDefinitionPrototypeDAConfigDefinitionPropertiesPrototype unmarshals an instance of ProjectConfigDefinitionPrototypeDAConfigDefinitionPropertiesPrototype from the specified map of raw messages.
+func UnmarshalProjectConfigDefinitionPrototypeDAConfigDefinitionPropertiesPrototype(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ProjectConfigDefinitionPrototypeDAConfigDefinitionPropertiesPrototype)
 	err = core.UnmarshalModel(m, "compliance_profile", &obj.ComplianceProfile, UnmarshalProjectComplianceProfile)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "compliance_profile-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "locator_id", &obj.LocatorID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "locator_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "environment_id", &obj.EnvironmentID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "environment_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "authorizations", &obj.Authorizations, UnmarshalProjectConfigAuth)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "authorizations-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "inputs", &obj.Inputs)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "inputs-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "settings", &obj.Settings)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "settings-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// ProjectConfigResponseDefinitionResourceConfigDefinitionProperties : The name and description of a project configuration.
-// This model "extends" ProjectConfigResponseDefinition
-type ProjectConfigResponseDefinitionResourceConfigDefinitionProperties struct {
-	// The configuration name. It is unique within the account across projects and regions.
-	Name *string `json:"name,omitempty"`
+// ProjectConfigDefinitionPrototypeResourceConfigDefinitionPropertiesPrototype : The description of a project configuration.
+// This model "extends" ProjectConfigDefinitionPrototype
+type ProjectConfigDefinitionPrototypeResourceConfigDefinitionPropertiesPrototype struct {
+	// The CRNs of the resources that are associated with this configuration.
+	ResourceCrns []string `json:"resource_crns,omitempty"`
 
 	// A project configuration description.
 	Description *string `json:"description,omitempty"`
+
+	// The configuration name. It's unique within the account across projects and regions.
+	Name *string `json:"name" validate:"required"`
 
 	// The ID of the project environment.
 	EnvironmentID *string `json:"environment_id,omitempty"`
@@ -6010,50 +8482,632 @@ type ProjectConfigResponseDefinitionResourceConfigDefinitionProperties struct {
 	// The authorization details. You can authorize by using a trusted profile or an API key in Secrets Manager.
 	Authorizations *ProjectConfigAuth `json:"authorizations,omitempty"`
 
-	// The input variables for configuration definition and environment.
+	// The input variables that are used for configuration definition and environment.
 	Inputs map[string]interface{} `json:"inputs,omitempty"`
 
-	// Schematics environment variables to use to deploy the configuration. Settings are only available if they were
-	// specified when the configuration was initially created.
+	// The Schematics environment variables to use to deploy the configuration. Settings are only available if they are
+	// specified when the configuration is initially created.
 	Settings map[string]interface{} `json:"settings,omitempty"`
-
-	// The CRNs of resources associated with this configuration.
-	ResourceCrns []string `json:"resource_crns,omitempty"`
 }
 
-func (*ProjectConfigResponseDefinitionResourceConfigDefinitionProperties) isaProjectConfigResponseDefinition() bool {
+// NewProjectConfigDefinitionPrototypeResourceConfigDefinitionPropertiesPrototype : Instantiate ProjectConfigDefinitionPrototypeResourceConfigDefinitionPropertiesPrototype (Generic Model Constructor)
+func (*ProjectV1) NewProjectConfigDefinitionPrototypeResourceConfigDefinitionPropertiesPrototype(name string) (_model *ProjectConfigDefinitionPrototypeResourceConfigDefinitionPropertiesPrototype, err error) {
+	_model = &ProjectConfigDefinitionPrototypeResourceConfigDefinitionPropertiesPrototype{
+		Name: core.StringPtr(name),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*ProjectConfigDefinitionPrototypeResourceConfigDefinitionPropertiesPrototype) isaProjectConfigDefinitionPrototype() bool {
 	return true
 }
 
-// UnmarshalProjectConfigResponseDefinitionResourceConfigDefinitionProperties unmarshals an instance of ProjectConfigResponseDefinitionResourceConfigDefinitionProperties from the specified map of raw messages.
-func UnmarshalProjectConfigResponseDefinitionResourceConfigDefinitionProperties(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ProjectConfigResponseDefinitionResourceConfigDefinitionProperties)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+// UnmarshalProjectConfigDefinitionPrototypeResourceConfigDefinitionPropertiesPrototype unmarshals an instance of ProjectConfigDefinitionPrototypeResourceConfigDefinitionPropertiesPrototype from the specified map of raw messages.
+func UnmarshalProjectConfigDefinitionPrototypeResourceConfigDefinitionPropertiesPrototype(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ProjectConfigDefinitionPrototypeResourceConfigDefinitionPropertiesPrototype)
+	err = core.UnmarshalPrimitive(m, "resource_crns", &obj.ResourceCrns)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_crns-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "environment_id", &obj.EnvironmentID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "environment_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "authorizations", &obj.Authorizations, UnmarshalProjectConfigAuth)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "authorizations-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "inputs", &obj.Inputs)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "inputs-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "settings", &obj.Settings)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "settings-error", common.GetComponentInfo())
 		return
 	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ProjectConfigDefinitionPrototypeStackConfigDefinitionProperties : The description of a project configuration.
+// This model "extends" ProjectConfigDefinitionPrototype
+type ProjectConfigDefinitionPrototypeStackConfigDefinitionProperties struct {
+	// The profile that is required for compliance.
+	ComplianceProfile *ProjectComplianceProfile `json:"compliance_profile,omitempty"`
+
+	// A unique concatenation of the catalog ID and the version ID that identify the deployable architecture in the
+	// catalog. I you're importing from an existing Schematics workspace that is not backed by cart, a `locator_id` is
+	// required. If you're using a Schematics workspace that is backed by cart, a `locator_id` is not necessary because the
+	// Schematics workspace has one.
+	// > There are 3 scenarios:
+	// > 1. If only a `locator_id` is specified, a new Schematics workspace is instantiated with that `locator_id`.
+	// > 2. If only a schematics `workspace_crn` is specified, a `400` is returned if a `locator_id` is not found in the
+	// existing schematics workspace.
+	// > 3. If both a Schematics `workspace_crn` and a `locator_id` are specified, a `400` message is returned if the
+	// specified `locator_id` does not agree with the `locator_id` in the existing Schematics workspace.
+	// > For more information of creating a Schematics workspace, see [Creating workspaces and importing your Terraform
+	// template](/docs/schematics?topic=schematics-sch-create-wks).
+	LocatorID *string `json:"locator_id,omitempty"`
+
+	// The member deployabe architectures that are included in your stack.
+	Members []StackConfigMember `json:"members,omitempty"`
+
+	// A project configuration description.
+	Description *string `json:"description,omitempty"`
+
+	// The configuration name. It's unique within the account across projects and regions.
+	Name *string `json:"name" validate:"required"`
+
+	// The ID of the project environment.
+	EnvironmentID *string `json:"environment_id,omitempty"`
+
+	// The authorization details. You can authorize by using a trusted profile or an API key in Secrets Manager.
+	Authorizations *ProjectConfigAuth `json:"authorizations,omitempty"`
+
+	// The input variables that are used for configuration definition and environment.
+	Inputs map[string]interface{} `json:"inputs,omitempty"`
+
+	// The Schematics environment variables to use to deploy the configuration. Settings are only available if they are
+	// specified when the configuration is initially created.
+	Settings map[string]interface{} `json:"settings,omitempty"`
+}
+
+// NewProjectConfigDefinitionPrototypeStackConfigDefinitionProperties : Instantiate ProjectConfigDefinitionPrototypeStackConfigDefinitionProperties (Generic Model Constructor)
+func (*ProjectV1) NewProjectConfigDefinitionPrototypeStackConfigDefinitionProperties(name string) (_model *ProjectConfigDefinitionPrototypeStackConfigDefinitionProperties, err error) {
+	_model = &ProjectConfigDefinitionPrototypeStackConfigDefinitionProperties{
+		Name: core.StringPtr(name),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*ProjectConfigDefinitionPrototypeStackConfigDefinitionProperties) isaProjectConfigDefinitionPrototype() bool {
+	return true
+}
+
+// UnmarshalProjectConfigDefinitionPrototypeStackConfigDefinitionProperties unmarshals an instance of ProjectConfigDefinitionPrototypeStackConfigDefinitionProperties from the specified map of raw messages.
+func UnmarshalProjectConfigDefinitionPrototypeStackConfigDefinitionProperties(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ProjectConfigDefinitionPrototypeStackConfigDefinitionProperties)
+	err = core.UnmarshalModel(m, "compliance_profile", &obj.ComplianceProfile, UnmarshalProjectComplianceProfile)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "compliance_profile-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "locator_id", &obj.LocatorID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "locator_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "members", &obj.Members, UnmarshalStackConfigMember)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "members-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "environment_id", &obj.EnvironmentID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "environment_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "authorizations", &obj.Authorizations, UnmarshalProjectConfigAuth)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "authorizations-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "inputs", &obj.Inputs)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "inputs-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "settings", &obj.Settings)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "settings-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ProjectConfigDefinitionResponseDAConfigDefinitionPropertiesResponse : The description of a project configuration.
+// This model "extends" ProjectConfigDefinitionResponse
+type ProjectConfigDefinitionResponseDAConfigDefinitionPropertiesResponse struct {
+	// The profile that is required for compliance.
+	ComplianceProfile *ProjectComplianceProfile `json:"compliance_profile,omitempty"`
+
+	// A unique concatenation of the catalog ID and the version ID that identify the deployable architecture in the
+	// catalog. I you're importing from an existing Schematics workspace that is not backed by cart, a `locator_id` is
+	// required. If you're using a Schematics workspace that is backed by cart, a `locator_id` is not necessary because the
+	// Schematics workspace has one.
+	// > There are 3 scenarios:
+	// > 1. If only a `locator_id` is specified, a new Schematics workspace is instantiated with that `locator_id`.
+	// > 2. If only a schematics `workspace_crn` is specified, a `400` is returned if a `locator_id` is not found in the
+	// existing schematics workspace.
+	// > 3. If both a Schematics `workspace_crn` and a `locator_id` are specified, a `400` message is returned if the
+	// specified `locator_id` does not agree with the `locator_id` in the existing Schematics workspace.
+	// > For more information of creating a Schematics workspace, see [Creating workspaces and importing your Terraform
+	// template](/docs/schematics?topic=schematics-sch-create-wks).
+	LocatorID *string `json:"locator_id,omitempty"`
+
+	// A project configuration description.
+	Description *string `json:"description" validate:"required"`
+
+	// The configuration name. It's unique within the account across projects and regions.
+	Name *string `json:"name" validate:"required"`
+
+	// The ID of the project environment.
+	EnvironmentID *string `json:"environment_id,omitempty"`
+
+	// The authorization details. You can authorize by using a trusted profile or an API key in Secrets Manager.
+	Authorizations *ProjectConfigAuth `json:"authorizations,omitempty"`
+
+	// The input variables that are used for configuration definition and environment.
+	Inputs map[string]interface{} `json:"inputs,omitempty"`
+
+	// The Schematics environment variables to use to deploy the configuration. Settings are only available if they are
+	// specified when the configuration is initially created.
+	Settings map[string]interface{} `json:"settings,omitempty"`
+}
+
+func (*ProjectConfigDefinitionResponseDAConfigDefinitionPropertiesResponse) isaProjectConfigDefinitionResponse() bool {
+	return true
+}
+
+// UnmarshalProjectConfigDefinitionResponseDAConfigDefinitionPropertiesResponse unmarshals an instance of ProjectConfigDefinitionResponseDAConfigDefinitionPropertiesResponse from the specified map of raw messages.
+func UnmarshalProjectConfigDefinitionResponseDAConfigDefinitionPropertiesResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ProjectConfigDefinitionResponseDAConfigDefinitionPropertiesResponse)
+	err = core.UnmarshalModel(m, "compliance_profile", &obj.ComplianceProfile, UnmarshalProjectComplianceProfile)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "compliance_profile-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "locator_id", &obj.LocatorID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "locator_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "environment_id", &obj.EnvironmentID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "environment_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "authorizations", &obj.Authorizations, UnmarshalProjectConfigAuth)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "authorizations-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "inputs", &obj.Inputs)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "inputs-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "settings", &obj.Settings)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "settings-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ProjectConfigDefinitionResponseResourceConfigDefinitionPropertiesResponse : The description of a project configuration.
+// This model "extends" ProjectConfigDefinitionResponse
+type ProjectConfigDefinitionResponseResourceConfigDefinitionPropertiesResponse struct {
+	// The CRNs of the resources that are associated with this configuration.
+	ResourceCrns []string `json:"resource_crns,omitempty"`
+
+	// A project configuration description.
+	Description *string `json:"description" validate:"required"`
+
+	// The configuration name. It's unique within the account across projects and regions.
+	Name *string `json:"name" validate:"required"`
+
+	// The ID of the project environment.
+	EnvironmentID *string `json:"environment_id,omitempty"`
+
+	// The authorization details. You can authorize by using a trusted profile or an API key in Secrets Manager.
+	Authorizations *ProjectConfigAuth `json:"authorizations,omitempty"`
+
+	// The input variables that are used for configuration definition and environment.
+	Inputs map[string]interface{} `json:"inputs,omitempty"`
+
+	// The Schematics environment variables to use to deploy the configuration. Settings are only available if they are
+	// specified when the configuration is initially created.
+	Settings map[string]interface{} `json:"settings,omitempty"`
+}
+
+func (*ProjectConfigDefinitionResponseResourceConfigDefinitionPropertiesResponse) isaProjectConfigDefinitionResponse() bool {
+	return true
+}
+
+// UnmarshalProjectConfigDefinitionResponseResourceConfigDefinitionPropertiesResponse unmarshals an instance of ProjectConfigDefinitionResponseResourceConfigDefinitionPropertiesResponse from the specified map of raw messages.
+func UnmarshalProjectConfigDefinitionResponseResourceConfigDefinitionPropertiesResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ProjectConfigDefinitionResponseResourceConfigDefinitionPropertiesResponse)
 	err = core.UnmarshalPrimitive(m, "resource_crns", &obj.ResourceCrns)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_crns-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "environment_id", &obj.EnvironmentID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "environment_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "authorizations", &obj.Authorizations, UnmarshalProjectConfigAuth)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "authorizations-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "inputs", &obj.Inputs)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "inputs-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "settings", &obj.Settings)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "settings-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ProjectConfigDefinitionResponseStackConfigDefinitionProperties : The description of a project configuration.
+// This model "extends" ProjectConfigDefinitionResponse
+type ProjectConfigDefinitionResponseStackConfigDefinitionProperties struct {
+	// The profile that is required for compliance.
+	ComplianceProfile *ProjectComplianceProfile `json:"compliance_profile,omitempty"`
+
+	// A unique concatenation of the catalog ID and the version ID that identify the deployable architecture in the
+	// catalog. I you're importing from an existing Schematics workspace that is not backed by cart, a `locator_id` is
+	// required. If you're using a Schematics workspace that is backed by cart, a `locator_id` is not necessary because the
+	// Schematics workspace has one.
+	// > There are 3 scenarios:
+	// > 1. If only a `locator_id` is specified, a new Schematics workspace is instantiated with that `locator_id`.
+	// > 2. If only a schematics `workspace_crn` is specified, a `400` is returned if a `locator_id` is not found in the
+	// existing schematics workspace.
+	// > 3. If both a Schematics `workspace_crn` and a `locator_id` are specified, a `400` message is returned if the
+	// specified `locator_id` does not agree with the `locator_id` in the existing Schematics workspace.
+	// > For more information of creating a Schematics workspace, see [Creating workspaces and importing your Terraform
+	// template](/docs/schematics?topic=schematics-sch-create-wks).
+	LocatorID *string `json:"locator_id,omitempty"`
+
+	// The member deployabe architectures that are included in your stack.
+	Members []StackConfigMember `json:"members,omitempty"`
+
+	// A project configuration description.
+	Description *string `json:"description,omitempty"`
+
+	// The configuration name. It's unique within the account across projects and regions.
+	Name *string `json:"name" validate:"required"`
+
+	// The ID of the project environment.
+	EnvironmentID *string `json:"environment_id,omitempty"`
+
+	// The authorization details. You can authorize by using a trusted profile or an API key in Secrets Manager.
+	Authorizations *ProjectConfigAuth `json:"authorizations,omitempty"`
+
+	// The input variables that are used for configuration definition and environment.
+	Inputs map[string]interface{} `json:"inputs,omitempty"`
+
+	// The Schematics environment variables to use to deploy the configuration. Settings are only available if they are
+	// specified when the configuration is initially created.
+	Settings map[string]interface{} `json:"settings,omitempty"`
+}
+
+func (*ProjectConfigDefinitionResponseStackConfigDefinitionProperties) isaProjectConfigDefinitionResponse() bool {
+	return true
+}
+
+// UnmarshalProjectConfigDefinitionResponseStackConfigDefinitionProperties unmarshals an instance of ProjectConfigDefinitionResponseStackConfigDefinitionProperties from the specified map of raw messages.
+func UnmarshalProjectConfigDefinitionResponseStackConfigDefinitionProperties(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ProjectConfigDefinitionResponseStackConfigDefinitionProperties)
+	err = core.UnmarshalModel(m, "compliance_profile", &obj.ComplianceProfile, UnmarshalProjectComplianceProfile)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "compliance_profile-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "locator_id", &obj.LocatorID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "locator_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "members", &obj.Members, UnmarshalStackConfigMember)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "members-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "environment_id", &obj.EnvironmentID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "environment_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "authorizations", &obj.Authorizations, UnmarshalProjectConfigAuth)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "authorizations-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "inputs", &obj.Inputs)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "inputs-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "settings", &obj.Settings)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "settings-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ProjectConfigMetadataCodeRiskAnalyzerLogsVersion204 : The Code Risk Analyzer logs of the configuration based on Code Risk Analyzer version 2.0.4.
+// This model "extends" ProjectConfigMetadataCodeRiskAnalyzerLogs
+type ProjectConfigMetadataCodeRiskAnalyzerLogsVersion204 struct {
+	// The version of the Code Risk Analyzer logs of the configuration. The metadata for this schema is specific to Code
+	// Risk Analyzer version 2.0.4.
+	CraVersion *string `json:"cra_version,omitempty"`
+
+	// The schema version of Code Risk Analyzer logs of the configuration.
+	SchemaVersion *string `json:"schema_version,omitempty"`
+
+	// The status of the Code Risk Analyzer logs of the configuration.
+	Status *string `json:"status,omitempty"`
+
+	// The Code Risk Analyzer logs a summary of the configuration.
+	Summary *CodeRiskAnalyzerLogsSummary `json:"summary,omitempty"`
+
+	// A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ to match the date and time
+	// format as specified by RFC 3339.
+	Timestamp *strfmt.DateTime `json:"timestamp,omitempty"`
+}
+
+// Constants associated with the ProjectConfigMetadataCodeRiskAnalyzerLogsVersion204.Status property.
+// The status of the Code Risk Analyzer logs of the configuration.
+const (
+	ProjectConfigMetadataCodeRiskAnalyzerLogsVersion204_Status_Failed = "failed"
+	ProjectConfigMetadataCodeRiskAnalyzerLogsVersion204_Status_Passed = "passed"
+)
+
+func (*ProjectConfigMetadataCodeRiskAnalyzerLogsVersion204) isaProjectConfigMetadataCodeRiskAnalyzerLogs() bool {
+	return true
+}
+
+// UnmarshalProjectConfigMetadataCodeRiskAnalyzerLogsVersion204 unmarshals an instance of ProjectConfigMetadataCodeRiskAnalyzerLogsVersion204 from the specified map of raw messages.
+func UnmarshalProjectConfigMetadataCodeRiskAnalyzerLogsVersion204(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ProjectConfigMetadataCodeRiskAnalyzerLogsVersion204)
+	err = core.UnmarshalPrimitive(m, "cra_version", &obj.CraVersion)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "cra_version-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "schema_version", &obj.SchemaVersion)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "schema_version-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "summary", &obj.Summary, UnmarshalCodeRiskAnalyzerLogsSummary)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "summary-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "timestamp", &obj.Timestamp)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "timestamp-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// StackDefinitionExportRequestStackDefinitionExportCatalogRequest : The payload for the stack definition export request to create a product.
+// This model "extends" StackDefinitionExportRequest
+type StackDefinitionExportRequestStackDefinitionExportCatalogRequest struct {
+	// The catalog ID to publish.
+	CatalogID *string `json:"catalog_id" validate:"required"`
+
+	// The semver value of this new version of the product.
+	TargetVersion *string `json:"target_version,omitempty"`
+
+	// The variation of this new version of the product.
+	Variation *string `json:"variation,omitempty"`
+
+	// The product label.
+	Label *string `json:"label" validate:"required"`
+
+	// Tags associated with the catalog product.
+	Tags []string `json:"tags,omitempty"`
+}
+
+// NewStackDefinitionExportRequestStackDefinitionExportCatalogRequest : Instantiate StackDefinitionExportRequestStackDefinitionExportCatalogRequest (Generic Model Constructor)
+func (*ProjectV1) NewStackDefinitionExportRequestStackDefinitionExportCatalogRequest(catalogID string, label string) (_model *StackDefinitionExportRequestStackDefinitionExportCatalogRequest, err error) {
+	_model = &StackDefinitionExportRequestStackDefinitionExportCatalogRequest{
+		CatalogID: core.StringPtr(catalogID),
+		Label: core.StringPtr(label),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*StackDefinitionExportRequestStackDefinitionExportCatalogRequest) isaStackDefinitionExportRequest() bool {
+	return true
+}
+
+// UnmarshalStackDefinitionExportRequestStackDefinitionExportCatalogRequest unmarshals an instance of StackDefinitionExportRequestStackDefinitionExportCatalogRequest from the specified map of raw messages.
+func UnmarshalStackDefinitionExportRequestStackDefinitionExportCatalogRequest(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(StackDefinitionExportRequestStackDefinitionExportCatalogRequest)
+	err = core.UnmarshalPrimitive(m, "catalog_id", &obj.CatalogID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "target_version", &obj.TargetVersion)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "target_version-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "variation", &obj.Variation)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "variation-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "label", &obj.Label)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "label-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "tags", &obj.Tags)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "tags-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// StackDefinitionExportRequestStackDefinitionExportProductRequest : The payload for the stack definition export request to create a new product version.
+// This model "extends" StackDefinitionExportRequest
+type StackDefinitionExportRequestStackDefinitionExportProductRequest struct {
+	// The catalog ID to publish.
+	CatalogID *string `json:"catalog_id" validate:"required"`
+
+	// The semver value of this new version of the product.
+	TargetVersion *string `json:"target_version" validate:"required"`
+
+	// The variation of this new version of the product.
+	Variation *string `json:"variation,omitempty"`
+
+	// The product ID to publish.
+	ProductID *string `json:"product_id" validate:"required"`
+}
+
+// NewStackDefinitionExportRequestStackDefinitionExportProductRequest : Instantiate StackDefinitionExportRequestStackDefinitionExportProductRequest (Generic Model Constructor)
+func (*ProjectV1) NewStackDefinitionExportRequestStackDefinitionExportProductRequest(catalogID string, targetVersion string, productID string) (_model *StackDefinitionExportRequestStackDefinitionExportProductRequest, err error) {
+	_model = &StackDefinitionExportRequestStackDefinitionExportProductRequest{
+		CatalogID: core.StringPtr(catalogID),
+		TargetVersion: core.StringPtr(targetVersion),
+		ProductID: core.StringPtr(productID),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*StackDefinitionExportRequestStackDefinitionExportProductRequest) isaStackDefinitionExportRequest() bool {
+	return true
+}
+
+// UnmarshalStackDefinitionExportRequestStackDefinitionExportProductRequest unmarshals an instance of StackDefinitionExportRequestStackDefinitionExportProductRequest from the specified map of raw messages.
+func UnmarshalStackDefinitionExportRequestStackDefinitionExportProductRequest(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(StackDefinitionExportRequestStackDefinitionExportProductRequest)
+	err = core.UnmarshalPrimitive(m, "catalog_id", &obj.CatalogID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "target_version", &obj.TargetVersion)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "target_version-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "variation", &obj.Variation)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "variation-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "product_id", &obj.ProductID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "product_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6074,8 +9128,8 @@ type ProjectsPager struct {
 
 // NewProjectsPager returns a new ProjectsPager instance.
 func (project *ProjectV1) NewProjectsPager(options *ListProjectsOptions) (pager *ProjectsPager, err error) {
-	if options.Start != nil && *options.Start != "" {
-		err = fmt.Errorf("the 'options.Start' field should not be set")
+	if options.Token != nil && *options.Token != "" {
+		err = core.SDKErrorf(nil, "the 'options.Token' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -6099,22 +9153,24 @@ func (pager *ProjectsPager) GetNextWithContext(ctx context.Context) (page []Proj
 		return nil, fmt.Errorf("no more results available")
 	}
 
-	pager.options.Start = pager.pageContext.next
+	pager.options.Token = pager.pageContext.next
 
 	result, _, err := pager.client.ListProjectsWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
 	var next *string
 	if result.Next != nil {
-		var start *string
-		start, err = core.GetQueryParam(result.Next.Href, "start")
+		var token *string
+		token, err = core.GetQueryParam(result.Next.Href, "token")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'start' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'token' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
-		next = start
+		next = token
 	}
 	pager.pageContext.next = next
 	pager.hasNext = (pager.pageContext.next != nil)
@@ -6130,6 +9186,7 @@ func (pager *ProjectsPager) GetAllWithContext(ctx context.Context) (allItems []P
 		var nextPage []ProjectSummary
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -6139,10 +9196,202 @@ func (pager *ProjectsPager) GetAllWithContext(ctx context.Context) (allItems []P
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *ProjectsPager) GetNext() (page []ProjectSummary, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *ProjectsPager) GetAll() (allItems []ProjectSummary, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+//
+// ProjectEnvironmentsPager can be used to simplify the use of the "ListProjectEnvironments" method.
+//
+type ProjectEnvironmentsPager struct {
+	hasNext bool
+	options *ListProjectEnvironmentsOptions
+	client  *ProjectV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewProjectEnvironmentsPager returns a new ProjectEnvironmentsPager instance.
+func (project *ProjectV1) NewProjectEnvironmentsPager(options *ListProjectEnvironmentsOptions) (pager *ProjectEnvironmentsPager, err error) {
+	if options.Token != nil && *options.Token != "" {
+		err = core.SDKErrorf(nil, "the 'options.Token' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy ListProjectEnvironmentsOptions = *options
+	pager = &ProjectEnvironmentsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  project,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *ProjectEnvironmentsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *ProjectEnvironmentsPager) GetNextWithContext(ctx context.Context) (page []Environment, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Token = pager.pageContext.next
+
+	result, _, err := pager.client.ListProjectEnvironmentsWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		var token *string
+		token, err = core.GetQueryParam(result.Next.Href, "token")
+		if err != nil {
+			errMsg := fmt.Sprintf("error retrieving 'token' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
+			return
+		}
+		next = token
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Environments
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *ProjectEnvironmentsPager) GetAllWithContext(ctx context.Context) (allItems []Environment, err error) {
+	for pager.HasNext() {
+		var nextPage []Environment
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *ProjectEnvironmentsPager) GetNext() (page []Environment, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *ProjectEnvironmentsPager) GetAll() (allItems []Environment, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+//
+// ConfigsPager can be used to simplify the use of the "ListConfigs" method.
+//
+type ConfigsPager struct {
+	hasNext bool
+	options *ListConfigsOptions
+	client  *ProjectV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewConfigsPager returns a new ConfigsPager instance.
+func (project *ProjectV1) NewConfigsPager(options *ListConfigsOptions) (pager *ConfigsPager, err error) {
+	if options.Token != nil && *options.Token != "" {
+		err = core.SDKErrorf(nil, "the 'options.Token' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy ListConfigsOptions = *options
+	pager = &ConfigsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  project,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *ConfigsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *ConfigsPager) GetNextWithContext(ctx context.Context) (page []ProjectConfigSummary, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Token = pager.pageContext.next
+
+	result, _, err := pager.client.ListConfigsWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		var token *string
+		token, err = core.GetQueryParam(result.Next.Href, "token")
+		if err != nil {
+			errMsg := fmt.Sprintf("error retrieving 'token' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
+			return
+		}
+		next = token
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Configs
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *ConfigsPager) GetAllWithContext(ctx context.Context) (allItems []ProjectConfigSummary, err error) {
+	for pager.HasNext() {
+		var nextPage []ProjectConfigSummary
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *ConfigsPager) GetNext() (page []ProjectConfigSummary, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *ConfigsPager) GetAll() (allItems []ProjectConfigSummary, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }

@@ -30,7 +30,7 @@ type ServiceBindingVolumeMount struct {
 
 	// device type
 	// Required: true
-	// Enum: [shared]
+	// Enum: ["shared"]
 	DeviceType *string `json:"device_type"`
 
 	// driver
@@ -39,7 +39,7 @@ type ServiceBindingVolumeMount struct {
 
 	// mode
 	// Required: true
-	// Enum: [r rw]
+	// Enum: ["r","rw"]
 	Mode *string `json:"mode"`
 }
 

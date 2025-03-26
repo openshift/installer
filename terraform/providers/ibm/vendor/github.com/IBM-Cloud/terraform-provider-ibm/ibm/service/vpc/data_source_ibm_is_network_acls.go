@@ -502,7 +502,7 @@ func dataSourceNetworkACLCollectionRulesBeforeToMap(beforeItem vpcv1.NetworkACLR
 	return beforeMap
 }
 
-func dataSourceNetworkACLCollectionBeforeDeletedToMap(deletedItem vpcv1.NetworkACLRuleReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceNetworkACLCollectionBeforeDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {
@@ -537,7 +537,7 @@ func dataSourceNetworkACLCollectionNetworkAclsSubnetsToMap(subnetsItem vpcv1.Sub
 	return subnetsMap
 }
 
-func dataSourceNetworkACLCollectionSubnetsDeletedToMap(deletedItem vpcv1.SubnetReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceNetworkACLCollectionSubnetsDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {
@@ -572,7 +572,7 @@ func dataSourceNetworkACLCollectionNetworkAclsVPCToMap(vpcItem vpcv1.VPCReferenc
 	return vpcMap
 }
 
-func dataSourceNetworkACLCollectionVPCDeletedToMap(deletedItem vpcv1.VPCReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceNetworkACLCollectionVPCDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {

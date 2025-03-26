@@ -6,6 +6,7 @@ package secretsmanager
 import (
 	"context"
 	"fmt"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -67,7 +68,8 @@ func DataSourceIbmSmPublicCertificateConfigurationDNSClassicInfrastructure() *sc
 func dataSourceIbmSmPublicCertificateConfigurationDNSClassicInfrastructureRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", fmt.Sprintf("(Data) %s", PublicCertConfigDnsClassicInfrastructureResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	region := getRegion(secretsManagerClient, d)
@@ -81,42 +83,51 @@ func dataSourceIbmSmPublicCertificateConfigurationDNSClassicInfrastructureRead(c
 	publicCertificateConfigurationDNSClassicInfrastructureInf, response, err := secretsManagerClient.GetConfigurationWithContext(context, getConfigurationOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetConfigurationWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetConfigurationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetConfigurationWithContext failed %s\n%s", err, response), fmt.Sprintf("(Data) %s", PublicCertConfigDnsClassicInfrastructureResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	publicCertificateConfigurationDNSClassicInfrastructure := publicCertificateConfigurationDNSClassicInfrastructureInf.(*secretsmanagerv2.PublicCertificateConfigurationDNSClassicInfrastructure)
 	d.SetId(fmt.Sprintf("%s/%s/%s", region, instanceId, *getConfigurationOptions.Name))
 
 	if err = d.Set("region", region); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting region: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting region"), fmt.Sprintf("(Data) %s", PublicCertConfigDnsClassicInfrastructureResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("config_type", publicCertificateConfigurationDNSClassicInfrastructure.ConfigType); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting config_type: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting config_type"), fmt.Sprintf("(Data) %s", PublicCertConfigDnsClassicInfrastructureResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("secret_type", publicCertificateConfigurationDNSClassicInfrastructure.SecretType); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting secret_type: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting secret_type"), fmt.Sprintf("(Data) %s", PublicCertConfigDnsClassicInfrastructureResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("created_by", publicCertificateConfigurationDNSClassicInfrastructure.CreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting created_by"), fmt.Sprintf("(Data) %s", PublicCertConfigDnsClassicInfrastructureResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("created_at", DateTimeToRFC3339(publicCertificateConfigurationDNSClassicInfrastructure.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting created_at"), fmt.Sprintf("(Data) %s", PublicCertConfigDnsClassicInfrastructureResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("updated_at", DateTimeToRFC3339(publicCertificateConfigurationDNSClassicInfrastructure.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting updated_at"), fmt.Sprintf("(Data) %s", PublicCertConfigDnsClassicInfrastructureResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("classic_infrastructure_username", publicCertificateConfigurationDNSClassicInfrastructure.ClassicInfrastructureUsername); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting classic_infrastructure_username: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting classic_infrastructure_username"), fmt.Sprintf("(Data) %s", PublicCertConfigDnsClassicInfrastructureResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("classic_infrastructure_password", publicCertificateConfigurationDNSClassicInfrastructure.ClassicInfrastructurePassword); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting classic_infrastructure_password: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting classic_infrastructure_password"), fmt.Sprintf("(Data) %s", PublicCertConfigDnsClassicInfrastructureResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	return nil
