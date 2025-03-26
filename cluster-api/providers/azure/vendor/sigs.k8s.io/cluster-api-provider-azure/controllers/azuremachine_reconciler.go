@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -101,10 +102,13 @@ func newAzureMachineService(machineScope *scope.MachineScope) (*azureMachineServ
 			virtualmachinesSvc,
 			roleAssignmentsSvc,
 			vmextensionsSvc,
-			tagsSvc,
 		},
 		skuCache: cache,
 	}
+	if !strings.EqualFold(machineScope.CloudEnvironment(), "HybridEnvironment") {
+		ams.services = append(ams.services, tagsSvc)
+	}
+
 	ams.Reconcile = ams.reconcile
 	ams.Pause = ams.pause
 	ams.Delete = ams.delete

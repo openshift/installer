@@ -94,7 +94,7 @@ func (s *AvailabilitySetSpec) Parameters(_ context.Context, existing interface{}
 func getFaultDomainCount(SKU *resourceskus.SKU, cloudEnvironment string) (*int32, error) {
 	// Azure Stack environments may not implement the resource SKU API
 	// for availability sets. Use a default value instead.
-	if SKU == nil && strings.EqualFold(cloudEnvironment, "HybridEnvironment") {
+	if strings.EqualFold(cloudEnvironment, "HybridEnvironment") {
 		return ptr.To(int32(2)), nil
 	}
 

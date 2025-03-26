@@ -42,9 +42,6 @@ var _ client = (*AzureClient)(nil)
 // NewClient creates a tags client from an authorizer.
 func NewClient(auth azure.Authorizer) (*AzureClient, error) {
 	opts, err := azure.ARMClientOptions(auth.CloudEnvironment(), auth.BaseURI())
-	opts.APIVersion = "2018-05-01"
-	//TODO: try testing this API version, altohugh we would expect
-	// API version to throw a more explicit error for API version.
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create tags client options")
 	}
