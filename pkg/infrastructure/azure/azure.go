@@ -85,6 +85,23 @@ func (*Provider) PublicGatherEndpoint() clusterapi.GatherEndpoint { return clust
 
 // PreProvision is called before provisioning using CAPI controllers has begun.
 func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionInput) error {
+	installConfig := in.InstallConfig.Config
+	platform := installConfig.Platform.Azure
+	p.ResourceGroupName = platform.ClusterResourceGroupName(in.InfraID)
+
+	userTags := platform.UserTags
+	tags := make(map[string]*string, len(userTags)+1)
+	tags[fmt.Sprintf("kubernetes.io_cluster.%s", in.InfraID)] = ptr.To("owned")
+	for k, v := range userTags {
+		tags[k] = ptr.To(v)
+	}
+	p.Tags = tags
+
+	return nil
+}
+
+// InfraReady is called once the installer infrastructure is ready.
+func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) error {
 	session, err := in.InstallConfig.Azure.Session()
 	if err != nil {
 		return fmt.Errorf("failed to get session: %w", err)
@@ -95,15 +112,6 @@ func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionI
 	subscriptionID := session.Credentials.SubscriptionID
 	cloudConfiguration := session.CloudConfig
 	tokenCredential := session.TokenCreds
-	p.ResourceGroupName = platform.ClusterResourceGroupName(in.InfraID)
-
-	userTags := platform.UserTags
-	tags := make(map[string]*string, len(userTags)+1)
-	tags[fmt.Sprintf("kubernetes.io_cluster.%s", in.InfraID)] = ptr.To("owned")
-	for k, v := range userTags {
-		tags[k] = ptr.To(v)
-	}
-	p.Tags = tags
 
 	// Creating a dummy nsg for existing vnets installation to appease the ingress operator.
 	if in.InstallConfig.Config.Azure.VirtualNetwork != "" {
@@ -127,7 +135,7 @@ func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionI
 			securityGroupName,
 			armnetwork.SecurityGroup{
 				Location: to.Ptr(platform.Region),
-				Tags:     tags,
+				Tags:     p.Tags,
 			},
 			nil)
 		if err != nil {
@@ -139,21 +147,6 @@ func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionI
 		}
 		logrus.Infof("nsg=%s", *nsg.ID)
 	}
-
-	return nil
-}
-
-// InfraReady is called once the installer infrastructure is ready.
-func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) error {
-	session, err := in.InstallConfig.Azure.Session()
-	if err != nil {
-		return fmt.Errorf("failed to get session: %w", err)
-	}
-
-	installConfig := in.InstallConfig.Config
-	platform := installConfig.Platform.Azure
-	subscriptionID := session.Credentials.SubscriptionID
-	cloudConfiguration := session.CloudConfig
 
 	var architecture armcompute.Architecture
 	if installConfig.ControlPlane.Architecture == types.ArchitectureARM64 {
@@ -206,7 +199,6 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		tags[k] = ptr.To(v)
 	}
 
-	tokenCredential := session.TokenCreds
 	storageURL := fmt.Sprintf("https://%s.blob.%s", storageAccountName, session.Environment.StorageEndpointSuffix)
 	blobURL := fmt.Sprintf("%s/%s/%s", storageURL, containerName, blobName)
 
