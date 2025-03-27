@@ -545,7 +545,7 @@ spec:
     - name: "eth0"
       macAddress: "52:54:01:aa:aa:a1"`,
 			requiresNmstatectl: true,
-			expectedError:      "invalid NMStateConfig configuration: ObjectMeta.Labels: Required value: mynmstateconfig does not have any label set",
+			expectedError:      "invalid NMStateConfig configuration: labels: Required value: mynmstateconfig does not have any label set",
 		},
 
 		{

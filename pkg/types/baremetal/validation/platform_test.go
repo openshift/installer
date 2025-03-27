@@ -71,7 +71,7 @@ func TestValidatePlatform(t *testing.T) {
 					machinePool().Replicas(3)).
 				Compute(
 					machinePool().Replicas(1)).build(),
-			expected: "baremetal.Hosts: Required value: not enough hosts found \\(1\\) to support all the configured ControlPlane replicas \\(3\\)",
+			expected: "baremetal.hosts: Required value: not enough hosts found \\(1\\) to support all the configured ControlPlane replicas \\(3\\)",
 		},
 		{
 			name: "toofew_masters",
@@ -84,7 +84,7 @@ func TestValidatePlatform(t *testing.T) {
 					machinePool().Replicas(3)).
 				Compute(
 					machinePool().Replicas(1)).build(),
-			expected: "baremetal.Hosts: Required value: not enough hosts found \\(1\\) to support all the configured ControlPlane replicas \\(3\\)",
+			expected: "baremetal.hosts: Required value: not enough hosts found \\(1\\) to support all the configured ControlPlane replicas \\(3\\)",
 		},
 		{
 			name: "toofew_workers",
@@ -97,7 +97,7 @@ func TestValidatePlatform(t *testing.T) {
 					machinePool().Replicas(1)).
 				Compute(
 					machinePool().Replicas(3)).build(),
-			expected: "baremetal.Hosts: Required value: not enough hosts found \\(1\\) to support all the configured Compute replicas \\(3\\)",
+			expected: "baremetal.hosts: Required value: not enough hosts found \\(1\\) to support all the configured Compute replicas \\(3\\)",
 		},
 		{
 			name: "enough_hosts",
@@ -150,7 +150,7 @@ func TestValidatePlatform(t *testing.T) {
 					machinePool().Replicas(2)).
 				Compute(
 					machinePool().Replicas(2)).build(),
-			expected: "baremetal.Hosts: Required value: not enough hosts found \\(1\\) to support all the configured Compute replicas \\(2\\)",
+			expected: "baremetal.hosts: Required value: not enough hosts found \\(1\\) to support all the configured Compute replicas \\(2\\)",
 		},
 		{
 			name: "more_than_enough_hosts",
@@ -189,7 +189,7 @@ func TestValidatePlatform(t *testing.T) {
 					platform().Hosts(
 						host1().Name(""))).
 				ControlPlane(machinePool().Replicas(1)).build(),
-			expected: "baremetal.hosts\\[0\\].Name: Required value: missing Name",
+			expected: "baremetal.hosts\\[0\\].name: Required value: missing Name",
 		},
 		{
 			name: "allowed_feature_loadbalancer_openshift_managed_default",
@@ -217,7 +217,7 @@ func TestValidatePlatform(t *testing.T) {
 			name: "missing_mac",
 			platform: platform().
 				Hosts(host1().BootMACAddress("")).build(),
-			expected: "baremetal.hosts\\[0\\].BootMACAddress: Required value: missing BootMACAddress",
+			expected: "baremetal.hosts\\[0\\].bootMACAddress: Required value: missing BootMACAddress",
 		},
 		{
 			name: "duplicate_host_name",
@@ -225,7 +225,7 @@ func TestValidatePlatform(t *testing.T) {
 				Hosts(
 					host1().Name("host1"),
 					host2().Name("host1")).build(),
-			expected: "baremetal.hosts\\[1\\].Name: Duplicate value: \"host1\"",
+			expected: "baremetal.hosts\\[1\\].name: Duplicate value: \"host1\"",
 		},
 		{
 			name: "valid_host_name",
@@ -243,19 +243,19 @@ func TestValidatePlatform(t *testing.T) {
 			name: "invalid_host_name_char",
 			platform: platform().
 				Hosts(host1().Name("test,example.com")).build(),
-			expected: "baremetal.Hosts\\[0\\].name: Invalid value: \"test,example.com\"",
+			expected: "baremetal.hosts\\[0\\].name: Invalid value: \"test,example.com\"",
 		},
 		{
 			name: "invalid_host_name_uppercase",
 			platform: platform().
 				Hosts(host1().Name("Host1")).build(),
-			expected: "baremetal.Hosts\\[0\\].name: Invalid value: \"Host1\"",
+			expected: "baremetal.hosts\\[0\\].name: Invalid value: \"Host1\"",
 		},
 		{
 			name: "invalid_host_name_length",
 			platform: platform().
 				Hosts(host1().Name(strings.Repeat("a", 300))).build(),
-			expected: "baremetal.Hosts\\[0\\].name: Invalid value: \"aaaaaaaaa",
+			expected: "baremetal.hosts\\[0\\].name: Invalid value: \"aaaaaaaaa",
 		},
 		{
 			name: "duplicate_host_mac",
@@ -263,13 +263,13 @@ func TestValidatePlatform(t *testing.T) {
 				Hosts(
 					host1().BootMACAddress("CA:FE:CA:FE:CA:FE"),
 					host2().BootMACAddress("CA:FE:CA:FE:CA:FE")).build(),
-			expected: "baremetal.hosts\\[1\\].BootMACAddress: Duplicate value: \"CA:FE:CA:FE:CA:FE\"",
+			expected: "baremetal.hosts\\[1\\].bootMACAddress: Duplicate value: \"CA:FE:CA:FE:CA:FE\"",
 		},
 		{
 			name: "invalid_boot_mode",
 			platform: platform().
 				Hosts(host1().BootMode("not-a-valid-value")).build(),
-			expected: "baremetal.Hosts\\[0\\].bootMode: Unsupported value: \"not-a-valid-value\": supported values: \"UEFI\", \"UEFISecureBoot\", \"legacy\"",
+			expected: "baremetal.hosts\\[0\\].bootMode: Unsupported value: \"not-a-valid-value\": supported values: \"UEFI\", \"UEFISecureBoot\", \"legacy\"",
 		},
 		{
 			name: "uefi_boot_mode",
@@ -287,7 +287,7 @@ func TestValidatePlatform(t *testing.T) {
 			name: "unsupported_uefi_secure_boot_mode",
 			platform: platform().
 				Hosts(host1().BootMode("UEFISecureBoot")).build(),
-			expected: "baremetal.Hosts\\[0\\].bootMode: Invalid value: \"UEFISecureBoot\": driver ipmi does not support UEFI secure boot",
+			expected: "baremetal.hosts\\[0\\].bootMode: Invalid value: \"UEFISecureBoot\": driver ipmi does not support UEFI secure boot",
 		},
 		{
 			name: "legacy_boot_mode",
@@ -457,25 +457,25 @@ func TestValidateProvisioning(t *testing.T) {
 				Hosts(
 					host1().BMCAddress("ipmi://192.168.111.1"),
 					host2().BMCAddress("ipmi://192.168.111.1")).build(),
-			expected: "baremetal.hosts\\[1\\].BMC.Address: Duplicate value: \"ipmi://192.168.111.1\"",
+			expected: "baremetal.hosts\\[1\\].bmc.address: Duplicate value: \"ipmi://192.168.111.1\"",
 		},
 		{
 			name: "bmc_address_required",
 			platform: platform().
 				Hosts(host1().BMCAddress("")).build(),
-			expected: "baremetal.hosts\\[0\\].BMC.Address: Required value: missing Address",
+			expected: "baremetal.hosts\\[0\\].bmc.address: Required value: missing Address",
 		},
 		{
 			name: "bmc_username_required",
 			platform: platform().
 				Hosts(host1().BMCUsername("")).build(),
-			expected: "baremetal.hosts\\[0\\].BMC.Username: Required value: missing Username",
+			expected: "baremetal.hosts\\[0\\].bmc.username: Required value: missing Username",
 		},
 		{
 			name: "bmc_password_required",
 			platform: platform().
 				Hosts(host1().BMCPassword("")).build(),
-			expected: "baremetal.hosts\\[0\\].BMC.Password: Required value: missing Password",
+			expected: "baremetal.hosts\\[0\\].bmc.password: Required value: missing Password",
 		},
 		{
 			name: "valid_with_os_image_overrides",
@@ -740,7 +740,7 @@ func TestValidateProvisioning(t *testing.T) {
 				BootstrapProvisioningIP("192.168.111.3").
 				Hosts(host1().BMCAddress("ipmi://192.168.111.1")).
 				build(),
-			expected: "baremetal.Hosts\\[0\\].BMC: Invalid value: \"ipmi://192.168.111.1\": driver ipmi requires provisioning network",
+			expected: "baremetal.hosts\\[0\\].bmc: Invalid value: \"ipmi://192.168.111.1\": driver ipmi requires provisioning network",
 		},
 	}
 

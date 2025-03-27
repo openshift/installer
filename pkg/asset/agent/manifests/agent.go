@@ -140,11 +140,11 @@ func (m *AgentManifests) validateNMStateLabelSelector() field.ErrorList {
 
 	var allErrs field.ErrorList
 
-	fieldPath := field.NewPath("Spec", "NMStateConfigLabelSelector", "MatchLabels")
+	fieldPath := field.NewPath("spec", "nmStateConfigLabelSelector", "matchLabels")
 
 	for _, networkConfig := range m.NMStateConfigs {
 		if !reflect.DeepEqual(m.InfraEnv.Spec.NMStateConfigLabelSelector.MatchLabels, networkConfig.ObjectMeta.Labels) {
-			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("infraEnv and %s.NMStateConfig labels do not match. Expected: %s Found: %s",
+			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("infraEnv and %s NMState Config labels do not match. Expected: %s Found: %s",
 				networkConfig.Name,
 				m.InfraEnv.Spec.NMStateConfigLabelSelector.MatchLabels,
 				networkConfig.ObjectMeta.Labels)))

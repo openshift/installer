@@ -181,7 +181,7 @@ func (a *ClusterImageSet) validateReleaseVersion(ctx context.Context, workflowTy
 
 	var allErrs field.ErrorList
 
-	fieldPath := field.NewPath("Spec", "ReleaseImage")
+	fieldPath := field.NewPath("spec", "releaseImage")
 
 	releaseImage := &releaseimage.Image{}
 	if err := releaseImage.Generate(ctx, asset.Parents{}); err != nil {

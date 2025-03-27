@@ -1588,7 +1588,7 @@ func validateFencingCredentials(installConfig *types.InstallConfig) (errors fiel
 	fencingCredentials := installConfig.ControlPlane.Fencing
 	allErrs := field.ErrorList{}
 	if fencingCredentials != nil {
-		allErrs = append(allErrs, common.ValidateUniqueAndRequiredFields(fencingCredentials.Credentials, fldPath, func([]byte) bool { return false }, "credentials")...)
+		allErrs = append(allErrs, common.ValidateUniqueAndRequiredFields(fencingCredentials.Credentials, fldPath.Child("credentials"), func([]byte) bool { return false })...)
 	}
 	allErrs = append(allErrs, validateCredentialsNumber(installConfig.ControlPlane, fencingCredentials, fldPath.Child("credentials"))...)
 

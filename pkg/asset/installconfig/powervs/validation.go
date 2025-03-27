@@ -34,8 +34,8 @@ func Validate(config *types.InstallConfig) error {
 			// Each machine pool CIDR must have 24 significant bits (/24)
 			if bits, _ := config.Networking.MachineNetwork[i].CIDR.Mask.Size(); bits != 24 {
 				// If not, create an error displaying the CIDR in the install config vs the expectation (/24)
-				fldPath := field.NewPath("Networking")
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("MachineNetwork").Child("CIDR"), (&config.Networking.MachineNetwork[i].CIDR).String(), "Machine Pool CIDR must be /24."))
+				fldPath := field.NewPath("networking")
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("machineNetwork").Index(i).Child("cidr"), (&config.Networking.MachineNetwork[i].CIDR).String(), "Machine Pool CIDR must be /24."))
 			}
 		}
 	}

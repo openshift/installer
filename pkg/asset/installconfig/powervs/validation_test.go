@@ -193,7 +193,7 @@ func TestValidate(t *testing.T) {
 		{
 			name:     "invalid machine pool CIDR",
 			edits:    editFunctions{invalidMachinePoolCIDR},
-			errorMsg: `Networking.MachineNetwork.CIDR: Invalid value: "192.168.0.0/16": Machine Pool CIDR must be /24.`,
+			errorMsg: `networking.machineNetwork\[0\].cidr: Invalid value: "192\.168\.0\.0/16": Machine Pool CIDR must be /24\.`,
 		},
 		{
 			name:     "valid machine pool CIDR",
