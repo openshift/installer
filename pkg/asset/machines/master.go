@@ -185,6 +185,17 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 	var ipClaims []ipamv1.IPAddressClaim
 	var ipAddrs []ipamv1.IPAddress
 	var controlPlaneMachineSet *machinev1.ControlPlaneMachineSet
+
+	// Check if SNO topology is supported on this platform
+	if pool.Replicas != nil && *pool.Replicas == 1 {
+		bootstrapInPlace := false
+		if ic.BootstrapInPlace != nil {
+			bootstrapInPlace = true
+		}
+		if !supportedSingleNodePlatform(bootstrapInPlace, ic.Platform.Name()) {
+			return fmt.Errorf("this install method does not support Single Node installation on platform %s", ic.Platform.Name())
+		}
+	}
 	switch ic.Platform.Name() {
 	case awstypes.Name:
 		subnets, err := aws.MachineSubnetsByZones(ctx, installConfig, awstypes.ClusterNodeSubnetRole)
@@ -967,6 +978,20 @@ func IsFencingCredentialsFile(filepath string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-
 	return match, nil
+}
+
+// supportedSingleNodePlatform indicates if the IPI Installer can be used to install SNO on
+// a platform.
+func supportedSingleNodePlatform(bootstrapInPlace bool, platformName string) bool {
+	switch platformName {
+	case awstypes.Name, gcptypes.Name, azuretypes.Name, powervstypes.Name:
+		// Single node OpenShift installations supported without `bootstrapInPlace`
+		return true
+	case nonetypes.Name, externaltypes.Name:
+		// Single node OpenShift installations supported with `bootstrapInPlace`
+		return bootstrapInPlace
+	default:
+		return false
+	}
 }
