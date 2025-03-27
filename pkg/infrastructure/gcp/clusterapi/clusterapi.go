@@ -151,7 +151,6 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	ignSecrets := []*corev1.Secret{
 		clusterapi.IgnitionSecret([]byte(ignShim), in.InfraID, "bootstrap"),
 		clusterapi.IgnitionSecret(ignOutput.UpdatedMasterIgn, in.InfraID, "master"),
-		clusterapi.IgnitionSecret(ignOutput.UpdatedWorkerIgn, in.InfraID, "worker"),
 	}
 
 	return ignSecrets, nil
