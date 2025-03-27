@@ -105,7 +105,7 @@ func newAzureMachineService(machineScope *scope.MachineScope) (*azureMachineServ
 		},
 		skuCache: cache,
 	}
-	if !strings.EqualFold(machineScope.CloudEnvironment(), "HybridEnvironment") {
+	if !strings.EqualFold(machineScope.CloudEnvironment(), azure.StackCloudName) {
 		ams.services = append(ams.services, tagsSvc)
 	}
 

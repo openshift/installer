@@ -114,8 +114,8 @@ func (ac *AzureClient) DeleteAsync(ctx context.Context, spec azure.ResourceSpecG
 	defer done()
 
 	//TODO: make dynamic
-	//forceDelete := ptr.To(true)
-	forceDelete := ptr.To(false)
+	forceDelete := ptr.To(true)
+	//forceDelete := ptr.To(false)
 	opts := &armcompute.VirtualMachinesClientBeginDeleteOptions{ResumeToken: resumeToken, ForceDeletion: forceDelete}
 	poller, err = ac.virtualmachines.BeginDelete(ctx, spec.ResourceGroupName(), spec.ResourceName(), opts)
 	if err != nil {

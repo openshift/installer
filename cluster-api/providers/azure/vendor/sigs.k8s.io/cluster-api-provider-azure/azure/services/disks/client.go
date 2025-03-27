@@ -18,6 +18,7 @@ package disks
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
@@ -38,6 +39,9 @@ type azureClient struct {
 // newClient creates a new disks client from an authorizer.
 func newClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*azureClient, error) {
 	opts, err := azure.ARMClientOptions(auth.CloudEnvironment(), auth.BaseURI())
+	if strings.EqualFold(auth.CloudEnvironment(), azure.StackCloudName) {
+		opts.APIVersion = azure.StackDiskAPIVersionProfile
+	}
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create disks client options")
 	}

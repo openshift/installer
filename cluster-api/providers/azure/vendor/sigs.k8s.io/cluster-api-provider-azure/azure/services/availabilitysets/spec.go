@@ -26,6 +26,7 @@ import (
 	"k8s.io/utils/ptr"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/resourceskus"
 )
@@ -94,7 +95,7 @@ func (s *AvailabilitySetSpec) Parameters(_ context.Context, existing interface{}
 func getFaultDomainCount(SKU *resourceskus.SKU, cloudEnvironment string) (*int32, error) {
 	// Azure Stack environments may not implement the resource SKU API
 	// for availability sets. Use a default value instead.
-	if strings.EqualFold(cloudEnvironment, "HybridEnvironment") {
+	if strings.EqualFold(cloudEnvironment, azure.StackCloudName) {
 		return ptr.To(int32(2)), nil
 	}
 

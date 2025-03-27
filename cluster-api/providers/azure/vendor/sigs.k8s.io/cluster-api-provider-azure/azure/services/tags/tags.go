@@ -20,7 +20,6 @@ import (
 	"context"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
 
@@ -77,8 +76,6 @@ func (s *Service) Reconcile(ctx context.Context) error {
 	defer done()
 
 	for _, tagsSpec := range s.Scope.TagsSpecs() {
-		spew.Println("BUGGIN tagSpec.Scope")
-		spew.Dump(tagsSpec.Scope)
 		existingTags, err := s.client.GetAtScope(ctx, tagsSpec.Scope)
 		if err != nil {
 			return errors.Wrap(err, "failed to get existing tags")

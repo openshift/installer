@@ -56,7 +56,7 @@ func NewClient(auth azure.Authorizer) (*AzureClient, error) {
 func (ac *AzureClient) GetAtScope(ctx context.Context, scope string) (armresources.TagsResource, error) {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "tags.AzureClient.GetAtScope")
 	defer done()
-	//TODO check out how this client is constructed
+
 	resp, err := ac.tags.GetAtScope(ctx, scope, nil)
 	if err != nil {
 		return armresources.TagsResource{}, err
