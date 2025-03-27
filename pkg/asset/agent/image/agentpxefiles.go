@@ -268,7 +268,7 @@ func (a *AgentPXEFiles) handleAdditionals390xArtifacts(bootArtifactsFullPath str
 
 	// Write the updated content back
 	agentINSFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("%s.%s-generic.ins", a.filePrefix, a.cpuArch))
-	err := os.WriteFile(agentINSFile, []byte(updatedContent), 0644)
+	err = os.WriteFile(agentINSFile, []byte(updatedContent), 0644)
 	if err != nil {
 		return err
 	}
