@@ -67,19 +67,23 @@ aliases:
   aws-approvers:
     - mtulio
     - patrickdillon
+    - tthvo
   aws-reviewers:
     - mtulio
     - patrickdillon
+    - tthvo
   gcp-approvers:
     - patrickdillon
   gcp-reviewers:
     - patrickdillon
   azure-approvers:
     - jhixson74
-    - mtulio
+    - rna-afk
+    - sadasu
   azure-reviewers:
     - jhixson74
-    - mtulio
+    - rna-afk
+    - sadasu
   ovirt-approvers:
     - janosdebugs
     - eslutsky
