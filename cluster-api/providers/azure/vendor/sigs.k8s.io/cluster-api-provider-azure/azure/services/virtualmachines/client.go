@@ -22,6 +22,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
 
@@ -112,10 +113,13 @@ func (ac *AzureClient) DeleteAsync(ctx context.Context, spec azure.ResourceSpecG
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "virtualmachines.AzureClient.Delete")
 	defer done()
 
-	forceDelete := ptr.To(true)
+	//TODO: make dynamic
+	//forceDelete := ptr.To(true)
+	forceDelete := ptr.To(false)
 	opts := &armcompute.VirtualMachinesClientBeginDeleteOptions{ResumeToken: resumeToken, ForceDeletion: forceDelete}
 	poller, err = ac.virtualmachines.BeginDelete(ctx, spec.ResourceGroupName(), spec.ResourceName(), opts)
 	if err != nil {
+		spew.Dump("BeginDelete", err)
 		return nil, err
 	}
 
@@ -125,6 +129,7 @@ func (ac *AzureClient) DeleteAsync(ctx context.Context, spec azure.ResourceSpecG
 	pollOpts := &runtime.PollUntilDoneOptions{Frequency: async.DefaultPollerFrequency}
 	_, err = poller.PollUntilDone(ctx, pollOpts)
 	if err != nil {
+		spew.Dump("PollUntilDone", err)
 		// if an error occurs, return the Poller.
 		// this means the long-running operation didn't finish in the specified timeout.
 		return poller, err
