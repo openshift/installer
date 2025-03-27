@@ -273,6 +273,5 @@ func (a *AgentPXEFiles) handleAdditionals390xArtifacts(bootArtifactsFullPath str
 		return err
 	}
 
-	logrus.Infof("Updated generic.ins with correct filenames: %s", agentINSFile)
 	return nil
 }
