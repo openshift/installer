@@ -20,6 +20,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	workflowreport "github.com/openshift/installer/pkg/asset/agent/workflow/report"
+	"github.com/openshift/installer/pkg/asset/rhcos"
 )
 
 const (
@@ -115,7 +116,7 @@ func (a *AgentArtifacts) Generate(ctx context.Context, dependencies asset.Parent
 		if err := workflowreport.GetReport(ctx).SubStage(workflow.StageAgentArtifactsAgentTUI); err != nil {
 			return err
 		}
-		agentTuiFiles, err = a.fetchAgentTuiFiles(agentManifests.ClusterImageSet.Spec.ReleaseImage, agentManifests.GetPullSecretData(), registriesConf.MirrorConfig)
+		agentTuiFiles, err = a.fetchAgentTuiFiles(agentManifests.ClusterImageSet.Spec.ReleaseImage, agentManifests.GetPullSecretData(), registriesConf)
 		if err != nil {
 			return err
 		}
@@ -132,10 +133,10 @@ func (a *AgentArtifacts) Generate(ctx context.Context, dependencies asset.Parent
 	return nil
 }
 
-func (a *AgentArtifacts) fetchAgentTuiFiles(releaseImage string, pullSecret string, mirrorConfig []mirror.RegistriesConfig) ([]string, error) {
-	release := NewRelease(
-		Config{MaxTries: OcDefaultTries, RetryDelay: OcDefaultRetryDelay},
-		releaseImage, pullSecret, mirrorConfig, nil)
+func (a *AgentArtifacts) fetchAgentTuiFiles(releaseImage string, pullSecret string, mirrorConfig rhcos.MirrorConfig) ([]string, error) {
+	release := rhcos.NewReleasePayload(
+		rhcos.ExtractConfig{},
+		releaseImage, pullSecret, mirrorConfig)
 
 	agentTuiFilenames := []string{"/usr/bin/agent-tui", "/usr/lib64/libnmstate.so.*"}
 	files := []string{}
