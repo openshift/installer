@@ -206,7 +206,7 @@ func TestValidatePlatform(t *testing.T) {
 				tc.config = installConfig().build()
 				tc.config.Nutanix = tc.platform
 			}
-			err := ValidatePlatform(tc.platform, field.NewPath("test-path"), tc.config).ToAggregate()
+			err := ValidatePlatform(tc.platform, field.NewPath("test-path"), tc.config, false).ToAggregate()
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
