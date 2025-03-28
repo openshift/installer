@@ -1,4 +1,4 @@
-package image
+package rhcos
 
 import (
 	"context"
@@ -12,24 +12,14 @@ import (
 
 	"github.com/coreos/stream-metadata-go/stream"
 	"github.com/stretchr/testify/assert"
-	corev1 "k8s.io/api/core/v1"
-
-	"github.com/openshift/assisted-service/api/v1beta1"
-	v1 "github.com/openshift/hive/apis/hive/v1"
-	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/agent/joiner"
-	"github.com/openshift/installer/pkg/asset/agent/manifests"
-	"github.com/openshift/installer/pkg/asset/agent/mirror"
-	"github.com/openshift/installer/pkg/asset/agent/workflow"
 )
 
-func TestBaseIso_Generate(t *testing.T) {
+func TestBaseIso(t *testing.T) {
 	ocReleaseImage := "416.94.202402130130-0"
 	ocBaseIsoFilename := "openshift-4.16"
 
 	cases := []struct {
 		name                       string
-		dependencies               []asset.Asset
 		envVarOsImageOverrideValue string
 		getIsoError                error
 		expectedBaseIsoFilename    string
@@ -41,56 +31,17 @@ func TestBaseIso_Generate(t *testing.T) {
 			expectedBaseIsoFilename:    "openshift-4.15",
 		},
 		{
-			name: "default",
-			dependencies: []asset.Asset{
-				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
-				&joiner.ClusterInfo{},
-				&manifests.AgentManifests{
-					InfraEnv: &v1beta1.InfraEnv{},
-					ClusterImageSet: &v1.ClusterImageSet{
-						Spec: v1.ClusterImageSetSpec{
-							ReleaseImage: ocReleaseImage,
-						},
-					},
-					PullSecret: &corev1.Secret{
-						StringData: map[string]string{
-							".dockerconfigjson": "supersecret",
-						},
-					},
-				},
-				&mirror.RegistriesConf{},
-			},
+			name:                    "default",
 			expectedBaseIsoFilename: ocBaseIsoFilename,
 		},
 		{
-			name: "direct download if oc is not available",
-			dependencies: []asset.Asset{
-				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
-				&joiner.ClusterInfo{},
-				&manifests.AgentManifests{
-					InfraEnv: &v1beta1.InfraEnv{},
-					ClusterImageSet: &v1.ClusterImageSet{
-						Spec: v1.ClusterImageSetSpec{
-							ReleaseImage: ocReleaseImage,
-						},
-					},
-					PullSecret: &corev1.Secret{
-						StringData: map[string]string{
-							".dockerconfigjson": "supersecret",
-						},
-					},
-				},
-				&mirror.RegistriesConf{},
-			},
+			name:                    "direct download if oc is not available",
 			getIsoError:             &exec.Error{},
 			expectedBaseIsoFilename: ocReleaseImage,
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			dependencies := asset.Parents{}
-			dependencies.Add(tc.dependencies...)
-
 			// Setup a fake http server, to serve the future download request.
 			svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				// Answer with a fixed size randomly filled buffer
@@ -120,13 +71,13 @@ func TestBaseIso_Generate(t *testing.T) {
 				assert.NoError(t, err)
 			}()
 
-			baseIso := &BaseIso{
-				ocRelease: &mockRelease{
+			fetcher := NewBaseISOFetcher(
+				&mockRelease{
 					isoBaseVersion:  ocReleaseImage,
 					baseIsoFileName: ocBaseIsoFilename,
 					baseIsoError:    tc.getIsoError,
 				},
-				streamGetter: func(ctx context.Context) (*stream.Stream, error) {
+				func(ctx context.Context) (*stream.Stream, error) {
 					return &stream.Stream{
 						Architectures: map[string]stream.Arch{
 							"x86_64": {
@@ -145,13 +96,12 @@ func TestBaseIso_Generate(t *testing.T) {
 							},
 						},
 					}, nil
-				},
-			}
-			err = baseIso.Generate(context.Background(), dependencies)
+				})
+			filename, err := fetcher.GetBaseISOFilename(context.Background(), "")
 
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
-				assert.Regexp(t, tc.expectedBaseIsoFilename, baseIso.File.Filename)
+				assert.Regexp(t, tc.expectedBaseIsoFilename, filename)
 			} else {
 				assert.Equal(t, tc.expectedError, err.Error())
 			}
@@ -165,7 +115,7 @@ type mockRelease struct {
 	baseIsoError    error
 }
 
-func (m *mockRelease) GetBaseIso(architecture string) (string, error) {
+func (m *mockRelease) GetBaseIso(architecture string, streamGetter CoreOSBuildFetcher) (string, error) {
 	if m.baseIsoError != nil {
 		return "", m.baseIsoError
 	}
