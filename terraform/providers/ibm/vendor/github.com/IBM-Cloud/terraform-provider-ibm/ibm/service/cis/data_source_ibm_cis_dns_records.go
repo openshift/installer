@@ -206,7 +206,9 @@ func dataSourceIBMCISDNSRecordsRead(d *schema.ResourceData, meta interface{}) er
 		record := map[string]interface{}{}
 		record["id"] = flex.ConvertCisToTfThreeVar(*instance.ID, zoneID, crn)
 		record[cisDNSRecordID] = *instance.ID
-		record[cisZoneName] = *instance.ZoneName
+		if instance.ZoneName != nil {
+			record[cisZoneName] = *instance.ZoneName
+		}
 		record[cisDNSRecordCreatedOn] = *instance.CreatedOn
 		record[cisDNSRecordModifiedOn] = *instance.ModifiedOn
 		record[cisDNSRecordName] = *instance.Name
@@ -221,7 +223,11 @@ func dataSourceIBMCISDNSRecordsRead(d *schema.ResourceData, meta interface{}) er
 		record[cisDNSRecordProxied] = *instance.Proxied
 		record[cisDNSRecordTTL] = *instance.TTL
 		if instance.Data != nil {
-			d.Set(cisDNSRecordData, flattenData(instance.Data, *instance.ZoneName))
+			zoneName := ""
+			if instance.ZoneName != nil {
+				zoneName = *instance.ZoneName
+			}
+			d.Set(cisDNSRecordData, flattenData(instance.Data, zoneName))
 		}
 
 		records = append(records, record)
