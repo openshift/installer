@@ -2,6 +2,7 @@ package agent
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/go-openapi/swag"
 	"github.com/sirupsen/logrus"
@@ -100,7 +101,9 @@ func DetermineReleaseImageArch(pullSecret, pullSpec string) (string, error) {
 
 	releaseArch, err := ExecuteOC(pullSecret, getReleaseArch)
 	if err != nil {
-		logrus.Errorf("Release Image arch could not be found: %s", err)
+		if strings.Contains(err.Error(), "unable to read image") {
+			logrus.Debugf("Could not get release image to check architecture in a disconnected setup")
+		}
 		return "", err
 	}
 	logrus.Debugf("Release Image arch is: %s", releaseArch)
