@@ -1,4 +1,4 @@
-package image
+package rhcos
 
 import (
 	"bytes"
@@ -20,12 +20,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/thedevsaddam/retry"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/yaml"
 
-	operatorv1alpha1 "github.com/openshift/api/operator/v1alpha1"
 	"github.com/openshift/installer/pkg/asset/agent"
-	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/rhcos/cache"
 )
 
@@ -34,46 +30,55 @@ const (
 	coreOsFileName       = "/coreos/coreos-%s.iso"
 	coreOsSha256FileName = "/coreos/coreos-%s.iso.sha256"
 	coreOsStreamFileName = "/coreos/coreos-stream.json"
-	// OcDefaultTries is the number of times to execute the oc command on failures.
-	OcDefaultTries = 5
-	// OcDefaultRetryDelay is the time between retries.
-	OcDefaultRetryDelay = time.Second * 5
+	// ocDefaultTries is the number of times to execute the oc command on failures.
+	ocDefaultTries = 5
+	// ocDefaultRetryDelay is the time between retries.
+	ocDefaultRetryDelay = time.Second * 5
 )
 
-// Config is used to set up the retries for extracting the base ISO.
-type Config struct {
+// ExtractConfig is used to set up the retries for extracting the base ISO.
+type ExtractConfig struct {
 	MaxTries   uint
 	RetryDelay time.Duration
 }
 
-// Release is the interface to use the oc command to the get image info.
-type Release interface {
-	GetBaseIso(architecture string) (string, error)
+// ReleasePayload is the interface to use the oc command to the get image info.
+type ReleasePayload interface {
+	GetBaseIso(architecture string, streamGetter CoreOSBuildFetcher) (string, error)
 	GetBaseIsoVersion(architecture string) (string, error)
 	ExtractFile(image string, filename string, architecture string) ([]string, error)
 }
 
-type release struct {
-	config       Config
-	releaseImage string
-	pullSecret   string
-	mirrorConfig []mirror.RegistriesConfig
-	streamGetter CoreOSBuildFetcher
+type MirrorConfig interface {
+	HasMirrors() bool
+	GetICSPContents() ([]byte, error)
 }
 
-// NewRelease is used to set up the executor to run oc commands.
-func NewRelease(config Config, releaseImage string, pullSecret string, mirrorConfig []mirror.RegistriesConfig, streamGetter CoreOSBuildFetcher) Release {
-	return &release{
+type releasePayload struct {
+	config       ExtractConfig
+	releaseImage string
+	pullSecret   string
+	mirrorConfig MirrorConfig
+}
+
+// NewReleasePayload is used to set up the executor to run oc commands.
+func NewReleasePayload(config ExtractConfig, releaseImage string, pullSecret string, mirrorConfig MirrorConfig) ReleasePayload {
+	if config.MaxTries == 0 {
+		config.MaxTries = ocDefaultTries
+	}
+	if config.RetryDelay == 0 {
+		config.RetryDelay = ocDefaultRetryDelay
+	}
+	return &releasePayload{
 		config:       config,
 		releaseImage: releaseImage,
 		pullSecret:   pullSecret,
 		mirrorConfig: mirrorConfig,
-		streamGetter: streamGetter,
 	}
 }
 
 // ExtractFile extracts the specified file from the given image name, and store it in the cache dir.
-func (r *release) ExtractFile(image string, filename string, architecture string) ([]string, error) {
+func (r *releasePayload) ExtractFile(image string, filename string, architecture string) ([]string, error) {
 	imagePullSpec, err := r.getImageFromRelease(image, architecture)
 	if err != nil {
 		return nil, err
@@ -92,7 +97,7 @@ func (r *release) ExtractFile(image string, filename string, architecture string
 }
 
 // Get the CoreOS ISO from the releaseImage.
-func (r *release) GetBaseIso(architecture string) (string, error) {
+func (r *releasePayload) GetBaseIso(architecture string, streamGetter CoreOSBuildFetcher) (string, error) {
 	// Get the machine-os-images pullspec from the release and use that to get the CoreOS ISO
 	image, err := r.getImageFromRelease(machineOsImageName, architecture)
 	if err != nil {
@@ -112,7 +117,7 @@ func (r *release) GetBaseIso(architecture string) (string, error) {
 	}
 	if cachedFile != "" {
 		logrus.Info("Verifying cached file")
-		valid, err := r.verifyCacheFile(image, cachedFile, architecture)
+		valid, err := r.verifyCacheFile(image, cachedFile, architecture, streamGetter)
 		if err != nil {
 			return "", err
 		}
@@ -131,7 +136,7 @@ func (r *release) GetBaseIso(architecture string) (string, error) {
 	return path[0], err
 }
 
-func (r *release) GetBaseIsoVersion(architecture string) (string, error) {
+func (r *releasePayload) GetBaseIsoVersion(architecture string) (string, error) {
 	files, err := r.ExtractFile(machineOsImageName, coreOsStreamFileName, architecture)
 	if err != nil {
 		return "", err
@@ -163,11 +168,11 @@ func (r *release) GetBaseIsoVersion(architecture string) (string, error) {
 	return "", errors.New("unable to determine CoreOS release version")
 }
 
-func (r *release) getImageFromRelease(imageName string, architecture string) (string, error) {
+func (r *releasePayload) getImageFromRelease(imageName string, architecture string) (string, error) {
 	// This requires the 'oc' command so make sure its available
 	_, err := exec.LookPath("oc")
 	if err != nil {
-		if len(r.mirrorConfig) > 0 {
+		if r.mirrorConfig.HasMirrors() {
 			logrus.Warning("Unable to validate mirror config because \"oc\" command is not available")
 		} else {
 			logrus.Debug("Skipping ISO extraction; \"oc\" command is not available")
@@ -189,15 +194,16 @@ func (r *release) getImageFromRelease(imageName string, architecture string) (st
 		filterbyos,
 		insecure,
 	}
-	if len(r.mirrorConfig) > 0 {
+	if r.mirrorConfig.HasMirrors() {
 		logrus.Debugf("Using mirror configuration")
-		icspFile, err := getIcspFileFromRegistriesConfig(r.mirrorConfig)
+		mirrorArg, cleanup, err := getMirrorArg(r.mirrorConfig)
 		if err != nil {
 			return "", err
 		}
-		defer removeIcspFile(icspFile)
-		icspfile := "--icsp-file=" + icspFile
-		cmd = append(cmd, icspfile)
+		if mirrorArg != "" {
+			defer cleanup()
+			cmd = append(cmd, mirrorArg)
+		}
 	}
 	cmd = append(cmd, r.releaseImage)
 	logrus.Debugf("Fetching image from OCP release (%s)", cmd)
@@ -212,7 +218,7 @@ func (r *release) getImageFromRelease(imageName string, architecture string) (st
 	return image, nil
 }
 
-func (r *release) extractFileFromImage(image, file, cacheDir string, architecture string) ([]string, error) {
+func (r *releasePayload) extractFileFromImage(image, file, cacheDir string, architecture string) ([]string, error) {
 	archName := arch.GoArch(architecture)
 	extractpath := "--path=" + file + ":" + cacheDir
 	filterbyos := "--filter-by-os=linux/" + archName
@@ -228,14 +234,15 @@ func (r *release) extractFileFromImage(image, file, cacheDir string, architectur
 		"--confirm",
 	}
 
-	if len(r.mirrorConfig) > 0 {
-		icspFile, err := getIcspFileFromRegistriesConfig(r.mirrorConfig)
+	if r.mirrorConfig.HasMirrors() {
+		mirrorArg, cleanup, err := getMirrorArg(r.mirrorConfig)
 		if err != nil {
 			return nil, err
 		}
-		defer removeIcspFile(icspFile)
-		icspfile := "--icsp-file=" + icspFile
-		cmd = append(cmd, icspfile)
+		if mirrorArg != "" {
+			defer cleanup()
+			cmd = append(cmd, mirrorArg)
+		}
 	}
 	path := filepath.Join(cacheDir, path.Base(file))
 	// Remove file if it exists
@@ -262,12 +269,12 @@ func (r *release) extractFileFromImage(image, file, cacheDir string, architectur
 }
 
 // Get hash from rhcos.json.
-func (r *release) getHashFromInstaller(architecture string) (bool, string) {
+func (r *releasePayload) getHashFromInstaller(architecture string, streamGetter CoreOSBuildFetcher) (bool, string) {
 	// Get hash from metadata in the installer
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
 
-	st, err := r.streamGetter(ctx)
+	st, err := streamGetter(ctx)
 	if err != nil {
 		return false, ""
 	}
@@ -295,7 +302,7 @@ func matchingHash(imageSha []byte, sha string) bool {
 }
 
 // Check if there is a different base ISO in the release payload.
-func (r *release) verifyCacheFile(image, file, architecture string) (bool, error) {
+func (r *releasePayload) verifyCacheFile(image, file, architecture string, streamGetter CoreOSBuildFetcher) (bool, error) {
 	// Get hash of cached file
 	f, err := os.Open(file)
 	if err != nil {
@@ -310,7 +317,7 @@ func (r *release) verifyCacheFile(image, file, architecture string) (bool, error
 	fileSha := h.Sum(nil)
 
 	// Check if the hash of cached file matches hash in rhcos.json
-	found, rhcosSha := r.getHashFromInstaller(architecture)
+	found, rhcosSha := r.getHashFromInstaller(architecture, streamGetter)
 	if found && matchingHash(fileSha, rhcosSha) {
 		logrus.Debug("Found matching hash in installer metadata")
 		return true, nil
@@ -361,64 +368,32 @@ func removeCacheFile(path string) error {
 }
 
 // Create a temporary file containing the ImageContentPolicySources.
-func getIcspFileFromRegistriesConfig(mirrorConfig []mirror.RegistriesConfig) (string, error) {
-	contents, err := getIcspContents(mirrorConfig)
-	if err != nil {
-		return "", err
-	}
-	if contents == nil {
+func getMirrorArg(mirrorConfig MirrorConfig) (string, func(), error) {
+	if !mirrorConfig.HasMirrors() {
 		logrus.Debugf("No registry entries to build ICSP file")
-		return "", nil
+		return "", nil, nil
+	}
+
+	contents, err := mirrorConfig.GetICSPContents()
+	if err != nil {
+		return "", nil, err
 	}
 
 	icspFile, err := os.CreateTemp("", "icsp-file")
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	if _, err := icspFile.Write(contents); err != nil {
 		icspFile.Close()
 		os.Remove(icspFile.Name())
-		return "", err
+		return "", nil, err
 	}
 	icspFile.Close()
 
-	return icspFile.Name(), nil
-}
-
-// Convert the data in registries.conf into ICSP format.
-func getIcspContents(mirrorConfig []mirror.RegistriesConfig) ([]byte, error) {
-	icsp := operatorv1alpha1.ImageContentSourcePolicy{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: operatorv1alpha1.SchemeGroupVersion.String(),
-			Kind:       "ImageContentSourcePolicy",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "image-policy",
-			// not namespaced
-		},
+	remove := func() {
+		os.Remove(icspFile.Name())
 	}
 
-	icsp.Spec.RepositoryDigestMirrors = make([]operatorv1alpha1.RepositoryDigestMirrors, len(mirrorConfig))
-	for i, mirrorRegistries := range mirrorConfig {
-		icsp.Spec.RepositoryDigestMirrors[i] = operatorv1alpha1.RepositoryDigestMirrors{Source: mirrorRegistries.Location, Mirrors: mirrorRegistries.Mirrors}
-	}
-
-	// Convert to json first so json tags are handled
-	jsonData, err := json.Marshal(&icsp)
-	if err != nil {
-		return nil, err
-	}
-	contents, err := yaml.JSONToYAML(jsonData)
-	if err != nil {
-		return nil, err
-	}
-
-	return contents, nil
-}
-
-func removeIcspFile(filename string) {
-	if filename != "" {
-		os.Remove(filename)
-	}
+	return "--icsp-file=" + icspFile.Name(), remove, nil
 }

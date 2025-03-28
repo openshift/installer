@@ -40,7 +40,9 @@ func TestGetIcspContents(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			contents, err := getIcspContents(tc.mirrorConfig)
+			contents, err := (&mirror.RegistriesConf{
+				MirrorConfig: tc.mirrorConfig,
+			}).GetICSPContents()
 			if tc.expectedError != "" {
 				assert.Equal(t, tc.expectedError, err.Error())
 			} else {
