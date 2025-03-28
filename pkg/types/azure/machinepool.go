@@ -240,12 +240,6 @@ type VMIdentity struct {
 	// Supplying more than one user-assigned identity is an experimental feature
 	// which may be enabled with the MachineAPIMigration feature gate.
 	UserAssignedIdentities []UserAssignedIdentity `json:"userAssignedIdentities"`
-
-	// SystemAssignedIdentityRole defines the role and scope to assign to the system-assigned identity.
-	// SystemAssignedIdentity is an experimental feature which may be enabled with the MachineAPIMigration
-	// feature gate and may only be assigned on control-plane nodes.
-	// +optional
-	SystemAssignedIdentityRole *capz.SystemAssignedIdentityRole `json:"systemAssignedIdentityRole,omitempty"`
 }
 
 // UserAssignedIdentity contains the fields that comprise a user-assigned identity.

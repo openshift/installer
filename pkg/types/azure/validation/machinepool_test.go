@@ -631,40 +631,22 @@ func TestValidateMachinePool(t *testing.T) {
 					},
 				},
 			},
-			expected: `^test-path.identity.type: Unsupported value: "unrecognized": supported values: "None", "SystemAssigned", "UserAssigned"$`,
+			expected: `^test-path.identity.type: Unsupported value: "unrecognized": supported values: "None", "UserAssigned"$`,
 		},
 		{
-			name:          "azure VM system-assigned identity name must be a valid UUID",
+			name:          "azure VM SystemAssignedIdentity is not allowed",
 			azurePlatform: azure.PublicCloud,
 			pool: &types.MachinePool{
 				Name: "",
 				Platform: types.MachinePoolPlatform{
 					Azure: &azure.MachinePool{
 						Identity: &azure.VMIdentity{
-							Type: capz.VMIdentitySystemAssigned,
-							SystemAssignedIdentityRole: &capz.SystemAssignedIdentityRole{
-								Name: "not valid",
-							},
+							Type: "SystemAssigned",
 						},
 					},
 				},
 			},
-			expected: `^test-path.identity.systemAssignedIdentityRole.name: Invalid value: "not valid": name must be a valid UUID, please provide a valid UUID or leave name black to have one generated for you$`,
-		},
-		{
-			name:          "azure VM system-assigned identity cannot be used on compute nodes",
-			azurePlatform: azure.PublicCloud,
-			pool: &types.MachinePool{
-				Name: "worker",
-				Platform: types.MachinePoolPlatform{
-					Azure: &azure.MachinePool{
-						Identity: &azure.VMIdentity{
-							Type: capz.VMIdentitySystemAssigned,
-						},
-					},
-				},
-			},
-			expected: `^test-path.identity.type: Invalid value: "SystemAssigned": only user-assigned identities are supported for compute nodes$`,
+			expected: `^test-path.identity.type: Unsupported value: "SystemAssigned": supported values: "None", "UserAssigned"$`,
 		},
 		{
 			name:          "azure VM identity cannot mismatch type and field",
@@ -674,13 +656,13 @@ func TestValidateMachinePool(t *testing.T) {
 				Platform: types.MachinePoolPlatform{
 					Azure: &azure.MachinePool{
 						Identity: &azure.VMIdentity{
-							Type:                   capz.VMIdentitySystemAssigned,
+							Type:                   capz.VMIdentityNone,
 							UserAssignedIdentities: []azure.UserAssignedIdentity{},
 						},
 					},
 				},
 			},
-			expected: `^test-path.identity.type: Invalid value: "SystemAssigned": userAssignedIdentities may only be used with type: UserAssigned$`,
+			expected: `^test-path.identity.type: Invalid value: "None": userAssignedIdentities may only be used with type: UserAssigned$`,
 		},
 		{
 			name:          "azure VM identity must have user assigned identities when type==UserAssigned",
