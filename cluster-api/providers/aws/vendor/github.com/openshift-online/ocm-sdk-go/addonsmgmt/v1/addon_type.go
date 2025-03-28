@@ -50,7 +50,7 @@ type Addon struct {
 	name                 string
 	namespaces           []*AddonNamespace
 	operatorName         string
-	parameters           *AddonParameters
+	parameters           *AddonParameterList
 	requirements         []*AddonRequirement
 	resourceCost         float64
 	resourceName         string
@@ -492,7 +492,7 @@ func (o *Addon) GetOperatorName() (value string, ok bool) {
 // the zero value of the type if the attribute doesn't have a value.
 //
 // List of parameters for this addon.
-func (o *Addon) Parameters() *AddonParameters {
+func (o *Addon) Parameters() *AddonParameterList {
 	if o != nil && o.bitmap_&524288 != 0 {
 		return o.parameters
 	}
@@ -503,7 +503,7 @@ func (o *Addon) Parameters() *AddonParameters {
 // a flag indicating if the attribute has a value.
 //
 // List of parameters for this addon.
-func (o *Addon) GetParameters() (value *AddonParameters, ok bool) {
+func (o *Addon) GetParameters() (value *AddonParameterList, ok bool) {
 	ok = o != nil && o.bitmap_&524288 != 0
 	if ok {
 		value = o.parameters

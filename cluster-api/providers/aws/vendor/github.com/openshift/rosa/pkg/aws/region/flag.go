@@ -23,6 +23,7 @@ import (
 
 	"github.com/spf13/pflag"
 
+	"github.com/openshift/rosa/pkg/constants"
 	"github.com/openshift/rosa/pkg/helper"
 )
 
@@ -41,7 +42,7 @@ func Region() string {
 	if helper.HandleEscapedEmptyString(region) != "" {
 		return region
 	}
-	awsRegion := os.Getenv("AWS_REGION")
+	awsRegion := os.Getenv(constants.AwsRegion)
 	if helper.HandleEscapedEmptyString(awsRegion) != "" {
 		return awsRegion
 	}

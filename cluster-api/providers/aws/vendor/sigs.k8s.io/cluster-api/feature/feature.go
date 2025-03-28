@@ -60,7 +60,14 @@ const (
 	// MachineSetPreflightChecks is a feature gate for the MachineSet preflight checks functionality.
 	//
 	// alpha: v1.5
+	// beta: v1.9
 	MachineSetPreflightChecks featuregate.Feature = "MachineSetPreflightChecks"
+
+	// MachineWaitForVolumeDetachConsiderVolumeAttachments is a feature gate that controls if the Machine controller
+	// also considers VolumeAttachments in addition to Nodes.status.volumesAttached when waiting for volumes to be detached.
+	//
+	// beta: v1.9
+	MachineWaitForVolumeDetachConsiderVolumeAttachments featuregate.Feature = "MachineWaitForVolumeDetachConsiderVolumeAttachments"
 )
 
 func init() {
@@ -71,10 +78,11 @@ func init() {
 // To add a new feature, define a key for it above and add it here.
 var defaultClusterAPIFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	// Every feature should be initiated here:
-	MachinePool:                    {Default: true, PreRelease: featuregate.Beta},
-	ClusterResourceSet:             {Default: true, PreRelease: featuregate.Beta},
+	ClusterResourceSet:        {Default: true, PreRelease: featuregate.Beta},
+	MachinePool:               {Default: true, PreRelease: featuregate.Beta},
+	MachineSetPreflightChecks: {Default: true, PreRelease: featuregate.Beta},
+	MachineWaitForVolumeDetachConsiderVolumeAttachments: {Default: true, PreRelease: featuregate.Beta},
 	ClusterTopology:                {Default: false, PreRelease: featuregate.Alpha},
 	KubeadmBootstrapFormatIgnition: {Default: false, PreRelease: featuregate.Alpha},
 	RuntimeSDK:                     {Default: false, PreRelease: featuregate.Alpha},
-	MachineSetPreflightChecks:      {Default: false, PreRelease: featuregate.Alpha},
 }

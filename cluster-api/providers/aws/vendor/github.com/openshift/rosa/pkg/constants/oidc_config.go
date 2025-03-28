@@ -4,6 +4,7 @@ const (
 	InstallerRoleArnFlag = "role-arn"
 	IssuerUrlFlag        = "issuer-url"
 	SecretArnFlag        = "secret-arn"
+	OidcConfigIdFlag     = "oidc-config-id"
 
 	SecretsManagerService = "secretsmanager"
 

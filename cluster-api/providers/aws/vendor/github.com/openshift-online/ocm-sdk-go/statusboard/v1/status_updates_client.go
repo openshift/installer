@@ -228,6 +228,7 @@ type StatusUpdatesListRequest struct {
 	header        http.Header
 	createdAfter  *time.Time
 	createdBefore *time.Time
+	flapDetection *bool
 	fullNames     *string
 	limitScope    *time.Time
 	page          *int
@@ -264,6 +265,12 @@ func (r *StatusUpdatesListRequest) CreatedAfter(value time.Time) *StatusUpdatesL
 // CreatedBefore sets the value of the 'created_before' parameter.
 func (r *StatusUpdatesListRequest) CreatedBefore(value time.Time) *StatusUpdatesListRequest {
 	r.createdBefore = &value
+	return r
+}
+
+// FlapDetection sets the value of the 'flap_detection' parameter.
+func (r *StatusUpdatesListRequest) FlapDetection(value bool) *StatusUpdatesListRequest {
+	r.flapDetection = &value
 	return r
 }
 
@@ -319,6 +326,9 @@ func (r *StatusUpdatesListRequest) SendContext(ctx context.Context) (result *Sta
 	}
 	if r.createdBefore != nil {
 		helpers.AddValue(&query, "created_before", *r.createdBefore)
+	}
+	if r.flapDetection != nil {
+		helpers.AddValue(&query, "flap_detection", *r.flapDetection)
 	}
 	if r.fullNames != nil {
 		helpers.AddValue(&query, "full_names", *r.fullNames)
