@@ -20,8 +20,13 @@ class DefaultStableLoadBalancerClusterInfraObject(unittest.TestCase):
             self.cluster_infra = yaml.load(f, Loader=yaml.FullLoader)
 
     def test_load_balancer(self):
-        """Assert that the Cluster infrastructure object does not contain the LoadBalancer configuration."""
-        self.assertNotIn("loadBalancer", self.cluster_infra["status"]["platformStatus"]["openstack"])
+        """Assert that the Cluster infrastructure object contains the default LoadBalancer configuration."""
+        self.assertIn("loadBalancer", self.cluster_infra["status"]["platformStatus"]["openstack"])
+
+        loadBalancer = self.cluster_infra["status"]["platformStatus"]["openstack"]["loadBalancer"]
+
+        self.assertIn("type", loadBalancer)
+        self.assertEqual("OpenShiftManagedDefault", loadBalancer["type"])
 
 
 if __name__ == '__main__':
