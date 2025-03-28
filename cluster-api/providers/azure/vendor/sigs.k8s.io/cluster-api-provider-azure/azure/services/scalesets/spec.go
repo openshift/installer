@@ -92,6 +92,9 @@ func (s *ScaleSetSpec) OwnerResourceName() string {
 }
 
 func (s *ScaleSetSpec) existingParameters(ctx context.Context, existing interface{}) (parameters interface{}, err error) {
+	ctx, log, done := tele.StartSpanWithLogger(ctx, "scalesets.ScaleSetSpec.existingParameters")
+	defer done()
+
 	existingVMSS, ok := existing.(armcompute.VirtualMachineScaleSet)
 	if !ok {
 		return nil, errors.Errorf("%T is not an armcompute.VirtualMachineScaleSet", existing)
@@ -129,6 +132,15 @@ func (s *ScaleSetSpec) existingParameters(ctx context.Context, existing interfac
 	if *vmss.SKU.Capacity <= existingInfraVMSS.Capacity && !hasModelChanges && !s.ShouldPatchCustomData {
 		// up to date, nothing to do
 		return nil, nil
+	}
+
+	// if there are no model changes and no change in custom data, remove VirtualMachineProfile to avoid unnecessary VMSS model
+	// updates.
+	if !hasModelChanges && !s.ShouldPatchCustomData {
+		log.V(4).Info("removing virtual machine profile from parameters", "hasModelChanges", hasModelChanges, "shouldPatchCustomData", s.ShouldPatchCustomData)
+		vmss.Properties.VirtualMachineProfile = nil
+	} else {
+		log.V(4).Info("has changes, not removing virtual machine profile from parameters", "hasModelChanges", hasModelChanges, "shouldPatchCustomData", s.ShouldPatchCustomData)
 	}
 
 	return vmss, nil
@@ -390,6 +402,10 @@ func (s *ScaleSetSpec) generateStorageProfile(ctx context.Context) (*armcompute.
 
 		storageProfile.OSDisk.DiffDiskSettings = &armcompute.DiffDiskSettings{
 			Option: ptr.To(armcompute.DiffDiskOptions(s.OSDisk.DiffDiskSettings.Option)),
+		}
+
+		if s.OSDisk.DiffDiskSettings.Placement != nil {
+			storageProfile.OSDisk.DiffDiskSettings.Placement = ptr.To(armcompute.DiffDiskPlacement(*s.OSDisk.DiffDiskSettings.Placement))
 		}
 	}
 

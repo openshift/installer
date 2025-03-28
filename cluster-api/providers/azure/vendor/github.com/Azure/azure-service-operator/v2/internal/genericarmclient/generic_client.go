@@ -24,8 +24,10 @@ import (
 	"github.com/Azure/azure-service-operator/v2/internal/version"
 )
 
-const CreatePollerID = "GenericClient.CreateOrUpdateByID"
-const DeletePollerID = "GenericClient.DeleteByID"
+const (
+	CreatePollerID = "GenericClient.CreateOrUpdateByID"
+	DeletePollerID = "GenericClient.DeleteByID"
+)
 
 // NOTE: All of these methods (and types) were adapted from
 // https://github.com/Azure/azure-sdk-for-go/blob/sdk/resources/armresources/v0.3.0/sdk/resources/armresources/zz_generated_resources_client.go
@@ -115,7 +117,6 @@ func NewGenericClient(
 		creds:    creds,
 		opts:     opts,
 	}, nil
-
 }
 
 // Creds returns the credentials used by this client
@@ -134,7 +135,8 @@ func (client *GenericClient) BeginCreateOrUpdateByID(
 	ctx context.Context,
 	resourceID string,
 	apiVersion string,
-	resource interface{}) (*PollerResponse[GenericResource], error) {
+	resource interface{},
+) (*PollerResponse[GenericResource], error) {
 	// The linter doesn't realize that the response is closed in the course of
 	// the autorest.NewPoller call below. Suppressing it as it is a false positive.
 	// nolint:bodyclose
@@ -160,8 +162,8 @@ func (client *GenericClient) createOrUpdateByID(
 	ctx context.Context,
 	resourceID string,
 	apiVersion string,
-	resource interface{}) (*http.Response, error) {
-
+	resource interface{},
+) (*http.Response, error) {
 	req, err := client.createOrUpdateByIDCreateRequest(ctx, resourceID, apiVersion, resource)
 	if err != nil {
 		return nil, err
@@ -184,8 +186,8 @@ func (client *GenericClient) createOrUpdateByIDCreateRequest(
 	ctx context.Context,
 	resourceID string,
 	apiVersion string,
-	resource interface{}) (*policy.Request, error) {
-
+	resource interface{},
+) (*policy.Request, error) {
 	if resourceID == "" {
 		return nil, errors.New("parameter resourceID cannot be empty")
 	}

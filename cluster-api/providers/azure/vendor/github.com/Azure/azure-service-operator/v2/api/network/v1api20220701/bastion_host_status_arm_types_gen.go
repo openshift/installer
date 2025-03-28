@@ -78,3 +78,9 @@ const (
 	Sku_Name_STATUS_Basic    = Sku_Name_STATUS("Basic")
 	Sku_Name_STATUS_Standard = Sku_Name_STATUS("Standard")
 )
+
+// Mapping from string to Sku_Name_STATUS
+var sku_Name_STATUS_Values = map[string]Sku_Name_STATUS{
+	"basic":    Sku_Name_STATUS_Basic,
+	"standard": Sku_Name_STATUS_Standard,
+}

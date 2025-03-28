@@ -88,14 +88,18 @@ func (s *spanLogSink) Error(err error, msg string, keysAndValues ...interface{})
 	)
 }
 
-func (s *spanLogSink) WithValues(keysAndValues ...interface{}) logr.LogSink {
-	s.vals = append(s.vals, keysAndValues...)
-	return s
+func (s spanLogSink) WithValues(keysAndValues ...interface{}) logr.LogSink {
+	// always create a new slice to avoid multiple loggers writing to the same backing array
+	vals := make([]interface{}, len(s.vals)+len(keysAndValues))
+	copy(vals, s.vals)
+	copy(vals[len(s.vals):], keysAndValues)
+	s.vals = vals
+	return &s
 }
 
-func (s *spanLogSink) WithName(name string) logr.LogSink {
+func (s spanLogSink) WithName(name string) logr.LogSink {
 	s.name = name
-	return s
+	return &s
 }
 
 // NewSpanLogSink is the main entry-point to this implementation.

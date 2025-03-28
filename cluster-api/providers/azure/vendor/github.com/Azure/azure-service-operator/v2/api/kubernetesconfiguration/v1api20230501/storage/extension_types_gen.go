@@ -4,12 +4,17 @@
 package storage
 
 import (
+	"context"
+	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // +kubebuilder:rbac:groups=kubernetesconfiguration.azure.com,resources=extensions,verbs=get;list;watch;create;update;patch;delete
@@ -43,6 +48,25 @@ func (extension *Extension) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (extension *Extension) SetConditions(conditions conditions.Conditions) {
 	extension.Status.Conditions = conditions
+}
+
+var _ genruntime.KubernetesExporter = &Extension{}
+
+// ExportKubernetesResources defines a resource which can create other resources in Kubernetes.
+func (extension *Extension) ExportKubernetesResources(_ context.Context, _ genruntime.MetaObject, _ *genericarmclient.GenericClient, _ logr.Logger) ([]client.Object, error) {
+	collector := configmaps.NewCollector(extension.Namespace)
+	if extension.Spec.OperatorSpec != nil && extension.Spec.OperatorSpec.ConfigMaps != nil {
+		if extension.Status.AksAssignedIdentity != nil {
+			if extension.Status.AksAssignedIdentity.PrincipalId != nil {
+				collector.AddValue(extension.Spec.OperatorSpec.ConfigMaps.PrincipalId, *extension.Status.AksAssignedIdentity.PrincipalId)
+			}
+		}
+	}
+	result, err := collector.Values()
+	if err != nil {
+		return nil, err
+	}
+	return configmaps.SliceToClientObjectSlice(result), nil
 }
 
 var _ genruntime.KubernetesResource = &Extension{}
@@ -156,6 +180,7 @@ type Extension_Spec struct {
 	ConfigurationSettings          map[string]string              `json:"configurationSettings,omitempty"`
 	ExtensionType                  *string                        `json:"extensionType,omitempty"`
 	Identity                       *Identity                      `json:"identity,omitempty"`
+	OperatorSpec                   *ExtensionOperatorSpec         `json:"operatorSpec,omitempty"`
 	OriginalVersion                string                         `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
@@ -264,6 +289,13 @@ type Extension_Properties_AksAssignedIdentity_STATUS struct {
 	Type        *string                `json:"type,omitempty"`
 }
 
+// Storage version of v1api20230501.ExtensionOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type ExtensionOperatorSpec struct {
+	ConfigMaps  *ExtensionOperatorConfigMaps `json:"configMaps,omitempty"`
+	PropertyBag genruntime.PropertyBag       `json:"$propertyBag,omitempty"`
+}
+
 // Storage version of v1api20230501.ExtensionStatus_STATUS
 // Status from the extension.
 type ExtensionStatus_STATUS struct {
@@ -368,6 +400,12 @@ type ErrorDetail_STATUS_Unrolled struct {
 	Message        *string                      `json:"message,omitempty"`
 	PropertyBag    genruntime.PropertyBag       `json:"$propertyBag,omitempty"`
 	Target         *string                      `json:"target,omitempty"`
+}
+
+// Storage version of v1api20230501.ExtensionOperatorConfigMaps
+type ExtensionOperatorConfigMaps struct {
+	PrincipalId *genruntime.ConfigMapDestination `json:"principalId,omitempty"`
+	PropertyBag genruntime.PropertyBag           `json:"$propertyBag,omitempty"`
 }
 
 // Storage version of v1api20230501.ScopeCluster

@@ -101,7 +101,7 @@ func (c *AzureCluster) validateClusterSpec(old *AzureCluster) field.ErrorList {
 
 	// If ClusterSpec has non-nil ExtendedLocation field but not enable EdgeZone feature gate flag, ClusterSpec validation failed.
 	if !feature.Gates.Enabled(feature.EdgeZone) && c.Spec.ExtendedLocation != nil {
-		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "ExtendedLocation"), "can be set only if the EdgeZone feature flag is enabled"))
+		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "extendedLocation"), "can be set only if the EdgeZone feature flag is enabled"))
 	}
 
 	if err := validateBastionSpec(c.Spec.BastionSpec, field.NewPath("spec").Child("azureBastion").Child("bastionSpec")); err != nil {
@@ -123,7 +123,7 @@ func (c *AzureCluster) validateClusterName() field.ErrorList {
 			fmt.Sprintf("Cluster Name longer than allowed length of %d characters", clusterNameMaxLength)))
 	}
 	if success, _ := regexp.MatchString(clusterNameRegex, c.Name); !success {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("metadata").Child("Name"), c.Name,
+		allErrs = append(allErrs, field.Invalid(field.NewPath("metadata").Child("name"), c.Name,
 			fmt.Sprintf("Cluster Name doesn't match regex %s, can contain only lowercase alphanumeric characters and '-', must start/end with an alphanumeric character",
 				clusterNameRegex)))
 	}

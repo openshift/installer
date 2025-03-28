@@ -4,7 +4,7 @@
 package compat
 
 import (
-	v20231001s "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/pkg/errors"
 )
@@ -18,7 +18,7 @@ type ServiceMeshProfile struct {
 }
 
 // AssignProperties_From_ServiceMeshProfile populates our ServiceMeshProfile from the provided source ServiceMeshProfile
-func (profile *ServiceMeshProfile) AssignProperties_From_ServiceMeshProfile(source *v20231001s.ServiceMeshProfile) error {
+func (profile *ServiceMeshProfile) AssignProperties_From_ServiceMeshProfile(source *storage.ServiceMeshProfile) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -58,13 +58,13 @@ func (profile *ServiceMeshProfile) AssignProperties_From_ServiceMeshProfile(sour
 }
 
 // AssignProperties_To_ServiceMeshProfile populates the provided destination ServiceMeshProfile from our ServiceMeshProfile
-func (profile *ServiceMeshProfile) AssignProperties_To_ServiceMeshProfile(destination *v20231001s.ServiceMeshProfile) error {
+func (profile *ServiceMeshProfile) AssignProperties_To_ServiceMeshProfile(destination *storage.ServiceMeshProfile) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(profile.PropertyBag)
 
 	// Istio
 	if profile.Istio != nil {
-		var istio v20231001s.IstioServiceMesh
+		var istio storage.IstioServiceMesh
 		err := profile.Istio.AssignProperties_To_IstioServiceMesh(&istio)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_IstioServiceMesh() to populate field Istio")
@@ -98,8 +98,8 @@ func (profile *ServiceMeshProfile) AssignProperties_To_ServiceMeshProfile(destin
 }
 
 type augmentConversionForServiceMeshProfile interface {
-	AssignPropertiesFrom(src *v20231001s.ServiceMeshProfile) error
-	AssignPropertiesTo(dst *v20231001s.ServiceMeshProfile) error
+	AssignPropertiesFrom(src *storage.ServiceMeshProfile) error
+	AssignPropertiesTo(dst *storage.ServiceMeshProfile) error
 }
 
 // Storage version of v1api20230202preview.IstioServiceMesh
@@ -110,7 +110,7 @@ type IstioServiceMesh struct {
 }
 
 // AssignProperties_From_IstioServiceMesh populates our IstioServiceMesh from the provided source IstioServiceMesh
-func (mesh *IstioServiceMesh) AssignProperties_From_IstioServiceMesh(source *v20231001s.IstioServiceMesh) error {
+func (mesh *IstioServiceMesh) AssignProperties_From_IstioServiceMesh(source *storage.IstioServiceMesh) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -161,13 +161,13 @@ func (mesh *IstioServiceMesh) AssignProperties_From_IstioServiceMesh(source *v20
 }
 
 // AssignProperties_To_IstioServiceMesh populates the provided destination IstioServiceMesh from our IstioServiceMesh
-func (mesh *IstioServiceMesh) AssignProperties_To_IstioServiceMesh(destination *v20231001s.IstioServiceMesh) error {
+func (mesh *IstioServiceMesh) AssignProperties_To_IstioServiceMesh(destination *storage.IstioServiceMesh) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(mesh.PropertyBag)
 
 	// CertificateAuthority
 	if propertyBag.Contains("CertificateAuthority") {
-		var certificateAuthority v20231001s.IstioCertificateAuthority
+		var certificateAuthority storage.IstioCertificateAuthority
 		err := propertyBag.Pull("CertificateAuthority", &certificateAuthority)
 		if err != nil {
 			return errors.Wrap(err, "pulling 'CertificateAuthority' from propertyBag")
@@ -180,7 +180,7 @@ func (mesh *IstioServiceMesh) AssignProperties_To_IstioServiceMesh(destination *
 
 	// Components
 	if mesh.Components != nil {
-		var component v20231001s.IstioComponents
+		var component storage.IstioComponents
 		err := mesh.Components.AssignProperties_To_IstioComponents(&component)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_IstioComponents() to populate field Components")
@@ -224,8 +224,8 @@ func (mesh *IstioServiceMesh) AssignProperties_To_IstioServiceMesh(destination *
 }
 
 type augmentConversionForIstioServiceMesh interface {
-	AssignPropertiesFrom(src *v20231001s.IstioServiceMesh) error
-	AssignPropertiesTo(dst *v20231001s.IstioServiceMesh) error
+	AssignPropertiesFrom(src *storage.IstioServiceMesh) error
+	AssignPropertiesTo(dst *storage.IstioServiceMesh) error
 }
 
 // Storage version of v1api20230202preview.IstioComponents
@@ -236,7 +236,7 @@ type IstioComponents struct {
 }
 
 // AssignProperties_From_IstioComponents populates our IstioComponents from the provided source IstioComponents
-func (components *IstioComponents) AssignProperties_From_IstioComponents(source *v20231001s.IstioComponents) error {
+func (components *IstioComponents) AssignProperties_From_IstioComponents(source *storage.IstioComponents) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -286,13 +286,13 @@ func (components *IstioComponents) AssignProperties_From_IstioComponents(source 
 }
 
 // AssignProperties_To_IstioComponents populates the provided destination IstioComponents from our IstioComponents
-func (components *IstioComponents) AssignProperties_To_IstioComponents(destination *v20231001s.IstioComponents) error {
+func (components *IstioComponents) AssignProperties_To_IstioComponents(destination *storage.IstioComponents) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(components.PropertyBag)
 
 	// EgressGateways
 	if propertyBag.Contains("EgressGateways") {
-		var egressGateway []v20231001s.IstioEgressGateway
+		var egressGateway []storage.IstioEgressGateway
 		err := propertyBag.Pull("EgressGateways", &egressGateway)
 		if err != nil {
 			return errors.Wrap(err, "pulling 'EgressGateways' from propertyBag")
@@ -305,11 +305,11 @@ func (components *IstioComponents) AssignProperties_To_IstioComponents(destinati
 
 	// IngressGateways
 	if components.IngressGateways != nil {
-		ingressGatewayList := make([]v20231001s.IstioIngressGateway, len(components.IngressGateways))
+		ingressGatewayList := make([]storage.IstioIngressGateway, len(components.IngressGateways))
 		for ingressGatewayIndex, ingressGatewayItem := range components.IngressGateways {
 			// Shadow the loop variable to avoid aliasing
 			ingressGatewayItem := ingressGatewayItem
-			var ingressGateway v20231001s.IstioIngressGateway
+			var ingressGateway storage.IstioIngressGateway
 			err := ingressGatewayItem.AssignProperties_To_IstioIngressGateway(&ingressGateway)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_IstioIngressGateway() to populate field IngressGateways")
@@ -342,8 +342,8 @@ func (components *IstioComponents) AssignProperties_To_IstioComponents(destinati
 }
 
 type augmentConversionForIstioComponents interface {
-	AssignPropertiesFrom(src *v20231001s.IstioComponents) error
-	AssignPropertiesTo(dst *v20231001s.IstioComponents) error
+	AssignPropertiesFrom(src *storage.IstioComponents) error
+	AssignPropertiesTo(dst *storage.IstioComponents) error
 }
 
 // Storage version of v1api20230202preview.IstioIngressGateway
@@ -356,7 +356,7 @@ type IstioIngressGateway struct {
 }
 
 // AssignProperties_From_IstioIngressGateway populates our IstioIngressGateway from the provided source IstioIngressGateway
-func (gateway *IstioIngressGateway) AssignProperties_From_IstioIngressGateway(source *v20231001s.IstioIngressGateway) error {
+func (gateway *IstioIngressGateway) AssignProperties_From_IstioIngressGateway(source *storage.IstioIngressGateway) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -392,7 +392,7 @@ func (gateway *IstioIngressGateway) AssignProperties_From_IstioIngressGateway(so
 }
 
 // AssignProperties_To_IstioIngressGateway populates the provided destination IstioIngressGateway from our IstioIngressGateway
-func (gateway *IstioIngressGateway) AssignProperties_To_IstioIngressGateway(destination *v20231001s.IstioIngressGateway) error {
+func (gateway *IstioIngressGateway) AssignProperties_To_IstioIngressGateway(destination *storage.IstioIngressGateway) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(gateway.PropertyBag)
 
@@ -428,6 +428,6 @@ func (gateway *IstioIngressGateway) AssignProperties_To_IstioIngressGateway(dest
 }
 
 type augmentConversionForIstioIngressGateway interface {
-	AssignPropertiesFrom(src *v20231001s.IstioIngressGateway) error
-	AssignPropertiesTo(dst *v20231001s.IstioIngressGateway) error
+	AssignPropertiesFrom(src *storage.IstioIngressGateway) error
+	AssignPropertiesTo(dst *storage.IstioIngressGateway) error
 }

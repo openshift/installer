@@ -388,12 +388,12 @@ func (fs *FlexScaleSet) getNodeInformationByIPConfigurationID(ipConfigurationID 
 	// get vmName by nic name
 	vmName, err := fs.GetVMNameByIPConfigurationName(nicResourceGroup, nicName)
 	if err != nil {
-		return "", "", "", fmt.Errorf("failed to get vm name of ip config ID %s", ipConfigurationID)
+		return "", "", "", fmt.Errorf("failed to get vm name of ip config ID %s: %w", ipConfigurationID, err)
 	}
 
 	nodeName, err := fs.getNodeNameByVMName(vmName)
 	if err != nil {
-		return "", "", "", fmt.Errorf("failed to map VM Name to NodeName: VM Name %s", vmName)
+		return "", "", "", fmt.Errorf("failed to map VM Name to NodeName: VM Name %s: %w", vmName, err)
 	}
 
 	vmssFlexName, err := fs.getNodeVmssFlexName(nodeName)

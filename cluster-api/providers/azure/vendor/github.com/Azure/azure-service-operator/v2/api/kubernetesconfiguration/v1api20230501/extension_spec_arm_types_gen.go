@@ -124,6 +124,11 @@ type Identity_Type string
 
 const Identity_Type_SystemAssigned = Identity_Type("SystemAssigned")
 
+// Mapping from string to Identity_Type
+var identity_Type_Values = map[string]Identity_Type{
+	"systemassigned": Identity_Type_SystemAssigned,
+}
+
 // Scope of the extension. It can be either Cluster or Namespace; but not both.
 type Scope_ARM struct {
 	// Cluster: Specifies that the scope of the extension is Cluster
@@ -143,6 +148,14 @@ const (
 	SystemData_CreatedByType_User            = SystemData_CreatedByType("User")
 )
 
+// Mapping from string to SystemData_CreatedByType
+var systemData_CreatedByType_Values = map[string]SystemData_CreatedByType{
+	"application":     SystemData_CreatedByType_Application,
+	"key":             SystemData_CreatedByType_Key,
+	"managedidentity": SystemData_CreatedByType_ManagedIdentity,
+	"user":            SystemData_CreatedByType_User,
+}
+
 // +kubebuilder:validation:Enum={"Application","Key","ManagedIdentity","User"}
 type SystemData_LastModifiedByType string
 
@@ -152,6 +165,14 @@ const (
 	SystemData_LastModifiedByType_ManagedIdentity = SystemData_LastModifiedByType("ManagedIdentity")
 	SystemData_LastModifiedByType_User            = SystemData_LastModifiedByType("User")
 )
+
+// Mapping from string to SystemData_LastModifiedByType
+var systemData_LastModifiedByType_Values = map[string]SystemData_LastModifiedByType{
+	"application":     SystemData_LastModifiedByType_Application,
+	"key":             SystemData_LastModifiedByType_Key,
+	"managedidentity": SystemData_LastModifiedByType_ManagedIdentity,
+	"user":            SystemData_LastModifiedByType_User,
+}
 
 // Specifies that the scope of the extension is Cluster
 type ScopeCluster_ARM struct {
