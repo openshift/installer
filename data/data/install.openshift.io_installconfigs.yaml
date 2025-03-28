@@ -57,6 +57,33 @@ spec:
                 - ""
                 - amd64
                 type: string
+              fencing:
+                description: |-
+                  Fencing stores the information about a baremetal host's management controller.
+                  Fencing may only be set for control plane nodes.
+                properties:
+                  credentials:
+                    description: Credentials stores the information about a baremetal
+                      host's management controller.
+                    items:
+                      description: Credential stores the information about a baremetal
+                        host's management controller.
+                      properties:
+                        address:
+                          type: string
+                        hostName:
+                          type: string
+                        password:
+                          type: string
+                        username:
+                          type: string
+                      required:
+                      - address
+                      - password
+                      - username
+                      type: object
+                    type: array
+                type: object
               hyperthreading:
                 default: Enabled
                 description: |-
@@ -1293,6 +1320,33 @@ spec:
                   - ""
                   - amd64
                   type: string
+                fencing:
+                  description: |-
+                    Fencing stores the information about a baremetal host's management controller.
+                    Fencing may only be set for control plane nodes.
+                  properties:
+                    credentials:
+                      description: Credentials stores the information about a baremetal
+                        host's management controller.
+                      items:
+                        description: Credential stores the information about a baremetal
+                          host's management controller.
+                        properties:
+                          address:
+                            type: string
+                          hostName:
+                            type: string
+                          password:
+                            type: string
+                          username:
+                            type: string
+                        required:
+                        - address
+                        - password
+                        - username
+                        type: object
+                      type: array
+                  type: object
                 hyperthreading:
                   default: Enabled
                   description: |-
@@ -2468,6 +2522,33 @@ spec:
                 - ""
                 - amd64
                 type: string
+              fencing:
+                description: |-
+                  Fencing stores the information about a baremetal host's management controller.
+                  Fencing may only be set for control plane nodes.
+                properties:
+                  credentials:
+                    description: Credentials stores the information about a baremetal
+                      host's management controller.
+                    items:
+                      description: Credential stores the information about a baremetal
+                        host's management controller.
+                      properties:
+                        address:
+                          type: string
+                        hostName:
+                          type: string
+                        password:
+                          type: string
+                        username:
+                          type: string
+                      required:
+                      - address
+                      - password
+                      - username
+                      type: object
+                    type: array
+                type: object
               hyperthreading:
                 default: Enabled
                 description: |-

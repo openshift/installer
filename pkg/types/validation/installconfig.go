@@ -31,6 +31,8 @@ import (
 	azurevalidation "github.com/openshift/installer/pkg/types/azure/validation"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	baremetalvalidation "github.com/openshift/installer/pkg/types/baremetal/validation"
+	"github.com/openshift/installer/pkg/types/common"
+	defaultsvalidation "github.com/openshift/installer/pkg/types/defaults/validation"
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/featuregates"
 	"github.com/openshift/installer/pkg/types/gcp"
@@ -121,7 +123,7 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 	}
 	allErrs = append(allErrs, validatePlatform(&c.Platform, usingAgentMethod, field.NewPath("platform"), c.Networking, c)...)
 	if c.ControlPlane != nil {
-		allErrs = append(allErrs, validateControlPlane(&c.Platform, c.ControlPlane, field.NewPath("controlPlane"))...)
+		allErrs = append(allErrs, validateControlPlane(c, field.NewPath("controlPlane"))...)
 	} else {
 		allErrs = append(allErrs, field.Required(field.NewPath("controlPlane"), "controlPlane is required"))
 	}
@@ -744,8 +746,10 @@ func validateOVNIPv4InternalJoinSubnet(n *types.Networking, fldPath *field.Path)
 	return allErrs
 }
 
-func validateControlPlane(platform *types.Platform, pool *types.MachinePool, fldPath *field.Path) field.ErrorList {
+func validateControlPlane(installConfig *types.InstallConfig, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
+	platform := &installConfig.Platform
+	pool := installConfig.ControlPlane
 	if pool.Name != types.MachinePoolControlPlaneRoleName {
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("name"), pool.Name, []string{types.MachinePoolControlPlaneRoleName}))
 	}
@@ -753,6 +757,7 @@ func validateControlPlane(platform *types.Platform, pool *types.MachinePool, fld
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), pool.Replicas, "number of control plane replicas must be positive"))
 	}
 	allErrs = append(allErrs, ValidateMachinePool(platform, pool, fldPath)...)
+	allErrs = append(allErrs, validateFencingCredentials(installConfig)...)
 	return allErrs
 }
 
@@ -804,6 +809,10 @@ func validateCompute(platform *types.Platform, control *types.MachinePool, pools
 			allErrs = append(allErrs, field.Invalid(poolFldPath.Child("architecture"), p.Architecture, "heteregeneous multi-arch is not supported; compute pool architecture must match control plane"))
 		}
 		allErrs = append(allErrs, ValidateMachinePool(platform, &p, poolFldPath)...)
+
+		if p.Fencing != nil {
+			allErrs = append(allErrs, field.Invalid(poolFldPath.Child("fencing"), p.Fencing, "fencing is only valid for control plane"))
+		}
 	}
 	return allErrs
 }
@@ -1466,6 +1475,10 @@ func validateGatedFeatures(c *types.InstallConfig) field.ErrorList {
 		gatedFeatures = append(gatedFeatures, azurevalidation.GatedFeatures(c)...)
 	}
 
+	if c.ControlPlane != nil {
+		gatedFeatures = append(gatedFeatures, defaultsvalidation.GatedFeatures(c)...)
+	}
+
 	fg := c.EnabledFeatureGates()
 	errMsgTemplate := "this field is protected by the %s feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set"
 
@@ -1543,4 +1556,40 @@ func isV4NodeSubnetLargeEnough(cn []types.ClusterNetworkEntry, nodeSubnet *ipnet
 
 	// reserve one IP for the gw, one IP for network and one for broadcasting
 	return maxNodesNum < (1<<(addrLen-intSubnetMask) - 3), nil
+}
+
+// validateCredentialsNumber in case fencing credentials exists validates there are exactly 2.
+func validateCredentialsNumber(controlPlane *types.MachinePool, fencing *types.Fencing, fldPath *field.Path) field.ErrorList {
+	errs := field.ErrorList{}
+	if controlPlane == nil || controlPlane.Replicas == nil {
+		// invalid use case covered by a different validation.
+		return errs
+	}
+	numOfCpReplicas := *controlPlane.Replicas
+	var numOfCredentials int
+	if fencing != nil {
+		numOfCredentials = len(fencing.Credentials)
+	}
+	if numOfCpReplicas == 2 {
+		if numOfCredentials != 2 {
+			errs = append(errs, field.Forbidden(fldPath, fmt.Sprintf("there should be exactly two fencing credentials to support the two node cluster, instead %d credentials were found", numOfCredentials)))
+		}
+	} else {
+		if numOfCredentials != 0 {
+			errs = append(errs, field.Forbidden(fldPath, fmt.Sprintf("there should not be any fencing credentials configured for a non dual replica control plane (Two Nodes Fencing) cluster, instead %d credentials were found", numOfCredentials)))
+		}
+	}
+	return errs
+}
+
+func validateFencingCredentials(installConfig *types.InstallConfig) (errors field.ErrorList) {
+	fldPath := field.NewPath("controlPlane", "fencing")
+	fencingCredentials := installConfig.ControlPlane.Fencing
+	allErrs := field.ErrorList{}
+	if fencingCredentials != nil {
+		allErrs = append(allErrs, common.ValidateUniqueAndRequiredFields(fencingCredentials.Credentials, fldPath, func([]byte) bool { return false }, "credentials")...)
+	}
+	allErrs = append(allErrs, validateCredentialsNumber(installConfig.ControlPlane, fencingCredentials, fldPath.Child("credentials"))...)
+
+	return allErrs
 }

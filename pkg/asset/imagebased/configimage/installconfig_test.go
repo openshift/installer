@@ -101,7 +101,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: ControlPlane.Replicas: Required value: Only Single Node OpenShift (SNO) is supported, total number of ControlPlane.Replicas must be 1. Found 2",
+			expectedError: "invalid install-config configuration: [controlPlane.fencing.credentials: Forbidden: there should be exactly two fencing credentials to support the two node cluster, instead 0 credentials were found, ControlPlane.Replicas: Required value: Only Single Node OpenShift (SNO) is supported, total number of ControlPlane.Replicas must be 1. Found 2]",
 		},
 		{
 			name: "invalid number of MachineNetworks",
