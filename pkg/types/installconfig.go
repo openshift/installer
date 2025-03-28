@@ -653,7 +653,8 @@ func MultiArchFeatureGateEnabled(platform string, fgs featuregates.FeatureGate) 
 // PublicAPI indicates whether the API load balancer should be public
 // by inspecting the cluster and operator publishing strategies.
 func (c *InstallConfig) PublicAPI() bool {
-	if c.Publish == ExternalPublishingStrategy {
+	// When no strategy is specified, the strategy defaults to "External".
+	if c.Publish == "" || c.Publish == ExternalPublishingStrategy {
 		return true
 	}
 

@@ -234,9 +234,9 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 		)
 	}
 
-	// Set the NetworkSpec.Subnets from VPC and zones (managed)
-	// or subnets (BYO VPC) based in the install-config.yaml.
-	err = setSubnets(context.TODO(), &zonesInput{
+	// Set the NetworkSpec.Subnets from VPC and zones (managed) or subnets (BYO VPC) based in the install-config.yaml.
+	// If subnet roles are assigned, set subnets for the ControlPlane LBs.
+	err = setSubnets(context.TODO(), &networkInput{
 		InstallConfig: ic,
 		ClusterID:     clusterID,
 		Cluster:       awsCluster,

@@ -16,17 +16,9 @@ import (
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
 
-// subnetsInput handles subnets information gathered from metadata.
-type subnetsInput struct {
-	vpc            string
-	privateSubnets aws.Subnets
-	publicSubnets  aws.Subnets
-	edgeSubnets    aws.Subnets
-}
-
-// zonesInput handles input parameters required to create managed and unmanaged
+// networkInput handles input parameters required to create managed and unmanaged
 // Subnets to CAPI.
-type zonesInput struct {
+type networkInput struct {
 	InstallConfig *installconfig.InstallConfig
 	Cluster       *capa.AWSCluster
 	ClusterID     *installconfig.ClusterID
@@ -36,8 +28,8 @@ type zonesInput struct {
 
 // GatherZonesFromMetadata retrieves zones from AWS API to be used
 // when building the subnets to CAPA.
-func (zin *zonesInput) GatherZonesFromMetadata(ctx context.Context) (err error) {
-	zin.ZonesInRegion, err = zin.InstallConfig.AWS.AvailabilityZones(ctx)
+func (nin *networkInput) GatherZonesFromMetadata(ctx context.Context) (err error) {
+	nin.ZonesInRegion, err = nin.InstallConfig.AWS.AvailabilityZones(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get availability zones: %w", err)
 	}
@@ -46,21 +38,44 @@ func (zin *zonesInput) GatherZonesFromMetadata(ctx context.Context) (err error) 
 
 // GatherSubnetsFromMetadata retrieves subnets from AWS API to be used
 // when building the subnets to CAPA.
-func (zin *zonesInput) GatherSubnetsFromMetadata(ctx context.Context) (err error) {
-	zin.Subnets = &subnetsInput{}
-	if zin.Subnets.privateSubnets, err = zin.InstallConfig.AWS.PrivateSubnets(ctx); err != nil {
+func (nin *networkInput) GatherSubnetsFromMetadata(ctx context.Context) (err error) {
+	nin.Subnets = &subnetsInput{
+		providedSubnets: nin.InstallConfig.Config.AWS.VPC.Subnets,
+	}
+	if nin.Subnets.privateSubnets, err = nin.InstallConfig.AWS.PrivateSubnets(ctx); err != nil {
 		return fmt.Errorf("failed to get private subnets: %w", err)
 	}
-	if zin.Subnets.publicSubnets, err = zin.InstallConfig.AWS.PublicSubnets(ctx); err != nil {
+	if nin.Subnets.publicSubnets, err = nin.InstallConfig.AWS.PublicSubnets(ctx); err != nil {
 		return fmt.Errorf("failed to get public subnets: %w", err)
 	}
-	if zin.Subnets.edgeSubnets, err = zin.InstallConfig.AWS.EdgeSubnets(ctx); err != nil {
+	if nin.Subnets.edgeSubnets, err = nin.InstallConfig.AWS.EdgeSubnets(ctx); err != nil {
 		return fmt.Errorf("failed to get edge subnets: %w", err)
 	}
-	if zin.Subnets.vpc, err = zin.InstallConfig.AWS.VPC(ctx); err != nil {
+	if nin.Subnets.vpc, err = nin.InstallConfig.AWS.VPC(ctx); err != nil {
 		return fmt.Errorf("failed to get VPC: %w", err)
 	}
 	return nil
+}
+
+// subnetsInput handles subnets information gathered from metadata.
+type subnetsInput struct {
+	vpc             string
+	privateSubnets  aws.Subnets
+	publicSubnets   aws.Subnets
+	edgeSubnets     aws.Subnets
+	providedSubnets []awstypes.Subnet
+}
+
+// GetSubnetIDsGroupedByRole retrieves map of subnet roles to the IDs of their assigned subnets.
+// If managed subnets or byo subnets have no roles, the map is empty.
+func (sni *subnetsInput) GetSubnetIDsGroupedByRole() map[awstypes.SubnetRoleType][]string {
+	subnetIDsByRole := make(map[awstypes.SubnetRoleType][]string)
+	for _, subnet := range sni.providedSubnets {
+		for _, role := range subnet.Roles {
+			subnetIDsByRole[role.Type] = append(subnetIDsByRole[role.Type], string(subnet.ID))
+		}
+	}
+	return subnetIDsByRole
 }
 
 // ZonesCAPI handles the discovered zones used to create subnets to CAPA.
@@ -123,7 +138,7 @@ func (zo *ZonesCAPI) SetDefaultConfigZones(pool string, defConfig []string, defR
 // setSubnets is the entrypoint to create the CAPI NetworkSpec structures
 // for managed or BYO VPC deployments from install-config.yaml.
 // The NetworkSpec.Subnets will be populated with the desired zones.
-func setSubnets(ctx context.Context, in *zonesInput) error {
+func setSubnets(ctx context.Context, in *networkInput) error {
 	if in.InstallConfig == nil {
 		return fmt.Errorf("failed to get installConfig")
 	}
@@ -158,7 +173,7 @@ func setSubnets(ctx context.Context, in *zonesInput) error {
 // so all API calls must be done prior this execution.
 // TODO: create support to mock AWS API calls in the unit tests, then the method
 // GatherSubnetsFromMetadata() can be added in setSubnetsBYOVPC.
-func setSubnetsBYOVPC(in *zonesInput) error {
+func setSubnetsBYOVPC(in *networkInput) error {
 	in.Cluster.Spec.NetworkSpec.VPC = capa.VPCSpec{
 		ID: in.Subnets.vpc,
 	}
@@ -197,6 +212,14 @@ func setSubnetsBYOVPC(in *zonesInput) error {
 		})
 	}
 
+	// If subnet roles are assigned, set the subnets to approriate components.
+	if subnetIDsByRole := in.Subnets.GetSubnetIDsGroupedByRole(); len(subnetIDsByRole) > 0 {
+		in.Cluster.Spec.ControlPlaneLoadBalancer.Subnets = subnetIDsByRole[awstypes.ControlPlaneInternalLBSubnetRole]
+		if in.InstallConfig.Config.PublicAPI() {
+			in.Cluster.Spec.SecondaryControlPlaneLoadBalancer.Subnets = subnetIDsByRole[awstypes.ControlPlaneExternalLBSubnetRole]
+		}
+	}
+
 	return nil
 }
 
@@ -210,7 +233,7 @@ func setSubnetsBYOVPC(in *zonesInput) error {
 // this execution.
 // TODO: create support to mock AWS API calls in the unit tests, then the method
 // GatherZonesFromMetadata() can be added in setSubnetsManagedVPC.
-func setSubnetsManagedVPC(in *zonesInput) error {
+func setSubnetsManagedVPC(in *networkInput) error {
 	out, err := extractZonesFromInstallConfig(in)
 	if err != nil {
 		return fmt.Errorf("failed to get availability zones: %w", err)
@@ -339,7 +362,7 @@ func setSubnetsManagedVPC(in *zonesInput) error {
 }
 
 // extractZonesFromInstallConfig extracts zones defined in the install-config.
-func extractZonesFromInstallConfig(in *zonesInput) (*ZonesCAPI, error) {
+func extractZonesFromInstallConfig(in *networkInput) (*ZonesCAPI, error) {
 	out := ZonesCAPI{
 		ControlPlaneZones: sets.New[string](),
 		ComputeZones:      sets.New[string](),
