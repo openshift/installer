@@ -30,4 +30,8 @@ platform:
     cloud: ${OS_CLOUD}
     loadBalancer:
       type: UserManaged
+    apiVIPs:
+      - 10.0.128.10
+    ingressVIPs:
+      - 10.0.128.20
 pullSecret: ${PULL_SECRET}
