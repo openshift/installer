@@ -151,7 +151,7 @@ func (t *TagManager) validateAndPersistUserTags(ctx context.Context, project str
 				nonexistentTags = append(nonexistentTags, name)
 				continue
 			}
-			return fmt.Errorf("failed to fetch user-defined tag %s(%d): %w", name, gErr.HTTPCode(), err)
+			return fmt.Errorf("failed to fetch user-defined tag %s: %w", name, err)
 		}
 		processedTags.addTag(tagValue.Parent, tagValue.Name)
 	}
