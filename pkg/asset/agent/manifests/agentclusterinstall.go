@@ -477,7 +477,8 @@ func (a *AgentClusterInstall) validateIPAddressAndNetworkType() field.ErrorList 
 	clusterNetworkPath := field.NewPath("spec", "networking", "clusterNetwork")
 	serviceNetworkPath := field.NewPath("spec", "networking", "serviceNetwork")
 
-	if a.Config.Spec.Networking.NetworkType == string(operv1.NetworkTypeOpenShiftSDN) {
+	switch a.Config.Spec.Networking.NetworkType {
+	case string(operv1.NetworkTypeOpenShiftSDN):
 		hasIPv6 := false
 		for _, cn := range a.Config.Spec.Networking.ClusterNetwork {
 			ipNet, errCIDR := ipnet.ParseCIDR(cn.CIDR)
@@ -510,6 +511,29 @@ func (a *AgentClusterInstall) validateIPAddressAndNetworkType() field.ErrorList 
 			allErrs = append(allErrs, field.Required(fieldPath,
 				fmt.Sprintf("serviceNetwork CIDR is IPv6 and is not compatible with networkType %s",
 					operv1.NetworkTypeOpenShiftSDN)))
+		}
+	case string(operv1.NetworkTypeOVNKubernetes):
+		for i, cn := range a.Config.Spec.Networking.ClusterNetwork {
+			path := clusterNetworkPath.Index(i)
+			ipNet, errCIDR := ipnet.ParseCIDR(cn.CIDR)
+			if errCIDR != nil {
+				allErrs = append(allErrs, field.Required(path.Child("cidr"), "error parsing the clusterNetwork CIDR"))
+				continue
+			}
+			cnOnes, cnBits := ipNet.Mask.Size()
+			maxHostPrefix := int32(cnBits) - 7
+			if cn.HostPrefix > maxHostPrefix {
+				allErrs = append(allErrs, field.Invalid(path.Child("hostPrefix"), cn.HostPrefix, fmt.Sprintf("must be at most %d", maxHostPrefix)))
+			}
+
+			numHosts := a.Config.Spec.ProvisionRequirements.ControlPlaneAgents + a.Config.Spec.ProvisionRequirements.WorkerAgents
+			var minPrefixDiff int32
+			for (1 << minPrefixDiff) < numHosts {
+				minPrefixDiff++
+			}
+			if (cn.HostPrefix - int32(cnOnes)) < minPrefixDiff {
+				allErrs = append(allErrs, field.Invalid(path, cn.CIDR, fmt.Sprintf("prefix length %d not large enough to accommodate %d hosts with hostPrefix length %d", cnOnes, numHosts, cn.HostPrefix)))
+			}
 		}
 	}
 
