@@ -369,11 +369,16 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	}
 	logrus.Debugf("bootstrap ignition config upload complete to %s/%s/%s", cosInstanceName, bucketName, ignitionFile)
 
-	ignitionURL := url.URL{
-		Scheme: "https",
-		Host:   cosEndpoint,
-		Path:   fmt.Sprintf("%s/%s", bucketName, ignitionFile),
+	// Build the URL for the ignition config.
+	cosURL, err := url.Parse(cosEndpoint)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse ibmcloud cos url from %s: %w", cosEndpoint, err)
 	}
+	// Make sure the COS URL has an https scheme, if one isn't already set.
+	if cosURL.Scheme == "" {
+		cosURL.Scheme = "https"
+	}
+	ignitionURL := cosURL.JoinPath(bucketName, ignitionFile)
 
 	// Build Ignition Config for Secret to direct bootstrap to consume COS Ignition Config.
 	logrus.Debugf("building ignition config data for bootstrap secret")
