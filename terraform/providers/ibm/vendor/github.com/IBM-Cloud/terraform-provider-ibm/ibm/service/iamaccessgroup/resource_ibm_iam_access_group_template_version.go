@@ -390,6 +390,18 @@ func resourceIBMIAMAccessGroupTemplateVersionCreate(context context.Context, d *
 		return diag.FromErr(fmt.Errorf("CreateTemplateVersionWithContext failed %s\n%s", err, response))
 	}
 
+	if d.Get("committed").(bool) {
+		commitTemplateOptions := &iamaccessgroupsv2.CommitTemplateOptions{}
+		commitTemplateOptions.SetTemplateID(*templateVersionResponse.ID)
+		commitTemplateOptions.SetVersionNum(*templateVersionResponse.Version)
+		commitTemplateOptions.SetIfMatch(response.Headers.Get("ETag"))
+		response, err = iamAccessGroupsClient.CommitTemplateWithContext(context, commitTemplateOptions)
+		if err != nil {
+			log.Printf("[DEBUG] CommitTemplateWithContext failed %s\n%s", err, response)
+			return diag.FromErr(fmt.Errorf("CommitTemplateWithContext failed %s\n%s", err, response))
+		}
+	}
+
 	d.SetId(fmt.Sprintf("%s/%s", *templateVersionResponse.ID, *templateVersionResponse.Version))
 
 	return resourceIBMIAMAccessGroupTemplateVersionRead(context, d, meta)

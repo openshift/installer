@@ -1,6 +1,10 @@
 // Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.94.1-71478489-20240820-161623
+ */
+
 package codeengine
 
 import (
@@ -8,14 +12,13 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/code-engine-go-sdk/codeenginev2"
 	"github.com/IBM/go-sdk-core/v5/core"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func ResourceIbmCodeEngineBuild() *schema.Resource {
@@ -94,7 +97,6 @@ func ResourceIbmCodeEngineBuild() *schema.Resource {
 			"strategy_spec_file": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				Default:      "Dockerfile",
 				ValidateFunc: validate.InvokeValidator("ibm_code_engine_build", "strategy_spec_file"),
 				Description:  "Optional path to the specification file that is used for build strategies for building an image.",
 			},
@@ -294,7 +296,7 @@ func ResourceIbmCodeEngineBuildValidator() *validate.ResourceValidator {
 func resourceIbmCodeEngineBuildCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_build", "create")
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "create", "initialize-client")
 		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
 		return tfErr.GetDiag()
 	}
@@ -346,7 +348,7 @@ func resourceIbmCodeEngineBuildCreate(context context.Context, d *schema.Resourc
 func resourceIbmCodeEngineBuildRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read")
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read", "initialize-client")
 		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
 		return tfErr.GetDiag()
 	}
@@ -355,8 +357,7 @@ func resourceIbmCodeEngineBuildRead(context context.Context, d *schema.ResourceD
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read", "sep-id-parts").GetDiag()
 	}
 
 	getBuildOptions.SetProjectID(parts[0])
@@ -374,105 +375,125 @@ func resourceIbmCodeEngineBuildRead(context context.Context, d *schema.ResourceD
 	}
 
 	if err = d.Set("project_id", build.ProjectID); err != nil {
-		return diag.FromErr(fmt.Errorf("error setting project_id: %s", err))
+		err = fmt.Errorf("Error setting project_id: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read", "set-project_id").GetDiag()
 	}
 	if err = d.Set("name", build.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("error setting name: %s", err))
+		err = fmt.Errorf("Error setting name: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read", "set-name").GetDiag()
 	}
 	if err = d.Set("output_image", build.OutputImage); err != nil {
-		return diag.FromErr(fmt.Errorf("error setting output_image: %s", err))
+		err = fmt.Errorf("Error setting output_image: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read", "set-output_image").GetDiag()
 	}
 	if err = d.Set("output_secret", build.OutputSecret); err != nil {
-		return diag.FromErr(fmt.Errorf("error setting output_secret: %s", err))
+		err = fmt.Errorf("Error setting output_secret: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read", "set-output_secret").GetDiag()
 	}
 	if !core.IsNil(build.SourceContextDir) {
 		if err = d.Set("source_context_dir", build.SourceContextDir); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting source_context_dir: %s", err))
+			err = fmt.Errorf("Error setting source_context_dir: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read", "set-source_context_dir").GetDiag()
 		}
 	}
 	if !core.IsNil(build.SourceRevision) {
 		if err = d.Set("source_revision", build.SourceRevision); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting source_revision: %s", err))
+			err = fmt.Errorf("Error setting source_revision: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read", "set-source_revision").GetDiag()
 		}
 	}
 	if !core.IsNil(build.SourceSecret) {
 		if err = d.Set("source_secret", build.SourceSecret); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting source_secret: %s", err))
+			err = fmt.Errorf("Error setting source_secret: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read", "set-source_secret").GetDiag()
 		}
 	}
 	if !core.IsNil(build.SourceType) {
 		if err = d.Set("source_type", build.SourceType); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting source_type: %s", err))
+			err = fmt.Errorf("Error setting source_type: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read", "set-source_type").GetDiag()
 		}
 	}
 	if !core.IsNil(build.SourceURL) {
 		if err = d.Set("source_url", build.SourceURL); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting source_url: %s", err))
+			err = fmt.Errorf("Error setting source_url: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read", "set-source_url").GetDiag()
 		}
 	}
 	if !core.IsNil(build.StrategySize) {
 		if err = d.Set("strategy_size", build.StrategySize); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting strategy_size: %s", err))
+			err = fmt.Errorf("Error setting strategy_size: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read", "set-strategy_size").GetDiag()
 		}
 	}
 	if !core.IsNil(build.StrategySpecFile) {
 		if err = d.Set("strategy_spec_file", build.StrategySpecFile); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting strategy_spec_file: %s", err))
+			err = fmt.Errorf("Error setting strategy_spec_file: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read", "set-strategy_spec_file").GetDiag()
 		}
 	}
 	if err = d.Set("strategy_type", build.StrategyType); err != nil {
-		return diag.FromErr(fmt.Errorf("error setting strategy_type: %s", err))
+		err = fmt.Errorf("Error setting strategy_type: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read", "set-strategy_type").GetDiag()
 	}
 	if !core.IsNil(build.Timeout) {
 		if err = d.Set("timeout", flex.IntValue(build.Timeout)); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting timeout: %s", err))
+			err = fmt.Errorf("Error setting timeout: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read", "set-timeout").GetDiag()
 		}
 	}
 	if !core.IsNil(build.CreatedAt) {
 		if err = d.Set("created_at", build.CreatedAt); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting created_at: %s", err))
+			err = fmt.Errorf("Error setting created_at: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read", "set-created_at").GetDiag()
 		}
 	}
 	if err = d.Set("entity_tag", build.EntityTag); err != nil {
-		return diag.FromErr(fmt.Errorf("error setting entity_tag: %s", err))
+		err = fmt.Errorf("Error setting entity_tag: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read", "set-entity_tag").GetDiag()
 	}
 	if !core.IsNil(build.Href) {
 		if err = d.Set("href", build.Href); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting href: %s", err))
+			err = fmt.Errorf("Error setting href: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read", "set-href").GetDiag()
 		}
 	}
 	if !core.IsNil(build.ID) {
 		if err = d.Set("build_id", build.ID); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting build_id: %s", err))
+			err = fmt.Errorf("Error setting build_id: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read", "set-build_id").GetDiag()
 		}
 	}
 	if !core.IsNil(build.Region) {
 		if err = d.Set("region", build.Region); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting region: %s", err))
+			err = fmt.Errorf("Error setting region: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read", "set-region").GetDiag()
 		}
 	}
 	if !core.IsNil(build.ResourceType) {
 		if err = d.Set("resource_type", build.ResourceType); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting resource_type: %s", err))
+			err = fmt.Errorf("Error setting resource_type: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read", "set-resource_type").GetDiag()
 		}
 	}
 	if !core.IsNil(build.Status) {
 		if err = d.Set("status", build.Status); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting status: %s", err))
+			err = fmt.Errorf("Error setting status: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read", "set-status").GetDiag()
 		}
 	}
 	if !core.IsNil(build.StatusDetails) {
-		statusDetailsMap, err := resourceIbmCodeEngineBuildBuildStatusToMap(build.StatusDetails)
+		statusDetailsMap, err := ResourceIbmCodeEngineBuildBuildStatusToMap(build.StatusDetails)
 		if err != nil {
-			return diag.FromErr(err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read", "status_details-to-map").GetDiag()
 		}
 		if err = d.Set("status_details", []map[string]interface{}{statusDetailsMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting status_details: %s", err))
+			err = fmt.Errorf("Error setting status_details: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "read", "set-status_details").GetDiag()
 		}
 	}
 	if err = d.Set("etag", response.Headers.Get("Etag")); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting etag: %s", err), "ibm_code_engine_build", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting etag: %s", err), "ibm_code_engine_build", "read", "set-etag").GetDiag()
 	}
 
 	return nil
@@ -481,7 +502,7 @@ func resourceIbmCodeEngineBuildRead(context context.Context, d *schema.ResourceD
 func resourceIbmCodeEngineBuildUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_build", "update")
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "update", "initialize-client")
 		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
 		return tfErr.GetDiag()
 	}
@@ -490,8 +511,7 @@ func resourceIbmCodeEngineBuildUpdate(context context.Context, d *schema.Resourc
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_build", "update")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "update", "sep-id-parts").GetDiag()
 	}
 
 	updateBuildOptions.SetProjectID(parts[0])
@@ -503,8 +523,7 @@ func resourceIbmCodeEngineBuildUpdate(context context.Context, d *schema.Resourc
 	if d.HasChange("project_id") {
 		errMsg := fmt.Sprintf("Cannot update resource property \"%s\" with the ForceNew annotation."+
 			" The resource must be re-created to update this property.", "project_id")
-		tfErr := flex.TerraformErrorf(err, errMsg, "ibm_code_engine_build", "update")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(nil, errMsg, "ibm_code_engine_build", "update", "project_id-forces-new").GetDiag()
 	}
 	if d.HasChange("output_image") {
 		newOutputImage := d.Get("output_image").(string)
@@ -564,7 +583,11 @@ func resourceIbmCodeEngineBuildUpdate(context context.Context, d *schema.Resourc
 	updateBuildOptions.SetIfMatch(d.Get("etag").(string))
 
 	if hasChange {
-		updateBuildOptions.Build, _ = patchVals.AsPatch()
+		// Fields with `nil` values are omitted from the generic map,
+		// so we need to re-add them to support removing arguments
+		// in merge-patch operations sent to the service.
+		updateBuildOptions.Build = ResourceIbmCodeEngineBuildBuildPatchAsPatch(patchVals, d)
+
 		_, _, err = codeEngineClient.UpdateBuildWithContext(context, updateBuildOptions)
 		if err != nil {
 			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateBuildWithContext failed: %s", err.Error()), "ibm_code_engine_build", "update")
@@ -579,7 +602,7 @@ func resourceIbmCodeEngineBuildUpdate(context context.Context, d *schema.Resourc
 func resourceIbmCodeEngineBuildDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_build", "delete")
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "delete", "initialize-client")
 		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
 		return tfErr.GetDiag()
 	}
@@ -588,8 +611,7 @@ func resourceIbmCodeEngineBuildDelete(context context.Context, d *schema.Resourc
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_build", "delete")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_build", "delete", "sep-id-parts").GetDiag()
 	}
 
 	deleteBuildOptions.SetProjectID(parts[0])
@@ -607,10 +629,62 @@ func resourceIbmCodeEngineBuildDelete(context context.Context, d *schema.Resourc
 	return nil
 }
 
-func resourceIbmCodeEngineBuildBuildStatusToMap(model *codeenginev2.BuildStatus) (map[string]interface{}, error) {
+func ResourceIbmCodeEngineBuildBuildStatusToMap(model *codeenginev2.BuildStatus) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Reason != nil {
-		modelMap["reason"] = model.Reason
+		modelMap["reason"] = *model.Reason
 	}
 	return modelMap, nil
+}
+
+func ResourceIbmCodeEngineBuildBuildPatchAsPatch(patchVals *codeenginev2.BuildPatch, d *schema.ResourceData) map[string]interface{} {
+	patch, _ := patchVals.AsPatch()
+	var path string
+
+	path = "output_image"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["output_image"] = nil
+	}
+	path = "output_secret"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["output_secret"] = nil
+	}
+	path = "source_context_dir"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["source_context_dir"] = nil
+	}
+	path = "source_revision"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["source_revision"] = nil
+	}
+	path = "source_secret"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["source_secret"] = nil
+	}
+	path = "source_type"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["source_type"] = nil
+	}
+	path = "source_url"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["source_url"] = nil
+	}
+	path = "strategy_size"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["strategy_size"] = nil
+	}
+	path = "strategy_spec_file"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["strategy_spec_file"] = nil
+	}
+	path = "strategy_type"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["strategy_type"] = nil
+	}
+	path = "timeout"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["timeout"] = nil
+	}
+
+	return patch
 }

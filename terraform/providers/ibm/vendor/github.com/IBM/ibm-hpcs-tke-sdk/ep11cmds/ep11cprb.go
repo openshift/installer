@@ -1,5 +1,5 @@
 //
-// Copyright 2021 IBM Inc. All rights reserved
+// Copyright contributors to the ibm-hpcs-tke-sdk project
 // SPDX-License-Identifier: Apache2.0
 //
 
@@ -7,6 +7,7 @@
 //
 // Date          Initials        Description
 // 04/09/2021    CLH             Adapt for TKE SDK
+// 11/11/2022    CLH             T444610 - Support 4770 crypto modules
 
 package ep11cmds
 
@@ -17,12 +18,11 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
+	"github.com/IBM/ibm-hpcs-tke-sdk/common"
+	"github.com/Logicalis/asn1"
 	"math/big"
 	"strconv"
 	"strings"
-
-	"github.com/Logicalis/asn1"
-	"github.com/IBM/ibm-hpcs-tke-sdk/common"
 )
 
 var delimiter byte = ';'
@@ -629,8 +629,8 @@ func buildAdminRspBlk(htpResponse string, de common.DomainEntry) (AdminRspBlk, e
 	if de.Public_key != "not available" {
 		// For all other cases, verify the OA signature in the xcpAdminRsp
 
-		// Decode the SignerInfo sequence
-		signerInfo, err := DecodeSignerInfo(adminRsp.SignerInfo)
+		// Get the ECC SignerInfo from the xcpAdminRsp
+		signerInfo, err := GetECCSignerInfo(adminRsp.SignerInfo) //@T444610CLH
 		if err != nil {
 			return adminRspBlk, err
 		}

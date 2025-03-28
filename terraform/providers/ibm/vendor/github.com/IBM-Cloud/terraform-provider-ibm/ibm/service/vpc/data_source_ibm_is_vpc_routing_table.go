@@ -59,7 +59,11 @@ func DataSourceIBMIBMIsVPCRoutingTable() *schema.Resource {
 				Optional:      true,
 				Description:   "The routing table identifier.",
 			},
-
+			rtCrn: &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The routing table CRN.",
+			},
 			"advertise_routes_to": &schema.Schema{
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -194,6 +198,43 @@ func DataSourceIBMIBMIsVPCRoutingTable() *schema.Resource {
 					},
 				},
 			},
+			rtResourceGroup: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The resource group for this volume.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						rtResourceGroupHref: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The URL for this resource group.",
+						},
+						rtResourceGroupId: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The unique identifier for this resource group.",
+						},
+						rtResourceGroupName: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The user-defined name for this resource group.",
+						},
+					},
+				},
+			},
+			rtTags: {
+				Type:     schema.TypeSet,
+				Computed: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+				Set:      flex.ResourceIBMVPCHash,
+			},
+			rtAccessTags: {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "List of access tags",
+			},
 		},
 	}
 }
@@ -311,6 +352,11 @@ func dataSourceIBMIBMIsVPCRoutingTableRead(context context.Context, d *schema.Re
 	if err = d.Set("advertise_routes_to", routingTable.AdvertiseRoutesTo); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting value of advertise_routes_to: %s", err))
 	}
+
+	if err = d.Set(rtCrn, routingTable.CRN); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting value of crn: %s", err))
+	}
+
 	routes := []map[string]interface{}{}
 	if routingTable.Routes != nil {
 		for _, modelItem := range routingTable.Routes {
@@ -338,6 +384,29 @@ func dataSourceIBMIBMIsVPCRoutingTableRead(context context.Context, d *schema.Re
 	if err = d.Set(rtSubnets, subnets); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting subnets %s", err))
 	}
+
+	resourceGroupList := []map[string]interface{}{}
+	if routingTable.ResourceGroup != nil {
+		resourceGroupMap := routingTableResourceGroupToMap(*routingTable.ResourceGroup)
+		resourceGroupList = append(resourceGroupList, resourceGroupMap)
+	}
+	if err = d.Set(rtResourceGroup, resourceGroupList); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting resource group %s", err))
+	}
+
+	tags, err := flex.GetGlobalTagsUsingCRN(meta, *routingTable.CRN, "", rtUserTagType)
+	if err != nil {
+		log.Printf(
+			"An error occured during reading of routing table (%s) tags : %s", d.Id(), err)
+	}
+	d.Set(rtTags, tags)
+
+	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *routingTable.CRN, "", rtAccessTagType)
+	if err != nil {
+		log.Printf(
+			"An error occured during reading of routing table (%s) access tags: %s", d.Id(), err)
+	}
+	d.Set(rtAccessTags, accesstags)
 
 	return nil
 }

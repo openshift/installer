@@ -1,8 +1,8 @@
-// Copyright IBM Corp. 2024 All Rights Reserved.
+// Copyright IBM Corp. 2025 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 /*
- * IBM OpenAPI Terraform Generator Version: 3.94.1-71478489-20240820-161623
+ * IBM OpenAPI Terraform Generator Version: 3.99.1-daeb6e46-20250131-173156
  */
 
 package partnercentersell
@@ -141,6 +141,11 @@ func ResourceIbmOnboardingProduct() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The ID of the approval workflow of your product.",
+			},
+			"iam_registration_id": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "IAM registration identifier.",
 			},
 		},
 	}
@@ -313,6 +318,12 @@ func resourceIbmOnboardingProductRead(context context.Context, d *schema.Resourc
 		if err = d.Set("approver_resource_id", onboardingProduct.ApproverResourceID); err != nil {
 			err = fmt.Errorf("Error setting approver_resource_id: %s", err)
 			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_onboarding_product", "read", "set-approver_resource_id").GetDiag()
+		}
+	}
+	if !core.IsNil(onboardingProduct.IamRegistrationID) {
+		if err = d.Set("iam_registration_id", onboardingProduct.IamRegistrationID); err != nil {
+			err = fmt.Errorf("Error setting iam_registration_id: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_onboarding_product", "read", "set-iam_registration_id").GetDiag()
 		}
 	}
 
@@ -493,57 +504,80 @@ func ResourceIbmOnboardingProductOnboardingProductPatchAsPatch(patchVals *partne
 	path = "primary_contact"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["primary_contact"] = nil
+	} else if !exists {
+		delete(patch, "primary_contact")
 	}
 	path = "eccn_number"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["eccn_number"] = nil
+	} else if !exists {
+		delete(patch, "eccn_number")
 	}
 	path = "ero_class"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["ero_class"] = nil
+	} else if !exists {
+		delete(patch, "ero_class")
 	}
 	path = "unspsc"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["unspsc"] = nil
+	} else if !exists {
+		delete(patch, "unspsc")
 	}
 	path = "tax_assessment"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["tax_assessment"] = nil
+	} else if !exists {
+		delete(patch, "tax_assessment")
 	}
 	path = "support"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["support"] = nil
 	} else if exists && patch["support"] != nil {
-		ResourceIbmOnboardingProductOnboardingProductSupportAsPatch(patch["support"].(map[string]interface{}), d)
+		ResourceIbmOnboardingProductOnboardingProductSupportAsPatch(patch["support"].(map[string]interface{}), d, fmt.Sprintf("%s.0", path))
+	} else if !exists {
+		delete(patch, "support")
 	}
 
 	return patch
 }
 
-func ResourceIbmOnboardingProductOnboardingProductSupportAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+func ResourceIbmOnboardingProductOnboardingProductSupportAsPatch(patch map[string]interface{}, d *schema.ResourceData, rootPath string) {
 	var path string
 
-	path = "support.0.escalation_contacts"
+	path = rootPath + ".escalation_contacts"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["escalation_contacts"] = nil
 	} else if exists && patch["escalation_contacts"] != nil {
-		ResourceIbmOnboardingProductOnboardingProductSupportEscalationContactItemsAsPatch(patch["escalation_contacts"].([]interface{})[0].(map[string]interface{}), d)
+		escalation_contactsList := patch["escalation_contacts"].([]map[string]interface{})
+		for i, escalation_contactsItem := range escalation_contactsList {
+			ResourceIbmOnboardingProductOnboardingProductSupportEscalationContactItemsAsPatch(escalation_contactsItem, d, fmt.Sprintf("%s.%d", path, i))
+		}
+	} else if !exists {
+		delete(patch, "escalation_contacts")
 	}
 }
 
-func ResourceIbmOnboardingProductOnboardingProductSupportEscalationContactItemsAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+func ResourceIbmOnboardingProductOnboardingProductSupportEscalationContactItemsAsPatch(patch map[string]interface{}, d *schema.ResourceData, rootPath string) {
 	var path string
 
-	path = "support.0.escalation_contacts.0.name"
+	path = rootPath + ".name"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["name"] = nil
+	} else if !exists {
+		delete(patch, "name")
 	}
-	path = "support.0.escalation_contacts.0.email"
+	path = rootPath + ".email"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["email"] = nil
+	} else if !exists {
+		delete(patch, "email")
 	}
-	path = "support.0.escalation_contacts.0.role"
+	path = rootPath + ".role"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["role"] = nil
+	} else if !exists {
+		delete(patch, "role")
 	}
 }

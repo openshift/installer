@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -91,7 +92,9 @@ func DataSourceIBMEnSMTPUsers() *schema.Resource {
 func dataSourceIBMEnSMTPUsersRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_en_smtp_users", "list")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.ListSMTPUsersOptions{}
@@ -114,12 +117,14 @@ func dataSourceIBMEnSMTPUsersRead(context context.Context, d *schema.ResourceDat
 	for {
 		options.SetOffset(offset)
 
-		result, response, err := enClient.ListSMTPUsersWithContext(context, options)
+		result, _, err := enClient.ListSMTPUsersWithContext(context, options)
 
 		smtpuserList = result
 
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("ListSMTPConfigurationsWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ListSMTPUsersWithContext failed: %s", err.Error()), "(Data) ibm_en_smtp_users", "list")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 
 		offset = offset + limit
@@ -136,12 +141,14 @@ func dataSourceIBMEnSMTPUsersRead(context context.Context, d *schema.ResourceDat
 	d.SetId(fmt.Sprintf("SMTPConfigurations/%s", *options.InstanceID))
 
 	if err = d.Set("total_count", flex.IntValue(smtpuserList.TotalCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting total_count: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting total_count: %s", err), "(Data) ibm_en_smtp_users", "list")
+		return tfErr.GetDiag()
 	}
 
 	if smtpuserList.Users != nil {
 		if err = d.Set("smtp_users", enFlattenSMTPUsersList(smtpuserList.Users)); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting SMTPConfigurations %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("SMTPUsers: %s", err), "(Data) ibm_en_smtp_users", "list")
+			return tfErr.GetDiag()
 		}
 	}
 

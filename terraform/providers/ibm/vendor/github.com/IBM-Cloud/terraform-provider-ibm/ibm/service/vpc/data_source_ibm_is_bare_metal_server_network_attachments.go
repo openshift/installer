@@ -276,7 +276,7 @@ func dataSourceIBMIsBareMetalServerNetworkAttachmentsID(d *schema.ResourceData) 
 	return time.Now().UTC().String()
 }
 
-func dataSourceIBMIsBareMetalServerNetworkAttachmentsBareMetalServerNetworkAttachmentCollectionFirstToMap(model *vpcv1.BareMetalServerNetworkAttachmentCollectionFirst) (map[string]interface{}, error) {
+func dataSourceIBMIsBareMetalServerNetworkAttachmentsBareMetalServerNetworkAttachmentCollectionFirstToMap(model *vpcv1.PageLink) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	modelMap["href"] = model.Href
 	return modelMap, nil
@@ -446,7 +446,7 @@ func dataSourceIBMIsBareMetalServerNetworkAttachmentsBareMetalServerNetworkAttac
 	return modelMap, nil
 }
 
-func dataSourceIBMIsBareMetalServerNetworkAttachmentsBareMetalServerNetworkAttachmentCollectionNextToMap(model *vpcv1.BareMetalServerNetworkAttachmentCollectionNext) (map[string]interface{}, error) {
+func dataSourceIBMIsBareMetalServerNetworkAttachmentsBareMetalServerNetworkAttachmentCollectionNextToMap(model *vpcv1.PageLink) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	modelMap["href"] = model.Href
 	return modelMap, nil

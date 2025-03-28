@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.92.1-44330004-20240620-143510
+ * IBM OpenAPI SDK Code Generator Version: 3.94.1-71478489-20240820-161623
  */
 
 // Package codeenginev2 : Operations and models for the CodeEngineV2 service
@@ -40,7 +40,7 @@ type CodeEngineV2 struct {
 	Service *core.BaseService
 
 	// The API version, in format `YYYY-MM-DD`. For the API behavior documented here, specify any date between `2021-03-31`
-	// and `2024-08-04`.
+	// and `2024-12-10`.
 	Version *string
 }
 
@@ -57,7 +57,7 @@ type CodeEngineV2Options struct {
 	Authenticator core.Authenticator
 
 	// The API version, in format `YYYY-MM-DD`. For the API behavior documented here, specify any date between `2021-03-31`
-	// and `2024-08-04`.
+	// and `2024-12-10`.
 	Version *string 
 }
 
@@ -457,6 +457,384 @@ func (codeEngine *CodeEngineV2) DeleteProjectWithContext(ctx context.Context, de
 		core.EnrichHTTPProblem(err, "delete_project", getServiceComponentInfo())
 		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
+	}
+
+	return
+}
+
+// ListAllowedOutboundDestination : List allowed outbound destinations
+// List all allowed outbound destinations in a project.
+func (codeEngine *CodeEngineV2) ListAllowedOutboundDestination(listAllowedOutboundDestinationOptions *ListAllowedOutboundDestinationOptions) (result *AllowedOutboundDestinationList, response *core.DetailedResponse, err error) {
+	result, response, err = codeEngine.ListAllowedOutboundDestinationWithContext(context.Background(), listAllowedOutboundDestinationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ListAllowedOutboundDestinationWithContext is an alternate form of the ListAllowedOutboundDestination method which supports a Context parameter
+func (codeEngine *CodeEngineV2) ListAllowedOutboundDestinationWithContext(ctx context.Context, listAllowedOutboundDestinationOptions *ListAllowedOutboundDestinationOptions) (result *AllowedOutboundDestinationList, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listAllowedOutboundDestinationOptions, "listAllowedOutboundDestinationOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(listAllowedOutboundDestinationOptions, "listAllowedOutboundDestinationOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"project_id": *listAllowedOutboundDestinationOptions.ProjectID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = codeEngine.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(codeEngine.Service.Options.URL, `/projects/{project_id}/allowed_outbound_destinations`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range listAllowedOutboundDestinationOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("code_engine", "V2", "ListAllowedOutboundDestination")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if listAllowedOutboundDestinationOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listAllowedOutboundDestinationOptions.Limit))
+	}
+	if listAllowedOutboundDestinationOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listAllowedOutboundDestinationOptions.Start))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = codeEngine.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "list_allowed_outbound_destination", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAllowedOutboundDestinationList)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// CreateAllowedOutboundDestination : Create an allowed outbound destination
+// Create an allowed outbound destination.
+func (codeEngine *CodeEngineV2) CreateAllowedOutboundDestination(createAllowedOutboundDestinationOptions *CreateAllowedOutboundDestinationOptions) (result AllowedOutboundDestinationIntf, response *core.DetailedResponse, err error) {
+	result, response, err = codeEngine.CreateAllowedOutboundDestinationWithContext(context.Background(), createAllowedOutboundDestinationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// CreateAllowedOutboundDestinationWithContext is an alternate form of the CreateAllowedOutboundDestination method which supports a Context parameter
+func (codeEngine *CodeEngineV2) CreateAllowedOutboundDestinationWithContext(ctx context.Context, createAllowedOutboundDestinationOptions *CreateAllowedOutboundDestinationOptions) (result AllowedOutboundDestinationIntf, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createAllowedOutboundDestinationOptions, "createAllowedOutboundDestinationOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(createAllowedOutboundDestinationOptions, "createAllowedOutboundDestinationOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"project_id": *createAllowedOutboundDestinationOptions.ProjectID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = codeEngine.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(codeEngine.Service.Options.URL, `/projects/{project_id}/allowed_outbound_destinations`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range createAllowedOutboundDestinationOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("code_engine", "V2", "CreateAllowedOutboundDestination")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	if codeEngine.Version != nil {
+		builder.AddQuery("version", fmt.Sprint(*codeEngine.Version))
+	}
+
+	_, err = builder.SetBodyContentJSON(createAllowedOutboundDestinationOptions.AllowedOutboundDestination)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = codeEngine.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "create_allowed_outbound_destination", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAllowedOutboundDestination)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetAllowedOutboundDestination : Get an allowed outbound destination
+// Display the details of an allowed outbound destination.
+func (codeEngine *CodeEngineV2) GetAllowedOutboundDestination(getAllowedOutboundDestinationOptions *GetAllowedOutboundDestinationOptions) (result AllowedOutboundDestinationIntf, response *core.DetailedResponse, err error) {
+	result, response, err = codeEngine.GetAllowedOutboundDestinationWithContext(context.Background(), getAllowedOutboundDestinationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAllowedOutboundDestinationWithContext is an alternate form of the GetAllowedOutboundDestination method which supports a Context parameter
+func (codeEngine *CodeEngineV2) GetAllowedOutboundDestinationWithContext(ctx context.Context, getAllowedOutboundDestinationOptions *GetAllowedOutboundDestinationOptions) (result AllowedOutboundDestinationIntf, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getAllowedOutboundDestinationOptions, "getAllowedOutboundDestinationOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getAllowedOutboundDestinationOptions, "getAllowedOutboundDestinationOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"project_id": *getAllowedOutboundDestinationOptions.ProjectID,
+		"name": *getAllowedOutboundDestinationOptions.Name,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = codeEngine.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(codeEngine.Service.Options.URL, `/projects/{project_id}/allowed_outbound_destinations/{name}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getAllowedOutboundDestinationOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("code_engine", "V2", "GetAllowedOutboundDestination")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if codeEngine.Version != nil {
+		builder.AddQuery("version", fmt.Sprint(*codeEngine.Version))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = codeEngine.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_allowed_outbound_destination", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAllowedOutboundDestination)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeleteAllowedOutboundDestination : Delete an allowed outbound destination
+// Delete an allowed outbound destination.
+func (codeEngine *CodeEngineV2) DeleteAllowedOutboundDestination(deleteAllowedOutboundDestinationOptions *DeleteAllowedOutboundDestinationOptions) (response *core.DetailedResponse, err error) {
+	response, err = codeEngine.DeleteAllowedOutboundDestinationWithContext(context.Background(), deleteAllowedOutboundDestinationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DeleteAllowedOutboundDestinationWithContext is an alternate form of the DeleteAllowedOutboundDestination method which supports a Context parameter
+func (codeEngine *CodeEngineV2) DeleteAllowedOutboundDestinationWithContext(ctx context.Context, deleteAllowedOutboundDestinationOptions *DeleteAllowedOutboundDestinationOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteAllowedOutboundDestinationOptions, "deleteAllowedOutboundDestinationOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deleteAllowedOutboundDestinationOptions, "deleteAllowedOutboundDestinationOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"project_id": *deleteAllowedOutboundDestinationOptions.ProjectID,
+		"name": *deleteAllowedOutboundDestinationOptions.Name,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = codeEngine.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(codeEngine.Service.Options.URL, `/projects/{project_id}/allowed_outbound_destinations/{name}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range deleteAllowedOutboundDestinationOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("code_engine", "V2", "DeleteAllowedOutboundDestination")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	if codeEngine.Version != nil {
+		builder.AddQuery("version", fmt.Sprint(*codeEngine.Version))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = codeEngine.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_allowed_outbound_destination", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// UpdateAllowedOutboundDestination : Update an allowed outbound destination
+// Update an allowed outbound destination.
+func (codeEngine *CodeEngineV2) UpdateAllowedOutboundDestination(updateAllowedOutboundDestinationOptions *UpdateAllowedOutboundDestinationOptions) (result AllowedOutboundDestinationIntf, response *core.DetailedResponse, err error) {
+	result, response, err = codeEngine.UpdateAllowedOutboundDestinationWithContext(context.Background(), updateAllowedOutboundDestinationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// UpdateAllowedOutboundDestinationWithContext is an alternate form of the UpdateAllowedOutboundDestination method which supports a Context parameter
+func (codeEngine *CodeEngineV2) UpdateAllowedOutboundDestinationWithContext(ctx context.Context, updateAllowedOutboundDestinationOptions *UpdateAllowedOutboundDestinationOptions) (result AllowedOutboundDestinationIntf, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updateAllowedOutboundDestinationOptions, "updateAllowedOutboundDestinationOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(updateAllowedOutboundDestinationOptions, "updateAllowedOutboundDestinationOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"project_id": *updateAllowedOutboundDestinationOptions.ProjectID,
+		"name": *updateAllowedOutboundDestinationOptions.Name,
+	}
+
+	builder := core.NewRequestBuilder(core.PATCH)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = codeEngine.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(codeEngine.Service.Options.URL, `/projects/{project_id}/allowed_outbound_destinations/{name}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range updateAllowedOutboundDestinationOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("code_engine", "V2", "UpdateAllowedOutboundDestination")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/merge-patch+json")
+	if updateAllowedOutboundDestinationOptions.IfMatch != nil {
+		builder.AddHeader("If-Match", fmt.Sprint(*updateAllowedOutboundDestinationOptions.IfMatch))
+	}
+
+	if codeEngine.Version != nil {
+		builder.AddQuery("version", fmt.Sprint(*codeEngine.Version))
+	}
+
+	_, err = builder.SetBodyContentJSON(updateAllowedOutboundDestinationOptions.AllowedOutboundDestination)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = codeEngine.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_allowed_outbound_destination", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAllowedOutboundDestination)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
 	}
 
 	return
@@ -4763,6 +5141,216 @@ func getServiceComponentInfo() *core.ProblemComponent {
 	return core.NewProblemComponent(DefaultServiceName, "2.0.0")
 }
 
+// AllowedOutboundDestination : AllowedOutboundDestination Describes the model of an allowed outbound destination.
+// Models which "extend" this model:
+// - AllowedOutboundDestinationCidrBlockData
+type AllowedOutboundDestination struct {
+	// The version of the allowed outbound destination, which is used to achieve optimistic locking.
+	EntityTag *string `json:"entity_tag" validate:"required"`
+
+	// Specify the type of the allowed outbound destination. Allowed types are: 'cidr_block'.
+	Type *string `json:"type" validate:"required"`
+
+	// The IPv4 address range.
+	CidrBlock *string `json:"cidr_block,omitempty"`
+
+	// The name of the CIDR block.
+	Name *string `json:"name,omitempty"`
+}
+
+// Constants associated with the AllowedOutboundDestination.Type property.
+// Specify the type of the allowed outbound destination. Allowed types are: 'cidr_block'.
+const (
+	AllowedOutboundDestination_Type_CidrBlock = "cidr_block"
+)
+func (*AllowedOutboundDestination) isaAllowedOutboundDestination() bool {
+	return true
+}
+
+type AllowedOutboundDestinationIntf interface {
+	isaAllowedOutboundDestination() bool
+}
+
+// UnmarshalAllowedOutboundDestination unmarshals an instance of AllowedOutboundDestination from the specified map of raw messages.
+func UnmarshalAllowedOutboundDestination(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AllowedOutboundDestination)
+	err = core.UnmarshalPrimitive(m, "entity_tag", &obj.EntityTag)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "entity_tag-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cidr_block", &obj.CidrBlock)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "cidr_block-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// AllowedOutboundDestinationList : Contains a list of allowed outbound destinations and pagination information.
+type AllowedOutboundDestinationList struct {
+	// List of all allowed outbound destinations.
+	AllowedOutboundDestinations []AllowedOutboundDestinationIntf `json:"allowed_outbound_destinations" validate:"required"`
+
+	// Describes properties needed to retrieve the first page of a result list.
+	First *ListFirstMetadata `json:"first,omitempty"`
+
+	// Maximum number of resources per page.
+	Limit *int64 `json:"limit" validate:"required"`
+
+	// Describes properties needed to retrieve the next page of a result list.
+	Next *ListNextMetadata `json:"next,omitempty"`
+}
+
+// UnmarshalAllowedOutboundDestinationList unmarshals an instance of AllowedOutboundDestinationList from the specified map of raw messages.
+func UnmarshalAllowedOutboundDestinationList(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AllowedOutboundDestinationList)
+	err = core.UnmarshalModel(m, "allowed_outbound_destinations", &obj.AllowedOutboundDestinations, UnmarshalAllowedOutboundDestination)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "allowed_outbound_destinations-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalListFirstMetadata)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalListNextMetadata)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *AllowedOutboundDestinationList) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	return resp.Next.Start, nil
+}
+
+// AllowedOutboundDestinationPatch : AllowedOutboundDestinationPatch is the request model for allowed outbound destination update operations.
+// Models which "extend" this model:
+// - AllowedOutboundDestinationPatchCidrBlockDataPatch
+type AllowedOutboundDestinationPatch struct {
+	// Specify the type of the allowed outbound destination. Allowed types are: 'cidr_block'.
+	Type *string `json:"type,omitempty"`
+
+	// The IPv4 address range.
+	CidrBlock *string `json:"cidr_block,omitempty"`
+}
+
+// Constants associated with the AllowedOutboundDestinationPatch.Type property.
+// Specify the type of the allowed outbound destination. Allowed types are: 'cidr_block'.
+const (
+	AllowedOutboundDestinationPatch_Type_CidrBlock = "cidr_block"
+)
+func (*AllowedOutboundDestinationPatch) isaAllowedOutboundDestinationPatch() bool {
+	return true
+}
+
+type AllowedOutboundDestinationPatchIntf interface {
+	isaAllowedOutboundDestinationPatch() bool
+}
+
+// UnmarshalAllowedOutboundDestinationPatch unmarshals an instance of AllowedOutboundDestinationPatch from the specified map of raw messages.
+func UnmarshalAllowedOutboundDestinationPatch(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AllowedOutboundDestinationPatch)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cidr_block", &obj.CidrBlock)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "cidr_block-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// AsPatch returns a generic map representation of the AllowedOutboundDestinationPatch
+func (allowedOutboundDestinationPatch *AllowedOutboundDestinationPatch) AsPatch() (_patch map[string]interface{}, err error) {
+	_patch = map[string]interface{}{}
+	if !core.IsNil(allowedOutboundDestinationPatch.Type) {
+		_patch["type"] = allowedOutboundDestinationPatch.Type
+	}
+	if !core.IsNil(allowedOutboundDestinationPatch.CidrBlock) {
+		_patch["cidr_block"] = allowedOutboundDestinationPatch.CidrBlock
+	}
+
+	return
+}
+
+// AllowedOutboundDestinationPrototype : AllowedOutboundDestinationPrototype is the request model for allowed outbound destination create operations.
+// Models which "extend" this model:
+// - AllowedOutboundDestinationPrototypeCidrBlockDataPrototype
+type AllowedOutboundDestinationPrototype struct {
+	// Specify the type of the allowed outbound destination. Allowed types are: 'cidr_block'.
+	Type *string `json:"type" validate:"required"`
+
+	// The IPv4 address range.
+	CidrBlock *string `json:"cidr_block,omitempty"`
+
+	// The name of the CIDR block.
+	Name *string `json:"name,omitempty"`
+}
+
+// Constants associated with the AllowedOutboundDestinationPrototype.Type property.
+// Specify the type of the allowed outbound destination. Allowed types are: 'cidr_block'.
+const (
+	AllowedOutboundDestinationPrototype_Type_CidrBlock = "cidr_block"
+)
+func (*AllowedOutboundDestinationPrototype) isaAllowedOutboundDestinationPrototype() bool {
+	return true
+}
+
+type AllowedOutboundDestinationPrototypeIntf interface {
+	isaAllowedOutboundDestinationPrototype() bool
+}
+
+// UnmarshalAllowedOutboundDestinationPrototype unmarshals an instance of AllowedOutboundDestinationPrototype from the specified map of raw messages.
+func UnmarshalAllowedOutboundDestinationPrototype(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AllowedOutboundDestinationPrototype)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cidr_block", &obj.CidrBlock)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "cidr_block-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // App : App is the response model for app resources.
 type App struct {
 	// Reference to a build that is associated with the application.
@@ -5626,14 +6214,82 @@ func UnmarshalAppPatch(m map[string]json.RawMessage, result interface{}) (err er
 
 // AsPatch returns a generic map representation of the AppPatch
 func (appPatch *AppPatch) AsPatch() (_patch map[string]interface{}, err error) {
-	var jsonData []byte
-	jsonData, err = json.Marshal(appPatch)
-	if err == nil {
-		err = json.Unmarshal(jsonData, &_patch)
+	_patch = map[string]interface{}{}
+	if !core.IsNil(appPatch.ImagePort) {
+		_patch["image_port"] = appPatch.ImagePort
 	}
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unmarshal-patch-data-error", common.GetComponentInfo())
+	if !core.IsNil(appPatch.ImageReference) {
+		_patch["image_reference"] = appPatch.ImageReference
 	}
+	if !core.IsNil(appPatch.ImageSecret) {
+		_patch["image_secret"] = appPatch.ImageSecret
+	}
+	if !core.IsNil(appPatch.ManagedDomainMappings) {
+		_patch["managed_domain_mappings"] = appPatch.ManagedDomainMappings
+	}
+	if !core.IsNil(appPatch.ProbeLiveness) {
+		_patch["probe_liveness"] = appPatch.ProbeLiveness.asPatch()
+	}
+	if !core.IsNil(appPatch.ProbeReadiness) {
+		_patch["probe_readiness"] = appPatch.ProbeReadiness.asPatch()
+	}
+	if !core.IsNil(appPatch.RunArguments) {
+		_patch["run_arguments"] = appPatch.RunArguments
+	}
+	if !core.IsNil(appPatch.RunAsUser) {
+		_patch["run_as_user"] = appPatch.RunAsUser
+	}
+	if !core.IsNil(appPatch.RunCommands) {
+		_patch["run_commands"] = appPatch.RunCommands
+	}
+	if !core.IsNil(appPatch.RunEnvVariables) {
+		var runEnvVariablesPatches []map[string]interface{}
+		for _, runEnvVariables := range appPatch.RunEnvVariables {
+			runEnvVariablesPatches = append(runEnvVariablesPatches, runEnvVariables.asPatch())
+		}
+		_patch["run_env_variables"] = runEnvVariablesPatches
+	}
+	if !core.IsNil(appPatch.RunServiceAccount) {
+		_patch["run_service_account"] = appPatch.RunServiceAccount
+	}
+	if !core.IsNil(appPatch.RunVolumeMounts) {
+		var runVolumeMountsPatches []map[string]interface{}
+		for _, runVolumeMounts := range appPatch.RunVolumeMounts {
+			runVolumeMountsPatches = append(runVolumeMountsPatches, runVolumeMounts.asPatch())
+		}
+		_patch["run_volume_mounts"] = runVolumeMountsPatches
+	}
+	if !core.IsNil(appPatch.ScaleConcurrency) {
+		_patch["scale_concurrency"] = appPatch.ScaleConcurrency
+	}
+	if !core.IsNil(appPatch.ScaleConcurrencyTarget) {
+		_patch["scale_concurrency_target"] = appPatch.ScaleConcurrencyTarget
+	}
+	if !core.IsNil(appPatch.ScaleCpuLimit) {
+		_patch["scale_cpu_limit"] = appPatch.ScaleCpuLimit
+	}
+	if !core.IsNil(appPatch.ScaleDownDelay) {
+		_patch["scale_down_delay"] = appPatch.ScaleDownDelay
+	}
+	if !core.IsNil(appPatch.ScaleEphemeralStorageLimit) {
+		_patch["scale_ephemeral_storage_limit"] = appPatch.ScaleEphemeralStorageLimit
+	}
+	if !core.IsNil(appPatch.ScaleInitialInstances) {
+		_patch["scale_initial_instances"] = appPatch.ScaleInitialInstances
+	}
+	if !core.IsNil(appPatch.ScaleMaxInstances) {
+		_patch["scale_max_instances"] = appPatch.ScaleMaxInstances
+	}
+	if !core.IsNil(appPatch.ScaleMemoryLimit) {
+		_patch["scale_memory_limit"] = appPatch.ScaleMemoryLimit
+	}
+	if !core.IsNil(appPatch.ScaleMinInstances) {
+		_patch["scale_min_instances"] = appPatch.ScaleMinInstances
+	}
+	if !core.IsNil(appPatch.ScaleRequestTimeout) {
+		_patch["scale_request_timeout"] = appPatch.ScaleRequestTimeout
+	}
+
 	return
 }
 
@@ -6607,14 +7263,41 @@ func UnmarshalBuildPatch(m map[string]json.RawMessage, result interface{}) (err 
 
 // AsPatch returns a generic map representation of the BuildPatch
 func (buildPatch *BuildPatch) AsPatch() (_patch map[string]interface{}, err error) {
-	var jsonData []byte
-	jsonData, err = json.Marshal(buildPatch)
-	if err == nil {
-		err = json.Unmarshal(jsonData, &_patch)
+	_patch = map[string]interface{}{}
+	if !core.IsNil(buildPatch.OutputImage) {
+		_patch["output_image"] = buildPatch.OutputImage
 	}
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unmarshal-patch-data-error", common.GetComponentInfo())
+	if !core.IsNil(buildPatch.OutputSecret) {
+		_patch["output_secret"] = buildPatch.OutputSecret
 	}
+	if !core.IsNil(buildPatch.SourceContextDir) {
+		_patch["source_context_dir"] = buildPatch.SourceContextDir
+	}
+	if !core.IsNil(buildPatch.SourceRevision) {
+		_patch["source_revision"] = buildPatch.SourceRevision
+	}
+	if !core.IsNil(buildPatch.SourceSecret) {
+		_patch["source_secret"] = buildPatch.SourceSecret
+	}
+	if !core.IsNil(buildPatch.SourceType) {
+		_patch["source_type"] = buildPatch.SourceType
+	}
+	if !core.IsNil(buildPatch.SourceURL) {
+		_patch["source_url"] = buildPatch.SourceURL
+	}
+	if !core.IsNil(buildPatch.StrategySize) {
+		_patch["strategy_size"] = buildPatch.StrategySize
+	}
+	if !core.IsNil(buildPatch.StrategySpecFile) {
+		_patch["strategy_spec_file"] = buildPatch.StrategySpecFile
+	}
+	if !core.IsNil(buildPatch.StrategyType) {
+		_patch["strategy_type"] = buildPatch.StrategyType
+	}
+	if !core.IsNil(buildPatch.Timeout) {
+		_patch["timeout"] = buildPatch.Timeout
+	}
+
 	return
 }
 
@@ -6909,11 +7592,23 @@ type BuildRunStatus struct {
 	// Time the build run completed.
 	CompletionTime *string `json:"completion_time,omitempty"`
 
+	// The default branch name of the git source.
+	GitBranchName *string `json:"git_branch_name,omitempty"`
+
+	// The commit author of a git source.
+	GitCommitAuthor *string `json:"git_commit_author,omitempty"`
+
+	// The commit sha of the git source.
+	GitCommitSha *string `json:"git_commit_sha,omitempty"`
+
 	// Describes the time the build run completed.
 	OutputDigest *string `json:"output_digest,omitempty"`
 
 	// Optional information to provide more context in case of a 'failed' or 'warning' status.
 	Reason *string `json:"reason,omitempty"`
+
+	// The timestamp of the source.
+	SourceTimestamp *string `json:"source_timestamp,omitempty"`
 
 	// Time the build run started.
 	StartTime *string `json:"start_time,omitempty"`
@@ -6949,6 +7644,21 @@ func UnmarshalBuildRunStatus(m map[string]json.RawMessage, result interface{}) (
 		err = core.SDKErrorf(err, "", "completion_time-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "git_branch_name", &obj.GitBranchName)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "git_branch_name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "git_commit_author", &obj.GitCommitAuthor)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "git_commit_author-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "git_commit_sha", &obj.GitCommitSha)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "git_commit_sha-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "output_digest", &obj.OutputDigest)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "output_digest-error", common.GetComponentInfo())
@@ -6957,6 +7667,11 @@ func UnmarshalBuildRunStatus(m map[string]json.RawMessage, result interface{}) (
 	err = core.UnmarshalPrimitive(m, "reason", &obj.Reason)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "reason-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "source_timestamp", &obj.SourceTimestamp)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "source_timestamp-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "start_time", &obj.StartTime)
@@ -7038,6 +7753,19 @@ func UnmarshalComponentRef(m map[string]json.RawMessage, result interface{}) (er
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// asPatch returns a generic map representation of the ComponentRef
+func (componentRef *ComponentRef) asPatch() (_patch map[string]interface{}) {
+	_patch = map[string]interface{}{}
+	if !core.IsNil(componentRef.Name) {
+		_patch["name"] = componentRef.Name
+	}
+	if !core.IsNil(componentRef.ResourceType) {
+		_patch["resource_type"] = componentRef.ResourceType
+	}
+
 	return
 }
 
@@ -7278,6 +8006,44 @@ func UnmarshalContainerStatusDetails(m map[string]json.RawMessage, result interf
 	return
 }
 
+// CreateAllowedOutboundDestinationOptions : The CreateAllowedOutboundDestination options.
+type CreateAllowedOutboundDestinationOptions struct {
+	// The ID of the project.
+	ProjectID *string `json:"project_id" validate:"required,ne="`
+
+	// AllowedOutboundDestination prototype.
+	AllowedOutboundDestination AllowedOutboundDestinationPrototypeIntf `json:"allowed_outbound_destination" validate:"required"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewCreateAllowedOutboundDestinationOptions : Instantiate CreateAllowedOutboundDestinationOptions
+func (*CodeEngineV2) NewCreateAllowedOutboundDestinationOptions(projectID string, allowedOutboundDestination AllowedOutboundDestinationPrototypeIntf) *CreateAllowedOutboundDestinationOptions {
+	return &CreateAllowedOutboundDestinationOptions{
+		ProjectID: core.StringPtr(projectID),
+		AllowedOutboundDestination: allowedOutboundDestination,
+	}
+}
+
+// SetProjectID : Allow user to set ProjectID
+func (_options *CreateAllowedOutboundDestinationOptions) SetProjectID(projectID string) *CreateAllowedOutboundDestinationOptions {
+	_options.ProjectID = core.StringPtr(projectID)
+	return _options
+}
+
+// SetAllowedOutboundDestination : Allow user to set AllowedOutboundDestination
+func (_options *CreateAllowedOutboundDestinationOptions) SetAllowedOutboundDestination(allowedOutboundDestination AllowedOutboundDestinationPrototypeIntf) *CreateAllowedOutboundDestinationOptions {
+	_options.AllowedOutboundDestination = allowedOutboundDestination
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CreateAllowedOutboundDestinationOptions) SetHeaders(param map[string]string) *CreateAllowedOutboundDestinationOptions {
+	options.Headers = param
+	return options
+}
+
 // CreateAppOptions : The CreateApp options.
 type CreateAppOptions struct {
 	// The ID of the project.
@@ -7376,7 +8142,7 @@ type CreateAppOptions struct {
 	// Optional amount of time in seconds that is allowed for a running app to respond to a request.
 	ScaleRequestTimeout *int64 `json:"scale_request_timeout,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7574,7 +8340,7 @@ type CreateBindingOptions struct {
 	// The service access secret that is bound to a component.
 	SecretName *string `json:"secret_name" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7670,7 +8436,7 @@ type CreateBuildOptions struct {
 	// The maximum amount of time, in seconds, that can pass before the build must succeed or fail.
 	Timeout *int64 `json:"timeout,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7840,7 +8606,7 @@ type CreateBuildRunOptions struct {
 	// The maximum amount of time, in seconds, that can pass before the build must succeed or fail.
 	Timeout *int64 `json:"timeout,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7980,7 +8746,7 @@ type CreateConfigMapOptions struct {
 	// field can consists of any character and must not be exceed a max length of 1048576 characters.
 	Data map[string]string `json:"data,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8030,7 +8796,7 @@ type CreateDomainMappingOptions struct {
 	// The name of the TLS secret that includes the certificate and private key of this domain mapping.
 	TlsSecret *string `json:"tls_secret" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8128,7 +8894,7 @@ type CreateFunctionOptions struct {
 	// see [Units of measurement](https://cloud.ibm.com/docs/codeengine?topic=codeengine-mem-cpu-combo#unit-measurements).
 	ScaleMemoryLimit *string `json:"scale_memory_limit,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8317,7 +9083,7 @@ type CreateJobOptions struct {
 	// specified if `run_mode` is `task`.
 	ScaleRetryLimit *int64 `json:"scale_retry_limit,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8540,7 +9306,7 @@ type CreateJobRunOptions struct {
 	// specified if `run_mode` is `task`.
 	ScaleRetryLimit *int64 `json:"scale_retry_limit,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8705,7 +9471,7 @@ type CreateProjectOptions struct {
 	// [Global Tagging API docs](https://cloud.ibm.com/apidocs/tagging).
 	Tags []string `json:"tags,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8762,7 +9528,7 @@ type CreateSecretOptions struct {
 	// Properties for the IBM Cloud Operator Secrets.
 	ServiceOperator *OperatorSecretPrototypeProps `json:"service_operator,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8830,6 +9596,44 @@ func (options *CreateSecretOptions) SetHeaders(param map[string]string) *CreateS
 	return options
 }
 
+// DeleteAllowedOutboundDestinationOptions : The DeleteAllowedOutboundDestination options.
+type DeleteAllowedOutboundDestinationOptions struct {
+	// The ID of the project.
+	ProjectID *string `json:"project_id" validate:"required,ne="`
+
+	// The name of your allowed outbound destination.
+	Name *string `json:"name" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewDeleteAllowedOutboundDestinationOptions : Instantiate DeleteAllowedOutboundDestinationOptions
+func (*CodeEngineV2) NewDeleteAllowedOutboundDestinationOptions(projectID string, name string) *DeleteAllowedOutboundDestinationOptions {
+	return &DeleteAllowedOutboundDestinationOptions{
+		ProjectID: core.StringPtr(projectID),
+		Name: core.StringPtr(name),
+	}
+}
+
+// SetProjectID : Allow user to set ProjectID
+func (_options *DeleteAllowedOutboundDestinationOptions) SetProjectID(projectID string) *DeleteAllowedOutboundDestinationOptions {
+	_options.ProjectID = core.StringPtr(projectID)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *DeleteAllowedOutboundDestinationOptions) SetName(name string) *DeleteAllowedOutboundDestinationOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeleteAllowedOutboundDestinationOptions) SetHeaders(param map[string]string) *DeleteAllowedOutboundDestinationOptions {
+	options.Headers = param
+	return options
+}
+
 // DeleteAppOptions : The DeleteApp options.
 type DeleteAppOptions struct {
 	// The ID of the project.
@@ -8838,7 +9642,7 @@ type DeleteAppOptions struct {
 	// The name of your application.
 	Name *string `json:"name" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8879,7 +9683,7 @@ type DeleteAppRevisionOptions struct {
 	// The name of your application revision.
 	Name *string `json:"name" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8924,7 +9728,7 @@ type DeleteBindingOptions struct {
 	// The id of your binding.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8962,7 +9766,7 @@ type DeleteBuildOptions struct {
 	// The name of your build.
 	Name *string `json:"name" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9000,7 +9804,7 @@ type DeleteBuildRunOptions struct {
 	// The name of your build run.
 	Name *string `json:"name" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9038,7 +9842,7 @@ type DeleteConfigMapOptions struct {
 	// The name of your configmap.
 	Name *string `json:"name" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9076,7 +9880,7 @@ type DeleteDomainMappingOptions struct {
 	// The name of your domain mapping.
 	Name *string `json:"name" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9114,7 +9918,7 @@ type DeleteFunctionOptions struct {
 	// The name of your function.
 	Name *string `json:"name" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9152,7 +9956,7 @@ type DeleteJobOptions struct {
 	// The name of your job.
 	Name *string `json:"name" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9190,7 +9994,7 @@ type DeleteJobRunOptions struct {
 	// The name of your job run.
 	Name *string `json:"name" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9225,7 +10029,7 @@ type DeleteProjectOptions struct {
 	// The ID of the project.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9256,7 +10060,7 @@ type DeleteSecretOptions struct {
 	// The name of your secret.
 	Name *string `json:"name" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9521,14 +10325,14 @@ func UnmarshalDomainMappingPatch(m map[string]json.RawMessage, result interface{
 
 // AsPatch returns a generic map representation of the DomainMappingPatch
 func (domainMappingPatch *DomainMappingPatch) AsPatch() (_patch map[string]interface{}, err error) {
-	var jsonData []byte
-	jsonData, err = json.Marshal(domainMappingPatch)
-	if err == nil {
-		err = json.Unmarshal(jsonData, &_patch)
+	_patch = map[string]interface{}{}
+	if !core.IsNil(domainMappingPatch.Component) {
+		_patch["component"] = domainMappingPatch.Component.asPatch()
 	}
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unmarshal-patch-data-error", common.GetComponentInfo())
+	if !core.IsNil(domainMappingPatch.TlsSecret) {
+		_patch["tls_secret"] = domainMappingPatch.TlsSecret
 	}
+
 	return
 }
 
@@ -9694,6 +10498,31 @@ func UnmarshalEnvVarPrototype(m map[string]json.RawMessage, result interface{}) 
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// asPatch returns a generic map representation of the EnvVarPrototype
+func (envVarPrototype *EnvVarPrototype) asPatch() (_patch map[string]interface{}) {
+	_patch = map[string]interface{}{}
+	if !core.IsNil(envVarPrototype.Key) {
+		_patch["key"] = envVarPrototype.Key
+	}
+	if !core.IsNil(envVarPrototype.Name) {
+		_patch["name"] = envVarPrototype.Name
+	}
+	if !core.IsNil(envVarPrototype.Prefix) {
+		_patch["prefix"] = envVarPrototype.Prefix
+	}
+	if !core.IsNil(envVarPrototype.Reference) {
+		_patch["reference"] = envVarPrototype.Reference
+	}
+	if !core.IsNil(envVarPrototype.Type) {
+		_patch["type"] = envVarPrototype.Type
+	}
+	if !core.IsNil(envVarPrototype.Value) {
+		_patch["value"] = envVarPrototype.Value
+	}
+
 	return
 }
 
@@ -10123,14 +10952,48 @@ func UnmarshalFunctionPatch(m map[string]json.RawMessage, result interface{}) (e
 
 // AsPatch returns a generic map representation of the FunctionPatch
 func (functionPatch *FunctionPatch) AsPatch() (_patch map[string]interface{}, err error) {
-	var jsonData []byte
-	jsonData, err = json.Marshal(functionPatch)
-	if err == nil {
-		err = json.Unmarshal(jsonData, &_patch)
+	_patch = map[string]interface{}{}
+	if !core.IsNil(functionPatch.CodeBinary) {
+		_patch["code_binary"] = functionPatch.CodeBinary
 	}
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unmarshal-patch-data-error", common.GetComponentInfo())
+	if !core.IsNil(functionPatch.CodeMain) {
+		_patch["code_main"] = functionPatch.CodeMain
 	}
+	if !core.IsNil(functionPatch.CodeReference) {
+		_patch["code_reference"] = functionPatch.CodeReference
+	}
+	if !core.IsNil(functionPatch.CodeSecret) {
+		_patch["code_secret"] = functionPatch.CodeSecret
+	}
+	if !core.IsNil(functionPatch.ManagedDomainMappings) {
+		_patch["managed_domain_mappings"] = functionPatch.ManagedDomainMappings
+	}
+	if !core.IsNil(functionPatch.RunEnvVariables) {
+		var runEnvVariablesPatches []map[string]interface{}
+		for _, runEnvVariables := range functionPatch.RunEnvVariables {
+			runEnvVariablesPatches = append(runEnvVariablesPatches, runEnvVariables.asPatch())
+		}
+		_patch["run_env_variables"] = runEnvVariablesPatches
+	}
+	if !core.IsNil(functionPatch.Runtime) {
+		_patch["runtime"] = functionPatch.Runtime
+	}
+	if !core.IsNil(functionPatch.ScaleConcurrency) {
+		_patch["scale_concurrency"] = functionPatch.ScaleConcurrency
+	}
+	if !core.IsNil(functionPatch.ScaleCpuLimit) {
+		_patch["scale_cpu_limit"] = functionPatch.ScaleCpuLimit
+	}
+	if !core.IsNil(functionPatch.ScaleDownDelay) {
+		_patch["scale_down_delay"] = functionPatch.ScaleDownDelay
+	}
+	if !core.IsNil(functionPatch.ScaleMaxExecutionTime) {
+		_patch["scale_max_execution_time"] = functionPatch.ScaleMaxExecutionTime
+	}
+	if !core.IsNil(functionPatch.ScaleMemoryLimit) {
+		_patch["scale_memory_limit"] = functionPatch.ScaleMemoryLimit
+	}
+
 	return
 }
 
@@ -10241,6 +11104,44 @@ func UnmarshalFunctionStatus(m map[string]json.RawMessage, result interface{}) (
 	return
 }
 
+// GetAllowedOutboundDestinationOptions : The GetAllowedOutboundDestination options.
+type GetAllowedOutboundDestinationOptions struct {
+	// The ID of the project.
+	ProjectID *string `json:"project_id" validate:"required,ne="`
+
+	// The name of your allowed outbound destination.
+	Name *string `json:"name" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewGetAllowedOutboundDestinationOptions : Instantiate GetAllowedOutboundDestinationOptions
+func (*CodeEngineV2) NewGetAllowedOutboundDestinationOptions(projectID string, name string) *GetAllowedOutboundDestinationOptions {
+	return &GetAllowedOutboundDestinationOptions{
+		ProjectID: core.StringPtr(projectID),
+		Name: core.StringPtr(name),
+	}
+}
+
+// SetProjectID : Allow user to set ProjectID
+func (_options *GetAllowedOutboundDestinationOptions) SetProjectID(projectID string) *GetAllowedOutboundDestinationOptions {
+	_options.ProjectID = core.StringPtr(projectID)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *GetAllowedOutboundDestinationOptions) SetName(name string) *GetAllowedOutboundDestinationOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetAllowedOutboundDestinationOptions) SetHeaders(param map[string]string) *GetAllowedOutboundDestinationOptions {
+	options.Headers = param
+	return options
+}
+
 // GetAppOptions : The GetApp options.
 type GetAppOptions struct {
 	// The ID of the project.
@@ -10249,7 +11150,7 @@ type GetAppOptions struct {
 	// The name of your application.
 	Name *string `json:"name" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10290,7 +11191,7 @@ type GetAppRevisionOptions struct {
 	// The name of your application revision.
 	Name *string `json:"name" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10335,7 +11236,7 @@ type GetBindingOptions struct {
 	// The id of your binding.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10373,7 +11274,7 @@ type GetBuildOptions struct {
 	// The name of your build.
 	Name *string `json:"name" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10411,7 +11312,7 @@ type GetBuildRunOptions struct {
 	// The name of your build run.
 	Name *string `json:"name" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10449,7 +11350,7 @@ type GetConfigMapOptions struct {
 	// The name of your configmap.
 	Name *string `json:"name" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10487,7 +11388,7 @@ type GetDomainMappingOptions struct {
 	// The name of your domain mapping.
 	Name *string `json:"name" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10525,7 +11426,7 @@ type GetFunctionOptions struct {
 	// The name of your function.
 	Name *string `json:"name" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10563,7 +11464,7 @@ type GetJobOptions struct {
 	// The name of your job.
 	Name *string `json:"name" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10601,7 +11502,7 @@ type GetJobRunOptions struct {
 	// The name of your job run.
 	Name *string `json:"name" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10636,7 +11537,7 @@ type GetProjectEgressIpsOptions struct {
 	// The ID of the project.
 	ProjectID *string `json:"project_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10664,7 +11565,7 @@ type GetProjectOptions struct {
 	// The ID of the project.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10692,7 +11593,7 @@ type GetProjectStatusDetailsOptions struct {
 	// The ID of the project.
 	ProjectID *string `json:"project_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10723,7 +11624,7 @@ type GetSecretOptions struct {
 	// The name of your secret.
 	Name *string `json:"name" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11247,14 +12148,61 @@ func UnmarshalJobPatch(m map[string]json.RawMessage, result interface{}) (err er
 
 // AsPatch returns a generic map representation of the JobPatch
 func (jobPatch *JobPatch) AsPatch() (_patch map[string]interface{}, err error) {
-	var jsonData []byte
-	jsonData, err = json.Marshal(jobPatch)
-	if err == nil {
-		err = json.Unmarshal(jsonData, &_patch)
+	_patch = map[string]interface{}{}
+	if !core.IsNil(jobPatch.ImageReference) {
+		_patch["image_reference"] = jobPatch.ImageReference
 	}
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unmarshal-patch-data-error", common.GetComponentInfo())
+	if !core.IsNil(jobPatch.ImageSecret) {
+		_patch["image_secret"] = jobPatch.ImageSecret
 	}
+	if !core.IsNil(jobPatch.RunArguments) {
+		_patch["run_arguments"] = jobPatch.RunArguments
+	}
+	if !core.IsNil(jobPatch.RunAsUser) {
+		_patch["run_as_user"] = jobPatch.RunAsUser
+	}
+	if !core.IsNil(jobPatch.RunCommands) {
+		_patch["run_commands"] = jobPatch.RunCommands
+	}
+	if !core.IsNil(jobPatch.RunEnvVariables) {
+		var runEnvVariablesPatches []map[string]interface{}
+		for _, runEnvVariables := range jobPatch.RunEnvVariables {
+			runEnvVariablesPatches = append(runEnvVariablesPatches, runEnvVariables.asPatch())
+		}
+		_patch["run_env_variables"] = runEnvVariablesPatches
+	}
+	if !core.IsNil(jobPatch.RunMode) {
+		_patch["run_mode"] = jobPatch.RunMode
+	}
+	if !core.IsNil(jobPatch.RunServiceAccount) {
+		_patch["run_service_account"] = jobPatch.RunServiceAccount
+	}
+	if !core.IsNil(jobPatch.RunVolumeMounts) {
+		var runVolumeMountsPatches []map[string]interface{}
+		for _, runVolumeMounts := range jobPatch.RunVolumeMounts {
+			runVolumeMountsPatches = append(runVolumeMountsPatches, runVolumeMounts.asPatch())
+		}
+		_patch["run_volume_mounts"] = runVolumeMountsPatches
+	}
+	if !core.IsNil(jobPatch.ScaleArraySpec) {
+		_patch["scale_array_spec"] = jobPatch.ScaleArraySpec
+	}
+	if !core.IsNil(jobPatch.ScaleCpuLimit) {
+		_patch["scale_cpu_limit"] = jobPatch.ScaleCpuLimit
+	}
+	if !core.IsNil(jobPatch.ScaleEphemeralStorageLimit) {
+		_patch["scale_ephemeral_storage_limit"] = jobPatch.ScaleEphemeralStorageLimit
+	}
+	if !core.IsNil(jobPatch.ScaleMaxExecutionTime) {
+		_patch["scale_max_execution_time"] = jobPatch.ScaleMaxExecutionTime
+	}
+	if !core.IsNil(jobPatch.ScaleMemoryLimit) {
+		_patch["scale_memory_limit"] = jobPatch.ScaleMemoryLimit
+	}
+	if !core.IsNil(jobPatch.ScaleRetryLimit) {
+		_patch["scale_retry_limit"] = jobPatch.ScaleRetryLimit
+	}
+
 	return
 }
 
@@ -11701,6 +12649,54 @@ func UnmarshalJobRunStatus(m map[string]json.RawMessage, result interface{}) (er
 	return
 }
 
+// ListAllowedOutboundDestinationOptions : The ListAllowedOutboundDestination options.
+type ListAllowedOutboundDestinationOptions struct {
+	// The ID of the project.
+	ProjectID *string `json:"project_id" validate:"required,ne="`
+
+	// Optional maximum number of allowed outbound destinations per page.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// An optional token that indicates the beginning of the page of results to be returned. If omitted, the first page of
+	// results is returned. This value is obtained from the 'start' query parameter in the `next` object of the operation
+	// response.
+	Start *string `json:"start,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewListAllowedOutboundDestinationOptions : Instantiate ListAllowedOutboundDestinationOptions
+func (*CodeEngineV2) NewListAllowedOutboundDestinationOptions(projectID string) *ListAllowedOutboundDestinationOptions {
+	return &ListAllowedOutboundDestinationOptions{
+		ProjectID: core.StringPtr(projectID),
+	}
+}
+
+// SetProjectID : Allow user to set ProjectID
+func (_options *ListAllowedOutboundDestinationOptions) SetProjectID(projectID string) *ListAllowedOutboundDestinationOptions {
+	_options.ProjectID = core.StringPtr(projectID)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListAllowedOutboundDestinationOptions) SetLimit(limit int64) *ListAllowedOutboundDestinationOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *ListAllowedOutboundDestinationOptions) SetStart(start string) *ListAllowedOutboundDestinationOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListAllowedOutboundDestinationOptions) SetHeaders(param map[string]string) *ListAllowedOutboundDestinationOptions {
+	options.Headers = param
+	return options
+}
+
 // ListAppInstancesOptions : The ListAppInstances options.
 type ListAppInstancesOptions struct {
 	// The ID of the project.
@@ -11717,7 +12713,7 @@ type ListAppInstancesOptions struct {
 	// response.
 	Start *string `json:"start,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11775,7 +12771,7 @@ type ListAppRevisionsOptions struct {
 	// response.
 	Start *string `json:"start,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11830,7 +12826,7 @@ type ListAppsOptions struct {
 	// response.
 	Start *string `json:"start,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11878,7 +12874,7 @@ type ListBindingsOptions struct {
 	// response.
 	Start *string `json:"start,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11929,7 +12925,7 @@ type ListBuildRunsOptions struct {
 	// response.
 	Start *string `json:"start,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11983,7 +12979,7 @@ type ListBuildsOptions struct {
 	// response.
 	Start *string `json:"start,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -12031,7 +13027,7 @@ type ListConfigMapsOptions struct {
 	// response.
 	Start *string `json:"start,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -12079,7 +13075,7 @@ type ListDomainMappingsOptions struct {
 	// response.
 	Start *string `json:"start,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -12135,7 +13131,7 @@ func UnmarshalListFirstMetadata(m map[string]json.RawMessage, result interface{}
 // ListFunctionRuntimesOptions : The ListFunctionRuntimes options.
 type ListFunctionRuntimesOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -12163,7 +13159,7 @@ type ListFunctionsOptions struct {
 	// operation response.
 	Start *string `json:"start,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -12214,7 +13210,7 @@ type ListJobRunsOptions struct {
 	// response.
 	Start *string `json:"start,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -12268,7 +13264,7 @@ type ListJobsOptions struct {
 	// response.
 	Start *string `json:"start,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -12339,7 +13335,7 @@ type ListProjectsOptions struct {
 	// obtained from the 'start' query parameter in the `next` object of the operation response.
 	Start *string `json:"start,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -12379,7 +13375,7 @@ type ListSecretsOptions struct {
 	// response.
 	Start *string `json:"start,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -12630,6 +13626,34 @@ func UnmarshalProbePrototype(m map[string]json.RawMessage, result interface{}) (
 	return
 }
 
+// asPatch returns a generic map representation of the ProbePrototype
+func (probePrototype *ProbePrototype) asPatch() (_patch map[string]interface{}) {
+	_patch = map[string]interface{}{}
+	if !core.IsNil(probePrototype.FailureThreshold) {
+		_patch["failure_threshold"] = probePrototype.FailureThreshold
+	}
+	if !core.IsNil(probePrototype.InitialDelay) {
+		_patch["initial_delay"] = probePrototype.InitialDelay
+	}
+	if !core.IsNil(probePrototype.Interval) {
+		_patch["interval"] = probePrototype.Interval
+	}
+	if !core.IsNil(probePrototype.Path) {
+		_patch["path"] = probePrototype.Path
+	}
+	if !core.IsNil(probePrototype.Port) {
+		_patch["port"] = probePrototype.Port
+	}
+	if !core.IsNil(probePrototype.Timeout) {
+		_patch["timeout"] = probePrototype.Timeout
+	}
+	if !core.IsNil(probePrototype.Type) {
+		_patch["type"] = probePrototype.Type
+	}
+
+	return
+}
+
 // Project : Describes the model of a project.
 type Project struct {
 	// An alphanumeric value identifying the account ID.
@@ -12829,6 +13853,9 @@ type ProjectStatusDetails struct {
 
 	// Defines whether a project is enabled for management and consumption.
 	Project *string `json:"project" validate:"required"`
+
+	// Return true when project is not VPE enabled.
+	VpeNotEnabled *bool `json:"vpe_not_enabled,omitempty"`
 }
 
 // Constants associated with the ProjectStatusDetails.Domain property.
@@ -12858,6 +13885,11 @@ func UnmarshalProjectStatusDetails(m map[string]json.RawMessage, result interfac
 		err = core.SDKErrorf(err, "", "project-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "vpe_not_enabled", &obj.VpeNotEnabled)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "vpe_not_enabled-error", common.GetComponentInfo())
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
@@ -12880,7 +13912,7 @@ type ReplaceConfigMapOptions struct {
 	// field can consists of any character and must not be exceed a max length of 1048576 characters.
 	Data map[string]string `json:"data,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -12944,7 +13976,7 @@ type ReplaceSecretOptions struct {
 	// field can consists of any character and must not exceed a max length of 1048576 characters.
 	Data SecretDataIntf `json:"data,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -13220,6 +14252,7 @@ func UnmarshalSecret(m map[string]json.RawMessage, result interface{}) (err erro
 // SecretData : Data container that allows to specify config parameters and their values as a key-value map. Each key field must
 // consist of alphanumeric characters, `-`, `_` or `.` and must not exceed a max length of 253 characters. Each value
 // field can consists of any character and must not exceed a max length of 1048576 characters.
+// This type supports additional properties of type *string.
 // Models which "extend" this model:
 // - SecretDataGenericSecretData
 // - SecretDataBasicAuthSecretData
@@ -13251,7 +14284,7 @@ type SecretData struct {
 	// The TLS key used in a TLS secret.
 	TlsKey *string `json:"tls_key,omitempty"`
 
-	// Allows users to set arbitrary properties
+	// Allows users to set arbitrary properties of type *string.
 	additionalProperties map[string]*string
 }
 func (*SecretData) isaSecretData() bool {
@@ -13266,7 +14299,7 @@ type SecretDataIntf interface {
 	GetProperties() map[string]*string
 }
 
-// SetProperty allows the user to set an arbitrary property on an instance of SecretData
+// SetProperty allows the user to set an arbitrary property on an instance of SecretData.
 func (o *SecretData) SetProperty(key string, value *string) {
 	if o.additionalProperties == nil {
 		o.additionalProperties = make(map[string]*string)
@@ -13274,7 +14307,7 @@ func (o *SecretData) SetProperty(key string, value *string) {
 	o.additionalProperties[key] = value
 }
 
-// SetProperties allows the user to set a map of arbitrary properties on an instance of SecretData
+// SetProperties allows the user to set a map of arbitrary properties on an instance of SecretData.
 func (o *SecretData) SetProperties(m map[string]*string) {
 	o.additionalProperties = make(map[string]*string)
 	for k, v := range m {
@@ -13282,12 +14315,12 @@ func (o *SecretData) SetProperties(m map[string]*string) {
 	}
 }
 
-// GetProperty allows the user to retrieve an arbitrary property from an instance of SecretData
+// GetProperty allows the user to retrieve an arbitrary property from an instance of SecretData.
 func (o *SecretData) GetProperty(key string) *string {
 	return o.additionalProperties[key]
 }
 
-// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of SecretData
+// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of SecretData.
 func (o *SecretData) GetProperties() map[string]*string {
 	return o.additionalProperties
 }
@@ -13630,6 +14663,66 @@ func UnmarshalServiceInstanceRefPrototype(m map[string]json.RawMessage, result i
 	return
 }
 
+// UpdateAllowedOutboundDestinationOptions : The UpdateAllowedOutboundDestination options.
+type UpdateAllowedOutboundDestinationOptions struct {
+	// The ID of the project.
+	ProjectID *string `json:"project_id" validate:"required,ne="`
+
+	// The name of your allowed outbound destination.
+	Name *string `json:"name" validate:"required,ne="`
+
+	// Version of the allowed outbound destination to be updated. Specify the version that you retrieved as entity_tag
+	// (ETag header) when reading the allowed outbound destination. This value helps identifying parallel usage of this
+	// API. Pass * to indicate to update any version available. This might result in stale updates.
+	IfMatch *string `json:"If-Match" validate:"required"`
+
+	// AllowedOutboundDestination patch.
+	AllowedOutboundDestination map[string]interface{} `json:"allowed_outbound_destination" validate:"required"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewUpdateAllowedOutboundDestinationOptions : Instantiate UpdateAllowedOutboundDestinationOptions
+func (*CodeEngineV2) NewUpdateAllowedOutboundDestinationOptions(projectID string, name string, ifMatch string, allowedOutboundDestination map[string]interface{}) *UpdateAllowedOutboundDestinationOptions {
+	return &UpdateAllowedOutboundDestinationOptions{
+		ProjectID: core.StringPtr(projectID),
+		Name: core.StringPtr(name),
+		IfMatch: core.StringPtr(ifMatch),
+		AllowedOutboundDestination: allowedOutboundDestination,
+	}
+}
+
+// SetProjectID : Allow user to set ProjectID
+func (_options *UpdateAllowedOutboundDestinationOptions) SetProjectID(projectID string) *UpdateAllowedOutboundDestinationOptions {
+	_options.ProjectID = core.StringPtr(projectID)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *UpdateAllowedOutboundDestinationOptions) SetName(name string) *UpdateAllowedOutboundDestinationOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetIfMatch : Allow user to set IfMatch
+func (_options *UpdateAllowedOutboundDestinationOptions) SetIfMatch(ifMatch string) *UpdateAllowedOutboundDestinationOptions {
+	_options.IfMatch = core.StringPtr(ifMatch)
+	return _options
+}
+
+// SetAllowedOutboundDestination : Allow user to set AllowedOutboundDestination
+func (_options *UpdateAllowedOutboundDestinationOptions) SetAllowedOutboundDestination(allowedOutboundDestination map[string]interface{}) *UpdateAllowedOutboundDestinationOptions {
+	_options.AllowedOutboundDestination = allowedOutboundDestination
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdateAllowedOutboundDestinationOptions) SetHeaders(param map[string]string) *UpdateAllowedOutboundDestinationOptions {
+	options.Headers = param
+	return options
+}
+
 // UpdateAppOptions : The UpdateApp options.
 type UpdateAppOptions struct {
 	// The ID of the project.
@@ -13646,7 +14739,7 @@ type UpdateAppOptions struct {
 	// App patch.
 	App map[string]interface{} `json:"app" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -13706,7 +14799,7 @@ type UpdateBuildOptions struct {
 	// Build patch.
 	Build map[string]interface{} `json:"build" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -13766,7 +14859,7 @@ type UpdateDomainMappingOptions struct {
 	// DomainMapping patch.
 	DomainMapping map[string]interface{} `json:"domain_mapping" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -13826,7 +14919,7 @@ type UpdateFunctionOptions struct {
 	// Function patch.
 	Function map[string]interface{} `json:"function" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -13886,7 +14979,7 @@ type UpdateJobOptions struct {
 	// Job patch prototype.
 	Job map[string]interface{} `json:"job" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -14043,7 +15136,189 @@ func UnmarshalVolumeMountPrototype(m map[string]json.RawMessage, result interfac
 	return
 }
 
+// asPatch returns a generic map representation of the VolumeMountPrototype
+func (volumeMountPrototype *VolumeMountPrototype) asPatch() (_patch map[string]interface{}) {
+	_patch = map[string]interface{}{}
+	if !core.IsNil(volumeMountPrototype.MountPath) {
+		_patch["mount_path"] = volumeMountPrototype.MountPath
+	}
+	if !core.IsNil(volumeMountPrototype.Name) {
+		_patch["name"] = volumeMountPrototype.Name
+	}
+	if !core.IsNil(volumeMountPrototype.Reference) {
+		_patch["reference"] = volumeMountPrototype.Reference
+	}
+	if !core.IsNil(volumeMountPrototype.Type) {
+		_patch["type"] = volumeMountPrototype.Type
+	}
+
+	return
+}
+
+// AllowedOutboundDestinationPatchCidrBlockDataPatch : Update an allowed outbound destination by using a CIDR block.
+// This model "extends" AllowedOutboundDestinationPatch
+type AllowedOutboundDestinationPatchCidrBlockDataPatch struct {
+	// Specify the type of the allowed outbound destination. Allowed types are: 'cidr_block'.
+	Type *string `json:"type,omitempty"`
+
+	// The IPv4 address range.
+	CidrBlock *string `json:"cidr_block,omitempty"`
+}
+
+// Constants associated with the AllowedOutboundDestinationPatchCidrBlockDataPatch.Type property.
+// Specify the type of the allowed outbound destination. Allowed types are: 'cidr_block'.
+const (
+	AllowedOutboundDestinationPatchCidrBlockDataPatch_Type_CidrBlock = "cidr_block"
+)
+
+func (*AllowedOutboundDestinationPatchCidrBlockDataPatch) isaAllowedOutboundDestinationPatch() bool {
+	return true
+}
+
+// UnmarshalAllowedOutboundDestinationPatchCidrBlockDataPatch unmarshals an instance of AllowedOutboundDestinationPatchCidrBlockDataPatch from the specified map of raw messages.
+func UnmarshalAllowedOutboundDestinationPatchCidrBlockDataPatch(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AllowedOutboundDestinationPatchCidrBlockDataPatch)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cidr_block", &obj.CidrBlock)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "cidr_block-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// AsPatch returns a generic map representation of the AllowedOutboundDestinationPatchCidrBlockDataPatch
+func (allowedOutboundDestinationPatchCidrBlockDataPatch *AllowedOutboundDestinationPatchCidrBlockDataPatch) AsPatch() (_patch map[string]interface{}, err error) {
+	_patch = map[string]interface{}{}
+	if !core.IsNil(allowedOutboundDestinationPatchCidrBlockDataPatch.Type) {
+		_patch["type"] = allowedOutboundDestinationPatchCidrBlockDataPatch.Type
+	}
+	if !core.IsNil(allowedOutboundDestinationPatchCidrBlockDataPatch.CidrBlock) {
+		_patch["cidr_block"] = allowedOutboundDestinationPatchCidrBlockDataPatch.CidrBlock
+	}
+
+	return
+}
+
+// AllowedOutboundDestinationPrototypeCidrBlockDataPrototype : Create an allowed outbound destination by using a CIDR block.
+// This model "extends" AllowedOutboundDestinationPrototype
+type AllowedOutboundDestinationPrototypeCidrBlockDataPrototype struct {
+	// Specify the type of the allowed outbound destination. Allowed types are: 'cidr_block'.
+	Type *string `json:"type" validate:"required"`
+
+	// The IPv4 address range.
+	CidrBlock *string `json:"cidr_block" validate:"required"`
+
+	// The name of the CIDR block.
+	Name *string `json:"name" validate:"required"`
+}
+
+// Constants associated with the AllowedOutboundDestinationPrototypeCidrBlockDataPrototype.Type property.
+// Specify the type of the allowed outbound destination. Allowed types are: 'cidr_block'.
+const (
+	AllowedOutboundDestinationPrototypeCidrBlockDataPrototype_Type_CidrBlock = "cidr_block"
+)
+
+// NewAllowedOutboundDestinationPrototypeCidrBlockDataPrototype : Instantiate AllowedOutboundDestinationPrototypeCidrBlockDataPrototype (Generic Model Constructor)
+func (*CodeEngineV2) NewAllowedOutboundDestinationPrototypeCidrBlockDataPrototype(typeVar string, cidrBlock string, name string) (_model *AllowedOutboundDestinationPrototypeCidrBlockDataPrototype, err error) {
+	_model = &AllowedOutboundDestinationPrototypeCidrBlockDataPrototype{
+		Type: core.StringPtr(typeVar),
+		CidrBlock: core.StringPtr(cidrBlock),
+		Name: core.StringPtr(name),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*AllowedOutboundDestinationPrototypeCidrBlockDataPrototype) isaAllowedOutboundDestinationPrototype() bool {
+	return true
+}
+
+// UnmarshalAllowedOutboundDestinationPrototypeCidrBlockDataPrototype unmarshals an instance of AllowedOutboundDestinationPrototypeCidrBlockDataPrototype from the specified map of raw messages.
+func UnmarshalAllowedOutboundDestinationPrototypeCidrBlockDataPrototype(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AllowedOutboundDestinationPrototypeCidrBlockDataPrototype)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cidr_block", &obj.CidrBlock)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "cidr_block-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// AllowedOutboundDestinationCidrBlockData : Allowed outbound destination CIDR block.
+// This model "extends" AllowedOutboundDestination
+type AllowedOutboundDestinationCidrBlockData struct {
+	// The version of the allowed outbound destination, which is used to achieve optimistic locking.
+	EntityTag *string `json:"entity_tag" validate:"required"`
+
+	// Specify the type of the allowed outbound destination. Allowed types are: 'cidr_block'.
+	Type *string `json:"type" validate:"required"`
+
+	// The IPv4 address range.
+	CidrBlock *string `json:"cidr_block" validate:"required"`
+
+	// The name of the CIDR block.
+	Name *string `json:"name" validate:"required"`
+}
+
+// Constants associated with the AllowedOutboundDestinationCidrBlockData.Type property.
+// Specify the type of the allowed outbound destination. Allowed types are: 'cidr_block'.
+const (
+	AllowedOutboundDestinationCidrBlockData_Type_CidrBlock = "cidr_block"
+)
+
+func (*AllowedOutboundDestinationCidrBlockData) isaAllowedOutboundDestination() bool {
+	return true
+}
+
+// UnmarshalAllowedOutboundDestinationCidrBlockData unmarshals an instance of AllowedOutboundDestinationCidrBlockData from the specified map of raw messages.
+func UnmarshalAllowedOutboundDestinationCidrBlockData(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AllowedOutboundDestinationCidrBlockData)
+	err = core.UnmarshalPrimitive(m, "entity_tag", &obj.EntityTag)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "entity_tag-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cidr_block", &obj.CidrBlock)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "cidr_block-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // SecretDataBasicAuthSecretData : SecretDataBasicAuthSecretData struct
+// This type supports additional properties of type *string.
 // This model "extends" SecretData
 type SecretDataBasicAuthSecretData struct {
 	// Basic auth username.
@@ -14052,7 +15327,7 @@ type SecretDataBasicAuthSecretData struct {
 	// Basic auth password.
 	Password *string `json:"password" validate:"required"`
 
-	// Allows users to set arbitrary properties
+	// Allows users to set arbitrary properties of type *string.
 	additionalProperties map[string]*string
 }
 
@@ -14073,7 +15348,7 @@ func (*SecretDataBasicAuthSecretData) isaSecretData() bool {
 	return true
 }
 
-// SetProperty allows the user to set an arbitrary property on an instance of SecretDataBasicAuthSecretData
+// SetProperty allows the user to set an arbitrary property on an instance of SecretDataBasicAuthSecretData.
 func (o *SecretDataBasicAuthSecretData) SetProperty(key string, value *string) {
 	if o.additionalProperties == nil {
 		o.additionalProperties = make(map[string]*string)
@@ -14081,7 +15356,7 @@ func (o *SecretDataBasicAuthSecretData) SetProperty(key string, value *string) {
 	o.additionalProperties[key] = value
 }
 
-// SetProperties allows the user to set a map of arbitrary properties on an instance of SecretDataBasicAuthSecretData
+// SetProperties allows the user to set a map of arbitrary properties on an instance of SecretDataBasicAuthSecretData.
 func (o *SecretDataBasicAuthSecretData) SetProperties(m map[string]*string) {
 	o.additionalProperties = make(map[string]*string)
 	for k, v := range m {
@@ -14089,12 +15364,12 @@ func (o *SecretDataBasicAuthSecretData) SetProperties(m map[string]*string) {
 	}
 }
 
-// GetProperty allows the user to retrieve an arbitrary property from an instance of SecretDataBasicAuthSecretData
+// GetProperty allows the user to retrieve an arbitrary property from an instance of SecretDataBasicAuthSecretData.
 func (o *SecretDataBasicAuthSecretData) GetProperty(key string) *string {
 	return o.additionalProperties[key]
 }
 
-// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of SecretDataBasicAuthSecretData
+// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of SecretDataBasicAuthSecretData.
 func (o *SecretDataBasicAuthSecretData) GetProperties() map[string]*string {
 	return o.additionalProperties
 }
@@ -14151,10 +15426,11 @@ func UnmarshalSecretDataBasicAuthSecretData(m map[string]json.RawMessage, result
 // SecretDataGenericSecretData : Data container that allows to specify config parameters and their values as a key-value map. Each key field must
 // consist of alphanumeric characters, `-`, `_` or `.` and must not be exceed a max length of 253 characters. Each value
 // field can consists of any character and must not be exceed a max length of 1048576 characters.
+// This type supports additional properties of type *string.
 // This model "extends" SecretData
 type SecretDataGenericSecretData struct {
 
-	// Allows users to set arbitrary properties
+	// Allows users to set arbitrary properties of type *string.
 	additionalProperties map[string]*string
 }
 
@@ -14162,7 +15438,7 @@ func (*SecretDataGenericSecretData) isaSecretData() bool {
 	return true
 }
 
-// SetProperty allows the user to set an arbitrary property on an instance of SecretDataGenericSecretData
+// SetProperty allows the user to set an arbitrary property on an instance of SecretDataGenericSecretData.
 func (o *SecretDataGenericSecretData) SetProperty(key string, value *string) {
 	if o.additionalProperties == nil {
 		o.additionalProperties = make(map[string]*string)
@@ -14170,7 +15446,7 @@ func (o *SecretDataGenericSecretData) SetProperty(key string, value *string) {
 	o.additionalProperties[key] = value
 }
 
-// SetProperties allows the user to set a map of arbitrary properties on an instance of SecretDataGenericSecretData
+// SetProperties allows the user to set a map of arbitrary properties on an instance of SecretDataGenericSecretData.
 func (o *SecretDataGenericSecretData) SetProperties(m map[string]*string) {
 	o.additionalProperties = make(map[string]*string)
 	for k, v := range m {
@@ -14178,12 +15454,12 @@ func (o *SecretDataGenericSecretData) SetProperties(m map[string]*string) {
 	}
 }
 
-// GetProperty allows the user to retrieve an arbitrary property from an instance of SecretDataGenericSecretData
+// GetProperty allows the user to retrieve an arbitrary property from an instance of SecretDataGenericSecretData.
 func (o *SecretDataGenericSecretData) GetProperty(key string) *string {
 	return o.additionalProperties[key]
 }
 
-// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of SecretDataGenericSecretData
+// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of SecretDataGenericSecretData.
 func (o *SecretDataGenericSecretData) GetProperties() map[string]*string {
 	return o.additionalProperties
 }
@@ -14220,6 +15496,7 @@ func UnmarshalSecretDataGenericSecretData(m map[string]json.RawMessage, result i
 }
 
 // SecretDataRegistrySecretData : SecretDataRegistrySecretData struct
+// This type supports additional properties of type *string.
 // This model "extends" SecretData
 type SecretDataRegistrySecretData struct {
 	// Registry username.
@@ -14234,7 +15511,7 @@ type SecretDataRegistrySecretData struct {
 	// Registry email address.
 	Email *string `json:"email,omitempty"`
 
-	// Allows users to set arbitrary properties
+	// Allows users to set arbitrary properties of type *string.
 	additionalProperties map[string]*string
 }
 
@@ -14256,7 +15533,7 @@ func (*SecretDataRegistrySecretData) isaSecretData() bool {
 	return true
 }
 
-// SetProperty allows the user to set an arbitrary property on an instance of SecretDataRegistrySecretData
+// SetProperty allows the user to set an arbitrary property on an instance of SecretDataRegistrySecretData.
 func (o *SecretDataRegistrySecretData) SetProperty(key string, value *string) {
 	if o.additionalProperties == nil {
 		o.additionalProperties = make(map[string]*string)
@@ -14264,7 +15541,7 @@ func (o *SecretDataRegistrySecretData) SetProperty(key string, value *string) {
 	o.additionalProperties[key] = value
 }
 
-// SetProperties allows the user to set a map of arbitrary properties on an instance of SecretDataRegistrySecretData
+// SetProperties allows the user to set a map of arbitrary properties on an instance of SecretDataRegistrySecretData.
 func (o *SecretDataRegistrySecretData) SetProperties(m map[string]*string) {
 	o.additionalProperties = make(map[string]*string)
 	for k, v := range m {
@@ -14272,12 +15549,12 @@ func (o *SecretDataRegistrySecretData) SetProperties(m map[string]*string) {
 	}
 }
 
-// GetProperty allows the user to retrieve an arbitrary property from an instance of SecretDataRegistrySecretData
+// GetProperty allows the user to retrieve an arbitrary property from an instance of SecretDataRegistrySecretData.
 func (o *SecretDataRegistrySecretData) GetProperty(key string) *string {
 	return o.additionalProperties[key]
 }
 
-// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of SecretDataRegistrySecretData
+// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of SecretDataRegistrySecretData.
 func (o *SecretDataRegistrySecretData) GetProperties() map[string]*string {
 	return o.additionalProperties
 }
@@ -14350,6 +15627,7 @@ func UnmarshalSecretDataRegistrySecretData(m map[string]json.RawMessage, result 
 }
 
 // SecretDataSSHSecretData : Secret Data field used by SSH secrets.
+// This type supports additional properties of type *string.
 // This model "extends" SecretData
 type SecretDataSSHSecretData struct {
 	// SSH key.
@@ -14358,7 +15636,7 @@ type SecretDataSSHSecretData struct {
 	// Known hosts.
 	KnownHosts *string `json:"known_hosts,omitempty"`
 
-	// Allows users to set arbitrary properties
+	// Allows users to set arbitrary properties of type *string.
 	additionalProperties map[string]*string
 }
 
@@ -14378,7 +15656,7 @@ func (*SecretDataSSHSecretData) isaSecretData() bool {
 	return true
 }
 
-// SetProperty allows the user to set an arbitrary property on an instance of SecretDataSSHSecretData
+// SetProperty allows the user to set an arbitrary property on an instance of SecretDataSSHSecretData.
 func (o *SecretDataSSHSecretData) SetProperty(key string, value *string) {
 	if o.additionalProperties == nil {
 		o.additionalProperties = make(map[string]*string)
@@ -14386,7 +15664,7 @@ func (o *SecretDataSSHSecretData) SetProperty(key string, value *string) {
 	o.additionalProperties[key] = value
 }
 
-// SetProperties allows the user to set a map of arbitrary properties on an instance of SecretDataSSHSecretData
+// SetProperties allows the user to set a map of arbitrary properties on an instance of SecretDataSSHSecretData.
 func (o *SecretDataSSHSecretData) SetProperties(m map[string]*string) {
 	o.additionalProperties = make(map[string]*string)
 	for k, v := range m {
@@ -14394,12 +15672,12 @@ func (o *SecretDataSSHSecretData) SetProperties(m map[string]*string) {
 	}
 }
 
-// GetProperty allows the user to retrieve an arbitrary property from an instance of SecretDataSSHSecretData
+// GetProperty allows the user to retrieve an arbitrary property from an instance of SecretDataSSHSecretData.
 func (o *SecretDataSSHSecretData) GetProperty(key string) *string {
 	return o.additionalProperties[key]
 }
 
-// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of SecretDataSSHSecretData
+// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of SecretDataSSHSecretData.
 func (o *SecretDataSSHSecretData) GetProperties() map[string]*string {
 	return o.additionalProperties
 }
@@ -14454,6 +15732,7 @@ func UnmarshalSecretDataSSHSecretData(m map[string]json.RawMessage, result inter
 }
 
 // SecretDataTLSSecretData : SecretDataTLSSecretData struct
+// This type supports additional properties of type *string.
 // This model "extends" SecretData
 type SecretDataTLSSecretData struct {
 	// The TLS certificate used in a TLS secret.
@@ -14462,7 +15741,7 @@ type SecretDataTLSSecretData struct {
 	// The TLS key used in a TLS secret.
 	TlsKey *string `json:"tls_key" validate:"required"`
 
-	// Allows users to set arbitrary properties
+	// Allows users to set arbitrary properties of type *string.
 	additionalProperties map[string]*string
 }
 
@@ -14483,7 +15762,7 @@ func (*SecretDataTLSSecretData) isaSecretData() bool {
 	return true
 }
 
-// SetProperty allows the user to set an arbitrary property on an instance of SecretDataTLSSecretData
+// SetProperty allows the user to set an arbitrary property on an instance of SecretDataTLSSecretData.
 func (o *SecretDataTLSSecretData) SetProperty(key string, value *string) {
 	if o.additionalProperties == nil {
 		o.additionalProperties = make(map[string]*string)
@@ -14491,7 +15770,7 @@ func (o *SecretDataTLSSecretData) SetProperty(key string, value *string) {
 	o.additionalProperties[key] = value
 }
 
-// SetProperties allows the user to set a map of arbitrary properties on an instance of SecretDataTLSSecretData
+// SetProperties allows the user to set a map of arbitrary properties on an instance of SecretDataTLSSecretData.
 func (o *SecretDataTLSSecretData) SetProperties(m map[string]*string) {
 	o.additionalProperties = make(map[string]*string)
 	for k, v := range m {
@@ -14499,12 +15778,12 @@ func (o *SecretDataTLSSecretData) SetProperties(m map[string]*string) {
 	}
 }
 
-// GetProperty allows the user to retrieve an arbitrary property from an instance of SecretDataTLSSecretData
+// GetProperty allows the user to retrieve an arbitrary property from an instance of SecretDataTLSSecretData.
 func (o *SecretDataTLSSecretData) GetProperty(key string) *string {
 	return o.additionalProperties[key]
 }
 
-// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of SecretDataTLSSecretData
+// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of SecretDataTLSSecretData.
 func (o *SecretDataTLSSecretData) GetProperties() map[string]*string {
 	return o.additionalProperties
 }
@@ -14640,6 +15919,93 @@ func (pager *ProjectsPager) GetNext() (page []Project, err error) {
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *ProjectsPager) GetAll() (allItems []Project, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+//
+// AllowedOutboundDestinationPager can be used to simplify the use of the "ListAllowedOutboundDestination" method.
+//
+type AllowedOutboundDestinationPager struct {
+	hasNext bool
+	options *ListAllowedOutboundDestinationOptions
+	client  *CodeEngineV2
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewAllowedOutboundDestinationPager returns a new AllowedOutboundDestinationPager instance.
+func (codeEngine *CodeEngineV2) NewAllowedOutboundDestinationPager(options *ListAllowedOutboundDestinationOptions) (pager *AllowedOutboundDestinationPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy ListAllowedOutboundDestinationOptions = *options
+	pager = &AllowedOutboundDestinationPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  codeEngine,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *AllowedOutboundDestinationPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *AllowedOutboundDestinationPager) GetNextWithContext(ctx context.Context) (page []AllowedOutboundDestinationIntf, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListAllowedOutboundDestinationWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		next = result.Next.Start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.AllowedOutboundDestinations
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *AllowedOutboundDestinationPager) GetAllWithContext(ctx context.Context) (allItems []AllowedOutboundDestinationIntf, err error) {
+	for pager.HasNext() {
+		var nextPage []AllowedOutboundDestinationIntf
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *AllowedOutboundDestinationPager) GetNext() (page []AllowedOutboundDestinationIntf, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *AllowedOutboundDestinationPager) GetAll() (allItems []AllowedOutboundDestinationIntf, err error) {
 	allItems, err = pager.GetAllWithContext(context.Background())
 	err = core.RepurposeSDKProblem(err, "")
 	return

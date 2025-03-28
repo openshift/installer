@@ -4,8 +4,14 @@
 package vpc
 
 import (
+	"context"
+	"fmt"
+	"log"
+
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -17,7 +23,7 @@ const (
 
 func DataSourceIBMISRegion() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceIBMISRegionRead,
+		ReadContext: dataSourceIBMISRegionRead,
 
 		Schema: map[string]*schema.Schema{
 
@@ -39,35 +45,47 @@ func DataSourceIBMISRegion() *schema.Resource {
 	}
 }
 
-func dataSourceIBMISRegionRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceIBMISRegionRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	name := d.Get("name").(string)
 
 	if name == "" {
 		bmxSess, err := meta.(conns.ClientSession).BluemixSession()
 		if err != nil {
-			return err
+			tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_is_region", "read", "session-initialize-client")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		name = bmxSess.Config.Region
 	}
-	return regionGet(d, meta, name)
+	return regionGet(context, d, meta, name)
 }
 
-func regionGet(d *schema.ResourceData, meta interface{}, name string) error {
+func regionGet(context context.Context, d *schema.ResourceData, meta interface{}, name string) diag.Diagnostics {
 	sess, err := vpcClient(meta)
 	if err != nil {
-		return err
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_is_region", "read", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	getRegionOptions := &vpcv1.GetRegionOptions{
 		Name: &name,
 	}
-	region, _, err := sess.GetRegion(getRegionOptions)
+	region, _, err := sess.GetRegionWithContext(context, getRegionOptions)
 	if err != nil {
-		return err
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetRegionWithContext failed: %s", err.Error()), "(Data) ibm_is_region", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	// For lack of anything better, compose our id from region name.
 	d.SetId(*region.Name)
-	d.Set(isRegionEndpoint, *region.Endpoint)
-	d.Set(isRegionName, *region.Name)
-	d.Set(isRegionStatus, *region.Status)
+	if err = d.Set("endpoint", region.Endpoint); err != nil {
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting endpoint: %s", err), "(Data) ibm_is_region", "read", "set-endpoint").GetDiag()
+	}
+	if err = d.Set("name", region.Name); err != nil {
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "(Data) ibm_is_region", "read", "set-name").GetDiag()
+	}
+	if err = d.Set("status", region.Status); err != nil {
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting status: %s", err), "(Data) ibm_is_region", "read", "set-status").GetDiag()
+	}
 	return nil
 }

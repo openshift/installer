@@ -8,13 +8,13 @@ import (
 	"fmt"
 	"time"
 
-	st "github.com/IBM-Cloud/power-go-client/clients/instance"
-	"github.com/IBM-Cloud/power-go-client/helpers"
+	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/softlayer/softlayer-go/sl"
 )
 
@@ -30,90 +30,99 @@ func ResourceIBMPIVolumeGroupAction() *schema.Resource {
 			Delete: schema.DefaultTimeout(15 * time.Minute),
 		},
 		Schema: map[string]*schema.Schema{
-			helpers.PICloudInstanceId: {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "Cloud Instance ID - This is the service_instance_id.",
+			// Arguments
+			Arg_CloudInstanceID: {
+				Description:  "The GUID of the service instance associated with an account.",
+				ForceNew:     true,
+				Required:     true,
+				Type:         schema.TypeString,
+				ValidateFunc: validation.NoZeroValues,
 			},
-			PIVolumeGroupID: {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "Volume Group ID",
-			},
-			PIVolumeGroupAction: {
-				Type:        schema.TypeList,
-				Required:    true,
-				ForceNew:    true,
-				MaxItems:    1,
-				MinItems:    1,
+			Arg_VolumeGroupAction: {
 				Description: "Performs an action (start stop reset ) on a volume group(one at a time).",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"start": {
-							Type:     schema.TypeList,
-							Optional: true,
-							MaxItems: 1,
-							ForceNew: true,
+						Attr_Start: {
+							Description: "Performs start action on a volume group.",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"source": {
-										Type:         schema.TypeString,
+									Attr_Source: {
+										Description:  "Indicates the source of the action `master` or `aux`.",
 										Required:     true,
-										ValidateFunc: validate.ValidateAllowedStringValues([]string{"master", "aux"}),
-									},
-								},
-							},
-						},
-						"stop": {
-							Type:     schema.TypeList,
-							Optional: true,
-							MaxItems: 1,
-							ForceNew: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"access": {
-										Type:     schema.TypeBool,
-										Required: true,
-									},
-								},
-							},
-						},
-						"reset": {
-							Type:     schema.TypeList,
-							Optional: true,
-							MaxItems: 1,
-							ForceNew: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"status": {
 										Type:         schema.TypeString,
-										Required:     true,
-										ValidateFunc: validate.ValidateAllowedStringValues([]string{"available"}),
+										ValidateFunc: validate.ValidateAllowedStringValues([]string{Master, Aux}),
 									},
 								},
 							},
+							ForceNew: true,
+							MaxItems: 1,
+							Optional: true,
+							Type:     schema.TypeList,
+						},
+						Attr_Stop: {
+							Description: "Performs stop action on a volume group.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									Attr_Access: {
+										Description: "Indicates the access mode of aux volumes.",
+										Required:    true,
+										Type:        schema.TypeBool,
+									},
+								},
+							},
+							ForceNew: true,
+							MaxItems: 1,
+							Optional: true,
+							Type:     schema.TypeList,
+						},
+						Attr_Reset: {
+							Description: "Performs reset action on the volume group to update its status value.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									Attr_Status: {
+										Description:  "New status to be set for a volume group.",
+										Required:     true,
+										Type:         schema.TypeString,
+										ValidateFunc: validate.ValidateAllowedStringValues([]string{State_Available}),
+									},
+								},
+							},
+							ForceNew: true,
+							MaxItems: 1,
+							Optional: true,
+							Type:     schema.TypeList,
 						},
 					},
 				},
+				ForceNew: true,
+				MaxItems: 1,
+				MinItems: 1,
+				Required: true,
+				Type:     schema.TypeList,
+			},
+			Arg_VolumeGroupID: {
+				Description:  "Volume Group ID",
+				ForceNew:     true,
+				Required:     true,
+				Type:         schema.TypeString,
+				ValidateFunc: validation.NoZeroValues,
 			},
 
-			// Computed Attributes
-			"volume_group_name": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Volume Group ID",
-			},
-			"volume_group_status": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Volume Group Status",
-			},
-			"replication_status": {
-				Type:        schema.TypeString,
+			// Attributes
+			Attr_ReplicationStatus: {
 				Computed:    true,
 				Description: "Volume Group Replication Status",
+				Type:        schema.TypeString,
+			},
+			Attr_VolumeGroupName: {
+				Computed:    true,
+				Description: "Volume Group ID",
+				Type:        schema.TypeString,
+			},
+			Attr_VolumeGroupStatus: {
+				Computed:    true,
+				Description: "Volume Group Status",
+				Type:        schema.TypeString,
 			},
 		},
 	}
@@ -125,16 +134,16 @@ func resourceIBMPIVolumeGroupActionCreate(ctx context.Context, d *schema.Resourc
 		return diag.FromErr(err)
 	}
 
-	vgID := d.Get(PIVolumeGroupID).(string)
-	vgAction, err := expandVolumeGroupAction(d.Get(PIVolumeGroupAction).([]interface{}))
+	vgID := d.Get(Arg_VolumeGroupID).(string)
+	vgAction, err := expandVolumeGroupAction(d.Get(Arg_VolumeGroupAction).([]interface{}))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
+	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
 	body := vgAction
 
-	client := st.NewIBMPIVolumeGroupClient(ctx, sess, cloudInstanceID)
+	client := instance.NewIBMPIVolumeGroupClient(ctx, sess, cloudInstanceID)
 	_, err = client.VolumeGroupAction(vgID, body)
 	if err != nil {
 		return diag.FromErr(err)
@@ -161,16 +170,16 @@ func resourceIBMPIVolumeGroupActionRead(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	client := st.NewIBMPIVolumeGroupClient(ctx, sess, cloudInstanceID)
+	client := instance.NewIBMPIVolumeGroupClient(ctx, sess, cloudInstanceID)
 
 	vg, err := client.GetDetails(vgID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.Set("volume_group_name", vg.Name)
-	d.Set("volume_group_status", vg.Status)
-	d.Set("replication_status", vg.ReplicationStatus)
+	d.Set(Attr_VolumeGroupName, vg.Name)
+	d.Set(Attr_VolumeGroupStatus, vg.Status)
+	d.Set(Attr_ReplicationStatus, vg.ReplicationStatus)
 
 	return nil
 }
@@ -190,18 +199,18 @@ func expandVolumeGroupAction(data []interface{}) (*models.VolumeGroupAction, err
 	vgAction := models.VolumeGroupAction{}
 	action := data[0].(map[string]interface{})
 
-	if v, ok := action["start"]; ok && len(v.([]interface{})) != 0 {
-		vgAction.Start = expandVolumeGroupStartAction(action["start"].([]interface{}))
+	if v, ok := action[Attr_Start]; ok && len(v.([]interface{})) != 0 {
+		vgAction.Start = expandVolumeGroupStartAction(action[Attr_Start].([]interface{}))
 		return &vgAction, nil
 	}
 
-	if v, ok := action["stop"]; ok && len(v.([]interface{})) != 0 {
-		vgAction.Stop = expandVolumeGroupStopAction(action["stop"].([]interface{}))
+	if v, ok := action[Attr_Stop]; ok && len(v.([]interface{})) != 0 {
+		vgAction.Stop = expandVolumeGroupStopAction(action[Attr_Stop].([]interface{}))
 		return &vgAction, nil
 	}
 
-	if v, ok := action["reset"]; ok && len(v.([]interface{})) != 0 {
-		vgAction.Reset = expandVolumeGroupResetAction(action["reset"].([]interface{}))
+	if v, ok := action[Attr_Reset]; ok && len(v.([]interface{})) != 0 {
+		vgAction.Reset = expandVolumeGroupResetAction(action[Attr_Reset].([]interface{}))
 		return &vgAction, nil
 	}
 	return nil, fmt.Errorf("[ERROR] no pi_volume_group_action received")
@@ -215,7 +224,7 @@ func expandVolumeGroupStartAction(start []interface{}) *models.VolumeGroupAction
 	s := start[0].(map[string]interface{})
 
 	return &models.VolumeGroupActionStart{
-		Source: sl.String(s["source"].(string)),
+		Source: sl.String(s[Attr_Source].(string)),
 	}
 }
 
@@ -227,7 +236,7 @@ func expandVolumeGroupStopAction(stop []interface{}) *models.VolumeGroupActionSt
 	s := stop[0].(map[string]interface{})
 
 	return &models.VolumeGroupActionStop{
-		Access: sl.Bool(s["access"].(bool)),
+		Access: sl.Bool(s[Attr_Access].(bool)),
 	}
 }
 
@@ -239,6 +248,6 @@ func expandVolumeGroupResetAction(reset []interface{}) *models.VolumeGroupAction
 	s := reset[0].(map[string]interface{})
 
 	return &models.VolumeGroupActionReset{
-		Status: sl.String(s["status"].(string)),
+		Status: sl.String(s[Attr_Status].(string)),
 	}
 }

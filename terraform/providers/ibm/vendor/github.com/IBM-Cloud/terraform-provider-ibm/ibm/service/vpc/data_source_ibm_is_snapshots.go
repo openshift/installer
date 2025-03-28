@@ -714,12 +714,12 @@ func getSnapshots(d *schema.ResourceData, meta interface{}) error {
 		l[isSnapshotClones] = flex.NewStringSet(schema.HashString, clones)
 
 		// catalog
+		catalogList := make([]map[string]interface{}, 0)
 		if snapshot.CatalogOffering != nil {
 			versionCrn := ""
 			if snapshot.CatalogOffering.Version != nil && snapshot.CatalogOffering.Version.CRN != nil {
 				versionCrn = *snapshot.CatalogOffering.Version.CRN
 			}
-			catalogList := make([]map[string]interface{}, 0)
 			catalogMap := map[string]interface{}{}
 			if versionCrn != "" {
 				catalogMap[isSnapshotCatalogOfferingVersionCrn] = versionCrn
@@ -738,8 +738,8 @@ func getSnapshots(d *schema.ResourceData, meta interface{}) error {
 				}
 			}
 			catalogList = append(catalogList, catalogMap)
-			l[isSnapshotCatalogOffering] = catalogList
 		}
+		l[isSnapshotCatalogOffering] = catalogList
 
 		backupPolicyPlanList := []map[string]interface{}{}
 		if snapshot.BackupPolicyPlan != nil {

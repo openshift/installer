@@ -9,17 +9,12 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-	st "github.com/IBM-Cloud/power-go-client/clients/instance"
-	"github.com/IBM-Cloud/power-go-client/helpers"
+	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
-)
-
-const (
-	PICloudConnectionNetworkId = "pi_network_id"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func ResourceIBMPICloudConnectionNetworkAttach() *schema.Resource {
@@ -35,24 +30,27 @@ func ResourceIBMPICloudConnectionNetworkAttach() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			// Required Attributes
-			helpers.PICloudInstanceId: {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "PI cloud instance ID",
+			// Arguments
+			Arg_CloudConnectionID: {
+				Description:  "Cloud Connection ID",
+				ForceNew:     true,
+				Required:     true,
+				Type:         schema.TypeString,
+				ValidateFunc: validation.NoZeroValues,
 			},
-			helpers.PICloudConnectionId: {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "Cloud Connection ID",
+			Arg_CloudInstanceID: {
+				Description:  "The GUID of the service instance associated with an account.",
+				ForceNew:     true,
+				Required:     true,
+				Type:         schema.TypeString,
+				ValidateFunc: validation.NoZeroValues,
 			},
-			PICloudConnectionNetworkId: {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "Network ID to attach to this cloud connection",
+			Arg_NetworkID: {
+				Description:  "Network ID to attach to this cloud connection",
+				ForceNew:     true,
+				Required:     true,
+				Type:         schema.TypeString,
+				ValidateFunc: validation.NoZeroValues,
 			},
 		},
 	}
@@ -64,12 +62,12 @@ func resourceIBMPICloudConnectionNetworkAttachCreate(ctx context.Context, d *sch
 		return diag.FromErr(err)
 	}
 
-	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
-	cloudConnectionID := d.Get(helpers.PICloudConnectionId).(string)
-	networkID := d.Get(PICloudConnectionNetworkId).(string)
+	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
+	cloudConnectionID := d.Get(Arg_CloudConnectionID).(string)
+	networkID := d.Get(Arg_NetworkID).(string)
 
-	client := st.NewIBMPICloudConnectionClient(ctx, sess, cloudInstanceID)
-	jobClient := st.NewIBMPIJobClient(ctx, sess, cloudInstanceID)
+	client := instance.NewIBMPICloudConnectionClient(ctx, sess, cloudInstanceID)
+	jobClient := instance.NewIBMPIJobClient(ctx, sess, cloudInstanceID)
 
 	_, jobReference, err := client.AddNetwork(cloudConnectionID, networkID)
 	if err != nil {
@@ -97,9 +95,9 @@ func resourceIBMPICloudConnectionNetworkAttachRead(ctx context.Context, d *schem
 	cloudConnectionID := parts[1]
 	networkID := parts[2]
 
-	d.Set(helpers.PICloudInstanceId, cloudInstanceID)
-	d.Set(helpers.PICloudConnectionId, cloudConnectionID)
-	d.Set(PICloudConnectionNetworkId, networkID)
+	d.Set(Arg_CloudInstanceID, cloudInstanceID)
+	d.Set(Arg_CloudConnectionID, cloudConnectionID)
+	d.Set(Arg_NetworkID, networkID)
 
 	return nil
 }
@@ -119,8 +117,8 @@ func resourceIBMPICloudConnectionNetworkAttachDelete(ctx context.Context, d *sch
 	cloudConnectionID := parts[1]
 	networkID := parts[2]
 
-	client := st.NewIBMPICloudConnectionClient(ctx, sess, cloudInstanceID)
-	jobClient := st.NewIBMPIJobClient(ctx, sess, cloudInstanceID)
+	client := instance.NewIBMPICloudConnectionClient(ctx, sess, cloudInstanceID)
+	jobClient := instance.NewIBMPIJobClient(ctx, sess, cloudInstanceID)
 
 	_, jobReference, err := client.DeleteNetwork(cloudConnectionID, networkID)
 	if err != nil {
@@ -128,7 +126,7 @@ func resourceIBMPICloudConnectionNetworkAttachDelete(ctx context.Context, d *sch
 		return diag.FromErr(err)
 	}
 	if jobReference != nil {
-		_, err = waitForIBMPIJobCompleted(ctx, jobClient, *jobReference.ID, d.Timeout(schema.TimeoutUpdate))
+		_, err = waitForIBMPIJobCompleted(ctx, jobClient, *jobReference.ID, d.Timeout(schema.TimeoutDelete))
 		if err != nil {
 			return diag.FromErr(err)
 		}

@@ -75,7 +75,7 @@ func DataSourceIbmSmServiceCredentialsSecretMetadata() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				ForceNew:    true,
-				Description: "A v4 UUID identifier, or `default` secret group.",
+				Description: "A UUID identifier, or `default` secret group.",
 			},
 			"secret_type": &schema.Schema{
 				Type:        schema.TypeString,

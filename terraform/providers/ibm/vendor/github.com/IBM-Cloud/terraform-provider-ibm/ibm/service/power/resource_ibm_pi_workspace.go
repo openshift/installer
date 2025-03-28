@@ -11,6 +11,7 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -29,6 +30,11 @@ func ResourceIBMPIWorkspace() *schema.Resource {
 			Delete: schema.DefaultTimeout(30 * time.Minute),
 			Update: schema.DefaultTimeout(10 * time.Minute),
 		},
+		CustomizeDiff: customdiff.Sequence(
+			func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+				return flex.ResourcePowerUserTagsCustomizeDiff(diff)
+			},
+		),
 
 		Schema: map[string]*schema.Schema{
 			// Arguments
@@ -62,6 +68,7 @@ func ResourceIBMPIWorkspace() *schema.Resource {
 				ValidateFunc: validation.NoZeroValues,
 			},
 			Arg_UserTags: {
+				Computed:    true,
 				Description: "List of user tags attached to the resource.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Optional:    true,

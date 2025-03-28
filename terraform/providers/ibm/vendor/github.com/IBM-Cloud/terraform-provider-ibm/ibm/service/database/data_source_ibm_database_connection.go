@@ -2226,14 +2226,3 @@ func DataSourceIBMDatabaseConnectionMySQLConnectionURIToMap(model *clouddatabase
 	}
 	return modelMap, nil
 }
-
-func DataSourceIBMDatabaseConnectionConnectionBundleToMap(model *clouddatabasesv5.ConnectionBundle) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	if model.Name != nil {
-		modelMap["name"] = *model.Name
-	}
-	if model.BundleBase64 != nil {
-		modelMap["bundle_base64"] = *model.BundleBase64
-	}
-	return modelMap, nil
-}

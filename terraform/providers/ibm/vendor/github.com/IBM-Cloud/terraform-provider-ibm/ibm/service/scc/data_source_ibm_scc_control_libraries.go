@@ -161,7 +161,7 @@ func dataSourceIbmSccControlLibrariesRead(context context.Context, d *schema.Res
 	return nil
 }
 
-func dataSourceIbmSccControlLibraryToMap(controlLibrary *securityandcompliancecenterapiv3.ControlLibraryItem) (map[string]interface{}, error) {
+func dataSourceIbmSccControlLibraryToMap(controlLibrary *securityandcompliancecenterapiv3.ControlLibrary) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if controlLibrary.ID != nil {
 		modelMap["id"] = controlLibrary.ID

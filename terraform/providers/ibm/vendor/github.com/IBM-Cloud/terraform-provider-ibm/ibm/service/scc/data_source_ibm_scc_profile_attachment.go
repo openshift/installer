@@ -262,7 +262,7 @@ func dataSourceIbmSccProfileAttachmentRead(context context.Context, d *schema.Re
 	scope := []map[string]interface{}{}
 	if attachmentItem.Scope != nil {
 		for _, modelItem := range attachmentItem.Scope {
-			modelMap, err := dataSourceIbmSccProfileAttachmentMultiCloudScopeToMap(&modelItem)
+			modelMap, err := dataSourceIbmSccProfileAttachmentMultiCloudScopeToMap(modelItem)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -350,12 +350,12 @@ func dataSourceIbmSccProfileAttachmentRead(context context.Context, d *schema.Re
 	return nil
 }
 
-func dataSourceIbmSccProfileAttachmentMultiCloudScopeToMap(model *securityandcompliancecenterapiv3.MultiCloudScope) (map[string]interface{}, error) {
+func dataSourceIbmSccProfileAttachmentMultiCloudScopeToMap(model securityandcompliancecenterapiv3.MultiCloudScopePayload) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	modelMap["environment"] = model.Environment
 	properties := []map[string]interface{}{}
 	for _, propertiesItem := range model.Properties {
-		propertiesItemMap, err := dataSourceIbmSccProfileAttachmentPropertyItemToMap(&propertiesItem)
+		propertiesItemMap, err := dataSourceIbmSccProfileAttachmentPropertyItemToMap(propertiesItem)
 		if err != nil {
 			return modelMap, err
 		}
@@ -365,18 +365,11 @@ func dataSourceIbmSccProfileAttachmentMultiCloudScopeToMap(model *securityandcom
 	return modelMap, nil
 }
 
-func dataSourceIbmSccProfileAttachmentPropertyItemToMap(model *securityandcompliancecenterapiv3.PropertyItem) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	if model.Name != nil {
-		modelMap["name"] = model.Name
-	}
-	if model.Value != nil {
-		modelMap["value"] = model.Value
-	}
-	return modelMap, nil
+func dataSourceIbmSccProfileAttachmentPropertyItemToMap(model securityandcompliancecenterapiv3.ScopePropertyIntf) (map[string]interface{}, error) {
+	return scopePropertiesToMap(model)
 }
 
-func dataSourceIbmSccProfileAttachmentAttachmentsNotificationsPrototypeToMap(model *securityandcompliancecenterapiv3.AttachmentsNotificationsPrototype) (map[string]interface{}, error) {
+func dataSourceIbmSccProfileAttachmentAttachmentsNotificationsPrototypeToMap(model *securityandcompliancecenterapiv3.AttachmentNotifications) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	modelMap["enabled"] = model.Enabled
 	controlsMap, err := dataSourceIbmSccProfileAttachmentFailedControlsToMap(model.Controls)
@@ -387,7 +380,7 @@ func dataSourceIbmSccProfileAttachmentAttachmentsNotificationsPrototypeToMap(mod
 	return modelMap, nil
 }
 
-func dataSourceIbmSccProfileAttachmentFailedControlsToMap(model *securityandcompliancecenterapiv3.FailedControls) (map[string]interface{}, error) {
+func dataSourceIbmSccProfileAttachmentFailedControlsToMap(model *securityandcompliancecenterapiv3.AttachmentNotificationsControls) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ThresholdLimit != nil {
 		modelMap["threshold_limit"] = flex.IntValue(model.ThresholdLimit)
@@ -398,7 +391,7 @@ func dataSourceIbmSccProfileAttachmentFailedControlsToMap(model *securityandcomp
 	return modelMap, nil
 }
 
-func dataSourceIbmSccProfileAttachmentAttachmentParameterPrototypeToMap(model *securityandcompliancecenterapiv3.AttachmentParameterPrototype) (map[string]interface{}, error) {
+func dataSourceIbmSccProfileAttachmentAttachmentParameterPrototypeToMap(model *securityandcompliancecenterapiv3.Parameter) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.AssessmentType != nil {
 		modelMap["assessment_type"] = model.AssessmentType

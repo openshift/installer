@@ -107,6 +107,11 @@ func DataSourceIBMIAMAccessGroup() *schema.Resource {
 								},
 							},
 						},
+						"crn": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "CRN of the access group",
+						},
 					},
 				},
 			},
@@ -205,6 +210,7 @@ func dataIBMIAMAccessGroupRead(d *schema.ResourceData, meta interface{}) error {
 	listAccessGroupOption := iamAccessGroupsClient.NewListAccessGroupsOptions(accountID)
 	listAccessGroupOption.Limit = &plimit
 	listAccessGroupOption.Offset = &offset
+	listAccessGroupOption.SetShowCRN(true)
 	retreivedGroups, detailedResponse, err := iamAccessGroupsClient.ListAccessGroups(listAccessGroupOption)
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error retrieving access groups: %s. API Response is: %s", err, detailedResponse)
@@ -266,6 +272,7 @@ func dataIBMIAMAccessGroupRead(d *schema.ResourceData, meta interface{}) error {
 			"iam_service_ids": serviceID,
 			"iam_profile_ids": profileID,
 			"rules":           flex.FlattenAccessGroupRules(rules),
+			"crn":             grp.CRN,
 		}
 
 		grpMap = append(grpMap, grpInstance)

@@ -1,8 +1,8 @@
-// Copyright IBM Corp. 2024 All Rights Reserved.
+// Copyright IBM Corp. 2025 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 /*
- * IBM OpenAPI Terraform Generator Version: 3.94.1-71478489-20240820-161623
+ * IBM OpenAPI Terraform Generator Version: 3.99.1-daeb6e46-20250131-173156
  */
 
 package partnercentersell
@@ -46,7 +46,7 @@ func ResourceIbmOnboardingIamRegistration() *schema.Resource {
 			},
 			"name": &schema.Schema{
 				Type:         schema.TypeString,
-				Optional:     true,
+				Required:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_onboarding_iam_registration", "name"),
 				Description:  "The IAM registration name, which must be the programmatic name of the product.",
 			},
@@ -338,13 +338,19 @@ func ResourceIbmOnboardingIamRegistration() *schema.Resource {
 								Schema: map[string]*schema.Schema{
 									"account_id": &schema.Schema{
 										Type:        schema.TypeString,
-										Optional:    true,
+										Required:    true,
 										Description: "An account id.",
 									},
 									"service_name": &schema.Schema{
 										Type:        schema.TypeString,
-										Optional:    true,
+										Required:    true,
 										Description: "The name of the service.",
+									},
+									"additional_properties": &schema.Schema{
+										Type:        schema.TypeMap,
+										Required:    true,
+										Description: "Additional properties the key must come from supported attributes.",
+										Elem:        &schema.Schema{Type: schema.TypeString},
 									},
 								},
 							},
@@ -387,7 +393,7 @@ func ResourceIbmOnboardingIamRegistration() *schema.Resource {
 										Optional:    true,
 										Description: "Optional opt-in if attribute is hidden from customers (customer can still use it if they found out themselves).",
 									},
-									"supported_attributes": &schema.Schema{
+									"supported_patterns": &schema.Schema{
 										Type:        schema.TypeList,
 										Optional:    true,
 										Description: "The list of supported patterns.",
@@ -938,10 +944,9 @@ func ResourceIbmOnboardingIamRegistration() *schema.Resource {
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"access_policy": &schema.Schema{
-										Type:        schema.TypeMap,
-										Optional:    true,
+										Type:        schema.TypeBool,
+										Required:    true,
 										Description: "Optional opt-in to require access control on the role.",
-										Elem:        &schema.Schema{Type: schema.TypeString},
 									},
 									"policy_type": &schema.Schema{
 										Type:        schema.TypeList,
@@ -1034,8 +1039,8 @@ func ResourceIbmOnboardingIamRegistrationValidator() *validate.ResourceValidator
 			Identifier:                 "name",
 			ValidateFunctionIdentifier: validate.ValidateRegexp,
 			Type:                       validate.TypeString,
-			Optional:                   true,
-			Regexp:                     `^[a-z0-9\-.]+$`,
+			Required:                   true,
+			Regexp:                     `^[a-zA-Z0-9\-.]+$`,
 		},
 		validate.ValidateSchema{
 			Identifier:                 "service_type",
@@ -1061,9 +1066,7 @@ func resourceIbmOnboardingIamRegistrationCreate(context context.Context, d *sche
 	createIamRegistrationOptions := &partnercentersellv1.CreateIamRegistrationOptions{}
 
 	createIamRegistrationOptions.SetProductID(d.Get("product_id").(string))
-	if _, ok := d.GetOk("name"); ok {
-		createIamRegistrationOptions.SetName(d.Get("name").(string))
-	}
+	createIamRegistrationOptions.SetName(d.Get("name").(string))
 	if _, ok := d.GetOk("enabled"); ok {
 		createIamRegistrationOptions.SetEnabled(d.Get("enabled").(bool))
 	}
@@ -1215,11 +1218,16 @@ func resourceIbmOnboardingIamRegistrationRead(context context.Context, d *schema
 		return tfErr.GetDiag()
 	}
 
-	if !core.IsNil(iamServiceRegistration.Name) {
-		if err = d.Set("name", iamServiceRegistration.Name); err != nil {
-			err = fmt.Errorf("Error setting name: %s", err)
-			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_onboarding_iam_registration", "read", "set-name").GetDiag()
+	if parts[0] != "" {
+		if err = d.Set("product_id", parts[0]); err != nil {
+			err = fmt.Errorf("Error setting product_id: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_onboarding_iam_registration", "read", "set-product_id").GetDiag()
 		}
+	}
+
+	if err = d.Set("name", iamServiceRegistration.Name); err != nil {
+		err = fmt.Errorf("Error setting name: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_onboarding_iam_registration", "read", "set-name").GetDiag()
 	}
 	if !core.IsNil(iamServiceRegistration.Enabled) {
 		if err = d.Set("enabled", iamServiceRegistration.Enabled); err != nil {
@@ -1698,11 +1706,15 @@ func ResourceIbmOnboardingIamRegistrationMapToIamServiceRegistrationSupportedAno
 
 func ResourceIbmOnboardingIamRegistrationMapToIamServiceRegistrationSupportedAnonymousAccessAttributes(modelMap map[string]interface{}) (*partnercentersellv1.IamServiceRegistrationSupportedAnonymousAccessAttributes, error) {
 	model := &partnercentersellv1.IamServiceRegistrationSupportedAnonymousAccessAttributes{}
-	if modelMap["account_id"] != nil && modelMap["account_id"].(string) != "" {
-		model.AccountID = core.StringPtr(modelMap["account_id"].(string))
-	}
-	if modelMap["service_name"] != nil && modelMap["service_name"].(string) != "" {
-		model.ServiceName = core.StringPtr(modelMap["service_name"].(string))
+	model.AccountID = core.StringPtr(modelMap["account_id"].(string))
+	model.ServiceName = core.StringPtr(modelMap["service_name"].(string))
+	if modelMap["additional_properties"] != nil {
+		model.AdditionalProperties = make(map[string]string)
+		for key, value := range modelMap["additional_properties"].(map[string]interface{}) {
+			if str, ok := value.(string); ok {
+				model.AdditionalProperties[key] = str
+			}
+		}
 	}
 	return model, nil
 }
@@ -1755,12 +1767,12 @@ func ResourceIbmOnboardingIamRegistrationMapToSupportedAttributesOptions(modelMa
 	if modelMap["hidden"] != nil {
 		model.Hidden = core.BoolPtr(modelMap["hidden"].(bool))
 	}
-	if modelMap["supported_attributes"] != nil {
-		supportedAttributes := []string{}
-		for _, supportedAttributesItem := range modelMap["supported_attributes"].([]interface{}) {
-			supportedAttributes = append(supportedAttributes, supportedAttributesItem.(string))
+	if modelMap["supported_patterns"] != nil {
+		supportedPatterns := []string{}
+		for _, supportedPatternsItem := range modelMap["supported_patterns"].([]interface{}) {
+			supportedPatterns = append(supportedPatterns, supportedPatternsItem.(string))
 		}
-		model.SupportedAttributes = supportedAttributes
+		model.SupportedPatterns = supportedPatterns
 	}
 	if modelMap["policy_types"] != nil {
 		policyTypes := []string{}
@@ -1978,14 +1990,7 @@ func ResourceIbmOnboardingIamRegistrationMapToIamServiceRegistrationSupportedRol
 
 func ResourceIbmOnboardingIamRegistrationMapToSupportedRoleOptions(modelMap map[string]interface{}) (*partnercentersellv1.SupportedRoleOptions, error) {
 	model := &partnercentersellv1.SupportedRoleOptions{}
-	if modelMap["access_policy"] != nil {
-		model.AccessPolicy = make(map[string]string)
-		for key, value := range modelMap["access_policy"].(map[string]interface{}) {
-			if str, ok := value.(string); ok {
-				model.AccessPolicy[key] = str
-			}
-		}
-	}
+	model.AccessPolicy = core.BoolPtr(modelMap["access_policy"].(bool))
 	if modelMap["policy_type"] != nil {
 		policyType := []string{}
 		for _, policyTypeItem := range modelMap["policy_type"].([]interface{}) {
@@ -2189,12 +2194,13 @@ func ResourceIbmOnboardingIamRegistrationIamServiceRegistrationSupportedAnonymou
 
 func ResourceIbmOnboardingIamRegistrationIamServiceRegistrationSupportedAnonymousAccessAttributesToMap(model *partnercentersellv1.IamServiceRegistrationSupportedAnonymousAccessAttributes) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	if model.AccountID != nil {
-		modelMap["account_id"] = *model.AccountID
+	modelMap["account_id"] = *model.AccountID
+	modelMap["service_name"] = *model.ServiceName
+	additionalProperties := make(map[string]interface{})
+	for k, v := range model.AdditionalProperties {
+		additionalProperties[k] = flex.Stringify(v)
 	}
-	if model.ServiceName != nil {
-		modelMap["service_name"] = *model.ServiceName
-	}
+	modelMap["additional_properties"] = additionalProperties
 	return modelMap, nil
 }
 
@@ -2242,8 +2248,8 @@ func ResourceIbmOnboardingIamRegistrationSupportedAttributesOptionsToMap(model *
 	if model.Hidden != nil {
 		modelMap["hidden"] = *model.Hidden
 	}
-	if model.SupportedAttributes != nil {
-		modelMap["supported_attributes"] = model.SupportedAttributes
+	if model.SupportedPatterns != nil {
+		modelMap["supported_patterns"] = model.SupportedPatterns
 	}
 	if model.PolicyTypes != nil {
 		modelMap["policy_types"] = model.PolicyTypes
@@ -2453,13 +2459,7 @@ func ResourceIbmOnboardingIamRegistrationIamServiceRegistrationSupportedRoleToMa
 
 func ResourceIbmOnboardingIamRegistrationSupportedRoleOptionsToMap(model *partnercentersellv1.SupportedRoleOptions) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	if model.AccessPolicy != nil {
-		accessPolicy := make(map[string]interface{})
-		for k, v := range model.AccessPolicy {
-			accessPolicy[k] = flex.Stringify(v)
-		}
-		modelMap["access_policy"] = accessPolicy
-	}
+	modelMap["access_policy"] = *model.AccessPolicy
 	if model.PolicyType != nil {
 		modelMap["policy_type"] = model.PolicyType
 	}
@@ -2518,557 +2518,741 @@ func ResourceIbmOnboardingIamRegistrationIamServiceRegistrationPatchAsPatch(patc
 	path = "enabled"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["enabled"] = nil
+	} else if !exists {
+		delete(patch, "enabled")
 	}
 	path = "service_type"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["service_type"] = nil
+	} else if !exists {
+		delete(patch, "service_type")
 	}
 	path = "actions"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["actions"] = nil
 	} else if exists && patch["actions"] != nil {
-		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationActionAsPatch(patch["actions"].([]interface{})[0].(map[string]interface{}), d)
+		actionsList := patch["actions"].([]map[string]interface{})
+		for i, actionsItem := range actionsList {
+			ResourceIbmOnboardingIamRegistrationIamServiceRegistrationActionAsPatch(actionsItem, d, fmt.Sprintf("%s.%d", path, i))
+		}
+	} else if !exists {
+		delete(patch, "actions")
 	}
 	path = "additional_policy_scopes"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["additional_policy_scopes"] = nil
+	} else if !exists {
+		delete(patch, "additional_policy_scopes")
 	}
 	path = "display_name"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["display_name"] = nil
+	} else if !exists {
+		delete(patch, "display_name")
 	}
 	path = "parent_ids"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["parent_ids"] = nil
+	} else if !exists {
+		delete(patch, "parent_ids")
 	}
 	path = "resource_hierarchy_attribute"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["resource_hierarchy_attribute"] = nil
 	} else if exists && patch["resource_hierarchy_attribute"] != nil {
-		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationResourceHierarchyAttributeAsPatch(patch["resource_hierarchy_attribute"].(map[string]interface{}), d)
+		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationResourceHierarchyAttributeAsPatch(patch["resource_hierarchy_attribute"].(map[string]interface{}), d, fmt.Sprintf("%s.0", path))
+	} else if !exists {
+		delete(patch, "resource_hierarchy_attribute")
 	}
 	path = "supported_anonymous_accesses"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["supported_anonymous_accesses"] = nil
 	} else if exists && patch["supported_anonymous_accesses"] != nil {
-		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationSupportedAnonymousAccessAsPatch(patch["supported_anonymous_accesses"].([]interface{})[0].(map[string]interface{}), d)
+		supported_anonymous_accessesList := patch["supported_anonymous_accesses"].([]map[string]interface{})
+		for i, supported_anonymous_accessesItem := range supported_anonymous_accessesList {
+			ResourceIbmOnboardingIamRegistrationIamServiceRegistrationSupportedAnonymousAccessAsPatch(supported_anonymous_accessesItem, d, fmt.Sprintf("%s.%d", path, i))
+		}
+	} else if !exists {
+		delete(patch, "supported_anonymous_accesses")
 	}
 	path = "supported_attributes"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["supported_attributes"] = nil
 	} else if exists && patch["supported_attributes"] != nil {
-		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationSupportedAttributeAsPatch(patch["supported_attributes"].([]interface{})[0].(map[string]interface{}), d)
+		supported_attributesList := patch["supported_attributes"].([]map[string]interface{})
+		for i, supported_attributesItem := range supported_attributesList {
+			ResourceIbmOnboardingIamRegistrationIamServiceRegistrationSupportedAttributeAsPatch(supported_attributesItem, d, fmt.Sprintf("%s.%d", path, i))
+		}
+	} else if !exists {
+		delete(patch, "supported_attributes")
 	}
 	path = "supported_authorization_subjects"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["supported_authorization_subjects"] = nil
 	} else if exists && patch["supported_authorization_subjects"] != nil {
-		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationSupportedAuthorizationSubjectAsPatch(patch["supported_authorization_subjects"].([]interface{})[0].(map[string]interface{}), d)
+		supported_authorization_subjectsList := patch["supported_authorization_subjects"].([]map[string]interface{})
+		for i, supported_authorization_subjectsItem := range supported_authorization_subjectsList {
+			ResourceIbmOnboardingIamRegistrationIamServiceRegistrationSupportedAuthorizationSubjectAsPatch(supported_authorization_subjectsItem, d, fmt.Sprintf("%s.%d", path, i))
+		}
+	} else if !exists {
+		delete(patch, "supported_authorization_subjects")
 	}
 	path = "supported_roles"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["supported_roles"] = nil
 	} else if exists && patch["supported_roles"] != nil {
-		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationSupportedRoleAsPatch(patch["supported_roles"].([]interface{})[0].(map[string]interface{}), d)
+		supported_rolesList := patch["supported_roles"].([]map[string]interface{})
+		for i, supported_rolesItem := range supported_rolesList {
+			ResourceIbmOnboardingIamRegistrationIamServiceRegistrationSupportedRoleAsPatch(supported_rolesItem, d, fmt.Sprintf("%s.%d", path, i))
+		}
+	} else if !exists {
+		delete(patch, "supported_roles")
 	}
 	path = "supported_network"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["supported_network"] = nil
 	} else if exists && patch["supported_network"] != nil {
-		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationSupportedNetworkAsPatch(patch["supported_network"].(map[string]interface{}), d)
+		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationSupportedNetworkAsPatch(patch["supported_network"].(map[string]interface{}), d, fmt.Sprintf("%s.0", path))
+	} else if !exists {
+		delete(patch, "supported_network")
 	}
 
 	return patch
 }
 
-func ResourceIbmOnboardingIamRegistrationIamServiceRegistrationSupportedNetworkAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+func ResourceIbmOnboardingIamRegistrationIamServiceRegistrationSupportedNetworkAsPatch(patch map[string]interface{}, d *schema.ResourceData, rootPath string) {
 	var path string
 
-	path = "supported_network.0.environment_attributes"
+	path = rootPath + ".environment_attributes"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["environment_attributes"] = nil
 	} else if exists && patch["environment_attributes"] != nil {
-		ResourceIbmOnboardingIamRegistrationEnvironmentAttributeAsPatch(patch["environment_attributes"].([]interface{})[0].(map[string]interface{}), d)
+		environment_attributesList := patch["environment_attributes"].([]map[string]interface{})
+		for i, environment_attributesItem := range environment_attributesList {
+			ResourceIbmOnboardingIamRegistrationEnvironmentAttributeAsPatch(environment_attributesItem, d, fmt.Sprintf("%s.%d", path, i))
+		}
+	} else if !exists {
+		delete(patch, "environment_attributes")
 	}
 }
 
-func ResourceIbmOnboardingIamRegistrationEnvironmentAttributeAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+func ResourceIbmOnboardingIamRegistrationEnvironmentAttributeAsPatch(patch map[string]interface{}, d *schema.ResourceData, rootPath string) {
 	var path string
 
-	path = "supported_network.0.environment_attributes.0.key"
+	path = rootPath + ".key"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["key"] = nil
+	} else if !exists {
+		delete(patch, "key")
 	}
-	path = "supported_network.0.environment_attributes.0.values"
+	path = rootPath + ".values"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["values"] = nil
+	} else if !exists {
+		delete(patch, "values")
 	}
-	path = "supported_network.0.environment_attributes.0.options"
+	path = rootPath + ".options"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["options"] = nil
 	} else if exists && patch["options"] != nil {
-		ResourceIbmOnboardingIamRegistrationEnvironmentAttributeOptionsAsPatch(patch["options"].(map[string]interface{}), d)
+		ResourceIbmOnboardingIamRegistrationEnvironmentAttributeOptionsAsPatch(patch["options"].(map[string]interface{}), d, fmt.Sprintf("%s.0", path))
+	} else if !exists {
+		delete(patch, "options")
 	}
 }
 
-func ResourceIbmOnboardingIamRegistrationEnvironmentAttributeOptionsAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+func ResourceIbmOnboardingIamRegistrationEnvironmentAttributeOptionsAsPatch(patch map[string]interface{}, d *schema.ResourceData, rootPath string) {
 	var path string
 
-	path = "supported_network.0.environment_attributes.0.options.0.hidden"
+	path = rootPath + ".hidden"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["hidden"] = nil
+	} else if !exists {
+		delete(patch, "hidden")
 	}
 }
 
-func ResourceIbmOnboardingIamRegistrationIamServiceRegistrationSupportedRoleAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+func ResourceIbmOnboardingIamRegistrationIamServiceRegistrationSupportedRoleAsPatch(patch map[string]interface{}, d *schema.ResourceData, rootPath string) {
 	var path string
 
-	path = "supported_roles.0.id"
+	path = rootPath + ".id"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["id"] = nil
+	} else if !exists {
+		delete(patch, "id")
 	}
-	path = "supported_roles.0.description"
+	path = rootPath + ".description"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["description"] = nil
 	} else if exists && patch["description"] != nil {
-		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationDescriptionObjectAsPatch(patch["description"].(map[string]interface{}), d)
+		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationDescriptionObjectAsPatch(patch["description"].(map[string]interface{}), d, fmt.Sprintf("%s.0", path))
+	} else if !exists {
+		delete(patch, "description")
 	}
-	path = "supported_roles.0.display_name"
+	path = rootPath + ".display_name"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["display_name"] = nil
 	} else if exists && patch["display_name"] != nil {
-		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationDisplayNameObjectAsPatch(patch["display_name"].(map[string]interface{}), d)
+		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationDisplayNameObjectAsPatch(patch["display_name"].(map[string]interface{}), d, fmt.Sprintf("%s.0", path))
+	} else if !exists {
+		delete(patch, "display_name")
 	}
-	path = "supported_roles.0.options"
+	path = rootPath + ".options"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["options"] = nil
 	} else if exists && patch["options"] != nil {
-		ResourceIbmOnboardingIamRegistrationSupportedRoleOptionsAsPatch(patch["options"].(map[string]interface{}), d)
+		ResourceIbmOnboardingIamRegistrationSupportedRoleOptionsAsPatch(patch["options"].(map[string]interface{}), d, fmt.Sprintf("%s.0", path))
+	} else if !exists {
+		delete(patch, "options")
 	}
 }
 
-func ResourceIbmOnboardingIamRegistrationSupportedRoleOptionsAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+func ResourceIbmOnboardingIamRegistrationSupportedRoleOptionsAsPatch(patch map[string]interface{}, d *schema.ResourceData, rootPath string) {
 	var path string
 
-	path = "supported_roles.0.options.0.access_policy"
-	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
-		patch["access_policy"] = nil
-	}
-	path = "supported_roles.0.options.0.policy_type"
+	path = rootPath + ".policy_type"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["policy_type"] = nil
+	} else if !exists {
+		delete(patch, "policy_type")
 	}
-	path = "supported_roles.0.options.0.account_type"
+	path = rootPath + ".account_type"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["account_type"] = nil
+	} else if !exists {
+		delete(patch, "account_type")
 	}
 }
 
-func ResourceIbmOnboardingIamRegistrationIamServiceRegistrationSupportedAuthorizationSubjectAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+func ResourceIbmOnboardingIamRegistrationIamServiceRegistrationSupportedAuthorizationSubjectAsPatch(patch map[string]interface{}, d *schema.ResourceData, rootPath string) {
 	var path string
 
-	path = "supported_authorization_subjects.0.attributes"
+	path = rootPath + ".attributes"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["attributes"] = nil
 	} else if exists && patch["attributes"] != nil {
-		ResourceIbmOnboardingIamRegistrationSupportAuthorizationSubjectAttributeAsPatch(patch["attributes"].(map[string]interface{}), d)
+		ResourceIbmOnboardingIamRegistrationSupportAuthorizationSubjectAttributeAsPatch(patch["attributes"].(map[string]interface{}), d, fmt.Sprintf("%s.0", path))
+	} else if !exists {
+		delete(patch, "attributes")
 	}
-	path = "supported_authorization_subjects.0.roles"
+	path = rootPath + ".roles"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["roles"] = nil
+	} else if !exists {
+		delete(patch, "roles")
 	}
 }
 
-func ResourceIbmOnboardingIamRegistrationSupportAuthorizationSubjectAttributeAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+func ResourceIbmOnboardingIamRegistrationSupportAuthorizationSubjectAttributeAsPatch(patch map[string]interface{}, d *schema.ResourceData, rootPath string) {
 	var path string
 
-	path = "supported_authorization_subjects.0.attributes.0.service_name"
+	path = rootPath + ".service_name"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["service_name"] = nil
+	} else if !exists {
+		delete(patch, "service_name")
 	}
-	path = "supported_authorization_subjects.0.attributes.0.resource_type"
+	path = rootPath + ".resource_type"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["resource_type"] = nil
+	} else if !exists {
+		delete(patch, "resource_type")
 	}
 }
 
-func ResourceIbmOnboardingIamRegistrationIamServiceRegistrationSupportedAttributeAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+func ResourceIbmOnboardingIamRegistrationIamServiceRegistrationSupportedAttributeAsPatch(patch map[string]interface{}, d *schema.ResourceData, rootPath string) {
 	var path string
 
-	path = "supported_attributes.0.key"
+	path = rootPath + ".key"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["key"] = nil
+	} else if !exists {
+		delete(patch, "key")
 	}
-	path = "supported_attributes.0.options"
+	path = rootPath + ".options"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["options"] = nil
 	} else if exists && patch["options"] != nil {
-		ResourceIbmOnboardingIamRegistrationSupportedAttributesOptionsAsPatch(patch["options"].(map[string]interface{}), d)
+		ResourceIbmOnboardingIamRegistrationSupportedAttributesOptionsAsPatch(patch["options"].(map[string]interface{}), d, fmt.Sprintf("%s.0", path))
+	} else if !exists {
+		delete(patch, "options")
 	}
-	path = "supported_attributes.0.display_name"
+	path = rootPath + ".display_name"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["display_name"] = nil
 	} else if exists && patch["display_name"] != nil {
-		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationDisplayNameObjectAsPatch(patch["display_name"].(map[string]interface{}), d)
+		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationDisplayNameObjectAsPatch(patch["display_name"].(map[string]interface{}), d, fmt.Sprintf("%s.0", path))
+	} else if !exists {
+		delete(patch, "display_name")
 	}
-	path = "supported_attributes.0.description"
+	path = rootPath + ".description"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["description"] = nil
 	} else if exists && patch["description"] != nil {
-		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationDescriptionObjectAsPatch(patch["description"].(map[string]interface{}), d)
+		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationDescriptionObjectAsPatch(patch["description"].(map[string]interface{}), d, fmt.Sprintf("%s.0", path))
+	} else if !exists {
+		delete(patch, "description")
 	}
-	path = "supported_attributes.0.ui"
+	path = rootPath + ".ui"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["ui"] = nil
 	} else if exists && patch["ui"] != nil {
-		ResourceIbmOnboardingIamRegistrationSupportedAttributeUiAsPatch(patch["ui"].(map[string]interface{}), d)
+		ResourceIbmOnboardingIamRegistrationSupportedAttributeUiAsPatch(patch["ui"].(map[string]interface{}), d, fmt.Sprintf("%s.0", path))
+	} else if !exists {
+		delete(patch, "ui")
 	}
 }
 
-func ResourceIbmOnboardingIamRegistrationSupportedAttributeUiAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+func ResourceIbmOnboardingIamRegistrationSupportedAttributeUiAsPatch(patch map[string]interface{}, d *schema.ResourceData, rootPath string) {
 	var path string
 
-	path = "supported_attributes.0.ui.0.input_type"
+	path = rootPath + ".input_type"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["input_type"] = nil
+	} else if !exists {
+		delete(patch, "input_type")
 	}
-	path = "supported_attributes.0.ui.0.input_details"
+	path = rootPath + ".input_details"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["input_details"] = nil
 	} else if exists && patch["input_details"] != nil {
-		ResourceIbmOnboardingIamRegistrationSupportedAttributeUiInputDetailsAsPatch(patch["input_details"].(map[string]interface{}), d)
+		ResourceIbmOnboardingIamRegistrationSupportedAttributeUiInputDetailsAsPatch(patch["input_details"].(map[string]interface{}), d, fmt.Sprintf("%s.0", path))
+	} else if !exists {
+		delete(patch, "input_details")
 	}
 }
 
-func ResourceIbmOnboardingIamRegistrationSupportedAttributeUiInputDetailsAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+func ResourceIbmOnboardingIamRegistrationSupportedAttributeUiInputDetailsAsPatch(patch map[string]interface{}, d *schema.ResourceData, rootPath string) {
 	var path string
 
-	path = "supported_attributes.0.ui.0.input_details.0.type"
+	path = rootPath + ".type"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["type"] = nil
+	} else if !exists {
+		delete(patch, "type")
 	}
-	path = "supported_attributes.0.ui.0.input_details.0.values"
+	path = rootPath + ".values"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["values"] = nil
 	} else if exists && patch["values"] != nil {
-		ResourceIbmOnboardingIamRegistrationSupportedAttributeUiInputValueAsPatch(patch["values"].([]interface{})[0].(map[string]interface{}), d)
+		valuesList := patch["values"].([]map[string]interface{})
+		for i, valuesItem := range valuesList {
+			ResourceIbmOnboardingIamRegistrationSupportedAttributeUiInputValueAsPatch(valuesItem, d, fmt.Sprintf("%s.%d", path, i))
+		}
+	} else if !exists {
+		delete(patch, "values")
 	}
-	path = "supported_attributes.0.ui.0.input_details.0.gst"
+	path = rootPath + ".gst"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["gst"] = nil
 	} else if exists && patch["gst"] != nil {
-		ResourceIbmOnboardingIamRegistrationSupportedAttributeUiInputGstAsPatch(patch["gst"].(map[string]interface{}), d)
+		ResourceIbmOnboardingIamRegistrationSupportedAttributeUiInputGstAsPatch(patch["gst"].(map[string]interface{}), d, fmt.Sprintf("%s.0", path))
+	} else if !exists {
+		delete(patch, "gst")
 	}
-	path = "supported_attributes.0.ui.0.input_details.0.url"
+	path = rootPath + ".url"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["url"] = nil
 	} else if exists && patch["url"] != nil {
-		ResourceIbmOnboardingIamRegistrationSupportedAttributeUiInputURLAsPatch(patch["url"].(map[string]interface{}), d)
+		ResourceIbmOnboardingIamRegistrationSupportedAttributeUiInputURLAsPatch(patch["url"].(map[string]interface{}), d, fmt.Sprintf("%s.0", path))
+	} else if !exists {
+		delete(patch, "url")
 	}
 }
 
-func ResourceIbmOnboardingIamRegistrationSupportedAttributeUiInputURLAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+func ResourceIbmOnboardingIamRegistrationSupportedAttributeUiInputURLAsPatch(patch map[string]interface{}, d *schema.ResourceData, rootPath string) {
 	var path string
 
-	path = "supported_attributes.0.ui.0.input_details.0.url.0.url_endpoint"
+	path = rootPath + ".url_endpoint"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["url_endpoint"] = nil
+	} else if !exists {
+		delete(patch, "url_endpoint")
 	}
-	path = "supported_attributes.0.ui.0.input_details.0.url.0.input_option_label"
+	path = rootPath + ".input_option_label"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["input_option_label"] = nil
+	} else if !exists {
+		delete(patch, "input_option_label")
 	}
 }
 
-func ResourceIbmOnboardingIamRegistrationSupportedAttributeUiInputGstAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+func ResourceIbmOnboardingIamRegistrationSupportedAttributeUiInputGstAsPatch(patch map[string]interface{}, d *schema.ResourceData, rootPath string) {
 	var path string
 
-	path = "supported_attributes.0.ui.0.input_details.0.gst.0.query"
+	path = rootPath + ".query"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["query"] = nil
+	} else if !exists {
+		delete(patch, "query")
 	}
-	path = "supported_attributes.0.ui.0.input_details.0.gst.0.value_property_name"
+	path = rootPath + ".value_property_name"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["value_property_name"] = nil
+	} else if !exists {
+		delete(patch, "value_property_name")
 	}
-	path = "supported_attributes.0.ui.0.input_details.0.gst.0.label_property_name"
+	path = rootPath + ".label_property_name"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["label_property_name"] = nil
+	} else if !exists {
+		delete(patch, "label_property_name")
 	}
-	path = "supported_attributes.0.ui.0.input_details.0.gst.0.input_option_label"
+	path = rootPath + ".input_option_label"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["input_option_label"] = nil
+	} else if !exists {
+		delete(patch, "input_option_label")
 	}
 }
 
-func ResourceIbmOnboardingIamRegistrationSupportedAttributeUiInputValueAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+func ResourceIbmOnboardingIamRegistrationSupportedAttributeUiInputValueAsPatch(patch map[string]interface{}, d *schema.ResourceData, rootPath string) {
 	var path string
 
-	path = "supported_attributes.0.ui.0.input_details.0.values.0.value"
+	path = rootPath + ".value"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["value"] = nil
+	} else if !exists {
+		delete(patch, "value")
 	}
-	path = "supported_attributes.0.ui.0.input_details.0.values.0.display_name"
+	path = rootPath + ".display_name"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["display_name"] = nil
 	} else if exists && patch["display_name"] != nil {
-		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationDisplayNameObjectAsPatch(patch["display_name"].(map[string]interface{}), d)
+		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationDisplayNameObjectAsPatch(patch["display_name"].(map[string]interface{}), d, fmt.Sprintf("%s.0", path))
+	} else if !exists {
+		delete(patch, "display_name")
 	}
 }
 
-func ResourceIbmOnboardingIamRegistrationSupportedAttributesOptionsAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+func ResourceIbmOnboardingIamRegistrationSupportedAttributesOptionsAsPatch(patch map[string]interface{}, d *schema.ResourceData, rootPath string) {
 	var path string
 
-	path = "supported_attributes.0.options.0.operators"
+	path = rootPath + ".operators"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["operators"] = nil
+	} else if !exists {
+		delete(patch, "operators")
 	}
-	path = "supported_attributes.0.options.0.hidden"
+	path = rootPath + ".hidden"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["hidden"] = nil
+	} else if !exists {
+		delete(patch, "hidden")
 	}
-	path = "supported_attributes.0.options.0.supported_attributes"
+	path = rootPath + ".supported_patterns"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
-		patch["supported_attributes"] = nil
+		patch["supported_patterns"] = nil
+	} else if !exists {
+		delete(patch, "supported_patterns")
 	}
-	path = "supported_attributes.0.options.0.policy_types"
+	path = rootPath + ".policy_types"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["policy_types"] = nil
+	} else if !exists {
+		delete(patch, "policy_types")
 	}
-	path = "supported_attributes.0.options.0.is_empty_value_supported"
+	path = rootPath + ".is_empty_value_supported"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["is_empty_value_supported"] = nil
+	} else if !exists {
+		delete(patch, "is_empty_value_supported")
 	}
-	path = "supported_attributes.0.options.0.is_string_exists_false_value_supported"
+	path = rootPath + ".is_string_exists_false_value_supported"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["is_string_exists_false_value_supported"] = nil
+	} else if !exists {
+		delete(patch, "is_string_exists_false_value_supported")
 	}
-	path = "supported_attributes.0.options.0.key"
+	path = rootPath + ".key"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["key"] = nil
+	} else if !exists {
+		delete(patch, "key")
 	}
-	path = "supported_attributes.0.options.0.resource_hierarchy"
+	path = rootPath + ".resource_hierarchy"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["resource_hierarchy"] = nil
 	} else if exists && patch["resource_hierarchy"] != nil {
-		ResourceIbmOnboardingIamRegistrationSupportedAttributesOptionsResourceHierarchyAsPatch(patch["resource_hierarchy"].(map[string]interface{}), d)
+		ResourceIbmOnboardingIamRegistrationSupportedAttributesOptionsResourceHierarchyAsPatch(patch["resource_hierarchy"].(map[string]interface{}), d, fmt.Sprintf("%s.0", path))
+	} else if !exists {
+		delete(patch, "resource_hierarchy")
 	}
 }
 
-func ResourceIbmOnboardingIamRegistrationSupportedAttributesOptionsResourceHierarchyAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+func ResourceIbmOnboardingIamRegistrationSupportedAttributesOptionsResourceHierarchyAsPatch(patch map[string]interface{}, d *schema.ResourceData, rootPath string) {
 	var path string
 
-	path = "supported_attributes.0.options.0.resource_hierarchy.0.key"
+	path = rootPath + ".key"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["key"] = nil
 	} else if exists && patch["key"] != nil {
-		ResourceIbmOnboardingIamRegistrationSupportedAttributesOptionsResourceHierarchyKeyAsPatch(patch["key"].(map[string]interface{}), d)
+		ResourceIbmOnboardingIamRegistrationSupportedAttributesOptionsResourceHierarchyKeyAsPatch(patch["key"].(map[string]interface{}), d, fmt.Sprintf("%s.0", path))
+	} else if !exists {
+		delete(patch, "key")
 	}
-	path = "supported_attributes.0.options.0.resource_hierarchy.0.value"
+	path = rootPath + ".value"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["value"] = nil
 	} else if exists && patch["value"] != nil {
-		ResourceIbmOnboardingIamRegistrationSupportedAttributesOptionsResourceHierarchyValueAsPatch(patch["value"].(map[string]interface{}), d)
+		ResourceIbmOnboardingIamRegistrationSupportedAttributesOptionsResourceHierarchyValueAsPatch(patch["value"].(map[string]interface{}), d, fmt.Sprintf("%s.0", path))
+	} else if !exists {
+		delete(patch, "value")
 	}
 }
 
-func ResourceIbmOnboardingIamRegistrationSupportedAttributesOptionsResourceHierarchyValueAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+func ResourceIbmOnboardingIamRegistrationSupportedAttributesOptionsResourceHierarchyValueAsPatch(patch map[string]interface{}, d *schema.ResourceData, rootPath string) {
 	var path string
 
-	path = "supported_attributes.0.options.0.resource_hierarchy.0.value.0.key"
+	path = rootPath + ".key"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["key"] = nil
+	} else if !exists {
+		delete(patch, "key")
 	}
 }
 
-func ResourceIbmOnboardingIamRegistrationSupportedAttributesOptionsResourceHierarchyKeyAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+func ResourceIbmOnboardingIamRegistrationSupportedAttributesOptionsResourceHierarchyKeyAsPatch(patch map[string]interface{}, d *schema.ResourceData, rootPath string) {
 	var path string
 
-	path = "supported_attributes.0.options.0.resource_hierarchy.0.key.0.key"
+	path = rootPath + ".key"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["key"] = nil
+	} else if !exists {
+		delete(patch, "key")
 	}
-	path = "supported_attributes.0.options.0.resource_hierarchy.0.key.0.value"
+	path = rootPath + ".value"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["value"] = nil
+	} else if !exists {
+		delete(patch, "value")
 	}
 }
 
-func ResourceIbmOnboardingIamRegistrationIamServiceRegistrationSupportedAnonymousAccessAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+func ResourceIbmOnboardingIamRegistrationIamServiceRegistrationSupportedAnonymousAccessAsPatch(patch map[string]interface{}, d *schema.ResourceData, rootPath string) {
 	var path string
 
-	path = "supported_anonymous_accesses.0.attributes"
+	path = rootPath + ".attributes"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["attributes"] = nil
-	} else if exists && patch["attributes"] != nil {
-		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationSupportedAnonymousAccessAttributesAsPatch(patch["attributes"].(map[string]interface{}), d)
+	} else if !exists {
+		delete(patch, "attributes")
 	}
-	path = "supported_anonymous_accesses.0.roles"
+	path = rootPath + ".roles"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["roles"] = nil
+	} else if !exists {
+		delete(patch, "roles")
 	}
 }
 
-func ResourceIbmOnboardingIamRegistrationIamServiceRegistrationSupportedAnonymousAccessAttributesAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+func ResourceIbmOnboardingIamRegistrationIamServiceRegistrationResourceHierarchyAttributeAsPatch(patch map[string]interface{}, d *schema.ResourceData, rootPath string) {
 	var path string
 
-	path = "supported_anonymous_accesses.0.attributes.0.account_id"
-	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
-		patch["account_id"] = nil
-	}
-	path = "supported_anonymous_accesses.0.attributes.0.service_name"
-	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
-		patch["service_name"] = nil
-	}
-}
-
-func ResourceIbmOnboardingIamRegistrationIamServiceRegistrationResourceHierarchyAttributeAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
-	var path string
-
-	path = "resource_hierarchy_attribute.0.key"
+	path = rootPath + ".key"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["key"] = nil
+	} else if !exists {
+		delete(patch, "key")
 	}
-	path = "resource_hierarchy_attribute.0.value"
+	path = rootPath + ".value"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["value"] = nil
+	} else if !exists {
+		delete(patch, "value")
 	}
 }
 
-func ResourceIbmOnboardingIamRegistrationIamServiceRegistrationActionAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+func ResourceIbmOnboardingIamRegistrationIamServiceRegistrationActionAsPatch(patch map[string]interface{}, d *schema.ResourceData, rootPath string) {
 	var path string
 
-	path = "actions.0.id"
+	path = rootPath + ".id"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["id"] = nil
+	} else if !exists {
+		delete(patch, "id")
 	}
-	path = "actions.0.roles"
+	path = rootPath + ".roles"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["roles"] = nil
+	} else if !exists {
+		delete(patch, "roles")
 	}
-	path = "actions.0.description"
+	path = rootPath + ".description"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["description"] = nil
 	} else if exists && patch["description"] != nil {
-		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationDescriptionObjectAsPatch(patch["description"].(map[string]interface{}), d)
+		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationDescriptionObjectAsPatch(patch["description"].(map[string]interface{}), d, fmt.Sprintf("%s.0", path))
+	} else if !exists {
+		delete(patch, "description")
 	}
-	path = "actions.0.display_name"
+	path = rootPath + ".display_name"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["display_name"] = nil
 	} else if exists && patch["display_name"] != nil {
-		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationDisplayNameObjectAsPatch(patch["display_name"].(map[string]interface{}), d)
+		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationDisplayNameObjectAsPatch(patch["display_name"].(map[string]interface{}), d, fmt.Sprintf("%s.0", path))
+	} else if !exists {
+		delete(patch, "display_name")
 	}
-	path = "actions.0.options"
+	path = rootPath + ".options"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["options"] = nil
 	} else if exists && patch["options"] != nil {
-		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationActionOptionsAsPatch(patch["options"].(map[string]interface{}), d)
+		ResourceIbmOnboardingIamRegistrationIamServiceRegistrationActionOptionsAsPatch(patch["options"].(map[string]interface{}), d, fmt.Sprintf("%s.0", path))
+	} else if !exists {
+		delete(patch, "options")
 	}
 }
 
-func ResourceIbmOnboardingIamRegistrationIamServiceRegistrationActionOptionsAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+func ResourceIbmOnboardingIamRegistrationIamServiceRegistrationActionOptionsAsPatch(patch map[string]interface{}, d *schema.ResourceData, rootPath string) {
 	var path string
 
-	path = "actions.0.options.0.hidden"
+	path = rootPath + ".hidden"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["hidden"] = nil
+	} else if !exists {
+		delete(patch, "hidden")
 	}
 }
 
-func ResourceIbmOnboardingIamRegistrationIamServiceRegistrationDisplayNameObjectAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+func ResourceIbmOnboardingIamRegistrationIamServiceRegistrationDisplayNameObjectAsPatch(patch map[string]interface{}, d *schema.ResourceData, rootPath string) {
 	var path string
 
-	path = "supported_roles.0.display_name.0.default"
+	path = rootPath + ".default"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["default"] = nil
+	} else if !exists {
+		delete(patch, "default")
 	}
-	path = "supported_roles.0.display_name.0.en"
+	path = rootPath + ".en"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["en"] = nil
+	} else if !exists {
+		delete(patch, "en")
 	}
-	path = "supported_roles.0.display_name.0.de"
+	path = rootPath + ".de"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["de"] = nil
+	} else if !exists {
+		delete(patch, "de")
 	}
-	path = "supported_roles.0.display_name.0.es"
+	path = rootPath + ".es"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["es"] = nil
+	} else if !exists {
+		delete(patch, "es")
 	}
-	path = "supported_roles.0.display_name.0.fr"
+	path = rootPath + ".fr"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["fr"] = nil
+	} else if !exists {
+		delete(patch, "fr")
 	}
-	path = "supported_roles.0.display_name.0.it"
+	path = rootPath + ".it"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["it"] = nil
+	} else if !exists {
+		delete(patch, "it")
 	}
-	path = "supported_roles.0.display_name.0.ja"
+	path = rootPath + ".ja"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["ja"] = nil
+	} else if !exists {
+		delete(patch, "ja")
 	}
-	path = "supported_roles.0.display_name.0.ko"
+	path = rootPath + ".ko"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["ko"] = nil
+	} else if !exists {
+		delete(patch, "ko")
 	}
-	path = "supported_roles.0.display_name.0.pt_br"
+	path = rootPath + ".pt_br"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["pt_br"] = nil
+	} else if !exists {
+		delete(patch, "pt_br")
 	}
-	path = "supported_roles.0.display_name.0.zh_tw"
+	path = rootPath + ".zh_tw"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["zh_tw"] = nil
+	} else if !exists {
+		delete(patch, "zh_tw")
 	}
-	path = "supported_roles.0.display_name.0.zh_cn"
+	path = rootPath + ".zh_cn"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["zh_cn"] = nil
+	} else if !exists {
+		delete(patch, "zh_cn")
 	}
 }
 
-func ResourceIbmOnboardingIamRegistrationIamServiceRegistrationDescriptionObjectAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+func ResourceIbmOnboardingIamRegistrationIamServiceRegistrationDescriptionObjectAsPatch(patch map[string]interface{}, d *schema.ResourceData, rootPath string) {
 	var path string
 
-	path = "supported_roles.0.description.0.default"
+	path = rootPath + ".default"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["default"] = nil
+	} else if !exists {
+		delete(patch, "default")
 	}
-	path = "supported_roles.0.description.0.en"
+	path = rootPath + ".en"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["en"] = nil
+	} else if !exists {
+		delete(patch, "en")
 	}
-	path = "supported_roles.0.description.0.de"
+	path = rootPath + ".de"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["de"] = nil
+	} else if !exists {
+		delete(patch, "de")
 	}
-	path = "supported_roles.0.description.0.es"
+	path = rootPath + ".es"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["es"] = nil
+	} else if !exists {
+		delete(patch, "es")
 	}
-	path = "supported_roles.0.description.0.fr"
+	path = rootPath + ".fr"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["fr"] = nil
+	} else if !exists {
+		delete(patch, "fr")
 	}
-	path = "supported_roles.0.description.0.it"
+	path = rootPath + ".it"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["it"] = nil
+	} else if !exists {
+		delete(patch, "it")
 	}
-	path = "supported_roles.0.description.0.ja"
+	path = rootPath + ".ja"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["ja"] = nil
+	} else if !exists {
+		delete(patch, "ja")
 	}
-	path = "supported_roles.0.description.0.ko"
+	path = rootPath + ".ko"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["ko"] = nil
+	} else if !exists {
+		delete(patch, "ko")
 	}
-	path = "supported_roles.0.description.0.pt_br"
+	path = rootPath + ".pt_br"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["pt_br"] = nil
+	} else if !exists {
+		delete(patch, "pt_br")
 	}
-	path = "supported_roles.0.description.0.zh_tw"
+	path = rootPath + ".zh_tw"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["zh_tw"] = nil
+	} else if !exists {
+		delete(patch, "zh_tw")
 	}
-	path = "supported_roles.0.description.0.zh_cn"
+	path = rootPath + ".zh_cn"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["zh_cn"] = nil
+	} else if !exists {
+		delete(patch, "zh_cn")
 	}
 }

@@ -17,6 +17,7 @@ const (
 	name                      = "name"
 	poolAlgorithm             = "algorithm"
 	href                      = "href"
+	family                    = "family"
 	poolProtocol              = "protocol"
 	poolCreatedAt             = "created_at"
 	poolProvisioningStatus    = "provisioning_status"
@@ -50,6 +51,11 @@ func DataSourceIBMISLB() *schema.Resource {
 				Required:    true,
 				Description: "Load Balancer name",
 			},
+			isLBAccessMode: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The access mode of this load balancer",
+			},
 			"dns": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -74,7 +80,21 @@ func DataSourceIBMISLB() *schema.Resource {
 				Computed:    true,
 				Description: "Load Balancer type",
 			},
-
+			isLBAvailability: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The availability of this load balancer",
+			},
+			isLBInstanceGroupsSupported: {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Indicates whether this load balancer supports instance groups.",
+			},
+			isLBSourceIPPersistenceSupported: {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Indicates whether this load balancer supports source IP session persistence.",
+			},
 			isLBUdpSupported: {
 				Type:        schema.TypeBool,
 				Computed:    true,
@@ -86,7 +106,11 @@ func DataSourceIBMISLB() *schema.Resource {
 				Computed:    true,
 				Description: "Load Balancer status",
 			},
-
+			isLbProfile: {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "The profile to use for this load balancer",
+			},
 			isLBRouteMode: {
 				Type:        schema.TypeBool,
 				Computed:    true,
@@ -296,6 +320,12 @@ func DataSourceIBMISLB() *schema.Resource {
 					},
 				},
 			},
+			"failsafe_policy_actions": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The supported `failsafe_policy.action` values for this load balancer's pools.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 			flex.ResourceControllerURL: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -354,6 +384,18 @@ func lbGetByName(d *schema.ResourceData, meta interface{}, name string) error {
 	for _, lb := range allrecs {
 		if *lb.Name == name {
 			d.SetId(*lb.ID)
+			if lb.Availability != nil {
+				d.Set(isLBAvailability, *lb.Availability)
+			}
+			if lb.AccessMode != nil {
+				d.Set(isLBAccessMode, *lb.AccessMode)
+			}
+			if lb.InstanceGroupsSupported != nil {
+				d.Set(isLBInstanceGroupsSupported, *lb.InstanceGroupsSupported)
+			}
+			if lb.SourceIPSessionPersistenceSupported != nil {
+				d.Set(isLBSourceIPPersistenceSupported, *lb.SourceIPSessionPersistenceSupported)
+			}
 			dnsList := make([]map[string]interface{}, 0)
 			if lb.Dns != nil {
 				dns := map[string]interface{}{}
@@ -366,11 +408,20 @@ func lbGetByName(d *schema.ResourceData, meta interface{}, name string) error {
 			if lb.Logging != nil && lb.Logging.Datapath != nil {
 				d.Set(isLBLogging, *lb.Logging.Datapath.Active)
 			}
-			if *lb.IsPublic {
+			if lb.IsPublic != nil && *lb.IsPublic {
 				d.Set(isLBType, "public")
+			} else if lb.IsPrivatePath != nil && *lb.IsPrivatePath {
+				d.Set(isLBType, "private_path")
 			} else {
 				d.Set(isLBType, "private")
 			}
+			lbProfile := make(map[string]interface{})
+			if lb.Profile != nil {
+				lbProfile[isLBName] = *lb.Profile.Name
+				lbProfile[href] = *lb.Profile.Href
+				lbProfile[family] = *lb.Profile.Family
+			}
+			d.Set(isLbProfile, lbProfile)
 			d.Set(isLBStatus, *lb.ProvisioningStatus)
 			if lb.RouteMode != nil {
 				d.Set(isLBRouteMode, *lb.RouteMode)
@@ -455,6 +506,10 @@ func lbGetByName(d *schema.ResourceData, meta interface{}, name string) error {
 				}
 				d.Set(isLBListeners, listenerList)
 			}
+			if err = d.Set("failsafe_policy_actions", lb.FailsafePolicyActions); err != nil {
+				err = fmt.Errorf("Error setting failsafe_policy_actions: %s", err)
+				return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_is_lb", "read", "set-failsafe_policy_actions")
+			}
 			listLoadBalancerPoolsOptions := &vpcv1.ListLoadBalancerPoolsOptions{}
 			listLoadBalancerPoolsOptions.SetLoadBalancerID(*lb.ID)
 			poolsResult, _, _ := sess.ListLoadBalancerPools(listLoadBalancerPoolsOptions)
@@ -472,17 +527,18 @@ func lbGetByName(d *schema.ResourceData, meta interface{}, name string) error {
 					pool[poolProvisioningStatus] = *p.ProvisioningStatus
 					pool["name"] = *p.Name
 					if p.HealthMonitor != nil {
+						poolHealthMonitor := p.HealthMonitor.(*vpcv1.LoadBalancerPoolHealthMonitor)
 						healthMonitorInfo := make(map[string]interface{})
-						delayfinal := strconv.FormatInt(*(p.HealthMonitor.Delay), 10)
+						delayfinal := strconv.FormatInt(*(poolHealthMonitor.Delay), 10)
 						healthMonitorInfo[healthMonitorDelay] = delayfinal
-						maxRetriesfinal := strconv.FormatInt(*(p.HealthMonitor.MaxRetries), 10)
-						timeoutfinal := strconv.FormatInt(*(p.HealthMonitor.Timeout), 10)
+						maxRetriesfinal := strconv.FormatInt(*(poolHealthMonitor.MaxRetries), 10)
+						timeoutfinal := strconv.FormatInt(*(poolHealthMonitor.Timeout), 10)
 						healthMonitorInfo[healthMonitorMaxRetries] = maxRetriesfinal
 						healthMonitorInfo[healthMonitorTimeout] = timeoutfinal
-						if p.HealthMonitor.URLPath != nil {
-							healthMonitorInfo[healthMonitorURLPath] = *(p.HealthMonitor.URLPath)
+						if poolHealthMonitor.URLPath != nil {
+							healthMonitorInfo[healthMonitorURLPath] = *(poolHealthMonitor.URLPath)
 						}
-						healthMonitorInfo[healthMonitorType] = *(p.HealthMonitor.Type)
+						healthMonitorInfo[healthMonitorType] = *(poolHealthMonitor.Type)
 						pool[healthMonitor] = healthMonitorInfo
 					}
 

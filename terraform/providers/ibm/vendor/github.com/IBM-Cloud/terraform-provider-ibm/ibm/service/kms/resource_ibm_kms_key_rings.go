@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	kp "github.com/IBM/keyprotect-go-client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -84,12 +85,12 @@ func resourceIBMKmsKeyRingCreate(d *schema.ResourceData, meta interface{}) error
 
 	err = kpAPI.CreateKeyRing(context.Background(), keyRingID)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error while creating key ring : %s", err)
+		return flex.FmtErrorf("[ERROR] Error while creating key ring : %s", err)
 	}
 	var keyRing string
 	keyRings, err := kpAPI.GetKeyRings(context.Background())
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error while fetching key ring : %s", err)
+		return flex.FmtErrorf("[ERROR] Error while fetching key ring : %s", err)
 	}
 	for _, v := range keyRings.KeyRings {
 		if v.ID == keyRingID {
@@ -115,7 +116,7 @@ func resourceIBMKmsKeyRingUpdate(d *schema.ResourceData, meta interface{}) error
 func resourceIBMKmsKeyRingRead(d *schema.ResourceData, meta interface{}) error {
 	id := strings.Split(d.Id(), ":keyRing:")
 	if len(id) < 2 {
-		return fmt.Errorf("[ERROR] Incorrect ID %s: Id should be a combination of keyRingID:keyRing:InstanceCRN", d.Id())
+		return flex.FmtErrorf("[ERROR] Incorrect ID %s: Id should be a combination of keyRingID:keyRing:InstanceCRN", d.Id())
 	}
 	instanceID := getInstanceIDFromCRN(id[1])
 	kpAPI, _, err := populateKPClient(d, meta, instanceID)
@@ -130,7 +131,7 @@ func resourceIBMKmsKeyRingRead(d *schema.ResourceData, meta interface{}) error {
 				return nil
 			}
 		}
-		return fmt.Errorf("[ERROR] Get Key Rings failed with error: %s", err)
+		return flex.FmtErrorf("[ERROR] Get Key Rings failed with error: %s", err)
 	}
 
 	d.Set("instance_id", instanceID)

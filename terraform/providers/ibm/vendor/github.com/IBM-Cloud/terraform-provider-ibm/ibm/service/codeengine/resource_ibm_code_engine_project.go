@@ -1,6 +1,10 @@
 // Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.94.1-71478489-20240820-161623
+ */
+
 package codeengine
 
 import (
@@ -9,15 +13,14 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/code-engine-go-sdk/codeenginev2"
 	"github.com/IBM/go-sdk-core/v5/core"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func ResourceIbmCodeEngineProject() *schema.Resource {
@@ -119,7 +122,7 @@ func ResourceIbmCodeEngineProjectValidator() *validate.ResourceValidator {
 func resourceIbmCodeEngineProjectCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_project", "create")
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_project", "create", "initialize-client")
 		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
 		return tfErr.GetDiag()
 	}
@@ -151,8 +154,7 @@ func resourceIbmCodeEngineProjectCreate(context context.Context, d *schema.Resou
 	_, err = waitForIbmCodeEngineProjectCreate(d, meta)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error waiting for resource IbmCodeEngineProject (%s) to be created: %s", d.Id(), err)
-		tfErr := flex.TerraformErrorf(err, errMsg, "ibm_code_engine_project", "create")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, errMsg, "ibm_code_engine_project", "create", "wait-for-state").GetDiag()
 	}
 
 	return resourceIbmCodeEngineProjectRead(context, d, meta)
@@ -181,7 +183,7 @@ func waitForIbmCodeEngineProjectCreate(d *schema.ResourceData, meta interface{})
 			}
 			failStates := map[string]bool{"creation_failed": true}
 			if failStates[*stateObj.Status] {
-				return stateObj, *stateObj.Status, fmt.Errorf("the instance %s failed: %s", "getProjectOptions", err)
+				return stateObj, *stateObj.Status, fmt.Errorf("The instance %s failed: %s", "getProjectOptions", err)
 			}
 			return stateObj, *stateObj.Status, nil
 		},
@@ -190,13 +192,13 @@ func waitForIbmCodeEngineProjectCreate(d *schema.ResourceData, meta interface{})
 		MinTimeout: 20 * time.Second,
 	}
 
-	return stateConf.WaitForState()
+	return stateConf.WaitForStateContext(context.Background())
 }
 
 func resourceIbmCodeEngineProjectRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_project", "read")
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_project", "read", "initialize-client")
 		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
 		return tfErr.GetDiag()
 	}
@@ -217,49 +219,59 @@ func resourceIbmCodeEngineProjectRead(context context.Context, d *schema.Resourc
 	}
 
 	if err = d.Set("name", project.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("error setting name: %s", err))
+		err = fmt.Errorf("Error setting name: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_project", "read", "set-name").GetDiag()
 	}
 	if err = d.Set("project_id", project.ID); err != nil {
-		return diag.FromErr(fmt.Errorf("error setting project_id: %s", err))
+		err = fmt.Errorf("Error setting project_id: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_project", "read", "set-project_id").GetDiag()
 	}
 	if !core.IsNil(project.ResourceGroupID) {
 		if err = d.Set("resource_group_id", project.ResourceGroupID); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting resource_group_id: %s", err))
+			err = fmt.Errorf("Error setting resource_group_id: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_project", "read", "set-resource_group_id").GetDiag()
 		}
 	}
 	if !core.IsNil(project.AccountID) {
 		if err = d.Set("account_id", project.AccountID); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting account_id: %s", err))
+			err = fmt.Errorf("Error setting account_id: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_project", "read", "set-account_id").GetDiag()
 		}
 	}
 	if !core.IsNil(project.CreatedAt) {
 		if err = d.Set("created_at", project.CreatedAt); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting created_at: %s", err))
+			err = fmt.Errorf("Error setting created_at: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_project", "read", "set-created_at").GetDiag()
 		}
 	}
 	if !core.IsNil(project.Crn) {
 		if err = d.Set("crn", project.Crn); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting crn: %s", err))
+			err = fmt.Errorf("Error setting crn: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_project", "read", "set-crn").GetDiag()
 		}
 	}
 	if !core.IsNil(project.Href) {
 		if err = d.Set("href", project.Href); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting href: %s", err))
+			err = fmt.Errorf("Error setting href: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_project", "read", "set-href").GetDiag()
 		}
 	}
 	if !core.IsNil(project.Region) {
 		if err = d.Set("region", project.Region); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting region: %s", err))
+			err = fmt.Errorf("Error setting region: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_project", "read", "set-region").GetDiag()
 		}
 	}
 	if !core.IsNil(project.ResourceType) {
 		if err = d.Set("resource_type", project.ResourceType); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting resource_type: %s", err))
+			err = fmt.Errorf("Error setting resource_type: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_project", "read", "set-resource_type").GetDiag()
 		}
 	}
 	if !core.IsNil(project.Status) {
 		if err = d.Set("status", project.Status); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting status: %s", err))
+			err = fmt.Errorf("Error setting status: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_project", "read", "set-status").GetDiag()
 		}
 	}
 
@@ -269,7 +281,7 @@ func resourceIbmCodeEngineProjectRead(context context.Context, d *schema.Resourc
 func resourceIbmCodeEngineProjectDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_project", "delete")
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_project", "delete", "initialize-client")
 		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
 		return tfErr.GetDiag()
 	}

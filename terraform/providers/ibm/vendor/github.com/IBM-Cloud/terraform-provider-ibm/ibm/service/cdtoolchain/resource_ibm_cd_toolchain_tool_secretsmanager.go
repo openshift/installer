@@ -1,5 +1,9 @@
-// Copyright IBM Corp. 2023 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
+
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.96.0-d6dec9d7-20241008-212902
+ */
 
 package cdtoolchain
 
@@ -16,7 +20,7 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
-	"github.com/IBM/continuous-delivery-go-sdk/cdtoolchainv2"
+	"github.com/IBM/continuous-delivery-go-sdk/v2/cdtoolchainv2"
 	"github.com/IBM/go-sdk-core/v5/core"
 )
 
@@ -112,11 +116,13 @@ func ResourceIBMCdToolchainToolSecretsmanager() *schema.Resource {
 						"ui_href": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
+							Computed:    true,
 							Description: "URI representing this resource through the UI.",
 						},
 						"api_href": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
+							Computed:    true,
 							Description: "URI representing this resource through an API.",
 						},
 					},
@@ -171,7 +177,9 @@ func ResourceIBMCdToolchainToolSecretsmanagerValidator() *validate.ResourceValid
 func resourceIBMCdToolchainToolSecretsmanagerCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_secretsmanager", "create", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	createToolOptions := &cdtoolchainv2.CreateToolOptions{}
@@ -191,10 +199,11 @@ func resourceIBMCdToolchainToolSecretsmanagerCreate(context context.Context, d *
 		createToolOptions.SetName(d.Get("name").(string))
 	}
 
-	toolchainToolPost, response, err := cdToolchainClient.CreateToolWithContext(context, createToolOptions)
+	toolchainToolPost, _, err := cdToolchainClient.CreateToolWithContext(context, createToolOptions)
 	if err != nil {
-		log.Printf("[DEBUG] CreateToolWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateToolWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateToolWithContext failed: %s", err.Error()), "ibm_cd_toolchain_tool_secretsmanager", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *createToolOptions.ToolchainID, *toolchainToolPost.ID))
@@ -205,14 +214,16 @@ func resourceIBMCdToolchainToolSecretsmanagerCreate(context context.Context, d *
 func resourceIBMCdToolchainToolSecretsmanagerRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_secretsmanager", "read", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getToolByIDOptions := &cdtoolchainv2.GetToolByIDOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_secretsmanager", "read", "sep-id-parts").GetDiag()
 	}
 
 	getToolByIDOptions.SetToolchainID(parts[0])
@@ -238,16 +249,19 @@ func resourceIBMCdToolchainToolSecretsmanagerRead(context context.Context, d *sc
 			d.SetId("")
 			return nil
 		}
-		log.Printf("[DEBUG] GetToolByIDWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetToolByIDWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetToolByIDWithContext failed: %s", err.Error()), "ibm_cd_toolchain_tool_secretsmanager", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("toolchain_id", toolchainTool.ToolchainID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting toolchain_id: %s", err))
+		err = fmt.Errorf("Error setting toolchain_id: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_secretsmanager", "read", "set-toolchain_id").GetDiag()
 	}
 	if !core.IsNil(toolchainTool.Name) {
 		if err = d.Set("name", toolchainTool.Name); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+			err = fmt.Errorf("Error setting name: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_secretsmanager", "read", "set-name").GetDiag()
 		}
 	}
 	remapFields := map[string]string{
@@ -259,35 +273,44 @@ func resourceIBMCdToolchainToolSecretsmanagerRead(context context.Context, d *sc
 	}
 	parametersMap := GetParametersFromRead(toolchainTool.Parameters, ResourceIBMCdToolchainToolSecretsmanager(), remapFields)
 	if err = d.Set("parameters", []map[string]interface{}{parametersMap}); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting parameters: %s", err))
+		err = fmt.Errorf("Error setting parameters: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_secretsmanager", "read", "set-parameters").GetDiag()
 	}
 	if err = d.Set("resource_group_id", toolchainTool.ResourceGroupID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting resource_group_id: %s", err))
+		err = fmt.Errorf("Error setting resource_group_id: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_secretsmanager", "read", "set-resource_group_id").GetDiag()
 	}
 	if err = d.Set("crn", toolchainTool.CRN); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
+		err = fmt.Errorf("Error setting crn: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_secretsmanager", "read", "set-crn").GetDiag()
 	}
 	if err = d.Set("toolchain_crn", toolchainTool.ToolchainCRN); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting toolchain_crn: %s", err))
+		err = fmt.Errorf("Error setting toolchain_crn: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_secretsmanager", "read", "set-toolchain_crn").GetDiag()
 	}
 	if err = d.Set("href", toolchainTool.Href); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
+		err = fmt.Errorf("Error setting href: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_secretsmanager", "read", "set-href").GetDiag()
 	}
-	referentMap, err := resourceIBMCdToolchainToolSecretsmanagerToolModelReferentToMap(toolchainTool.Referent)
+	referentMap, err := ResourceIBMCdToolchainToolSecretsmanagerToolModelReferentToMap(toolchainTool.Referent)
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_secretsmanager", "read", "referent-to-map").GetDiag()
 	}
 	if err = d.Set("referent", []map[string]interface{}{referentMap}); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting referent: %s", err))
+		err = fmt.Errorf("Error setting referent: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_secretsmanager", "read", "set-referent").GetDiag()
 	}
 	if err = d.Set("updated_at", flex.DateTimeToString(toolchainTool.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
+		err = fmt.Errorf("Error setting updated_at: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_secretsmanager", "read", "set-updated_at").GetDiag()
 	}
 	if err = d.Set("state", toolchainTool.State); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting state: %s", err))
+		err = fmt.Errorf("Error setting state: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_secretsmanager", "read", "set-state").GetDiag()
 	}
 	if err = d.Set("tool_id", toolchainTool.ID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting tool_id: %s", err))
+		err = fmt.Errorf("Error setting tool_id: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_secretsmanager", "read", "set-tool_id").GetDiag()
 	}
 
 	return nil
@@ -296,14 +319,16 @@ func resourceIBMCdToolchainToolSecretsmanagerRead(context context.Context, d *sc
 func resourceIBMCdToolchainToolSecretsmanagerUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_secretsmanager", "update", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	updateToolOptions := &cdtoolchainv2.UpdateToolOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_secretsmanager", "update", "sep-id-parts").GetDiag()
 	}
 
 	updateToolOptions.SetToolchainID(parts[0])
@@ -313,8 +338,9 @@ func resourceIBMCdToolchainToolSecretsmanagerUpdate(context context.Context, d *
 
 	patchVals := &cdtoolchainv2.ToolchainToolPrototypePatch{}
 	if d.HasChange("toolchain_id") {
-		return diag.FromErr(fmt.Errorf("Cannot update resource property \"%s\" with the ForceNew annotation."+
-			" The resource must be re-created to update this property.", "toolchain_id"))
+		errMsg := fmt.Sprintf("Cannot update resource property \"%s\" with the ForceNew annotation."+
+			" The resource must be re-created to update this property.", "toolchain_id")
+		return flex.DiscriminatedTerraformErrorf(nil, errMsg, "ibm_cd_toolchain_tool_secretsmanager", "update", "toolchain_id-forces-new").GetDiag()
 	}
 	if d.HasChange("name") {
 		newName := d.Get("name").(string)
@@ -335,11 +361,16 @@ func resourceIBMCdToolchainToolSecretsmanagerUpdate(context context.Context, d *
 	}
 
 	if hasChange {
-		updateToolOptions.ToolchainToolPrototypePatch, _ = patchVals.AsPatch()
-		_, response, err := cdToolchainClient.UpdateToolWithContext(context, updateToolOptions)
+		// Fields with `nil` values are omitted from the generic map,
+		// so we need to re-add them to support removing arguments
+		// in merge-patch operations sent to the service.
+		updateToolOptions.ToolchainToolPrototypePatch = ResourceIBMCdToolchainToolSecretsmanagerToolchainToolPrototypePatchAsPatch(patchVals, d)
+
+		_, _, err = cdToolchainClient.UpdateToolWithContext(context, updateToolOptions)
 		if err != nil {
-			log.Printf("[DEBUG] UpdateToolWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("UpdateToolWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateToolWithContext failed: %s", err.Error()), "ibm_cd_toolchain_tool_secretsmanager", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -349,23 +380,26 @@ func resourceIBMCdToolchainToolSecretsmanagerUpdate(context context.Context, d *
 func resourceIBMCdToolchainToolSecretsmanagerDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_secretsmanager", "delete", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	deleteToolOptions := &cdtoolchainv2.DeleteToolOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_secretsmanager", "delete", "sep-id-parts").GetDiag()
 	}
 
 	deleteToolOptions.SetToolchainID(parts[0])
 	deleteToolOptions.SetToolID(parts[1])
 
-	response, err := cdToolchainClient.DeleteToolWithContext(context, deleteToolOptions)
+	_, err = cdToolchainClient.DeleteToolWithContext(context, deleteToolOptions)
 	if err != nil {
-		log.Printf("[DEBUG] DeleteToolWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteToolWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteToolWithContext failed: %s", err.Error()), "ibm_cd_toolchain_tool_secretsmanager", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")
@@ -373,13 +407,60 @@ func resourceIBMCdToolchainToolSecretsmanagerDelete(context context.Context, d *
 	return nil
 }
 
-func resourceIBMCdToolchainToolSecretsmanagerToolModelReferentToMap(model *cdtoolchainv2.ToolModelReferent) (map[string]interface{}, error) {
+func ResourceIBMCdToolchainToolSecretsmanagerToolModelReferentToMap(model *cdtoolchainv2.ToolModelReferent) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.UIHref != nil {
-		modelMap["ui_href"] = model.UIHref
+		modelMap["ui_href"] = *model.UIHref
 	}
 	if model.APIHref != nil {
-		modelMap["api_href"] = model.APIHref
+		modelMap["api_href"] = *model.APIHref
 	}
 	return modelMap, nil
+}
+
+func ResourceIBMCdToolchainToolSecretsmanagerToolchainToolPrototypePatchAsPatch(patchVals *cdtoolchainv2.ToolchainToolPrototypePatch, d *schema.ResourceData) map[string]interface{} {
+	patch, _ := patchVals.AsPatch()
+	var path string
+
+	path = "name"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["name"] = nil
+	}
+	path = "tool_type_id"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["tool_type_id"] = nil
+	}
+	path = "parameters"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["parameters"] = nil
+	} else if exists && patch["parameters"] != nil {
+		ResourceIBMCdToolchainToolSecretsmanagerToolModelParametersAsPatch(patch["parameters"].(map[string]interface{}), d)
+	}
+
+	return patch
+}
+
+func ResourceIBMCdToolchainToolSecretsmanagerToolModelParametersAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+	var path string
+
+	path = "parameters.0.instance_id_type"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["instance_id_type"] = nil
+	}
+	path = "parameters.0.instance_name"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["instance_name"] = nil
+	}
+	path = "parameters.0.instance_crn"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["instance_crn"] = nil
+	}
+	path = "parameters.0.location"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["location"] = nil
+	}
+	path = "parameters.0.resource_group_name"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["resource_group_name"] = nil
+	}
 }

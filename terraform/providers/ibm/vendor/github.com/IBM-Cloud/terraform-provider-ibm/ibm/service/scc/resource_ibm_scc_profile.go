@@ -652,7 +652,6 @@ func resourceIbmSccProfileMapToProfilePrototype(modelMap map[string]interface{})
 	model := &securityandcompliancecenterapiv3.CreateProfileOptions{}
 	model.ProfileName = core.StringPtr(modelMap["profile_name"].(string))
 	model.ProfileDescription = core.StringPtr(modelMap["profile_description"].(string))
-	model.ProfileType = core.StringPtr(modelMap["profile_type"].(string))
 	model.ProfileVersion = core.StringPtr(modelMap["profile_version"].(string))
 	controls := []securityandcompliancecenterapiv3.ProfileControlsPrototype{}
 	for _, controlsItem := range modelMap["controls"].([]interface{}) {
@@ -708,7 +707,7 @@ func resourceIbmSccProfileMapToReplaceProfileOptions(modelMap map[string]interfa
 	return model, nil
 }
 
-func resourceIbmSccProfileProfileControlsToMap(model *securityandcompliancecenterapiv3.ProfileControls) (map[string]interface{}, error) {
+func resourceIbmSccProfileProfileControlsToMap(model *securityandcompliancecenterapiv3.ProfileControlsInResponse) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ControlLibraryID != nil {
 		modelMap["control_library_id"] = model.ControlLibraryID
@@ -758,7 +757,7 @@ func resourceIbmSccProfileProfileControlsToMap(model *securityandcompliancecente
 	return modelMap, nil
 }
 
-func resourceIbmSccProfileControlDocsToMap(model *securityandcompliancecenterapiv3.ControlDocs) (map[string]interface{}, error) {
+func resourceIbmSccProfileControlDocsToMap(model *securityandcompliancecenterapiv3.ControlDoc) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ControlDocsID != nil {
 		modelMap["control_docs_id"] = model.ControlDocsID
@@ -769,10 +768,10 @@ func resourceIbmSccProfileControlDocsToMap(model *securityandcompliancecenterapi
 	return modelMap, nil
 }
 
-func resourceIbmSccProfileControlSpecificationsToMap(model *securityandcompliancecenterapiv3.ControlSpecifications) (map[string]interface{}, error) {
+func resourceIbmSccProfileControlSpecificationsToMap(model *securityandcompliancecenterapiv3.ControlSpecification) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	if model.ControlSpecificationID != nil {
-		modelMap["control_specification_id"] = model.ControlSpecificationID
+	if model.ID != nil {
+		modelMap["control_specification_id"] = model.ID
 	}
 	if model.Responsibility != nil {
 		modelMap["responsibility"] = model.Responsibility
@@ -786,8 +785,8 @@ func resourceIbmSccProfileControlSpecificationsToMap(model *securityandcomplianc
 	if model.Environment != nil {
 		modelMap["environment"] = model.Environment
 	}
-	if model.ControlSpecificationDescription != nil {
-		modelMap["control_specification_description"] = model.ControlSpecificationDescription
+	if model.Description != nil {
+		modelMap["control_specification_description"] = model.Description
 	}
 	if model.AssessmentsCount != nil {
 		modelMap["assessments_count"] = flex.IntValue(model.AssessmentsCount)
@@ -806,7 +805,7 @@ func resourceIbmSccProfileControlSpecificationsToMap(model *securityandcomplianc
 	return modelMap, nil
 }
 
-func resourceIbmSccProfileImplementationToMap(model *securityandcompliancecenterapiv3.Implementation) (map[string]interface{}, error) {
+func resourceIbmSccProfileImplementationToMap(model *securityandcompliancecenterapiv3.Assessment) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.AssessmentID != nil {
 		modelMap["assessment_id"] = model.AssessmentID
@@ -837,7 +836,7 @@ func resourceIbmSccProfileImplementationToMap(model *securityandcompliancecenter
 	return modelMap, nil
 }
 
-func resourceIbmSccProfileParameterInfoToMap(model *securityandcompliancecenterapiv3.ParameterInfo) (map[string]interface{}, error) {
+func resourceIbmSccProfileParameterInfoToMap(model *securityandcompliancecenterapiv3.Parameter) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ParameterName != nil {
 		modelMap["parameter_name"] = model.ParameterName
@@ -851,7 +850,7 @@ func resourceIbmSccProfileParameterInfoToMap(model *securityandcompliancecentera
 	return modelMap, nil
 }
 
-func resourceIbmSccProfileDefaultParametersPrototypeToMap(model *securityandcompliancecenterapiv3.DefaultParametersPrototype) (map[string]interface{}, error) {
+func resourceIbmSccProfileDefaultParametersPrototypeToMap(model *securityandcompliancecenterapiv3.DefaultParameters) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.AssessmentType != nil {
 		modelMap["assessment_type"] = model.AssessmentType

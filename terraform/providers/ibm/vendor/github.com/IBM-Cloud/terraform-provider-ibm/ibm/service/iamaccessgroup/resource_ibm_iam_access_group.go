@@ -48,6 +48,11 @@ func ResourceIBMIAMAccessGroup() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"crn": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "CRN of the access group",
+			},
 		},
 	}
 }
@@ -86,6 +91,7 @@ func resourceIBMIAMAccessGroupRead(context context.Context, d *schema.ResourceDa
 	}
 	agrpID := d.Id()
 	getAccessGroupOptions := iamAccessGroupsClient.NewGetAccessGroupOptions(agrpID)
+	getAccessGroupOptions.SetShowCRN(true)
 	var agrp *iamaccessgroupsv2.Group
 	var detailedResponse *core.DetailedResponse
 	err = resource.RetryContext(context, 5*time.Second, func() *resource.RetryError {
@@ -113,7 +119,7 @@ func resourceIBMIAMAccessGroupRead(context context.Context, d *schema.ResourceDa
 	d.Set("name", agrp.Name)
 	d.Set("description", agrp.Description)
 	d.Set("version", version)
-
+	d.Set("crn", agrp.CRN)
 	return nil
 }
 

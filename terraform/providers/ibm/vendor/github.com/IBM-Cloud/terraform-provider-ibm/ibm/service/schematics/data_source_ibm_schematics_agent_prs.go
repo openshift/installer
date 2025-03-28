@@ -70,7 +70,9 @@ func DataSourceIbmSchematicsAgentPrs() *schema.Resource {
 func dataSourceIbmSchematicsAgentPrsRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsAgentPrsRead schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_agent_prs", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getAgentDataOptions := &schematicsv1.GetAgentDataOptions{
@@ -84,38 +86,56 @@ func dataSourceIbmSchematicsAgentPrsRead(context context.Context, d *schema.Reso
 			d.SetId(DataSourceIBMSchematicsAgentID(d))
 			return nil
 		}
-		log.Printf("[DEBUG] GetAgentDataWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetAgentDataWithContext failed %s\n%s", err, response))
+
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsAgentPrsRead GetAgentDataWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_agent_prs", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	d.SetId(DataSourceIBMSchematicsAgentID(d))
 
 	if agentData.RecentPrsJob != nil {
 
 		if err = d.Set("agent_id", getAgentDataOptions.AgentID); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting agent_id: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsAgentPrsRead failed with error: %s", err), "ibm_schematics_agent_prs", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("job_id", agentData.RecentPrsJob.JobID); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting job_id: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsAgentPrsRead failed with error: %s", err), "ibm_schematics_agent_prs", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		} else if agentData.RecentPrsJob.JobID != nil {
 			d.SetId(fmt.Sprintf("%s", *agentData.RecentPrsJob.JobID))
 		}
 		if err = d.Set("updated_at", flex.DateTimeToString(agentData.RecentPrsJob.UpdatedAt)); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsAgentPrsRead failed with error: %s", err), "ibm_schematics_agent_prs", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("updated_by", agentData.RecentPrsJob.UpdatedBy); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting updated_by: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsAgentPrsRead failed with error: %s", err), "ibm_schematics_agent_prs", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("agent_version", agentData.Version); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting agent_version: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsAgentPrsRead failed with error: %s", err), "ibm_schematics_agent_prs", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("status_code", agentData.RecentPrsJob.StatusCode); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting status_code: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsAgentPrsRead failed with error: %s", err), "ibm_schematics_agent_prs", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("status_message", agentData.RecentPrsJob.StatusMessage); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting status_message: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsAgentPrsRead failed with error: %s", err), "ibm_schematics_agent_prs", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("log_url", agentData.RecentPrsJob.LogURL); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting log_url: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIbmSchematicsAgentPrsRead failed with error: %s", err), "ibm_schematics_agent_prs", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 
 	}

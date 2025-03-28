@@ -328,26 +328,6 @@ func dataSourceIbmSccReportControlsRead(context context.Context, d *schema.Resou
 
 	d.SetId(dataSourceIbmSccReportControlsID(d))
 
-	if err = d.Set("total_count", flex.IntValue(reportControls.TotalCount)); err != nil {
-		return diag.FromErr(flex.FmtErrorf("Error setting total_count: %s", err))
-	}
-
-	if err = d.Set("compliant_count", flex.IntValue(reportControls.CompliantCount)); err != nil {
-		return diag.FromErr(flex.FmtErrorf("Error setting compliant_count: %s", err))
-	}
-
-	if err = d.Set("not_compliant_count", flex.IntValue(reportControls.NotCompliantCount)); err != nil {
-		return diag.FromErr(flex.FmtErrorf("Error setting not_compliant_count: %s", err))
-	}
-
-	if err = d.Set("unable_to_perform_count", flex.IntValue(reportControls.UnableToPerformCount)); err != nil {
-		return diag.FromErr(flex.FmtErrorf("Error setting unable_to_perform_count: %s", err))
-	}
-
-	if err = d.Set("user_evaluation_required_count", flex.IntValue(reportControls.UserEvaluationRequiredCount)); err != nil {
-		return diag.FromErr(flex.FmtErrorf("Error setting user_evaluation_required_count: %s", err))
-	}
-
 	if err = d.Set("home_account_id", reportControls.HomeAccountID); err != nil {
 		return diag.FromErr(flex.FmtErrorf("Error setting home_account_id: %s", err))
 	}
@@ -365,7 +345,31 @@ func dataSourceIbmSccReportControlsRead(context context.Context, d *schema.Resou
 	if err = d.Set("controls", controls); err != nil {
 		return diag.FromErr(flex.FmtErrorf("Error setting controls %s", err))
 	}
+	getReportSummaryOptions := &securityandcompliancecenterapiv3.GetReportSummaryOptions{}
 
+	getReportSummaryOptions.SetReportID(d.Get("report_id").(string))
+	getReportSummaryOptions.SetInstanceID(d.Get("instance_id").(string))
+	reportSummary, response, err := resultsClient.GetReportSummaryWithContext(context, getReportSummaryOptions)
+
+	if err = d.Set("total_count", flex.IntValue(reportSummary.Controls.TotalCount)); err != nil {
+		return diag.FromErr(flex.FmtErrorf("Error setting total_count: %s", err))
+	}
+
+	if err = d.Set("compliant_count", flex.IntValue(reportSummary.Controls.CompliantCount)); err != nil {
+		return diag.FromErr(flex.FmtErrorf("Error setting compliant_count: %s", err))
+	}
+
+	if err = d.Set("not_compliant_count", flex.IntValue(reportSummary.Controls.NotCompliantCount)); err != nil {
+		return diag.FromErr(flex.FmtErrorf("Error setting not_compliant_count: %s", err))
+	}
+
+	if err = d.Set("unable_to_perform_count", flex.IntValue(reportSummary.Controls.UnableToPerformCount)); err != nil {
+		return diag.FromErr(flex.FmtErrorf("Error setting unable_to_perform_count: %s", err))
+	}
+
+	if err = d.Set("user_evaluation_required_count", flex.IntValue(reportSummary.Controls.UserEvaluationRequiredCount)); err != nil {
+		return diag.FromErr(flex.FmtErrorf("Error setting user_evaluation_required_count: %s", err))
+	}
 	return nil
 }
 
@@ -393,9 +397,6 @@ func dataSourceIbmSccReportControlsControlWithStatsToMap(model *securityandcompl
 	}
 	if model.ControlCategory != nil {
 		modelMap["control_category"] = model.ControlCategory
-	}
-	if model.ControlPath != nil {
-		modelMap["control_path"] = model.ControlPath
 	}
 	if model.ControlSpecifications != nil {
 		controlSpecifications := []map[string]interface{}{}
@@ -478,7 +479,7 @@ func dataSourceIbmSccReportControlsControlSpecificationWithStatsToMap(model *sec
 	return modelMap, nil
 }
 
-func dataSourceIbmSccReportControlsAssessmentToMap(model *securityandcompliancecenterapiv3.Assessment) (map[string]interface{}, error) {
+func dataSourceIbmSccReportControlsAssessmentToMap(model *securityandcompliancecenterapiv3.AssessmentWithStats) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.AssessmentID != nil {
 		modelMap["assessment_id"] = model.AssessmentID
@@ -509,7 +510,7 @@ func dataSourceIbmSccReportControlsAssessmentToMap(model *securityandcompliancec
 	return modelMap, nil
 }
 
-func dataSourceIbmSccReportControlsParameterInfoToMap(model *securityandcompliancecenterapiv3.ParameterInfo) (map[string]interface{}, error) {
+func dataSourceIbmSccReportControlsParameterInfoToMap(model *securityandcompliancecenterapiv3.Parameter) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ParameterName != nil {
 		modelMap["parameter_name"] = model.ParameterName

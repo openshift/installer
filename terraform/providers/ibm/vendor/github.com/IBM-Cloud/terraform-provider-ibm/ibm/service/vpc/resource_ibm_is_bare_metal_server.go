@@ -1167,6 +1167,148 @@ func ResourceIBMIsBareMetalServer() *schema.Resource {
 				Set:         flex.ResourceIBMVPCHash,
 				Description: "List of access management tags",
 			},
+			"health_reasons": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The reasons for the current health_state (if any).",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"code": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A snake case string succinctly identifying the reason for this health state.",
+						},
+						"message": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "An explanation of the reason for this health state.",
+						},
+						"more_info": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Link to documentation about the reason for this health state.",
+						},
+					},
+				},
+			},
+			"health_state": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The health of this resource",
+			},
+			isReservation: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The reservation used by this bare metal server",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						isReservationId: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The unique identifier for this reservation.",
+						},
+						isReservationCrn: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The CRN for this reservation.",
+						},
+						isReservationName: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The name for this reservation. The name is unique across all reservations in the region.",
+						},
+						isReservationHref: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The URL for this reservation.",
+						},
+						isReservationResourceType: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The resource type.",
+						},
+						isReservationDeleted: &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "If present, this property indicates the referenced resource has been deleted and providessome supplementary information.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									isReservationDeletedMoreInfo: &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about deleted resources.",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			isReservationAffinity: {
+				Type:     schema.TypeList,
+				Optional: true,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"policy": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: "The reservation affinity policy to use for this bare metal server.",
+						},
+						isReservationAffinityPool: &schema.Schema{
+							Type:        schema.TypeList,
+							Optional:    true,
+							Computed:    true,
+							Description: "The pool of reservations available for use by this bare metal server.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									isReservationId: {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Computed:    true,
+										Description: "The unique identifier for this reservation.",
+									},
+									isReservationCrn: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The CRN for this reservation.",
+									},
+									isReservationHref: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The URL for this reservation.",
+									},
+									isReservationName: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The name for this reservation. The name is unique across all reservations in the region.",
+									},
+									isReservationResourceType: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The resource type.",
+									},
+									isReservationDeleted: &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "If present, this property indicates the referenced resource has been deleted and providessome supplementary information.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												isReservationDeletedMoreInfo: &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Link to documentation about deleted resources.",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -1290,6 +1432,32 @@ func resourceIBMISBareMetalServerCreate(context context.Context, d *schema.Resou
 	if name, ok := d.GetOk(isBareMetalServerName); ok {
 		nameStr := name.(string)
 		options.Name = &nameStr
+	}
+
+	if resAffinity, ok := d.GetOk(isReservationAffinity); ok {
+		resAff := resAffinity.([]interface{})[0].(map[string]interface{})
+		var resAffinity = &vpcv1.BareMetalServerReservationAffinityPrototype{}
+		policy, ok := resAff["policy"]
+		policyStr := policy.(string)
+		if policyStr != "" && ok {
+			resAffinity.Policy = &policyStr
+		}
+		poolIntf, okPool := resAff[isReservationAffinityPool]
+		if okPool && poolIntf != nil && poolIntf.([]interface{}) != nil && len(poolIntf.([]interface{})) > 0 {
+			pool := poolIntf.([]interface{})[0].(map[string]interface{})
+			id, okId := pool["id"]
+			if okId {
+				idStr, ok := id.(string)
+				if idStr != "" && ok {
+					var resAffPool = make([]vpcv1.ReservationIdentityIntf, 1)
+					resAffPool[0] = &vpcv1.ReservationIdentity{
+						ID: &idStr,
+					}
+					resAffinity.Pool = resAffPool
+				}
+			}
+		}
+		options.ReservationAffinity = resAffinity
 	}
 
 	if primnicintf, ok := d.GetOk(isBareMetalServerPrimaryNetworkInterface); ok && len(primnicintf.([]interface{})) > 0 {
@@ -1880,7 +2048,16 @@ func resourceIBMISBareMetalServerCreate(context context.Context, d *schema.Resou
 	createbmsoptions.BareMetalServerPrototype = options
 	bms, response, err := sess.CreateBareMetalServerWithContext(context, createbmsoptions)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("[DEBUG] Create bare metal server err %s\n%s", err, response))
+		if response != nil && response.StatusCode == 409 {
+			log.Printf("[DEBUG] Create Bare Metal Server response status code: 409 conflict, provider will try again. %s", err)
+			time.Sleep(15 * time.Second)
+			bms, response, err = sess.CreateBareMetalServerWithContext(context, createbmsoptions)
+			if err != nil {
+				return diag.FromErr(fmt.Errorf("[DEBUG] Create bare metal server(1) err %s\n%s", err, response))
+			}
+		} else {
+			return diag.FromErr(fmt.Errorf("[DEBUG] Create bare metal server err %s\n%s", err, response))
+		}
 	}
 	d.SetId(*bms.ID)
 	log.Printf("[INFO] Bare Metal Server : %s", *bms.ID)
@@ -2129,6 +2306,71 @@ func bareMetalServerGet(context context.Context, d *schema.ResourceData, meta in
 		primaryNicList = append(primaryNicList, currentPrimNic)
 		d.Set(isBareMetalServerPrimaryNetworkInterface, primaryNicList)
 	}
+
+	if bms.HealthReasons != nil {
+		healthReasonsList := make([]map[string]interface{}, 0)
+		for _, sr := range bms.HealthReasons {
+			currentSR := map[string]interface{}{}
+			if sr.Code != nil && sr.Message != nil {
+				currentSR["code"] = *sr.Code
+				currentSR["message"] = *sr.Message
+				if sr.MoreInfo != nil {
+					currentSR["more_info"] = *sr.Message
+				}
+				healthReasonsList = append(healthReasonsList, currentSR)
+			}
+		}
+		d.Set("health_reasons", healthReasonsList)
+	}
+	if err = d.Set("health_state", bms.HealthState); err != nil {
+		return err
+	}
+	if bms.ReservationAffinity != nil {
+		reservationAffinity := []map[string]interface{}{}
+		reservationAffinityMap := map[string]interface{}{}
+
+		reservationAffinityMap[isReservationAffinityPolicyResp] = bms.ReservationAffinity.Policy
+		if bms.ReservationAffinity.Pool != nil && len(bms.ReservationAffinity.Pool) > 0 {
+			poolList := make([]map[string]interface{}, 0)
+			for _, pool := range bms.ReservationAffinity.Pool {
+				res := map[string]interface{}{}
+
+				res[isReservationId] = *pool.ID
+				res[isReservationHref] = *pool.Href
+				res[isReservationName] = *pool.Name
+				res[isReservationCrn] = *pool.CRN
+				res[isReservationResourceType] = *pool.ResourceType
+				if pool.Deleted != nil {
+					deletedList := []map[string]interface{}{}
+					deletedMap := dataSourceReservationDeletedToMap(*pool.Deleted)
+					deletedList = append(deletedList, deletedMap)
+					res[isReservationDeleted] = deletedList
+				}
+				poolList = append(poolList, res)
+			}
+			reservationAffinityMap[isReservationAffinityPool] = poolList
+		}
+		reservationAffinity = append(reservationAffinity, reservationAffinityMap)
+		d.Set(isReservationAffinity, reservationAffinity)
+	}
+	resList := make([]map[string]interface{}, 0)
+	if bms.Reservation != nil {
+		res := map[string]interface{}{}
+
+		res[isReservationId] = *bms.Reservation.ID
+		res[isReservationHref] = *bms.Reservation.Href
+		res[isReservationName] = *bms.Reservation.Name
+		res[isReservationCrn] = *bms.Reservation.CRN
+		res[isReservationResourceType] = *bms.Reservation.ResourceType
+		if bms.Reservation.Deleted != nil {
+			deletedList := []map[string]interface{}{}
+			deletedMap := dataSourceReservationDeletedToMap(*bms.Reservation.Deleted)
+			deletedList = append(deletedList, deletedMap)
+			res[isReservationDeleted] = deletedList
+		}
+		resList = append(resList, res)
+	}
+	d.Set(isReservation, resList)
 
 	if !core.IsNil(bms.PrimaryNetworkAttachment) {
 		pnaId := *bms.PrimaryNetworkAttachment.ID
@@ -3648,8 +3890,49 @@ func bareMetalServerUpdate(context context.Context, d *schema.ResourceData, meta
 		}
 		bmsPatchModel.Name = &nameStr
 	}
+	resPol := "reservation_affinity.0.policy"
+	resPool := "reservation_affinity.0.pool"
+	policyStr := ""
+	idStr := ""
+
+	if (d.HasChange(resPol) || d.HasChange(resPool)) && !d.IsNewResource() {
+		flag = true
+		if resAffinity, ok := d.GetOk(isReservationAffinity); ok {
+			resAff := resAffinity.([]interface{})[0].(map[string]interface{})
+			var resAffinityPatch = &vpcv1.BareMetalServerReservationAffinityPatch{}
+			policy, ok := resAff["policy"]
+			policyStr = policy.(string)
+			if policyStr != "" && ok {
+				resAffinityPatch.Policy = &policyStr
+			}
+			if d.HasChange(resPool) {
+				poolIntf, okPool := resAff[isReservationAffinityPool]
+				if okPool && poolIntf != nil && poolIntf.([]interface{}) != nil && len(poolIntf.([]interface{})) > 0 {
+					pool := poolIntf.([]interface{})[0].(map[string]interface{})
+					id, okId := pool["id"]
+					if okId {
+						idStr, ok = id.(string)
+						if idStr != "" && ok {
+							var resAffPool = make([]vpcv1.ReservationIdentityIntf, 1)
+							resAffPool[0] = &vpcv1.ReservationIdentity{
+								ID: &idStr,
+							}
+							resAffinityPatch.Pool = resAffPool
+						}
+					}
+
+				}
+			}
+		}
+	}
 	if flag {
 		bmsPatch, err := bmsPatchModel.AsPatch()
+		//Detaching the reservation from the reserved bare metal server
+		if policyStr == "disabled" && idStr == "" {
+			resAffMap := bmsPatch["reservation_affinity"].(map[string]interface{})
+			resAffMap["pool"] = nil
+			bmsPatch["reservation_affinity"] = resAffMap
+		}
 		if err != nil {
 			return fmt.Errorf("[ERROR] Error calling asPatch for BareMetalServerPatch: %s", err)
 		}
@@ -3675,7 +3958,7 @@ func bareMetalServerUpdate(context context.Context, d *schema.ResourceData, meta
 	}
 
 	if flag || isServerStopped {
-		isServerStopped, err = resourceStartServerIfStopped(id, "hard", d, context, sess, isServerStopped)
+		_, err = resourceStartServerIfStopped(id, "hard", d, context, sess, isServerStopped)
 		if err != nil {
 			return err
 		}

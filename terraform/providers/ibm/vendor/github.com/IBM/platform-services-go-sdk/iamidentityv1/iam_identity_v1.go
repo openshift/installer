@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2024.
+ * (C) Copyright IBM Corp. 2025.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.93.0-c40121e6-20240729-182103
+ * IBM OpenAPI SDK Code Generator Version: 3.98.0-8be2046a-20241205-162752
  */
 
 // Package iamidentityv1 : Operations and models for the IamIdentityV1 service
@@ -4668,6 +4668,314 @@ func (iamIdentity *IamIdentityV1) GetEffectiveAccountSettingsWithContext(ctx con
 	return
 }
 
+// UpdatePreferenceOnScopeAccount : Update Identity Preference on scope account
+// Update one Identity Preference on scope 'account'. supported preferences:
+//
+//	The following preferences are storing values for identities inside an account,
+//	i.e. for each account that an identity is member of, the value stored might be different.
+//	This means, users who might be member of multiple accounts can have multiple preferences, one per account.
+//	Identities like Service Ids or Trusted Profiles can only exist in one account,
+//	therefore they can only have one preference inside their related account.
+//	preference: console/landing_page
+//	  service: console
+//	  preferenceId: landing_page
+//	  supportedIdentityType: Trusted Profiles, Users
+//	  type: string
+//	  validation: valid URL (without host part), e.g. /billing or /iam
+//	preference: console/global_left_navigation
+//	  service: console
+//	  preferenceId: global_left_navigation
+//	  supportedIdentityType: Trusted Profiles, Users
+//	  type: list of strings
+//	  validation: each entry in the list of strings must match the identifier of one navigation entry in the console.
+func (iamIdentity *IamIdentityV1) UpdatePreferenceOnScopeAccount(updatePreferenceOnScopeAccountOptions *UpdatePreferenceOnScopeAccountOptions) (result *IdentityPreferenceResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.UpdatePreferenceOnScopeAccountWithContext(context.Background(), updatePreferenceOnScopeAccountOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// UpdatePreferenceOnScopeAccountWithContext is an alternate form of the UpdatePreferenceOnScopeAccount method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) UpdatePreferenceOnScopeAccountWithContext(ctx context.Context, updatePreferenceOnScopeAccountOptions *UpdatePreferenceOnScopeAccountOptions) (result *IdentityPreferenceResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updatePreferenceOnScopeAccountOptions, "updatePreferenceOnScopeAccountOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(updatePreferenceOnScopeAccountOptions, "updatePreferenceOnScopeAccountOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"account_id":    *updatePreferenceOnScopeAccountOptions.AccountID,
+		"iam_id":        *updatePreferenceOnScopeAccountOptions.IamID,
+		"service":       *updatePreferenceOnScopeAccountOptions.Service,
+		"preference_id": *updatePreferenceOnScopeAccountOptions.PreferenceID,
+	}
+
+	builder := core.NewRequestBuilder(core.PUT)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/preferences/accounts/{account_id}/identities/{iam_id}/{service}/{preference_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range updatePreferenceOnScopeAccountOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UpdatePreferenceOnScopeAccount")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if updatePreferenceOnScopeAccountOptions.ValueString != nil {
+		body["value_string"] = updatePreferenceOnScopeAccountOptions.ValueString
+	}
+	if updatePreferenceOnScopeAccountOptions.ValueListOfStrings != nil {
+		body["value_list_of_strings"] = updatePreferenceOnScopeAccountOptions.ValueListOfStrings
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_preference_on_scope_account", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIdentityPreferenceResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeletePreferencesOnScopeAccount : Delete Identity Preference on scope account
+// Delete one Identity Preference on scope 'account'.
+func (iamIdentity *IamIdentityV1) DeletePreferencesOnScopeAccount(deletePreferencesOnScopeAccountOptions *DeletePreferencesOnScopeAccountOptions) (response *core.DetailedResponse, err error) {
+	response, err = iamIdentity.DeletePreferencesOnScopeAccountWithContext(context.Background(), deletePreferencesOnScopeAccountOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DeletePreferencesOnScopeAccountWithContext is an alternate form of the DeletePreferencesOnScopeAccount method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) DeletePreferencesOnScopeAccountWithContext(ctx context.Context, deletePreferencesOnScopeAccountOptions *DeletePreferencesOnScopeAccountOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deletePreferencesOnScopeAccountOptions, "deletePreferencesOnScopeAccountOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deletePreferencesOnScopeAccountOptions, "deletePreferencesOnScopeAccountOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"account_id":    *deletePreferencesOnScopeAccountOptions.AccountID,
+		"iam_id":        *deletePreferencesOnScopeAccountOptions.IamID,
+		"service":       *deletePreferencesOnScopeAccountOptions.Service,
+		"preference_id": *deletePreferencesOnScopeAccountOptions.PreferenceID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/preferences/accounts/{account_id}/identities/{iam_id}/{service}/{preference_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range deletePreferencesOnScopeAccountOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeletePreferencesOnScopeAccount")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_preferences_on_scope_account", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// GetPreferencesOnScopeAccount : Get Identity Preference on scope account
+// Get one Identity Preference on scope 'account'.
+func (iamIdentity *IamIdentityV1) GetPreferencesOnScopeAccount(getPreferencesOnScopeAccountOptions *GetPreferencesOnScopeAccountOptions) (result *IdentityPreferenceResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.GetPreferencesOnScopeAccountWithContext(context.Background(), getPreferencesOnScopeAccountOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetPreferencesOnScopeAccountWithContext is an alternate form of the GetPreferencesOnScopeAccount method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) GetPreferencesOnScopeAccountWithContext(ctx context.Context, getPreferencesOnScopeAccountOptions *GetPreferencesOnScopeAccountOptions) (result *IdentityPreferenceResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getPreferencesOnScopeAccountOptions, "getPreferencesOnScopeAccountOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getPreferencesOnScopeAccountOptions, "getPreferencesOnScopeAccountOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"account_id":    *getPreferencesOnScopeAccountOptions.AccountID,
+		"iam_id":        *getPreferencesOnScopeAccountOptions.IamID,
+		"service":       *getPreferencesOnScopeAccountOptions.Service,
+		"preference_id": *getPreferencesOnScopeAccountOptions.PreferenceID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/preferences/accounts/{account_id}/identities/{iam_id}/{service}/{preference_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getPreferencesOnScopeAccountOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetPreferencesOnScopeAccount")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_preferences_on_scope_account", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIdentityPreferenceResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetAllPreferencesOnScopeAccount : Get all Identity Preferences for one account
+// Get all Identity Preferences for one account / user combination.
+func (iamIdentity *IamIdentityV1) GetAllPreferencesOnScopeAccount(getAllPreferencesOnScopeAccountOptions *GetAllPreferencesOnScopeAccountOptions) (result *IdentityPreferencesResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.GetAllPreferencesOnScopeAccountWithContext(context.Background(), getAllPreferencesOnScopeAccountOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAllPreferencesOnScopeAccountWithContext is an alternate form of the GetAllPreferencesOnScopeAccount method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) GetAllPreferencesOnScopeAccountWithContext(ctx context.Context, getAllPreferencesOnScopeAccountOptions *GetAllPreferencesOnScopeAccountOptions) (result *IdentityPreferencesResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getAllPreferencesOnScopeAccountOptions, "getAllPreferencesOnScopeAccountOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getAllPreferencesOnScopeAccountOptions, "getAllPreferencesOnScopeAccountOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"account_id": *getAllPreferencesOnScopeAccountOptions.AccountID,
+		"iam_id":     *getAllPreferencesOnScopeAccountOptions.IamID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/preferences/accounts/{account_id}/identities/{iam_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getAllPreferencesOnScopeAccountOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetAllPreferencesOnScopeAccount")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_all_preferences_on_scope_account", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIdentityPreferencesResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
 // ListTrustedProfileAssignments : List assignments
 // List trusted profile template assignments.
 func (iamIdentity *IamIdentityV1) ListTrustedProfileAssignments(listTrustedProfileAssignmentsOptions *ListTrustedProfileAssignmentsOptions) (result *TemplateAssignmentListResponse, response *core.DetailedResponse, err error) {
@@ -7217,7 +7525,9 @@ type APIKey struct {
 	// Access is done via the UUID of the API key.
 	Name *string `json:"name" validate:"required"`
 
-	// Defines if the API key supports sessions. Sessions are only supported for user apikeys.
+	// Defines whether you can manage CLI login sessions for the API key. When `true`, sessions are created and can be
+	// reviewed or revoked. When `false`, no sessions are tracked. To block access, delete or rotate the API key. Available
+	// only for user API keys.
 	SupportSessions *bool `json:"support_sessions,omitempty"`
 
 	// Defines the action to take when API key is leaked, valid values are 'none', 'disable' and 'delete'.
@@ -7882,7 +8192,9 @@ type CreateAPIKeyOptions struct {
 	// of API keys for users.
 	StoreValue *bool `json:"store_value,omitempty"`
 
-	// Defines if the API key supports sessions. Sessions are only supported for user apikeys.
+	// Defines whether you can manage CLI login sessions for the API key. When `true`, sessions are created and can be
+	// reviewed or revoked. When `false`, no sessions are tracked. To block access, delete or rotate the API key. Available
+	// only for user API keys.
 	SupportSessions *bool `json:"support_sessions,omitempty"`
 
 	// Defines the action to take when API key is leaked, valid values are 'none', 'disable' and 'delete'.
@@ -8826,6 +9138,64 @@ func (options *DeleteLinkOptions) SetHeaders(param map[string]string) *DeleteLin
 	return options
 }
 
+// DeletePreferencesOnScopeAccountOptions : The DeletePreferencesOnScopeAccount options.
+type DeletePreferencesOnScopeAccountOptions struct {
+	// Account id to delete preference for.
+	AccountID *string `json:"account_id" validate:"required,ne="`
+
+	// IAM id to delete the preference for.
+	IamID *string `json:"iam_id" validate:"required,ne="`
+
+	// Service of the preference to be deleted.
+	Service *string `json:"service" validate:"required,ne="`
+
+	// Identifier of preference to be deleted.
+	PreferenceID *string `json:"preference_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewDeletePreferencesOnScopeAccountOptions : Instantiate DeletePreferencesOnScopeAccountOptions
+func (*IamIdentityV1) NewDeletePreferencesOnScopeAccountOptions(accountID string, iamID string, service string, preferenceID string) *DeletePreferencesOnScopeAccountOptions {
+	return &DeletePreferencesOnScopeAccountOptions{
+		AccountID:    core.StringPtr(accountID),
+		IamID:        core.StringPtr(iamID),
+		Service:      core.StringPtr(service),
+		PreferenceID: core.StringPtr(preferenceID),
+	}
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *DeletePreferencesOnScopeAccountOptions) SetAccountID(accountID string) *DeletePreferencesOnScopeAccountOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetIamID : Allow user to set IamID
+func (_options *DeletePreferencesOnScopeAccountOptions) SetIamID(iamID string) *DeletePreferencesOnScopeAccountOptions {
+	_options.IamID = core.StringPtr(iamID)
+	return _options
+}
+
+// SetService : Allow user to set Service
+func (_options *DeletePreferencesOnScopeAccountOptions) SetService(service string) *DeletePreferencesOnScopeAccountOptions {
+	_options.Service = core.StringPtr(service)
+	return _options
+}
+
+// SetPreferenceID : Allow user to set PreferenceID
+func (_options *DeletePreferencesOnScopeAccountOptions) SetPreferenceID(preferenceID string) *DeletePreferencesOnScopeAccountOptions {
+	_options.PreferenceID = core.StringPtr(preferenceID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeletePreferencesOnScopeAccountOptions) SetHeaders(param map[string]string) *DeletePreferencesOnScopeAccountOptions {
+	options.Headers = param
+	return options
+}
+
 // DeleteProfileIdentityOptions : The DeleteProfileIdentity options.
 type DeleteProfileIdentityOptions struct {
 	// ID of the trusted profile.
@@ -9491,6 +9861,44 @@ func (options *GetAccountSettingsTemplateVersionOptions) SetHeaders(param map[st
 	return options
 }
 
+// GetAllPreferencesOnScopeAccountOptions : The GetAllPreferencesOnScopeAccount options.
+type GetAllPreferencesOnScopeAccountOptions struct {
+	// Account id to get preferences for.
+	AccountID *string `json:"account_id" validate:"required,ne="`
+
+	// IAM id to get the preferences for.
+	IamID *string `json:"iam_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewGetAllPreferencesOnScopeAccountOptions : Instantiate GetAllPreferencesOnScopeAccountOptions
+func (*IamIdentityV1) NewGetAllPreferencesOnScopeAccountOptions(accountID string, iamID string) *GetAllPreferencesOnScopeAccountOptions {
+	return &GetAllPreferencesOnScopeAccountOptions{
+		AccountID: core.StringPtr(accountID),
+		IamID:     core.StringPtr(iamID),
+	}
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *GetAllPreferencesOnScopeAccountOptions) SetAccountID(accountID string) *GetAllPreferencesOnScopeAccountOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetIamID : Allow user to set IamID
+func (_options *GetAllPreferencesOnScopeAccountOptions) SetIamID(iamID string) *GetAllPreferencesOnScopeAccountOptions {
+	_options.IamID = core.StringPtr(iamID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetAllPreferencesOnScopeAccountOptions) SetHeaders(param map[string]string) *GetAllPreferencesOnScopeAccountOptions {
+	options.Headers = param
+	return options
+}
+
 // GetAPIKeyOptions : The GetAPIKey options.
 type GetAPIKeyOptions struct {
 	// Unique ID of the API key.
@@ -9841,6 +10249,64 @@ func (_options *GetMfaStatusOptions) SetIamID(iamID string) *GetMfaStatusOptions
 
 // SetHeaders : Allow user to set Headers
 func (options *GetMfaStatusOptions) SetHeaders(param map[string]string) *GetMfaStatusOptions {
+	options.Headers = param
+	return options
+}
+
+// GetPreferencesOnScopeAccountOptions : The GetPreferencesOnScopeAccount options.
+type GetPreferencesOnScopeAccountOptions struct {
+	// Account id to get preference for.
+	AccountID *string `json:"account_id" validate:"required,ne="`
+
+	// IAM id to get the preference for.
+	IamID *string `json:"iam_id" validate:"required,ne="`
+
+	// Service of the preference to be fetched.
+	Service *string `json:"service" validate:"required,ne="`
+
+	// Identifier of preference to be fetched.
+	PreferenceID *string `json:"preference_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewGetPreferencesOnScopeAccountOptions : Instantiate GetPreferencesOnScopeAccountOptions
+func (*IamIdentityV1) NewGetPreferencesOnScopeAccountOptions(accountID string, iamID string, service string, preferenceID string) *GetPreferencesOnScopeAccountOptions {
+	return &GetPreferencesOnScopeAccountOptions{
+		AccountID:    core.StringPtr(accountID),
+		IamID:        core.StringPtr(iamID),
+		Service:      core.StringPtr(service),
+		PreferenceID: core.StringPtr(preferenceID),
+	}
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *GetPreferencesOnScopeAccountOptions) SetAccountID(accountID string) *GetPreferencesOnScopeAccountOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetIamID : Allow user to set IamID
+func (_options *GetPreferencesOnScopeAccountOptions) SetIamID(iamID string) *GetPreferencesOnScopeAccountOptions {
+	_options.IamID = core.StringPtr(iamID)
+	return _options
+}
+
+// SetService : Allow user to set Service
+func (_options *GetPreferencesOnScopeAccountOptions) SetService(service string) *GetPreferencesOnScopeAccountOptions {
+	_options.Service = core.StringPtr(service)
+	return _options
+}
+
+// SetPreferenceID : Allow user to set PreferenceID
+func (_options *GetPreferencesOnScopeAccountOptions) SetPreferenceID(preferenceID string) *GetPreferencesOnScopeAccountOptions {
+	_options.PreferenceID = core.StringPtr(preferenceID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetPreferencesOnScopeAccountOptions) SetHeaders(param map[string]string) *GetPreferencesOnScopeAccountOptions {
 	options.Headers = param
 	return options
 }
@@ -10275,6 +10741,84 @@ func UnmarshalIDBasedMfaEnrollment(m map[string]json.RawMessage, result interfac
 	err = core.UnmarshalPrimitive(m, "comply_state", &obj.ComplyState)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "comply_state-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// IdentityPreferenceResponse : IdentityPreferenceResponse struct
+type IdentityPreferenceResponse struct {
+	// Service of the preference.
+	Service *string `json:"service,omitempty"`
+
+	// Unique ID of the preference.
+	ID *string `json:"id,omitempty"`
+
+	// Account ID of the preference, only present for scope 'account'.
+	AccountID *string `json:"account_id,omitempty"`
+
+	// Scope of the preference, 'global' or 'account'.
+	Scope *string `json:"scope,omitempty"`
+
+	// String value of the preference, only one value property is set, either 'value_string' or 'value_list_of_strings' is
+	// present.
+	ValueString *string `json:"value_string,omitempty"`
+
+	// List of value of the preference, only one value property is set, either 'value_string' or 'value_list_of_strings' is
+	// present.
+	ValueListOfStrings []string `json:"value_list_of_strings,omitempty"`
+}
+
+// UnmarshalIdentityPreferenceResponse unmarshals an instance of IdentityPreferenceResponse from the specified map of raw messages.
+func UnmarshalIdentityPreferenceResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(IdentityPreferenceResponse)
+	err = core.UnmarshalPrimitive(m, "service", &obj.Service)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "service-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "scope", &obj.Scope)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "scope-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value_string", &obj.ValueString)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "value_string-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value_list_of_strings", &obj.ValueListOfStrings)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "value_list_of_strings-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// IdentityPreferencesResponse : IdentityPreferencesResponse struct
+type IdentityPreferencesResponse struct {
+	// List of Identity Preferences.
+	Preferences []IdentityPreferenceResponse `json:"preferences" validate:"required"`
+}
+
+// UnmarshalIdentityPreferencesResponse unmarshals an instance of IdentityPreferencesResponse from the specified map of raw messages.
+func UnmarshalIdentityPreferencesResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(IdentityPreferencesResponse)
+	err = core.UnmarshalModel(m, "preferences", &obj.Preferences, UnmarshalIdentityPreferenceResponse)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "preferences-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -13786,7 +14330,9 @@ type UpdateAPIKeyOptions struct {
 	// key. If a non empty value is provided the API key will be updated.
 	Description *string `json:"description,omitempty"`
 
-	// Defines if the API key supports sessions. Sessions are only supported for user apikeys.
+	// Defines whether you can manage CLI login sessions for the API key. When `true`, sessions are created and can be
+	// reviewed or revoked. When `false`, no sessions are tracked. To block access, delete or rotate the API key. Available
+	// only for user API keys.
 	SupportSessions *bool `json:"support_sessions,omitempty"`
 
 	// Defines the action to take when API key is leaked, valid values are 'none', 'disable' and 'delete'.
@@ -13959,6 +14505,85 @@ func (_options *UpdateClaimRuleOptions) SetExpiration(expiration int64) *UpdateC
 
 // SetHeaders : Allow user to set Headers
 func (options *UpdateClaimRuleOptions) SetHeaders(param map[string]string) *UpdateClaimRuleOptions {
+	options.Headers = param
+	return options
+}
+
+// UpdatePreferenceOnScopeAccountOptions : The UpdatePreferenceOnScopeAccount options.
+type UpdatePreferenceOnScopeAccountOptions struct {
+	// Account id to update preference for.
+	AccountID *string `json:"account_id" validate:"required,ne="`
+
+	// IAM id to update the preference for.
+	IamID *string `json:"iam_id" validate:"required,ne="`
+
+	// Service of the preference to be updated.
+	Service *string `json:"service" validate:"required,ne="`
+
+	// Identifier of preference to be updated.
+	PreferenceID *string `json:"preference_id" validate:"required,ne="`
+
+	// contains a string value of the preference. only one value property is set, either 'value_string' or
+	// 'value_list_of_strings' is present.
+	ValueString *string `json:"value_string" validate:"required"`
+
+	// contains a list of string values of the preference. only one value property is set, either 'value_string' or
+	// 'value_list_of_strings' is present.
+	ValueListOfStrings []string `json:"value_list_of_strings,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewUpdatePreferenceOnScopeAccountOptions : Instantiate UpdatePreferenceOnScopeAccountOptions
+func (*IamIdentityV1) NewUpdatePreferenceOnScopeAccountOptions(accountID string, iamID string, service string, preferenceID string, valueString string) *UpdatePreferenceOnScopeAccountOptions {
+	return &UpdatePreferenceOnScopeAccountOptions{
+		AccountID:    core.StringPtr(accountID),
+		IamID:        core.StringPtr(iamID),
+		Service:      core.StringPtr(service),
+		PreferenceID: core.StringPtr(preferenceID),
+		ValueString:  core.StringPtr(valueString),
+	}
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *UpdatePreferenceOnScopeAccountOptions) SetAccountID(accountID string) *UpdatePreferenceOnScopeAccountOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetIamID : Allow user to set IamID
+func (_options *UpdatePreferenceOnScopeAccountOptions) SetIamID(iamID string) *UpdatePreferenceOnScopeAccountOptions {
+	_options.IamID = core.StringPtr(iamID)
+	return _options
+}
+
+// SetService : Allow user to set Service
+func (_options *UpdatePreferenceOnScopeAccountOptions) SetService(service string) *UpdatePreferenceOnScopeAccountOptions {
+	_options.Service = core.StringPtr(service)
+	return _options
+}
+
+// SetPreferenceID : Allow user to set PreferenceID
+func (_options *UpdatePreferenceOnScopeAccountOptions) SetPreferenceID(preferenceID string) *UpdatePreferenceOnScopeAccountOptions {
+	_options.PreferenceID = core.StringPtr(preferenceID)
+	return _options
+}
+
+// SetValueString : Allow user to set ValueString
+func (_options *UpdatePreferenceOnScopeAccountOptions) SetValueString(valueString string) *UpdatePreferenceOnScopeAccountOptions {
+	_options.ValueString = core.StringPtr(valueString)
+	return _options
+}
+
+// SetValueListOfStrings : Allow user to set ValueListOfStrings
+func (_options *UpdatePreferenceOnScopeAccountOptions) SetValueListOfStrings(valueListOfStrings []string) *UpdatePreferenceOnScopeAccountOptions {
+	_options.ValueListOfStrings = valueListOfStrings
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdatePreferenceOnScopeAccountOptions) SetHeaders(param map[string]string) *UpdatePreferenceOnScopeAccountOptions {
 	options.Headers = param
 	return options
 }

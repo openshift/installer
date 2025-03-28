@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.84.0-a4533f12-20240103-170852
+ * IBM OpenAPI SDK Code Generator Version: 3.98.0-8be2046a-20241205-162752
  */
 
 // Package vmwarev1 : Operations and models for the VmwareV1 service
@@ -34,7 +34,7 @@ import (
 	"github.com/go-openapi/strfmt"
 )
 
-// VmwareV1 : IBM Cloud for VMware as a Service API
+// VmwareV1 : IBM Cloud for VMware Cloud Foundation as a Service API
 //
 // API Version: 1.2.0
 type VmwareV1 struct {
@@ -69,22 +69,26 @@ func NewVmwareV1UsingExternalConfig(options *VmwareV1Options) (vmware *VmwareV1,
 	if options.Authenticator == nil {
 		options.Authenticator, err = core.GetAuthenticatorFromEnvironment(options.ServiceName)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "env-auth-error", common.GetComponentInfo())
 			return
 		}
 	}
 
 	vmware, err = NewVmwareV1(options)
+	err = core.RepurposeSDKProblem(err, "new-client-error")
 	if err != nil {
 		return
 	}
 
 	err = vmware.Service.ConfigureService(options.ServiceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client-config-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = vmware.Service.SetServiceURL(options.URL)
+		err = core.RepurposeSDKProblem(err, "url-set-error")
 	}
 	return
 }
@@ -98,12 +102,14 @@ func NewVmwareV1(options *VmwareV1Options) (service *VmwareV1, err error) {
 
 	baseService, err := core.NewBaseService(serviceOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "new-base-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = baseService.SetServiceURL(options.URL)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "set-url-error", common.GetComponentInfo())
 			return
 		}
 	}
@@ -117,7 +123,7 @@ func NewVmwareV1(options *VmwareV1Options) (service *VmwareV1, err error) {
 
 // GetServiceURLForRegion returns the service URL to be used for the specified region
 func GetServiceURLForRegion(region string) (string, error) {
-	return "", fmt.Errorf("service does not support regional URLs")
+	return "", core.SDKErrorf(nil, "service does not support regional URLs", "no-regional-support", common.GetComponentInfo())
 }
 
 // Clone makes a copy of "vmware" suitable for processing requests.
@@ -137,7 +143,11 @@ func ConstructServiceURL(providedUrlVariables map[string]string) (string, error)
 
 // SetServiceURL sets the service URL
 func (vmware *VmwareV1) SetServiceURL(url string) error {
-	return vmware.Service.SetServiceURL(url)
+	err := vmware.Service.SetServiceURL(url)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-set-error", common.GetComponentInfo())
+	}
+	return err
 }
 
 // GetServiceURL returns the service URL
@@ -171,23 +181,27 @@ func (vmware *VmwareV1) DisableRetries() {
 	vmware.Service.DisableRetries()
 }
 
-// CreateDirectorSites : Create a director site instance
-// Create an instance of a director site with specified configurations. The director site instance is the infrastructure
-// and associated VMware software stack, which consists of VMware vCenter Server, VMware NSX-T, and VMware Cloud
-// Director. VMware platform management and operations are performed with Cloud Director. The minimum initial order size
-// is 2 hosts (2-Socket 32 Cores, 192 GB RAM) with 24 TB of 2.0 IOPS/GB storage.
+// CreateDirectorSites : Create a Cloud Director site instance
+// Create an instance of a Cloud Director site with specified configurations. The Cloud Director site instance is the
+// infrastructure and associated VMware software stack, which consists of VMware vCenter Server, VMware NSX-T, and
+// VMware Cloud Director. VMware platform management and operations are performed with Cloud Director. The minimum
+// initial order size is 2 hosts (2-Socket 32 Cores, 192 GB RAM) with 24 TB of 2.0 IOPS/GB storage.
 func (vmware *VmwareV1) CreateDirectorSites(createDirectorSitesOptions *CreateDirectorSitesOptions) (result *DirectorSite, response *core.DetailedResponse, err error) {
-	return vmware.CreateDirectorSitesWithContext(context.Background(), createDirectorSitesOptions)
+	result, response, err = vmware.CreateDirectorSitesWithContext(context.Background(), createDirectorSitesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateDirectorSitesWithContext is an alternate form of the CreateDirectorSites method which supports a Context parameter
 func (vmware *VmwareV1) CreateDirectorSitesWithContext(ctx context.Context, createDirectorSitesOptions *CreateDirectorSitesOptions) (result *DirectorSite, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createDirectorSitesOptions, "createDirectorSitesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createDirectorSitesOptions, "createDirectorSitesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -196,6 +210,7 @@ func (vmware *VmwareV1) CreateDirectorSitesWithContext(ctx context.Context, crea
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/director_sites`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -240,22 +255,27 @@ func (vmware *VmwareV1) CreateDirectorSitesWithContext(ctx context.Context, crea
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_director_sites", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDirectorSite)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -264,16 +284,19 @@ func (vmware *VmwareV1) CreateDirectorSitesWithContext(ctx context.Context, crea
 	return
 }
 
-// ListDirectorSites : List director site instances
-// List all VMware director site instances that the user can access in the cloud account.
+// ListDirectorSites : List Cloud Director site instances
+// List all VMware Cloud Director site instances that the user can access in the cloud account.
 func (vmware *VmwareV1) ListDirectorSites(listDirectorSitesOptions *ListDirectorSitesOptions) (result *DirectorSiteCollection, response *core.DetailedResponse, err error) {
-	return vmware.ListDirectorSitesWithContext(context.Background(), listDirectorSitesOptions)
+	result, response, err = vmware.ListDirectorSitesWithContext(context.Background(), listDirectorSitesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListDirectorSitesWithContext is an alternate form of the ListDirectorSites method which supports a Context parameter
 func (vmware *VmwareV1) ListDirectorSitesWithContext(ctx context.Context, listDirectorSitesOptions *ListDirectorSitesOptions) (result *DirectorSiteCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(listDirectorSitesOptions, "listDirectorSitesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -282,6 +305,7 @@ func (vmware *VmwareV1) ListDirectorSitesWithContext(ctx context.Context, listDi
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/director_sites`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -303,17 +327,21 @@ func (vmware *VmwareV1) ListDirectorSitesWithContext(ctx context.Context, listDi
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_director_sites", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDirectorSiteCollection)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -322,20 +350,24 @@ func (vmware *VmwareV1) ListDirectorSitesWithContext(ctx context.Context, listDi
 	return
 }
 
-// GetDirectorSite : Get a director site instance
-// Get a director site instance by specifying the instance ID.
+// GetDirectorSite : Get a Cloud Director site instance
+// Get a Cloud Director site instance by specifying the instance ID.
 func (vmware *VmwareV1) GetDirectorSite(getDirectorSiteOptions *GetDirectorSiteOptions) (result *DirectorSite, response *core.DetailedResponse, err error) {
-	return vmware.GetDirectorSiteWithContext(context.Background(), getDirectorSiteOptions)
+	result, response, err = vmware.GetDirectorSiteWithContext(context.Background(), getDirectorSiteOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetDirectorSiteWithContext is an alternate form of the GetDirectorSite method which supports a Context parameter
 func (vmware *VmwareV1) GetDirectorSiteWithContext(ctx context.Context, getDirectorSiteOptions *GetDirectorSiteOptions) (result *DirectorSite, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getDirectorSiteOptions, "getDirectorSiteOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getDirectorSiteOptions, "getDirectorSiteOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -348,6 +380,7 @@ func (vmware *VmwareV1) GetDirectorSiteWithContext(ctx context.Context, getDirec
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/director_sites/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -369,17 +402,21 @@ func (vmware *VmwareV1) GetDirectorSiteWithContext(ctx context.Context, getDirec
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_director_site", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDirectorSite)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -388,20 +425,24 @@ func (vmware *VmwareV1) GetDirectorSiteWithContext(ctx context.Context, getDirec
 	return
 }
 
-// DeleteDirectorSite : Delete a director site instance
-// Delete a director site instance by specifying the instance ID.
+// DeleteDirectorSite : Delete a Cloud Director site instance
+// Delete a Cloud Director site instance by specifying the instance ID.
 func (vmware *VmwareV1) DeleteDirectorSite(deleteDirectorSiteOptions *DeleteDirectorSiteOptions) (result *DirectorSite, response *core.DetailedResponse, err error) {
-	return vmware.DeleteDirectorSiteWithContext(context.Background(), deleteDirectorSiteOptions)
+	result, response, err = vmware.DeleteDirectorSiteWithContext(context.Background(), deleteDirectorSiteOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteDirectorSiteWithContext is an alternate form of the DeleteDirectorSite method which supports a Context parameter
 func (vmware *VmwareV1) DeleteDirectorSiteWithContext(ctx context.Context, deleteDirectorSiteOptions *DeleteDirectorSiteOptions) (result *DirectorSite, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteDirectorSiteOptions, "deleteDirectorSiteOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteDirectorSiteOptions, "deleteDirectorSiteOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -414,6 +455,7 @@ func (vmware *VmwareV1) DeleteDirectorSiteWithContext(ctx context.Context, delet
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/director_sites/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -435,17 +477,193 @@ func (vmware *VmwareV1) DeleteDirectorSiteWithContext(ctx context.Context, delet
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_director_site", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDirectorSite)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// EnableVeeamOnPvdcsList : Enable or disable Veeam on a Cloud Director site
+// Enable or disable Veeam on a Cloud Director site.
+func (vmware *VmwareV1) EnableVeeamOnPvdcsList(enableVeeamOnPvdcsListOptions *EnableVeeamOnPvdcsListOptions) (result *ServiceEnabled, response *core.DetailedResponse, err error) {
+	result, response, err = vmware.EnableVeeamOnPvdcsListWithContext(context.Background(), enableVeeamOnPvdcsListOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// EnableVeeamOnPvdcsListWithContext is an alternate form of the EnableVeeamOnPvdcsList method which supports a Context parameter
+func (vmware *VmwareV1) EnableVeeamOnPvdcsListWithContext(ctx context.Context, enableVeeamOnPvdcsListOptions *EnableVeeamOnPvdcsListOptions) (result *ServiceEnabled, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(enableVeeamOnPvdcsListOptions, "enableVeeamOnPvdcsListOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(enableVeeamOnPvdcsListOptions, "enableVeeamOnPvdcsListOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"site_id": *enableVeeamOnPvdcsListOptions.SiteID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/director_sites/{site_id}/action/enable_veeam`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range enableVeeamOnPvdcsListOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vmware", "V1", "EnableVeeamOnPvdcsList")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+	if enableVeeamOnPvdcsListOptions.AcceptLanguage != nil {
+		builder.AddHeader("Accept-Language", fmt.Sprint(*enableVeeamOnPvdcsListOptions.AcceptLanguage))
+	}
+	if enableVeeamOnPvdcsListOptions.XGlobalTransactionID != nil {
+		builder.AddHeader("X-Global-Transaction-ID", fmt.Sprint(*enableVeeamOnPvdcsListOptions.XGlobalTransactionID))
+	}
+
+	body := make(map[string]interface{})
+	if enableVeeamOnPvdcsListOptions.Enable != nil {
+		body["enable"] = enableVeeamOnPvdcsListOptions.Enable
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = vmware.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "enable_veeam_on_pvdcs_list", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalServiceEnabled)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// EnableVcdaOnDataCenter : Enable or disable VCDA on a Cloud Director site
+// Enable or disable VMware Cloud Director Availability (VCDA) on a Cloud Director site.
+func (vmware *VmwareV1) EnableVcdaOnDataCenter(enableVcdaOnDataCenterOptions *EnableVcdaOnDataCenterOptions) (result *ServiceEnabled, response *core.DetailedResponse, err error) {
+	result, response, err = vmware.EnableVcdaOnDataCenterWithContext(context.Background(), enableVcdaOnDataCenterOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// EnableVcdaOnDataCenterWithContext is an alternate form of the EnableVcdaOnDataCenter method which supports a Context parameter
+func (vmware *VmwareV1) EnableVcdaOnDataCenterWithContext(ctx context.Context, enableVcdaOnDataCenterOptions *EnableVcdaOnDataCenterOptions) (result *ServiceEnabled, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(enableVcdaOnDataCenterOptions, "enableVcdaOnDataCenterOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(enableVcdaOnDataCenterOptions, "enableVcdaOnDataCenterOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"site_id": *enableVcdaOnDataCenterOptions.SiteID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/director_sites/{site_id}/action/enable_vcda`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range enableVcdaOnDataCenterOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vmware", "V1", "EnableVcdaOnDataCenter")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+	if enableVcdaOnDataCenterOptions.AcceptLanguage != nil {
+		builder.AddHeader("Accept-Language", fmt.Sprint(*enableVcdaOnDataCenterOptions.AcceptLanguage))
+	}
+	if enableVcdaOnDataCenterOptions.XGlobalTransactionID != nil {
+		builder.AddHeader("X-Global-Transaction-ID", fmt.Sprint(*enableVcdaOnDataCenterOptions.XGlobalTransactionID))
+	}
+
+	body := make(map[string]interface{})
+	if enableVcdaOnDataCenterOptions.Enable != nil {
+		body["enable"] = enableVcdaOnDataCenterOptions.Enable
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = vmware.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "enable_vcda_on_data_center", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalServiceEnabled)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -455,19 +673,23 @@ func (vmware *VmwareV1) DeleteDirectorSiteWithContext(ctx context.Context, delet
 }
 
 // CreateDirectorSitesVcdaConnectionEndpoints : Create a VCDA connection
-// Create a VCDA connection in the Cloud Director site identified by {site_id}.
+// Create a VMware Cloud Director Availability (VCDA) connection in the Cloud Director site identified by {site_id}.
 func (vmware *VmwareV1) CreateDirectorSitesVcdaConnectionEndpoints(createDirectorSitesVcdaConnectionEndpointsOptions *CreateDirectorSitesVcdaConnectionEndpointsOptions) (result *VcdaConnection, response *core.DetailedResponse, err error) {
-	return vmware.CreateDirectorSitesVcdaConnectionEndpointsWithContext(context.Background(), createDirectorSitesVcdaConnectionEndpointsOptions)
+	result, response, err = vmware.CreateDirectorSitesVcdaConnectionEndpointsWithContext(context.Background(), createDirectorSitesVcdaConnectionEndpointsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateDirectorSitesVcdaConnectionEndpointsWithContext is an alternate form of the CreateDirectorSitesVcdaConnectionEndpoints method which supports a Context parameter
 func (vmware *VmwareV1) CreateDirectorSitesVcdaConnectionEndpointsWithContext(ctx context.Context, createDirectorSitesVcdaConnectionEndpointsOptions *CreateDirectorSitesVcdaConnectionEndpointsOptions) (result *VcdaConnection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createDirectorSitesVcdaConnectionEndpointsOptions, "createDirectorSitesVcdaConnectionEndpointsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createDirectorSitesVcdaConnectionEndpointsOptions, "createDirectorSitesVcdaConnectionEndpointsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -480,6 +702,7 @@ func (vmware *VmwareV1) CreateDirectorSitesVcdaConnectionEndpointsWithContext(ct
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/director_sites/{site_id}/vcda/connection_endpoints`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -512,22 +735,27 @@ func (vmware *VmwareV1) CreateDirectorSitesVcdaConnectionEndpointsWithContext(ct
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_director_sites_vcda_connection_endpoints", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalVcdaConnection)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -537,25 +765,30 @@ func (vmware *VmwareV1) CreateDirectorSitesVcdaConnectionEndpointsWithContext(ct
 }
 
 // DeleteDirectorSitesVcdaConnectionEndpoints : Delete a VCDA connection
-// Delete a VCDA connection in the Cloud Director site identified by {site_id} and {vcda_connections_id}.
+// Delete a VMware Cloud Director Availability (VCDA) connection in the Cloud Director site identified by {site_id} and
+// {vcda_connections_id}.
 func (vmware *VmwareV1) DeleteDirectorSitesVcdaConnectionEndpoints(deleteDirectorSitesVcdaConnectionEndpointsOptions *DeleteDirectorSitesVcdaConnectionEndpointsOptions) (result *VcdaConnection, response *core.DetailedResponse, err error) {
-	return vmware.DeleteDirectorSitesVcdaConnectionEndpointsWithContext(context.Background(), deleteDirectorSitesVcdaConnectionEndpointsOptions)
+	result, response, err = vmware.DeleteDirectorSitesVcdaConnectionEndpointsWithContext(context.Background(), deleteDirectorSitesVcdaConnectionEndpointsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteDirectorSitesVcdaConnectionEndpointsWithContext is an alternate form of the DeleteDirectorSitesVcdaConnectionEndpoints method which supports a Context parameter
 func (vmware *VmwareV1) DeleteDirectorSitesVcdaConnectionEndpointsWithContext(ctx context.Context, deleteDirectorSitesVcdaConnectionEndpointsOptions *DeleteDirectorSitesVcdaConnectionEndpointsOptions) (result *VcdaConnection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteDirectorSitesVcdaConnectionEndpointsOptions, "deleteDirectorSitesVcdaConnectionEndpointsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteDirectorSitesVcdaConnectionEndpointsOptions, "deleteDirectorSitesVcdaConnectionEndpointsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"site_id": *deleteDirectorSitesVcdaConnectionEndpointsOptions.SiteID,
-		"id":      *deleteDirectorSitesVcdaConnectionEndpointsOptions.ID,
+		"id": *deleteDirectorSitesVcdaConnectionEndpointsOptions.ID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -563,6 +796,7 @@ func (vmware *VmwareV1) DeleteDirectorSitesVcdaConnectionEndpointsWithContext(ct
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/director_sites/{site_id}/services/vcda/connection_endpoints/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -584,17 +818,21 @@ func (vmware *VmwareV1) DeleteDirectorSitesVcdaConnectionEndpointsWithContext(ct
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_director_sites_vcda_connection_endpoints", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalVcdaConnection)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -606,23 +844,27 @@ func (vmware *VmwareV1) DeleteDirectorSitesVcdaConnectionEndpointsWithContext(ct
 // UpdateDirectorSitesVcdaConnectionEndpoints : Update VCDA connection allowlist
 // Update the allowlist for a private connection to a specific VCDA instance.
 func (vmware *VmwareV1) UpdateDirectorSitesVcdaConnectionEndpoints(updateDirectorSitesVcdaConnectionEndpointsOptions *UpdateDirectorSitesVcdaConnectionEndpointsOptions) (result *UpdatedVcdaConnection, response *core.DetailedResponse, err error) {
-	return vmware.UpdateDirectorSitesVcdaConnectionEndpointsWithContext(context.Background(), updateDirectorSitesVcdaConnectionEndpointsOptions)
+	result, response, err = vmware.UpdateDirectorSitesVcdaConnectionEndpointsWithContext(context.Background(), updateDirectorSitesVcdaConnectionEndpointsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateDirectorSitesVcdaConnectionEndpointsWithContext is an alternate form of the UpdateDirectorSitesVcdaConnectionEndpoints method which supports a Context parameter
 func (vmware *VmwareV1) UpdateDirectorSitesVcdaConnectionEndpointsWithContext(ctx context.Context, updateDirectorSitesVcdaConnectionEndpointsOptions *UpdateDirectorSitesVcdaConnectionEndpointsOptions) (result *UpdatedVcdaConnection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateDirectorSitesVcdaConnectionEndpointsOptions, "updateDirectorSitesVcdaConnectionEndpointsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateDirectorSitesVcdaConnectionEndpointsOptions, "updateDirectorSitesVcdaConnectionEndpointsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"site_id": *updateDirectorSitesVcdaConnectionEndpointsOptions.SiteID,
-		"id":      *updateDirectorSitesVcdaConnectionEndpointsOptions.ID,
+		"id": *updateDirectorSitesVcdaConnectionEndpointsOptions.ID,
 	}
 
 	builder := core.NewRequestBuilder(core.PATCH)
@@ -630,6 +872,7 @@ func (vmware *VmwareV1) UpdateDirectorSitesVcdaConnectionEndpointsWithContext(ct
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/director_sites/{site_id}/services/vcda/connection_endpoints/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -656,22 +899,27 @@ func (vmware *VmwareV1) UpdateDirectorSitesVcdaConnectionEndpointsWithContext(ct
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_director_sites_vcda_connection_endpoints", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalUpdatedVcdaConnection)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -683,17 +931,21 @@ func (vmware *VmwareV1) UpdateDirectorSitesVcdaConnectionEndpointsWithContext(ct
 // CreateDirectorSitesVcdaC2cConnection : Create a VCDA cloud-to-cloud connection
 // Create a VCDA cloud-to-cloud connection in the Cloud Director site identified by {site_id}.
 func (vmware *VmwareV1) CreateDirectorSitesVcdaC2cConnection(createDirectorSitesVcdaC2cConnectionOptions *CreateDirectorSitesVcdaC2cConnectionOptions) (result *VcdaC2c, response *core.DetailedResponse, err error) {
-	return vmware.CreateDirectorSitesVcdaC2cConnectionWithContext(context.Background(), createDirectorSitesVcdaC2cConnectionOptions)
+	result, response, err = vmware.CreateDirectorSitesVcdaC2cConnectionWithContext(context.Background(), createDirectorSitesVcdaC2cConnectionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateDirectorSitesVcdaC2cConnectionWithContext is an alternate form of the CreateDirectorSitesVcdaC2cConnection method which supports a Context parameter
 func (vmware *VmwareV1) CreateDirectorSitesVcdaC2cConnectionWithContext(ctx context.Context, createDirectorSitesVcdaC2cConnectionOptions *CreateDirectorSitesVcdaC2cConnectionOptions) (result *VcdaC2c, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createDirectorSitesVcdaC2cConnectionOptions, "createDirectorSitesVcdaC2cConnectionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createDirectorSitesVcdaC2cConnectionOptions, "createDirectorSitesVcdaC2cConnectionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -706,6 +958,7 @@ func (vmware *VmwareV1) CreateDirectorSitesVcdaC2cConnectionWithContext(ctx cont
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/director_sites/{site_id}/services/vcda/c2c_connections`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -744,22 +997,27 @@ func (vmware *VmwareV1) CreateDirectorSitesVcdaC2cConnectionWithContext(ctx cont
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_director_sites_vcda_c2c_connection", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalVcdaC2c)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -771,23 +1029,27 @@ func (vmware *VmwareV1) CreateDirectorSitesVcdaC2cConnectionWithContext(ctx cont
 // DeleteDirectorSitesVcdaC2cConnection : Delete a VCDA cloud-to-cloud connection
 // Delete a VCDA cloud-to-cloud connection in the Cloud Director site identified by {site_id}.
 func (vmware *VmwareV1) DeleteDirectorSitesVcdaC2cConnection(deleteDirectorSitesVcdaC2cConnectionOptions *DeleteDirectorSitesVcdaC2cConnectionOptions) (result *VcdaC2c, response *core.DetailedResponse, err error) {
-	return vmware.DeleteDirectorSitesVcdaC2cConnectionWithContext(context.Background(), deleteDirectorSitesVcdaC2cConnectionOptions)
+	result, response, err = vmware.DeleteDirectorSitesVcdaC2cConnectionWithContext(context.Background(), deleteDirectorSitesVcdaC2cConnectionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteDirectorSitesVcdaC2cConnectionWithContext is an alternate form of the DeleteDirectorSitesVcdaC2cConnection method which supports a Context parameter
 func (vmware *VmwareV1) DeleteDirectorSitesVcdaC2cConnectionWithContext(ctx context.Context, deleteDirectorSitesVcdaC2cConnectionOptions *DeleteDirectorSitesVcdaC2cConnectionOptions) (result *VcdaC2c, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteDirectorSitesVcdaC2cConnectionOptions, "deleteDirectorSitesVcdaC2cConnectionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteDirectorSitesVcdaC2cConnectionOptions, "deleteDirectorSitesVcdaC2cConnectionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"site_id": *deleteDirectorSitesVcdaC2cConnectionOptions.SiteID,
-		"id":      *deleteDirectorSitesVcdaC2cConnectionOptions.ID,
+		"id": *deleteDirectorSitesVcdaC2cConnectionOptions.ID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -795,6 +1057,7 @@ func (vmware *VmwareV1) DeleteDirectorSitesVcdaC2cConnectionWithContext(ctx cont
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/director_sites/{site_id}/services/vcda/c2c_connections/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -816,17 +1079,21 @@ func (vmware *VmwareV1) DeleteDirectorSitesVcdaC2cConnectionWithContext(ctx cont
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_director_sites_vcda_c2c_connection", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalVcdaC2c)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -836,25 +1103,29 @@ func (vmware *VmwareV1) DeleteDirectorSitesVcdaC2cConnectionWithContext(ctx cont
 }
 
 // UpdateDirectorSitesVcdaC2cConnection : Update note in the cloud-to-cloud connection
-// Update the note in the VCDA cloud-to-cloud connection in the director site identified by {site_id}.
+// Update the note in the VCDA cloud-to-cloud connection in the Cloud Director site identified by {site_id}.
 func (vmware *VmwareV1) UpdateDirectorSitesVcdaC2cConnection(updateDirectorSitesVcdaC2cConnectionOptions *UpdateDirectorSitesVcdaC2cConnectionOptions) (result *UpdatedVcdaC2c, response *core.DetailedResponse, err error) {
-	return vmware.UpdateDirectorSitesVcdaC2cConnectionWithContext(context.Background(), updateDirectorSitesVcdaC2cConnectionOptions)
+	result, response, err = vmware.UpdateDirectorSitesVcdaC2cConnectionWithContext(context.Background(), updateDirectorSitesVcdaC2cConnectionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateDirectorSitesVcdaC2cConnectionWithContext is an alternate form of the UpdateDirectorSitesVcdaC2cConnection method which supports a Context parameter
 func (vmware *VmwareV1) UpdateDirectorSitesVcdaC2cConnectionWithContext(ctx context.Context, updateDirectorSitesVcdaC2cConnectionOptions *UpdateDirectorSitesVcdaC2cConnectionOptions) (result *UpdatedVcdaC2c, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateDirectorSitesVcdaC2cConnectionOptions, "updateDirectorSitesVcdaC2cConnectionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateDirectorSitesVcdaC2cConnectionOptions, "updateDirectorSitesVcdaC2cConnectionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"site_id": *updateDirectorSitesVcdaC2cConnectionOptions.SiteID,
-		"id":      *updateDirectorSitesVcdaC2cConnectionOptions.ID,
+		"id": *updateDirectorSitesVcdaC2cConnectionOptions.ID,
 	}
 
 	builder := core.NewRequestBuilder(core.PATCH)
@@ -862,6 +1133,7 @@ func (vmware *VmwareV1) UpdateDirectorSitesVcdaC2cConnectionWithContext(ctx cont
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/director_sites/{site_id}/services/vcda/c2c_connections/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -888,22 +1160,27 @@ func (vmware *VmwareV1) UpdateDirectorSitesVcdaC2cConnectionWithContext(ctx cont
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_director_sites_vcda_c2c_connection", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalUpdatedVcdaC2c)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -912,20 +1189,24 @@ func (vmware *VmwareV1) UpdateDirectorSitesVcdaC2cConnectionWithContext(ctx cont
 	return
 }
 
-// GetOidcConfiguration : Get an OpenID Connect (OIDC) configuration
-// Return the details of an OIDC configuration on a Cloud Director site.
+// GetOidcConfiguration : Get an OIDC configuration
+// Return the details of an OpenID Connect (OIDC) configuration on a Cloud Director site.
 func (vmware *VmwareV1) GetOidcConfiguration(getOidcConfigurationOptions *GetOidcConfigurationOptions) (result *OIDC, response *core.DetailedResponse, err error) {
-	return vmware.GetOidcConfigurationWithContext(context.Background(), getOidcConfigurationOptions)
+	result, response, err = vmware.GetOidcConfigurationWithContext(context.Background(), getOidcConfigurationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetOidcConfigurationWithContext is an alternate form of the GetOidcConfiguration method which supports a Context parameter
 func (vmware *VmwareV1) GetOidcConfigurationWithContext(ctx context.Context, getOidcConfigurationOptions *GetOidcConfigurationOptions) (result *OIDC, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getOidcConfigurationOptions, "getOidcConfigurationOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getOidcConfigurationOptions, "getOidcConfigurationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -938,6 +1219,7 @@ func (vmware *VmwareV1) GetOidcConfigurationWithContext(ctx context.Context, get
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/director_sites/{site_id}/oidc_configuration`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -956,17 +1238,21 @@ func (vmware *VmwareV1) GetOidcConfigurationWithContext(ctx context.Context, get
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_oidc_configuration", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOIDC)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -975,20 +1261,24 @@ func (vmware *VmwareV1) GetOidcConfigurationWithContext(ctx context.Context, get
 	return
 }
 
-// SetOidcConfiguration : Set an OpenID Connect (OIDC) configuration
-// Request to configure OIDC on a Cloud Director site.
+// SetOidcConfiguration : Set an OIDC configuration
+// Request to configure OpenID Connect (OIDC) on a Cloud Director site.
 func (vmware *VmwareV1) SetOidcConfiguration(setOidcConfigurationOptions *SetOidcConfigurationOptions) (result *OIDC, response *core.DetailedResponse, err error) {
-	return vmware.SetOidcConfigurationWithContext(context.Background(), setOidcConfigurationOptions)
+	result, response, err = vmware.SetOidcConfigurationWithContext(context.Background(), setOidcConfigurationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // SetOidcConfigurationWithContext is an alternate form of the SetOidcConfiguration method which supports a Context parameter
 func (vmware *VmwareV1) SetOidcConfigurationWithContext(ctx context.Context, setOidcConfigurationOptions *SetOidcConfigurationOptions) (result *OIDC, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(setOidcConfigurationOptions, "setOidcConfigurationOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(setOidcConfigurationOptions, "setOidcConfigurationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1001,6 +1291,7 @@ func (vmware *VmwareV1) SetOidcConfigurationWithContext(ctx context.Context, set
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/director_sites/{site_id}/oidc_configuration`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1022,17 +1313,21 @@ func (vmware *VmwareV1) SetOidcConfigurationWithContext(ctx context.Context, set
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "set_oidc_configuration", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOIDC)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1041,20 +1336,24 @@ func (vmware *VmwareV1) SetOidcConfigurationWithContext(ctx context.Context, set
 	return
 }
 
-// ListDirectorSitesPvdcs : List the provider virtual data centers in a director site instance
-// List the provider virtual data centers in a specified director site.
+// ListDirectorSitesPvdcs : List the resource pools in a Cloud Director site instance
+// List the resource pools in a specified Cloud Director site.
 func (vmware *VmwareV1) ListDirectorSitesPvdcs(listDirectorSitesPvdcsOptions *ListDirectorSitesPvdcsOptions) (result *PVDCCollection, response *core.DetailedResponse, err error) {
-	return vmware.ListDirectorSitesPvdcsWithContext(context.Background(), listDirectorSitesPvdcsOptions)
+	result, response, err = vmware.ListDirectorSitesPvdcsWithContext(context.Background(), listDirectorSitesPvdcsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListDirectorSitesPvdcsWithContext is an alternate form of the ListDirectorSitesPvdcs method which supports a Context parameter
 func (vmware *VmwareV1) ListDirectorSitesPvdcsWithContext(ctx context.Context, listDirectorSitesPvdcsOptions *ListDirectorSitesPvdcsOptions) (result *PVDCCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listDirectorSitesPvdcsOptions, "listDirectorSitesPvdcsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listDirectorSitesPvdcsOptions, "listDirectorSitesPvdcsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1067,6 +1366,7 @@ func (vmware *VmwareV1) ListDirectorSitesPvdcsWithContext(ctx context.Context, l
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/director_sites/{site_id}/pvdcs`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1088,17 +1388,21 @@ func (vmware *VmwareV1) ListDirectorSitesPvdcsWithContext(ctx context.Context, l
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_director_sites_pvdcs", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPVDCCollection)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1107,23 +1411,27 @@ func (vmware *VmwareV1) ListDirectorSitesPvdcsWithContext(ctx context.Context, l
 	return
 }
 
-// CreateDirectorSitesPvdcs : Create a provider virtual data center instance in a specified director site
-// Create an instance of a provider virtual data center with specified configurations. The director site instance is the
+// CreateDirectorSitesPvdcs : Create a resource pool instance in a specified Cloud Director site
+// Create an instance of a resource pool with specified configurations. The Cloud Director site instance is the
 // infrastructure and associated VMware software stack, which consists of VMware vCenter Server, VMware NSX-T, and
 // VMware Cloud Director. VMware platform management and operations are performed with Cloud Director. The minimum
 // initial order size is 2 hosts (2-Socket 32 Cores, 192 GB RAM) with 24 TB of 2.0 IOPS/GB storage.
 func (vmware *VmwareV1) CreateDirectorSitesPvdcs(createDirectorSitesPvdcsOptions *CreateDirectorSitesPvdcsOptions) (result *PVDC, response *core.DetailedResponse, err error) {
-	return vmware.CreateDirectorSitesPvdcsWithContext(context.Background(), createDirectorSitesPvdcsOptions)
+	result, response, err = vmware.CreateDirectorSitesPvdcsWithContext(context.Background(), createDirectorSitesPvdcsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateDirectorSitesPvdcsWithContext is an alternate form of the CreateDirectorSitesPvdcs method which supports a Context parameter
 func (vmware *VmwareV1) CreateDirectorSitesPvdcsWithContext(ctx context.Context, createDirectorSitesPvdcsOptions *CreateDirectorSitesPvdcsOptions) (result *PVDC, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createDirectorSitesPvdcsOptions, "createDirectorSitesPvdcsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createDirectorSitesPvdcsOptions, "createDirectorSitesPvdcsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1136,6 +1444,7 @@ func (vmware *VmwareV1) CreateDirectorSitesPvdcsWithContext(ctx context.Context,
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/director_sites/{site_id}/pvdcs`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1168,22 +1477,27 @@ func (vmware *VmwareV1) CreateDirectorSitesPvdcsWithContext(ctx context.Context,
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_director_sites_pvdcs", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPVDC)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1192,26 +1506,30 @@ func (vmware *VmwareV1) CreateDirectorSitesPvdcsWithContext(ctx context.Context,
 	return
 }
 
-// GetDirectorSitesPvdcs : Get the specified provider virtual data center in a director site instance
-// Get the specified provider virtual data centers in a specified director site.
+// GetDirectorSitesPvdcs : Get the specified resource pool in a Cloud Director site instance
+// Get the specified resource pools in a specified Cloud Director site.
 func (vmware *VmwareV1) GetDirectorSitesPvdcs(getDirectorSitesPvdcsOptions *GetDirectorSitesPvdcsOptions) (result *PVDC, response *core.DetailedResponse, err error) {
-	return vmware.GetDirectorSitesPvdcsWithContext(context.Background(), getDirectorSitesPvdcsOptions)
+	result, response, err = vmware.GetDirectorSitesPvdcsWithContext(context.Background(), getDirectorSitesPvdcsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetDirectorSitesPvdcsWithContext is an alternate form of the GetDirectorSitesPvdcs method which supports a Context parameter
 func (vmware *VmwareV1) GetDirectorSitesPvdcsWithContext(ctx context.Context, getDirectorSitesPvdcsOptions *GetDirectorSitesPvdcsOptions) (result *PVDC, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getDirectorSitesPvdcsOptions, "getDirectorSitesPvdcsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getDirectorSitesPvdcsOptions, "getDirectorSitesPvdcsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"site_id": *getDirectorSitesPvdcsOptions.SiteID,
-		"id":      *getDirectorSitesPvdcsOptions.ID,
+		"id": *getDirectorSitesPvdcsOptions.ID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -1219,6 +1537,7 @@ func (vmware *VmwareV1) GetDirectorSitesPvdcsWithContext(ctx context.Context, ge
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/director_sites/{site_id}/pvdcs/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1240,17 +1559,21 @@ func (vmware *VmwareV1) GetDirectorSitesPvdcsWithContext(ctx context.Context, ge
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_director_sites_pvdcs", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPVDC)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1260,19 +1583,23 @@ func (vmware *VmwareV1) GetDirectorSitesPvdcsWithContext(ctx context.Context, ge
 }
 
 // ListDirectorSitesPvdcsClusters : List clusters
-// List all VMware clusters of a director site instance by specifying the ID of the instance.
+// List all VMware clusters of a Cloud Director site instance by specifying the instance ID.
 func (vmware *VmwareV1) ListDirectorSitesPvdcsClusters(listDirectorSitesPvdcsClustersOptions *ListDirectorSitesPvdcsClustersOptions) (result *ClusterCollection, response *core.DetailedResponse, err error) {
-	return vmware.ListDirectorSitesPvdcsClustersWithContext(context.Background(), listDirectorSitesPvdcsClustersOptions)
+	result, response, err = vmware.ListDirectorSitesPvdcsClustersWithContext(context.Background(), listDirectorSitesPvdcsClustersOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListDirectorSitesPvdcsClustersWithContext is an alternate form of the ListDirectorSitesPvdcsClusters method which supports a Context parameter
 func (vmware *VmwareV1) ListDirectorSitesPvdcsClustersWithContext(ctx context.Context, listDirectorSitesPvdcsClustersOptions *ListDirectorSitesPvdcsClustersOptions) (result *ClusterCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listDirectorSitesPvdcsClustersOptions, "listDirectorSitesPvdcsClustersOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listDirectorSitesPvdcsClustersOptions, "listDirectorSitesPvdcsClustersOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1286,6 +1613,7 @@ func (vmware *VmwareV1) ListDirectorSitesPvdcsClustersWithContext(ctx context.Co
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/director_sites/{site_id}/pvdcs/{pvdc_id}/clusters`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1307,17 +1635,21 @@ func (vmware *VmwareV1) ListDirectorSitesPvdcsClustersWithContext(ctx context.Co
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_director_sites_pvdcs_clusters", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalClusterCollection)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1327,19 +1659,23 @@ func (vmware *VmwareV1) ListDirectorSitesPvdcsClustersWithContext(ctx context.Co
 }
 
 // CreateDirectorSitesPvdcsClusters : Create a cluster
-// Creates a new VMware cluster under specified provider virtual data center in a director site instance.
+// Create a VMware cluster under a specified resource pool in a Cloud Director site instance.
 func (vmware *VmwareV1) CreateDirectorSitesPvdcsClusters(createDirectorSitesPvdcsClustersOptions *CreateDirectorSitesPvdcsClustersOptions) (result *Cluster, response *core.DetailedResponse, err error) {
-	return vmware.CreateDirectorSitesPvdcsClustersWithContext(context.Background(), createDirectorSitesPvdcsClustersOptions)
+	result, response, err = vmware.CreateDirectorSitesPvdcsClustersWithContext(context.Background(), createDirectorSitesPvdcsClustersOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateDirectorSitesPvdcsClustersWithContext is an alternate form of the CreateDirectorSitesPvdcsClusters method which supports a Context parameter
 func (vmware *VmwareV1) CreateDirectorSitesPvdcsClustersWithContext(ctx context.Context, createDirectorSitesPvdcsClustersOptions *CreateDirectorSitesPvdcsClustersOptions) (result *Cluster, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createDirectorSitesPvdcsClustersOptions, "createDirectorSitesPvdcsClustersOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createDirectorSitesPvdcsClustersOptions, "createDirectorSitesPvdcsClustersOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1353,6 +1689,7 @@ func (vmware *VmwareV1) CreateDirectorSitesPvdcsClustersWithContext(ctx context.
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/director_sites/{site_id}/pvdcs/{pvdc_id}/clusters`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1388,22 +1725,27 @@ func (vmware *VmwareV1) CreateDirectorSitesPvdcsClustersWithContext(ctx context.
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_director_sites_pvdcs_clusters", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCluster)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1413,25 +1755,29 @@ func (vmware *VmwareV1) CreateDirectorSitesPvdcsClustersWithContext(ctx context.
 }
 
 // GetDirectorInstancesPvdcsCluster : Get a cluster
-// Get a specific VMware cluster from the provider virtual data center in a director site instance.
+// Get a specific VMware cluster from the resource pool in a Cloud Director site instance.
 func (vmware *VmwareV1) GetDirectorInstancesPvdcsCluster(getDirectorInstancesPvdcsClusterOptions *GetDirectorInstancesPvdcsClusterOptions) (result *Cluster, response *core.DetailedResponse, err error) {
-	return vmware.GetDirectorInstancesPvdcsClusterWithContext(context.Background(), getDirectorInstancesPvdcsClusterOptions)
+	result, response, err = vmware.GetDirectorInstancesPvdcsClusterWithContext(context.Background(), getDirectorInstancesPvdcsClusterOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetDirectorInstancesPvdcsClusterWithContext is an alternate form of the GetDirectorInstancesPvdcsCluster method which supports a Context parameter
 func (vmware *VmwareV1) GetDirectorInstancesPvdcsClusterWithContext(ctx context.Context, getDirectorInstancesPvdcsClusterOptions *GetDirectorInstancesPvdcsClusterOptions) (result *Cluster, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getDirectorInstancesPvdcsClusterOptions, "getDirectorInstancesPvdcsClusterOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getDirectorInstancesPvdcsClusterOptions, "getDirectorInstancesPvdcsClusterOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"site_id": *getDirectorInstancesPvdcsClusterOptions.SiteID,
-		"id":      *getDirectorInstancesPvdcsClusterOptions.ID,
+		"id": *getDirectorInstancesPvdcsClusterOptions.ID,
 		"pvdc_id": *getDirectorInstancesPvdcsClusterOptions.PvdcID,
 	}
 
@@ -1440,6 +1786,7 @@ func (vmware *VmwareV1) GetDirectorInstancesPvdcsClusterWithContext(ctx context.
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/director_sites/{site_id}/pvdcs/{pvdc_id}/clusters/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1461,17 +1808,21 @@ func (vmware *VmwareV1) GetDirectorInstancesPvdcsClusterWithContext(ctx context.
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_director_instances_pvdcs_cluster", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCluster)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1481,26 +1832,29 @@ func (vmware *VmwareV1) GetDirectorInstancesPvdcsClusterWithContext(ctx context.
 }
 
 // DeleteDirectorSitesPvdcsCluster : Delete a cluster
-// Delete a cluster from an existing provider virtual data center in director site instance by specifying the instance
-// ID.
+// Delete a cluster from a resource pool in a Cloud Director site instance by specifying the instance ID.
 func (vmware *VmwareV1) DeleteDirectorSitesPvdcsCluster(deleteDirectorSitesPvdcsClusterOptions *DeleteDirectorSitesPvdcsClusterOptions) (result *ClusterSummary, response *core.DetailedResponse, err error) {
-	return vmware.DeleteDirectorSitesPvdcsClusterWithContext(context.Background(), deleteDirectorSitesPvdcsClusterOptions)
+	result, response, err = vmware.DeleteDirectorSitesPvdcsClusterWithContext(context.Background(), deleteDirectorSitesPvdcsClusterOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteDirectorSitesPvdcsClusterWithContext is an alternate form of the DeleteDirectorSitesPvdcsCluster method which supports a Context parameter
 func (vmware *VmwareV1) DeleteDirectorSitesPvdcsClusterWithContext(ctx context.Context, deleteDirectorSitesPvdcsClusterOptions *DeleteDirectorSitesPvdcsClusterOptions) (result *ClusterSummary, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteDirectorSitesPvdcsClusterOptions, "deleteDirectorSitesPvdcsClusterOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteDirectorSitesPvdcsClusterOptions, "deleteDirectorSitesPvdcsClusterOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"site_id": *deleteDirectorSitesPvdcsClusterOptions.SiteID,
-		"id":      *deleteDirectorSitesPvdcsClusterOptions.ID,
+		"id": *deleteDirectorSitesPvdcsClusterOptions.ID,
 		"pvdc_id": *deleteDirectorSitesPvdcsClusterOptions.PvdcID,
 	}
 
@@ -1509,6 +1863,7 @@ func (vmware *VmwareV1) DeleteDirectorSitesPvdcsClusterWithContext(ctx context.C
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/director_sites/{site_id}/pvdcs/{pvdc_id}/clusters/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1530,17 +1885,21 @@ func (vmware *VmwareV1) DeleteDirectorSitesPvdcsClusterWithContext(ctx context.C
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_director_sites_pvdcs_cluster", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalClusterSummary)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1550,26 +1909,30 @@ func (vmware *VmwareV1) DeleteDirectorSitesPvdcsClusterWithContext(ctx context.C
 }
 
 // UpdateDirectorSitesPvdcsCluster : Update a cluster
-// Update the number of hosts or file storage shares of a specific cluster in a specific director site instance. VMware
-// clusters must have between [2-25] hosts.
+// Update the number of hosts or file storage shares of a specific cluster in a specific Cloud Director site instance.
+// VMware clusters must have between [2-25] hosts.
 func (vmware *VmwareV1) UpdateDirectorSitesPvdcsCluster(updateDirectorSitesPvdcsClusterOptions *UpdateDirectorSitesPvdcsClusterOptions) (result *UpdateCluster, response *core.DetailedResponse, err error) {
-	return vmware.UpdateDirectorSitesPvdcsClusterWithContext(context.Background(), updateDirectorSitesPvdcsClusterOptions)
+	result, response, err = vmware.UpdateDirectorSitesPvdcsClusterWithContext(context.Background(), updateDirectorSitesPvdcsClusterOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateDirectorSitesPvdcsClusterWithContext is an alternate form of the UpdateDirectorSitesPvdcsCluster method which supports a Context parameter
 func (vmware *VmwareV1) UpdateDirectorSitesPvdcsClusterWithContext(ctx context.Context, updateDirectorSitesPvdcsClusterOptions *UpdateDirectorSitesPvdcsClusterOptions) (result *UpdateCluster, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateDirectorSitesPvdcsClusterOptions, "updateDirectorSitesPvdcsClusterOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateDirectorSitesPvdcsClusterOptions, "updateDirectorSitesPvdcsClusterOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"site_id": *updateDirectorSitesPvdcsClusterOptions.SiteID,
-		"id":      *updateDirectorSitesPvdcsClusterOptions.ID,
+		"id": *updateDirectorSitesPvdcsClusterOptions.ID,
 		"pvdc_id": *updateDirectorSitesPvdcsClusterOptions.PvdcID,
 	}
 
@@ -1578,6 +1941,7 @@ func (vmware *VmwareV1) UpdateDirectorSitesPvdcsClusterWithContext(ctx context.C
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/director_sites/{site_id}/pvdcs/{pvdc_id}/clusters/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1600,22 +1964,27 @@ func (vmware *VmwareV1) UpdateDirectorSitesPvdcsClusterWithContext(ctx context.C
 
 	_, err = builder.SetBodyContentJSON(updateDirectorSitesPvdcsClusterOptions.Body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_director_sites_pvdcs_cluster", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalUpdateCluster)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1625,15 +1994,18 @@ func (vmware *VmwareV1) UpdateDirectorSitesPvdcsClusterWithContext(ctx context.C
 }
 
 // ListDirectorSiteRegions : List regions
-// List all IBM Cloud regions enabled for users to create a new director site instance.
+// List all IBM Cloud regions enabled for users to create a new Cloud Director site instance.
 func (vmware *VmwareV1) ListDirectorSiteRegions(listDirectorSiteRegionsOptions *ListDirectorSiteRegionsOptions) (result *DirectorSiteRegionCollection, response *core.DetailedResponse, err error) {
-	return vmware.ListDirectorSiteRegionsWithContext(context.Background(), listDirectorSiteRegionsOptions)
+	result, response, err = vmware.ListDirectorSiteRegionsWithContext(context.Background(), listDirectorSiteRegionsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListDirectorSiteRegionsWithContext is an alternate form of the ListDirectorSiteRegions method which supports a Context parameter
 func (vmware *VmwareV1) ListDirectorSiteRegionsWithContext(ctx context.Context, listDirectorSiteRegionsOptions *ListDirectorSiteRegionsOptions) (result *DirectorSiteRegionCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(listDirectorSiteRegionsOptions, "listDirectorSiteRegionsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1642,6 +2014,7 @@ func (vmware *VmwareV1) ListDirectorSiteRegionsWithContext(ctx context.Context, 
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/director_site_regions`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1663,17 +2036,21 @@ func (vmware *VmwareV1) ListDirectorSiteRegionsWithContext(ctx context.Context, 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_director_site_regions", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDirectorSiteRegionCollection)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1685,13 +2062,16 @@ func (vmware *VmwareV1) ListDirectorSiteRegionsWithContext(ctx context.Context, 
 // ListMultitenantDirectorSites : Get all multitenant Cloud Director sites
 // Retrieve a collection of multitenant Cloud Director sites.
 func (vmware *VmwareV1) ListMultitenantDirectorSites(listMultitenantDirectorSitesOptions *ListMultitenantDirectorSitesOptions) (result *MultitenantDirectorSiteCollection, response *core.DetailedResponse, err error) {
-	return vmware.ListMultitenantDirectorSitesWithContext(context.Background(), listMultitenantDirectorSitesOptions)
+	result, response, err = vmware.ListMultitenantDirectorSitesWithContext(context.Background(), listMultitenantDirectorSitesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListMultitenantDirectorSitesWithContext is an alternate form of the ListMultitenantDirectorSites method which supports a Context parameter
 func (vmware *VmwareV1) ListMultitenantDirectorSitesWithContext(ctx context.Context, listMultitenantDirectorSitesOptions *ListMultitenantDirectorSitesOptions) (result *MultitenantDirectorSiteCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(listMultitenantDirectorSitesOptions, "listMultitenantDirectorSitesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1700,6 +2080,7 @@ func (vmware *VmwareV1) ListMultitenantDirectorSitesWithContext(ctx context.Cont
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/multitenant_director_sites`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1721,17 +2102,21 @@ func (vmware *VmwareV1) ListMultitenantDirectorSitesWithContext(ctx context.Cont
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_multitenant_director_sites", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMultitenantDirectorSiteCollection)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1741,17 +2126,20 @@ func (vmware *VmwareV1) ListMultitenantDirectorSitesWithContext(ctx context.Cont
 }
 
 // ListDirectorSiteHostProfiles : List host profiles
-// List available host profiles that can be used when you create a director site instance. IBM Cloud offers several
-// different host types. Typically, the host type is selected based on the properties of the workload to be run in the
-// VMware cluster.
+// List available host profiles that can be used when you create a Cloud Director site instance. IBM Cloud offers
+// several different host types. Typically, the host type is selected based on the properties of the workload to be run
+// in the VMware cluster.
 func (vmware *VmwareV1) ListDirectorSiteHostProfiles(listDirectorSiteHostProfilesOptions *ListDirectorSiteHostProfilesOptions) (result *DirectorSiteHostProfileCollection, response *core.DetailedResponse, err error) {
-	return vmware.ListDirectorSiteHostProfilesWithContext(context.Background(), listDirectorSiteHostProfilesOptions)
+	result, response, err = vmware.ListDirectorSiteHostProfilesWithContext(context.Background(), listDirectorSiteHostProfilesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListDirectorSiteHostProfilesWithContext is an alternate form of the ListDirectorSiteHostProfiles method which supports a Context parameter
 func (vmware *VmwareV1) ListDirectorSiteHostProfilesWithContext(ctx context.Context, listDirectorSiteHostProfilesOptions *ListDirectorSiteHostProfilesOptions) (result *DirectorSiteHostProfileCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(listDirectorSiteHostProfilesOptions, "listDirectorSiteHostProfilesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1760,6 +2148,7 @@ func (vmware *VmwareV1) ListDirectorSiteHostProfilesWithContext(ctx context.Cont
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/director_site_host_profiles`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1781,17 +2170,21 @@ func (vmware *VmwareV1) ListDirectorSiteHostProfilesWithContext(ctx context.Cont
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_director_site_host_profiles", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDirectorSiteHostProfileCollection)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1801,15 +2194,18 @@ func (vmware *VmwareV1) ListDirectorSiteHostProfilesWithContext(ctx context.Cont
 }
 
 // ListVdcs : List virtual data centers
-// List all Virtual Data Centers that user has access to in the cloud account.
+// List all virtual data centers (VDCs) that user has access to in the cloud account.
 func (vmware *VmwareV1) ListVdcs(listVdcsOptions *ListVdcsOptions) (result *VDCCollection, response *core.DetailedResponse, err error) {
-	return vmware.ListVdcsWithContext(context.Background(), listVdcsOptions)
+	result, response, err = vmware.ListVdcsWithContext(context.Background(), listVdcsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListVdcsWithContext is an alternate form of the ListVdcs method which supports a Context parameter
 func (vmware *VmwareV1) ListVdcsWithContext(ctx context.Context, listVdcsOptions *ListVdcsOptions) (result *VDCCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(listVdcsOptions, "listVdcsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1818,6 +2214,7 @@ func (vmware *VmwareV1) ListVdcsWithContext(ctx context.Context, listVdcsOptions
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/vdcs`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1836,17 +2233,21 @@ func (vmware *VmwareV1) ListVdcsWithContext(ctx context.Context, listVdcsOptions
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_vdcs", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalVDCCollection)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1856,19 +2257,23 @@ func (vmware *VmwareV1) ListVdcsWithContext(ctx context.Context, listVdcsOptions
 }
 
 // CreateVdc : Create a virtual data center
-// Create a new Virtual Data Center with specified configurations.
+// Create a virtual data center (VDC) with specified configurations.
 func (vmware *VmwareV1) CreateVdc(createVdcOptions *CreateVdcOptions) (result *VDC, response *core.DetailedResponse, err error) {
-	return vmware.CreateVdcWithContext(context.Background(), createVdcOptions)
+	result, response, err = vmware.CreateVdcWithContext(context.Background(), createVdcOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateVdcWithContext is an alternate form of the CreateVdc method which supports a Context parameter
 func (vmware *VmwareV1) CreateVdcWithContext(ctx context.Context, createVdcOptions *CreateVdcOptions) (result *VDC, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createVdcOptions, "createVdcOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createVdcOptions, "createVdcOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1877,6 +2282,7 @@ func (vmware *VmwareV1) CreateVdcWithContext(ctx context.Context, createVdcOptio
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/vdcs`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1924,22 +2330,27 @@ func (vmware *VmwareV1) CreateVdcWithContext(ctx context.Context, createVdcOptio
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_vdc", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalVDC)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1949,19 +2360,23 @@ func (vmware *VmwareV1) CreateVdcWithContext(ctx context.Context, createVdcOptio
 }
 
 // GetVdc : Get a virtual data center
-// Get details about a Virtual Data Center by specifying the VDC ID.
+// Get details about a virtual data center (VDC) by specifying the VDC ID.
 func (vmware *VmwareV1) GetVdc(getVdcOptions *GetVdcOptions) (result *VDC, response *core.DetailedResponse, err error) {
-	return vmware.GetVdcWithContext(context.Background(), getVdcOptions)
+	result, response, err = vmware.GetVdcWithContext(context.Background(), getVdcOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetVdcWithContext is an alternate form of the GetVdc method which supports a Context parameter
 func (vmware *VmwareV1) GetVdcWithContext(ctx context.Context, getVdcOptions *GetVdcOptions) (result *VDC, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getVdcOptions, "getVdcOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getVdcOptions, "getVdcOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1974,6 +2389,7 @@ func (vmware *VmwareV1) GetVdcWithContext(ctx context.Context, getVdcOptions *Ge
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/vdcs/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1992,17 +2408,21 @@ func (vmware *VmwareV1) GetVdcWithContext(ctx context.Context, getVdcOptions *Ge
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_vdc", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalVDC)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2012,19 +2432,23 @@ func (vmware *VmwareV1) GetVdcWithContext(ctx context.Context, getVdcOptions *Ge
 }
 
 // DeleteVdc : Delete a virtual data center
-// Delete a Virtual Data Center by specifying the VDC ID.
+// Delete a virtual data center (VDC) by specifying the VDC ID.
 func (vmware *VmwareV1) DeleteVdc(deleteVdcOptions *DeleteVdcOptions) (result *VDC, response *core.DetailedResponse, err error) {
-	return vmware.DeleteVdcWithContext(context.Background(), deleteVdcOptions)
+	result, response, err = vmware.DeleteVdcWithContext(context.Background(), deleteVdcOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteVdcWithContext is an alternate form of the DeleteVdc method which supports a Context parameter
 func (vmware *VmwareV1) DeleteVdcWithContext(ctx context.Context, deleteVdcOptions *DeleteVdcOptions) (result *VDC, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteVdcOptions, "deleteVdcOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteVdcOptions, "deleteVdcOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2037,6 +2461,7 @@ func (vmware *VmwareV1) DeleteVdcWithContext(ctx context.Context, deleteVdcOptio
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/vdcs/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2055,17 +2480,21 @@ func (vmware *VmwareV1) DeleteVdcWithContext(ctx context.Context, deleteVdcOptio
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_vdc", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalVDC)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2077,17 +2506,21 @@ func (vmware *VmwareV1) DeleteVdcWithContext(ctx context.Context, deleteVdcOptio
 // UpdateVdc : Update a virtual data center
 // Update a virtual data center with the specified ID.
 func (vmware *VmwareV1) UpdateVdc(updateVdcOptions *UpdateVdcOptions) (result *VDC, response *core.DetailedResponse, err error) {
-	return vmware.UpdateVdcWithContext(context.Background(), updateVdcOptions)
+	result, response, err = vmware.UpdateVdcWithContext(context.Background(), updateVdcOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateVdcWithContext is an alternate form of the UpdateVdc method which supports a Context parameter
 func (vmware *VmwareV1) UpdateVdcWithContext(ctx context.Context, updateVdcOptions *UpdateVdcOptions) (result *VDC, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateVdcOptions, "updateVdcOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateVdcOptions, "updateVdcOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2100,6 +2533,7 @@ func (vmware *VmwareV1) UpdateVdcWithContext(ctx context.Context, updateVdcOptio
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/vdcs/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2119,22 +2553,27 @@ func (vmware *VmwareV1) UpdateVdcWithContext(ctx context.Context, updateVdcOptio
 
 	_, err = builder.SetBodyContentJSON(updateVdcOptions.VDCPatch)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_vdc", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalVDC)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2143,27 +2582,31 @@ func (vmware *VmwareV1) UpdateVdcWithContext(ctx context.Context, updateVdcOptio
 	return
 }
 
-// AddTransitGatewayConnections : Add transit gateway connections to edge
-// Add transit gateway connections to an edge and virtual data center.
+// AddTransitGatewayConnections : Add IBM Transit Gateway connections to edge
+// Add IBM Transit Gateway connections to an edge and virtual data center.
 func (vmware *VmwareV1) AddTransitGatewayConnections(addTransitGatewayConnectionsOptions *AddTransitGatewayConnectionsOptions) (result *TransitGateway, response *core.DetailedResponse, err error) {
-	return vmware.AddTransitGatewayConnectionsWithContext(context.Background(), addTransitGatewayConnectionsOptions)
+	result, response, err = vmware.AddTransitGatewayConnectionsWithContext(context.Background(), addTransitGatewayConnectionsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // AddTransitGatewayConnectionsWithContext is an alternate form of the AddTransitGatewayConnections method which supports a Context parameter
 func (vmware *VmwareV1) AddTransitGatewayConnectionsWithContext(ctx context.Context, addTransitGatewayConnectionsOptions *AddTransitGatewayConnectionsOptions) (result *TransitGateway, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(addTransitGatewayConnectionsOptions, "addTransitGatewayConnectionsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(addTransitGatewayConnectionsOptions, "addTransitGatewayConnectionsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"vdc_id":  *addTransitGatewayConnectionsOptions.VdcID,
+		"vdc_id": *addTransitGatewayConnectionsOptions.VdcID,
 		"edge_id": *addTransitGatewayConnectionsOptions.EdgeID,
-		"id":      *addTransitGatewayConnectionsOptions.ID,
+		"id": *addTransitGatewayConnectionsOptions.ID,
 	}
 
 	builder := core.NewRequestBuilder(core.PUT)
@@ -2171,6 +2614,7 @@ func (vmware *VmwareV1) AddTransitGatewayConnectionsWithContext(ctx context.Cont
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/vdcs/{vdc_id}/edges/{edge_id}/transit_gateways/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2183,6 +2627,7 @@ func (vmware *VmwareV1) AddTransitGatewayConnectionsWithContext(ctx context.Cont
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
 	if addTransitGatewayConnectionsOptions.ContentLength != nil {
 		builder.AddHeader("Content-Length", fmt.Sprint(*addTransitGatewayConnectionsOptions.ContentLength))
 	}
@@ -2190,19 +2635,33 @@ func (vmware *VmwareV1) AddTransitGatewayConnectionsWithContext(ctx context.Cont
 		builder.AddHeader("Accept-Language", fmt.Sprint(*addTransitGatewayConnectionsOptions.AcceptLanguage))
 	}
 
+	body := make(map[string]interface{})
+	if addTransitGatewayConnectionsOptions.Region != nil {
+		body["region"] = addTransitGatewayConnectionsOptions.Region
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "add_transit_gateway_connections", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTransitGateway)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2211,27 +2670,31 @@ func (vmware *VmwareV1) AddTransitGatewayConnectionsWithContext(ctx context.Cont
 	return
 }
 
-// RemoveTransitGatewayConnections : Remove transit gateway connections from edge
-// Remove transit gateway connections from an edge and virtual data center.
+// RemoveTransitGatewayConnections : Remove IBM Transit Gateway connections from edge
+// Remove IBM Transit Gateway connections from an edge and virtual data center.
 func (vmware *VmwareV1) RemoveTransitGatewayConnections(removeTransitGatewayConnectionsOptions *RemoveTransitGatewayConnectionsOptions) (result *TransitGateway, response *core.DetailedResponse, err error) {
-	return vmware.RemoveTransitGatewayConnectionsWithContext(context.Background(), removeTransitGatewayConnectionsOptions)
+	result, response, err = vmware.RemoveTransitGatewayConnectionsWithContext(context.Background(), removeTransitGatewayConnectionsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // RemoveTransitGatewayConnectionsWithContext is an alternate form of the RemoveTransitGatewayConnections method which supports a Context parameter
 func (vmware *VmwareV1) RemoveTransitGatewayConnectionsWithContext(ctx context.Context, removeTransitGatewayConnectionsOptions *RemoveTransitGatewayConnectionsOptions) (result *TransitGateway, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(removeTransitGatewayConnectionsOptions, "removeTransitGatewayConnectionsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(removeTransitGatewayConnectionsOptions, "removeTransitGatewayConnectionsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"vdc_id":  *removeTransitGatewayConnectionsOptions.VdcID,
+		"vdc_id": *removeTransitGatewayConnectionsOptions.VdcID,
 		"edge_id": *removeTransitGatewayConnectionsOptions.EdgeID,
-		"id":      *removeTransitGatewayConnectionsOptions.ID,
+		"id": *removeTransitGatewayConnectionsOptions.ID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -2239,6 +2702,7 @@ func (vmware *VmwareV1) RemoveTransitGatewayConnectionsWithContext(ctx context.C
 	builder.EnableGzipCompression = vmware.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(vmware.Service.Options.URL, `/vdcs/{vdc_id}/edges/{edge_id}/transit_gateways/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2257,23 +2721,30 @@ func (vmware *VmwareV1) RemoveTransitGatewayConnectionsWithContext(ctx context.C
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = vmware.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "remove_transit_gateway_connections", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTransitGateway)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
 	}
 
 	return
+}
+func getServiceComponentInfo() *core.ProblemComponent {
+	return core.NewProblemComponent(DefaultServiceName, "1.2.0")
 }
 
 // AddTransitGatewayConnectionsOptions : The AddTransitGatewayConnections options.
@@ -2284,25 +2755,28 @@ type AddTransitGatewayConnectionsOptions struct {
 	// A unique ID for an edge.
 	EdgeID *string `json:"edge_id" validate:"required,ne="`
 
-	// A unique ID for a transit gateway.
+	// A unique ID for an IBM Transit Gateway.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// size of the message body in bytes.
+	// Size of the message body in bytes.
 	ContentLength *int64 `json:"Content-Length" validate:"required"`
+
+	// The region where the IBM Transit Gateway is deployed.
+	Region *string `json:"region,omitempty"`
 
 	// Language.
 	AcceptLanguage *string `json:"Accept-Language,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewAddTransitGatewayConnectionsOptions : Instantiate AddTransitGatewayConnectionsOptions
 func (*VmwareV1) NewAddTransitGatewayConnectionsOptions(vdcID string, edgeID string, id string, contentLength int64) *AddTransitGatewayConnectionsOptions {
 	return &AddTransitGatewayConnectionsOptions{
-		VdcID:         core.StringPtr(vdcID),
-		EdgeID:        core.StringPtr(edgeID),
-		ID:            core.StringPtr(id),
+		VdcID: core.StringPtr(vdcID),
+		EdgeID: core.StringPtr(edgeID),
+		ID: core.StringPtr(id),
 		ContentLength: core.Int64Ptr(contentLength),
 	}
 }
@@ -2328,6 +2802,12 @@ func (_options *AddTransitGatewayConnectionsOptions) SetID(id string) *AddTransi
 // SetContentLength : Allow user to set ContentLength
 func (_options *AddTransitGatewayConnectionsOptions) SetContentLength(contentLength int64) *AddTransitGatewayConnectionsOptions {
 	_options.ContentLength = core.Int64Ptr(contentLength)
+	return _options
+}
+
+// SetRegion : Allow user to set Region
+func (_options *AddTransitGatewayConnectionsOptions) SetRegion(region string) *AddTransitGatewayConnectionsOptions {
+	_options.Region = core.StringPtr(region)
 	return _options
 }
 
@@ -2363,13 +2843,13 @@ type Cluster struct {
 	// The number of hosts in the cluster.
 	HostCount *int64 `json:"host_count" validate:"required"`
 
-	// The status of the director site cluster.
+	// The status of the Cloud Director site cluster.
 	Status *string `json:"status" validate:"required"`
 
 	// The location of deployed cluster.
 	DataCenterName *string `json:"data_center_name" validate:"required"`
 
-	// Back link to associated director site resource.
+	// Back link to associated Cloud Director site resource.
 	DirectorSite *DirectorSiteReference `json:"director_site" validate:"required"`
 
 	// The name of the host profile.
@@ -2402,54 +2882,67 @@ func UnmarshalCluster(m map[string]json.RawMessage, result interface{}) (err err
 	obj := new(Cluster)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ordered_at", &obj.OrderedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ordered_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "provisioned_at", &obj.ProvisionedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "provisioned_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "host_count", &obj.HostCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "host_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "data_center_name", &obj.DataCenterName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "data_center_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "director_site", &obj.DirectorSite, UnmarshalDirectorSiteReference)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "director_site-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "host_profile", &obj.HostProfile)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "host_profile-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "storage_type", &obj.StorageType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "storage_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "billing_plan", &obj.BillingPlan)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "billing_plan-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "file_shares", &obj.FileShares, UnmarshalFileShares)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "file_shares-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2458,7 +2951,7 @@ func UnmarshalCluster(m map[string]json.RawMessage, result interface{}) (err err
 
 // ClusterCollection : Return all clusters instances.
 type ClusterCollection struct {
-	// list of cluster objects.
+	// List of cluster objects.
 	Clusters []Cluster `json:"clusters" validate:"required"`
 }
 
@@ -2467,6 +2960,7 @@ func UnmarshalClusterCollection(m map[string]json.RawMessage, result interface{}
 	obj := new(ClusterCollection)
 	err = core.UnmarshalModel(m, "clusters", &obj.Clusters, UnmarshalCluster)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "clusters-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2478,7 +2972,7 @@ type ClusterPatch struct {
 	// Chosen storage policies and their sizes.
 	FileShares *FileSharesPrototype `json:"file_shares,omitempty"`
 
-	// count of hosts to add or remove on cluster.
+	// Number of hosts to add to or remove from the cluster.
 	HostCount *int64 `json:"host_count,omitempty"`
 }
 
@@ -2487,10 +2981,12 @@ func UnmarshalClusterPatch(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(ClusterPatch)
 	err = core.UnmarshalModel(m, "file_shares", &obj.FileShares, UnmarshalFileSharesPrototype)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "file_shares-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "host_count", &obj.HostCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "host_count-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2499,18 +2995,21 @@ func UnmarshalClusterPatch(m map[string]json.RawMessage, result interface{}) (er
 
 // AsPatch returns a generic map representation of the ClusterPatch
 func (clusterPatch *ClusterPatch) AsPatch() (_patch map[string]interface{}, err error) {
-	var jsonData []byte
-	jsonData, err = json.Marshal(clusterPatch)
-	if err == nil {
-		err = json.Unmarshal(jsonData, &_patch)
+	_patch = map[string]interface{}{}
+	if !core.IsNil(clusterPatch.FileShares) {
+		_patch["file_shares"] = clusterPatch.FileShares.asPatch()
 	}
+	if !core.IsNil(clusterPatch.HostCount) {
+		_patch["host_count"] = clusterPatch.HostCount
+	}
+
 	return
 }
 
 // ClusterPrototype : VMware Cluster order information. Clusters form VMware workload availability boundaries.
 type ClusterPrototype struct {
-	// Name of the VMware cluster. Cluster names must be unique per director site instance. Cluster names cannot be changed
-	// after creation.
+	// Name of the VMware cluster. Cluster names must be unique per Cloud Director site instance. Cluster names cannot be
+	// changed after creation.
 	Name *string `json:"name" validate:"required"`
 
 	// Number of hosts in the VMware cluster.
@@ -2527,12 +3026,15 @@ type ClusterPrototype struct {
 // NewClusterPrototype : Instantiate ClusterPrototype (Generic Model Constructor)
 func (*VmwareV1) NewClusterPrototype(name string, hostCount int64, hostProfile string, fileShares *FileSharesPrototype) (_model *ClusterPrototype, err error) {
 	_model = &ClusterPrototype{
-		Name:        core.StringPtr(name),
-		HostCount:   core.Int64Ptr(hostCount),
+		Name: core.StringPtr(name),
+		HostCount: core.Int64Ptr(hostCount),
 		HostProfile: core.StringPtr(hostProfile),
-		FileShares:  fileShares,
+		FileShares: fileShares,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -2541,18 +3043,22 @@ func UnmarshalClusterPrototype(m map[string]json.RawMessage, result interface{})
 	obj := new(ClusterPrototype)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "host_count", &obj.HostCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "host_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "host_profile", &obj.HostProfile)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "host_profile-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "file_shares", &obj.FileShares, UnmarshalFileSharesPrototype)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "file_shares-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2574,7 +3080,7 @@ type ClusterSummary struct {
 	// The cluster ID.
 	ID *string `json:"id" validate:"required"`
 
-	// THe location of the deployed cluster.
+	// The location of the deployed cluster.
 	DataCenterName *string `json:"data_center_name" validate:"required"`
 
 	// The status of the cluster.
@@ -2592,34 +3098,42 @@ func UnmarshalClusterSummary(m map[string]json.RawMessage, result interface{}) (
 	obj := new(ClusterSummary)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "host_count", &obj.HostCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "host_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "host_profile", &obj.HostProfile)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "host_profile-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "data_center_name", &obj.DataCenterName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "data_center_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "file_shares", &obj.FileShares, UnmarshalFileShares)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "file_shares-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2628,11 +3142,11 @@ func UnmarshalClusterSummary(m map[string]json.RawMessage, result interface{}) (
 
 // CreateDirectorSitesOptions : The CreateDirectorSites options.
 type CreateDirectorSitesOptions struct {
-	// Name of the director site instance. Use a name that is unique to your region and meaningful. Names cannot be changed
-	// after initial creation.
+	// Name of the Cloud Director site instance. Use a name that is unique to your region and meaningful. Names cannot be
+	// changed after initial creation.
 	Name *string `json:"name" validate:"required"`
 
-	// List of VMware provider virtual data centers to deploy on the instance.
+	// List of VMware resource pools to deploy on the instance.
 	Pvdcs []PVDCPrototype `json:"pvdcs" validate:"required"`
 
 	// The resource group to associate with the resource instance.
@@ -2657,7 +3171,7 @@ type CreateDirectorSitesOptions struct {
 	// Transaction ID.
 	XGlobalTransactionID *string `json:"X-Global-Transaction-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -2665,13 +3179,13 @@ type CreateDirectorSitesOptions struct {
 // Type of console connection.
 const (
 	CreateDirectorSitesOptions_ConsoleConnectionType_Private = "private"
-	CreateDirectorSitesOptions_ConsoleConnectionType_Public  = "public"
+	CreateDirectorSitesOptions_ConsoleConnectionType_Public = "public"
 )
 
 // NewCreateDirectorSitesOptions : Instantiate CreateDirectorSitesOptions
 func (*VmwareV1) NewCreateDirectorSitesOptions(name string, pvdcs []PVDCPrototype) *CreateDirectorSitesOptions {
 	return &CreateDirectorSitesOptions{
-		Name:  core.StringPtr(name),
+		Name: core.StringPtr(name),
 		Pvdcs: pvdcs,
 	}
 }
@@ -2738,14 +3252,14 @@ func (options *CreateDirectorSitesOptions) SetHeaders(param map[string]string) *
 
 // CreateDirectorSitesPvdcsClustersOptions : The CreateDirectorSitesPvdcsClusters options.
 type CreateDirectorSitesPvdcsClustersOptions struct {
-	// A unique identifier for the director site in which the virtual data center was created.
+	// A unique ID for the Cloud Director site in which the virtual data center was created.
 	SiteID *string `json:"site_id" validate:"required,ne="`
 
-	// A unique identifier for the provider virtual data center in a director site.
+	// A unique ID for the resource pool in a Cloud Director site.
 	PvdcID *string `json:"pvdc_id" validate:"required,ne="`
 
-	// Name of the VMware cluster. Cluster names must be unique per director site instance. Cluster names cannot be changed
-	// after creation.
+	// Name of the VMware cluster. Cluster names must be unique per Cloud Director site instance. Cluster names cannot be
+	// changed after creation.
 	Name *string `json:"name" validate:"required"`
 
 	// Number of hosts in the VMware cluster.
@@ -2764,19 +3278,19 @@ type CreateDirectorSitesPvdcsClustersOptions struct {
 	// Transaction ID.
 	XGlobalTransactionID *string `json:"X-Global-Transaction-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewCreateDirectorSitesPvdcsClustersOptions : Instantiate CreateDirectorSitesPvdcsClustersOptions
 func (*VmwareV1) NewCreateDirectorSitesPvdcsClustersOptions(siteID string, pvdcID string, name string, hostCount int64, hostProfile string, fileShares *FileSharesPrototype) *CreateDirectorSitesPvdcsClustersOptions {
 	return &CreateDirectorSitesPvdcsClustersOptions{
-		SiteID:      core.StringPtr(siteID),
-		PvdcID:      core.StringPtr(pvdcID),
-		Name:        core.StringPtr(name),
-		HostCount:   core.Int64Ptr(hostCount),
+		SiteID: core.StringPtr(siteID),
+		PvdcID: core.StringPtr(pvdcID),
+		Name: core.StringPtr(name),
+		HostCount: core.Int64Ptr(hostCount),
 		HostProfile: core.StringPtr(hostProfile),
-		FileShares:  fileShares,
+		FileShares: fileShares,
 	}
 }
 
@@ -2836,11 +3350,11 @@ func (options *CreateDirectorSitesPvdcsClustersOptions) SetHeaders(param map[str
 
 // CreateDirectorSitesPvdcsOptions : The CreateDirectorSitesPvdcs options.
 type CreateDirectorSitesPvdcsOptions struct {
-	// A unique identifier for the director site in which the virtual data center was created.
+	// A unique ID for the Cloud Director site in which the virtual data center was created.
 	SiteID *string `json:"site_id" validate:"required,ne="`
 
-	// Name of the provider virtual data center. Provider virtual data center names must be unique per director site
-	// instance. Provider virtual data center names cannot be changed after creation.
+	// Name of the resource pool. Resource pool names must be unique per Cloud Director site instance and they cannot be
+	// changed after creation.
 	Name *string `json:"name" validate:"required"`
 
 	// Data center location to deploy the cluster. See `GET /director_site_regions` for supported data center locations.
@@ -2855,17 +3369,17 @@ type CreateDirectorSitesPvdcsOptions struct {
 	// Transaction ID.
 	XGlobalTransactionID *string `json:"X-Global-Transaction-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewCreateDirectorSitesPvdcsOptions : Instantiate CreateDirectorSitesPvdcsOptions
 func (*VmwareV1) NewCreateDirectorSitesPvdcsOptions(siteID string, name string, dataCenterName string, clusters []ClusterPrototype) *CreateDirectorSitesPvdcsOptions {
 	return &CreateDirectorSitesPvdcsOptions{
-		SiteID:         core.StringPtr(siteID),
-		Name:           core.StringPtr(name),
+		SiteID: core.StringPtr(siteID),
+		Name: core.StringPtr(name),
 		DataCenterName: core.StringPtr(dataCenterName),
-		Clusters:       clusters,
+		Clusters: clusters,
 	}
 }
 
@@ -2913,7 +3427,7 @@ func (options *CreateDirectorSitesPvdcsOptions) SetHeaders(param map[string]stri
 
 // CreateDirectorSitesVcdaC2cConnectionOptions : The CreateDirectorSitesVcdaC2cConnection options.
 type CreateDirectorSitesVcdaC2cConnectionOptions struct {
-	// A unique identifier for the director site in which the virtual data center was created.
+	// A unique ID for the Cloud Director site in which the virtual data center was created.
 	SiteID *string `json:"site_id" validate:"required,ne="`
 
 	// Local data center name.
@@ -2937,18 +3451,18 @@ type CreateDirectorSitesVcdaC2cConnectionOptions struct {
 	// Transaction ID.
 	XGlobalTransactionID *string `json:"X-Global-Transaction-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewCreateDirectorSitesVcdaC2cConnectionOptions : Instantiate CreateDirectorSitesVcdaC2cConnectionOptions
 func (*VmwareV1) NewCreateDirectorSitesVcdaC2cConnectionOptions(siteID string, localDataCenterName string, localSiteName string, peerSiteName string, peerRegion string) *CreateDirectorSitesVcdaC2cConnectionOptions {
 	return &CreateDirectorSitesVcdaC2cConnectionOptions{
-		SiteID:              core.StringPtr(siteID),
+		SiteID: core.StringPtr(siteID),
 		LocalDataCenterName: core.StringPtr(localDataCenterName),
-		LocalSiteName:       core.StringPtr(localSiteName),
-		PeerSiteName:        core.StringPtr(peerSiteName),
-		PeerRegion:          core.StringPtr(peerRegion),
+		LocalSiteName: core.StringPtr(localSiteName),
+		PeerSiteName: core.StringPtr(peerSiteName),
+		PeerRegion: core.StringPtr(peerRegion),
 	}
 }
 
@@ -3008,7 +3522,7 @@ func (options *CreateDirectorSitesVcdaC2cConnectionOptions) SetHeaders(param map
 
 // CreateDirectorSitesVcdaConnectionEndpointsOptions : The CreateDirectorSitesVcdaConnectionEndpoints options.
 type CreateDirectorSitesVcdaConnectionEndpointsOptions struct {
-	// A unique identifier for the director site in which the virtual data center was created.
+	// A unique ID for the Cloud Director site in which the virtual data center was created.
 	SiteID *string `json:"site_id" validate:"required,ne="`
 
 	// Connection type.
@@ -3026,7 +3540,7 @@ type CreateDirectorSitesVcdaConnectionEndpointsOptions struct {
 	// Transaction ID.
 	XGlobalTransactionID *string `json:"X-Global-Transaction-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3034,14 +3548,14 @@ type CreateDirectorSitesVcdaConnectionEndpointsOptions struct {
 // Connection type.
 const (
 	CreateDirectorSitesVcdaConnectionEndpointsOptions_Type_Private = "private"
-	CreateDirectorSitesVcdaConnectionEndpointsOptions_Type_Public  = "public"
+	CreateDirectorSitesVcdaConnectionEndpointsOptions_Type_Public = "public"
 )
 
 // NewCreateDirectorSitesVcdaConnectionEndpointsOptions : Instantiate CreateDirectorSitesVcdaConnectionEndpointsOptions
 func (*VmwareV1) NewCreateDirectorSitesVcdaConnectionEndpointsOptions(siteID string, typeVar string, dataCenterName string) *CreateDirectorSitesVcdaConnectionEndpointsOptions {
 	return &CreateDirectorSitesVcdaConnectionEndpointsOptions{
-		SiteID:         core.StringPtr(siteID),
-		Type:           core.StringPtr(typeVar),
+		SiteID: core.StringPtr(siteID),
+		Type: core.StringPtr(typeVar),
 		DataCenterName: core.StringPtr(dataCenterName),
 	}
 }
@@ -3090,28 +3604,28 @@ func (options *CreateDirectorSitesVcdaConnectionEndpointsOptions) SetHeaders(par
 
 // CreateVdcOptions : The CreateVdc options.
 type CreateVdcOptions struct {
-	// A human readable identifier for the Virtual Data Center. Use a name that is unique to your region.
+	// A human readable ID for the virtual data center (VDC). Use a name that is unique to your region.
 	Name *string `json:"name" validate:"required"`
 
-	// The director site in which to deploy the Virtual Data Center.
+	// The Cloud Director site in which to deploy the virtual data center (VDC).
 	DirectorSite *VDCDirectorSitePrototype `json:"director_site" validate:"required"`
 
-	// The networking Edge to be deployed on the Virtual Data Center.
+	// The networking edge to be deployed on the virtual data center (VDC).
 	Edge *VDCEdgePrototype `json:"edge,omitempty"`
 
-	// Flag to determine whether to enable or not fast provisioning.
+	// Indicates whether to enable or not fast provisioning.
 	FastProvisioningEnabled *bool `json:"fast_provisioning_enabled,omitempty"`
 
 	// The resource group to associate with the resource instance.
 	// If not specified, the default resource group in the account is used.
 	ResourceGroup *ResourceGroupIdentity `json:"resource_group,omitempty"`
 
-	// The vCPU usage limit on the Virtual Data Center. Supported for Virtual Data Centers deployed on a multitenant
-	// director site. This property is required when provider type is reserved.
+	// The vCPU usage limit on the virtual data center (VDC). Supported for VDCs deployed on a multitenant Cloud Director
+	// site. This property is required when the resource pool type is reserved.
 	Cpu *int64 `json:"cpu,omitempty"`
 
-	// The RAM usage limit on the Virtual Data Center in GB (1024^3 bytes). Supported for Virtual Data Centers deployed on
-	// a multitenant director site. This property is required when provider type is reserved.
+	// The RAM usage limit on the virtual data center (VDC) in GB (1024^3 bytes). Supported for VDCs deployed on a
+	// multitenant Cloud Director site. This property is required when the resource pool type is reserved.
 	Ram *int64 `json:"ram,omitempty"`
 
 	// Indicates if the RHEL VMs will be using the license from IBM or the customer will use their own license (BYOL).
@@ -3124,14 +3638,14 @@ type CreateVdcOptions struct {
 	// Language.
 	AcceptLanguage *string `json:"Accept-Language,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewCreateVdcOptions : Instantiate CreateVdcOptions
 func (*VmwareV1) NewCreateVdcOptions(name string, directorSite *VDCDirectorSitePrototype) *CreateVdcOptions {
 	return &CreateVdcOptions{
-		Name:         core.StringPtr(name),
+		Name: core.StringPtr(name),
 		DirectorSite: directorSite,
 	}
 }
@@ -3219,14 +3733,17 @@ func UnmarshalDataCenter(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(DataCenter)
 	err = core.UnmarshalPrimitive(m, "display_name", &obj.DisplayName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "display_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "uplink_speed", &obj.UplinkSpeed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "uplink_speed-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3235,7 +3752,7 @@ func UnmarshalDataCenter(m map[string]json.RawMessage, result interface{}) (err 
 
 // DeleteDirectorSiteOptions : The DeleteDirectorSite options.
 type DeleteDirectorSiteOptions struct {
-	// A unique identifier for the director site in which the virtual data center was created.
+	// A unique ID for the Cloud Director site in which the virtual data center was created.
 	ID *string `json:"id" validate:"required,ne="`
 
 	// Language.
@@ -3244,7 +3761,7 @@ type DeleteDirectorSiteOptions struct {
 	// Transaction ID.
 	XGlobalTransactionID *string `json:"X-Global-Transaction-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3281,13 +3798,13 @@ func (options *DeleteDirectorSiteOptions) SetHeaders(param map[string]string) *D
 
 // DeleteDirectorSitesPvdcsClusterOptions : The DeleteDirectorSitesPvdcsCluster options.
 type DeleteDirectorSitesPvdcsClusterOptions struct {
-	// A unique identifier for the director site in which the virtual data center was created.
+	// A unique ID for the Cloud Director site in which the virtual data center was created.
 	SiteID *string `json:"site_id" validate:"required,ne="`
 
 	// The cluster to query.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// A unique identifier for the provider virtual data center in a director site.
+	// A unique ID for the resource pool in a Cloud Director site.
 	PvdcID *string `json:"pvdc_id" validate:"required,ne="`
 
 	// Language.
@@ -3296,7 +3813,7 @@ type DeleteDirectorSitesPvdcsClusterOptions struct {
 	// Transaction ID.
 	XGlobalTransactionID *string `json:"X-Global-Transaction-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3304,7 +3821,7 @@ type DeleteDirectorSitesPvdcsClusterOptions struct {
 func (*VmwareV1) NewDeleteDirectorSitesPvdcsClusterOptions(siteID string, id string, pvdcID string) *DeleteDirectorSitesPvdcsClusterOptions {
 	return &DeleteDirectorSitesPvdcsClusterOptions{
 		SiteID: core.StringPtr(siteID),
-		ID:     core.StringPtr(id),
+		ID: core.StringPtr(id),
 		PvdcID: core.StringPtr(pvdcID),
 	}
 }
@@ -3347,7 +3864,7 @@ func (options *DeleteDirectorSitesPvdcsClusterOptions) SetHeaders(param map[stri
 
 // DeleteDirectorSitesVcdaC2cConnectionOptions : The DeleteDirectorSitesVcdaC2cConnection options.
 type DeleteDirectorSitesVcdaC2cConnectionOptions struct {
-	// A unique identifier for the director site in which the virtual data center was created.
+	// A unique ID for the Cloud Director site in which the virtual data center was created.
 	SiteID *string `json:"site_id" validate:"required,ne="`
 
 	// A unique ID for the cloud-to-cloud connections in the relationship Cloud Director site.
@@ -3359,7 +3876,7 @@ type DeleteDirectorSitesVcdaC2cConnectionOptions struct {
 	// Transaction ID.
 	XGlobalTransactionID *string `json:"X-Global-Transaction-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3367,7 +3884,7 @@ type DeleteDirectorSitesVcdaC2cConnectionOptions struct {
 func (*VmwareV1) NewDeleteDirectorSitesVcdaC2cConnectionOptions(siteID string, id string) *DeleteDirectorSitesVcdaC2cConnectionOptions {
 	return &DeleteDirectorSitesVcdaC2cConnectionOptions{
 		SiteID: core.StringPtr(siteID),
-		ID:     core.StringPtr(id),
+		ID: core.StringPtr(id),
 	}
 }
 
@@ -3403,7 +3920,7 @@ func (options *DeleteDirectorSitesVcdaC2cConnectionOptions) SetHeaders(param map
 
 // DeleteDirectorSitesVcdaConnectionEndpointsOptions : The DeleteDirectorSitesVcdaConnectionEndpoints options.
 type DeleteDirectorSitesVcdaConnectionEndpointsOptions struct {
-	// A unique identifier for the director site in which the virtual data center was created.
+	// A unique ID for the Cloud Director site in which the virtual data center was created.
 	SiteID *string `json:"site_id" validate:"required,ne="`
 
 	// A unique ID for the VCDA connections in the relationship Cloud Director site.
@@ -3415,7 +3932,7 @@ type DeleteDirectorSitesVcdaConnectionEndpointsOptions struct {
 	// Transaction ID.
 	XGlobalTransactionID *string `json:"X-Global-Transaction-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3423,7 +3940,7 @@ type DeleteDirectorSitesVcdaConnectionEndpointsOptions struct {
 func (*VmwareV1) NewDeleteDirectorSitesVcdaConnectionEndpointsOptions(siteID string, id string) *DeleteDirectorSitesVcdaConnectionEndpointsOptions {
 	return &DeleteDirectorSitesVcdaConnectionEndpointsOptions{
 		SiteID: core.StringPtr(siteID),
-		ID:     core.StringPtr(id),
+		ID: core.StringPtr(id),
 	}
 }
 
@@ -3459,13 +3976,13 @@ func (options *DeleteDirectorSitesVcdaConnectionEndpointsOptions) SetHeaders(par
 
 // DeleteVdcOptions : The DeleteVdc options.
 type DeleteVdcOptions struct {
-	// A unique identifier for a specified virtual data center.
+	// A unique ID for a specified virtual data center.
 	ID *string `json:"id" validate:"required,ne="`
 
 	// Language.
 	AcceptLanguage *string `json:"Accept-Language,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3494,34 +4011,34 @@ func (options *DeleteVdcOptions) SetHeaders(param map[string]string) *DeleteVdcO
 	return options
 }
 
-// DirectorSite : A director site resource. The director site instance is the infrastructure and the associated VMware software stack,
-// which consists of VMware vCenter Server, VMware NSX-T, and VMware Cloud Director.
+// DirectorSite : A Cloud Director site resource. The Cloud Director site instance is the infrastructure and the associated VMware
+// software stack, which consists of VMware vCenter Server, VMware NSX-T, and VMware Cloud Director.
 type DirectorSite struct {
-	// A unique identifier for the director site in IBM Cloud.
+	// A unique ID for the Cloud Director site in IBM Cloud.
 	Crn *string `json:"crn" validate:"required"`
 
-	// The hyperlink of the director site resource.
+	// The hyperlink of the Cloud Director site resource.
 	Href *string `json:"href" validate:"required"`
 
-	// ID of the director site.
+	// ID of the Cloud Director site.
 	ID *string `json:"id" validate:"required"`
 
-	// The time that the director site is ordered.
+	// The time that the Cloud Director site is ordered.
 	OrderedAt *strfmt.DateTime `json:"ordered_at" validate:"required"`
 
-	// The time that the director site is provisioned and available to use.
+	// The time that the Cloud Director site is provisioned and available to use.
 	ProvisionedAt *strfmt.DateTime `json:"provisioned_at,omitempty"`
 
-	// The name of director site. The name of the director site cannot be changed after creation.
+	// The name of Cloud Director site. The name of the Cloud Director site cannot be changed after creation.
 	Name *string `json:"name" validate:"required"`
 
-	// The status of director site.
+	// The status of Cloud Director site.
 	Status *string `json:"status" validate:"required"`
 
 	// The resource group information to associate with the resource instance.
 	ResourceGroup *ResourceGroupReference `json:"resource_group" validate:"required"`
 
-	// List of VMware provider virtual data centers to deploy on the instance.
+	// List of VMware resource pools to deploy on the instance.
 	Pvdcs []PVDC `json:"pvdcs" validate:"required"`
 
 	// Director site type.
@@ -3534,29 +4051,29 @@ type DirectorSite struct {
 	RhelVmActivationKey *string `json:"rhel_vm_activation_key,omitempty"`
 
 	// Type of director console connection.
-	ConsoleConnectionType *string `json:"console_connection_type,omitempty"`
+	ConsoleConnectionType *string `json:"console_connection_type" validate:"required"`
 
 	// Status of director console connection.
-	ConsoleConnectionStatus *string `json:"console_connection_status,omitempty"`
+	ConsoleConnectionStatus *string `json:"console_connection_status" validate:"required"`
 
 	// Director console IP allowlist.
-	IpAllowList []string `json:"ip_allow_list,omitempty"`
+	IpAllowList []string `json:"ip_allow_list" validate:"required"`
 }
 
 // Constants associated with the DirectorSite.Status property.
-// The status of director site.
+// The status of Cloud Director site.
 const (
-	DirectorSite_Status_Creating   = "creating"
-	DirectorSite_Status_Deleted    = "deleted"
-	DirectorSite_Status_Deleting   = "deleting"
+	DirectorSite_Status_Creating = "creating"
+	DirectorSite_Status_Deleted = "deleted"
+	DirectorSite_Status_Deleting = "deleting"
 	DirectorSite_Status_ReadyToUse = "ready_to_use"
-	DirectorSite_Status_Updating   = "updating"
+	DirectorSite_Status_Updating = "updating"
 )
 
 // Constants associated with the DirectorSite.Type property.
 // Director site type.
 const (
-	DirectorSite_Type_Multitenant  = "multitenant"
+	DirectorSite_Type_Multitenant = "multitenant"
 	DirectorSite_Type_SingleTenant = "single_tenant"
 )
 
@@ -3564,17 +4081,17 @@ const (
 // Type of director console connection.
 const (
 	DirectorSite_ConsoleConnectionType_Private = "private"
-	DirectorSite_ConsoleConnectionType_Public  = "public"
+	DirectorSite_ConsoleConnectionType_Public = "public"
 )
 
 // Constants associated with the DirectorSite.ConsoleConnectionStatus property.
 // Status of director console connection.
 const (
-	DirectorSite_ConsoleConnectionStatus_Creating   = "creating"
-	DirectorSite_ConsoleConnectionStatus_Deleted    = "deleted"
-	DirectorSite_ConsoleConnectionStatus_Deleting   = "deleting"
+	DirectorSite_ConsoleConnectionStatus_Creating = "creating"
+	DirectorSite_ConsoleConnectionStatus_Deleted = "deleted"
+	DirectorSite_ConsoleConnectionStatus_Deleting = "deleting"
 	DirectorSite_ConsoleConnectionStatus_ReadyToUse = "ready_to_use"
-	DirectorSite_ConsoleConnectionStatus_Updating   = "updating"
+	DirectorSite_ConsoleConnectionStatus_Updating = "updating"
 )
 
 // UnmarshalDirectorSite unmarshals an instance of DirectorSite from the specified map of raw messages.
@@ -3582,71 +4099,86 @@ func UnmarshalDirectorSite(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(DirectorSite)
 	err = core.UnmarshalPrimitive(m, "crn", &obj.Crn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ordered_at", &obj.OrderedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ordered_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "provisioned_at", &obj.ProvisionedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "provisioned_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resource_group", &obj.ResourceGroup, UnmarshalResourceGroupReference)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_group-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "pvdcs", &obj.Pvdcs, UnmarshalPVDC)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pvdcs-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "services", &obj.Services, UnmarshalService)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "services-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "rhel_vm_activation_key", &obj.RhelVmActivationKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rhel_vm_activation_key-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "console_connection_type", &obj.ConsoleConnectionType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "console_connection_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "console_connection_status", &obj.ConsoleConnectionStatus)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "console_connection_status-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ip_allow_list", &obj.IpAllowList)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ip_allow_list-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// DirectorSiteCollection : Return all director site instances.
+// DirectorSiteCollection : Return all Cloud Director site instances.
 type DirectorSiteCollection struct {
-	// List of director site instances.
+	// List of Cloud Director site instances.
 	DirectorSites []DirectorSite `json:"director_sites" validate:"required"`
 }
 
@@ -3655,6 +4187,7 @@ func UnmarshalDirectorSiteCollection(m map[string]json.RawMessage, result interf
 	obj := new(DirectorSiteCollection)
 	err = core.UnmarshalModel(m, "director_sites", &obj.DirectorSites, UnmarshalDirectorSite)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "director_sites-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3696,38 +4229,47 @@ func UnmarshalDirectorSiteHostProfile(m map[string]json.RawMessage, result inter
 	obj := new(DirectorSiteHostProfile)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cpu", &obj.Cpu)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cpu-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "family", &obj.Family)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "family-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "processor", &obj.Processor)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "processor-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ram", &obj.Ram)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ram-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "socket", &obj.Socket)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "socket-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "speed", &obj.Speed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "speed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "manufacturer", &obj.Manufacturer)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "manufacturer-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "features", &obj.Features)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "features-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3745,19 +4287,20 @@ func UnmarshalDirectorSiteHostProfileCollection(m map[string]json.RawMessage, re
 	obj := new(DirectorSiteHostProfileCollection)
 	err = core.UnmarshalModel(m, "director_site_host_profiles", &obj.DirectorSiteHostProfiles, UnmarshalDirectorSiteHostProfile)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "director_site_host_profiles-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// DirectorSitePVDC : The PVDC within the Director Site in which to deploy the Virtual Data Center.
+// DirectorSitePVDC : The resource pool within the Director Site in which to deploy the virtual data center (VDC).
 type DirectorSitePVDC struct {
-	// A unique identifier for the PVDC.
+	// A unique ID for the resource pool.
 	ID *string `json:"id" validate:"required"`
 
-	// Determines how resources are made available to the Virtual Data Center. Required for Virtual Data Centers deployed
-	// on a multitenant director site.
+	// Determines how resources are made available to the virtual data center (VDC). Required for VDCs deployed on a
+	// multitenant Cloud Director site.
 	ProviderType *VDCProviderType `json:"provider_type,omitempty"`
 }
 
@@ -3767,6 +4310,9 @@ func (*VmwareV1) NewDirectorSitePVDC(id string) (_model *DirectorSitePVDC, err e
 		ID: core.StringPtr(id),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -3775,25 +4321,27 @@ func UnmarshalDirectorSitePVDC(m map[string]json.RawMessage, result interface{})
 	obj := new(DirectorSitePVDC)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "provider_type", &obj.ProviderType, UnmarshalVDCProviderType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "provider_type-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// DirectorSiteReference : Back link to associated director site resource.
+// DirectorSiteReference : Back link to associated Cloud Director site resource.
 type DirectorSiteReference struct {
-	// A unique identifier for the director site in IBM Cloud.
+	// A unique ID for the Cloud Director site in IBM Cloud.
 	Crn *string `json:"crn" validate:"required"`
 
-	// The hyperlink of the director site resource.
+	// The hyperlink of the Cloud Director site resource.
 	Href *string `json:"href" validate:"required"`
 
-	// ID of the director site.
+	// ID of the Cloud Director site.
 	ID *string `json:"id" validate:"required"`
 }
 
@@ -3802,14 +4350,17 @@ func UnmarshalDirectorSiteReference(m map[string]json.RawMessage, result interfa
 	obj := new(DirectorSiteReference)
 	err = core.UnmarshalPrimitive(m, "crn", &obj.Crn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3818,7 +4369,7 @@ func UnmarshalDirectorSiteReference(m map[string]json.RawMessage, result interfa
 
 // DirectorSiteRegion : The region details.
 type DirectorSiteRegion struct {
-	// Name the region.
+	// The region name.
 	Name *string `json:"name" validate:"required"`
 
 	// The data center details.
@@ -3833,14 +4384,17 @@ func UnmarshalDirectorSiteRegion(m map[string]json.RawMessage, result interface{
 	obj := new(DirectorSiteRegion)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "data_centers", &obj.DataCenters, UnmarshalDataCenter)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "data_centers-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "endpoint", &obj.Endpoint)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "endpoint-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3849,7 +4403,7 @@ func UnmarshalDirectorSiteRegion(m map[string]json.RawMessage, result interface{
 
 // DirectorSiteRegionCollection : Success. The request was successfully processed.
 type DirectorSiteRegionCollection struct {
-	// regions of director sites.
+	// Regions of Cloud Director sites.
 	DirectorSiteRegions []DirectorSiteRegion `json:"director_site_regions" validate:"required"`
 }
 
@@ -3858,31 +4412,39 @@ func UnmarshalDirectorSiteRegionCollection(m map[string]json.RawMessage, result 
 	obj := new(DirectorSiteRegionCollection)
 	err = core.UnmarshalModel(m, "director_site_regions", &obj.DirectorSiteRegions, UnmarshalDirectorSiteRegion)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "director_site_regions-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// Edge : A networking Edge deployed on a Virtual Data Center. Networking edges are based on NSX-T and used for bridging
+// Edge : A networking edge deployed on a virtual data center (VDC). Networking edges are based on NSX-T and used for bridging
 // virtualize networking to the physical public-internet and IBM private networking.
 type Edge struct {
-	// A unique identifier for the Edge.
+	// A unique ID for the edge.
 	ID *string `json:"id" validate:"required"`
 
-	// The public IP addresses assigned to the Edge.
+	// The public IP addresses assigned to the edge.
 	PublicIps []string `json:"public_ips" validate:"required"`
 
-	// The size of the Edge.
+	// The private IP addresses assigned to the edge.
+	PrivateIps []string `json:"private_ips" validate:"required"`
+
+	// Indicates whether the edge is private only. The default value is True for a private Cloud Director site and False
+	// for a public Cloud Director site.
+	PrivateOnly *bool `json:"private_only,omitempty"`
+
+	// The size of the edge.
 	//
-	// The size can be specified only for performance Edges. Larger sizes require more capacity from the director site in
-	// which the Virtual Data Center was created to be deployed.
-	Size *string `json:"size,omitempty"`
+	// The size can be specified only for performance edges. Larger sizes require more capacity from the Cloud Director
+	// site in which the virtual data center (VDC) was created to be deployed.
+	Size *string `json:"size" validate:"required"`
 
 	// Determines the state of the edge.
 	Status *string `json:"status" validate:"required"`
 
-	// Connected transit gateways.
+	// Connected IBM Transit Gateways.
 	TransitGateways []TransitGateway `json:"transit_gateways" validate:"required"`
 
 	// The type of edge to be deployed.
@@ -3896,22 +4458,22 @@ type Edge struct {
 }
 
 // Constants associated with the Edge.Size property.
-// The size of the Edge.
+// The size of the edge.
 //
-// The size can be specified only for performance Edges. Larger sizes require more capacity from the director site in
-// which the Virtual Data Center was created to be deployed.
+// The size can be specified only for performance edges. Larger sizes require more capacity from the Cloud Director site
+// in which the virtual data center (VDC) was created to be deployed.
 const (
 	Edge_Size_ExtraLarge = "extra_large"
-	Edge_Size_Large      = "large"
-	Edge_Size_Medium     = "medium"
+	Edge_Size_Large = "large"
+	Edge_Size_Medium = "medium"
 )
 
 // Constants associated with the Edge.Status property.
 // Determines the state of the edge.
 const (
-	Edge_Status_Creating   = "creating"
-	Edge_Status_Deleted    = "deleted"
-	Edge_Status_Deleting   = "deleting"
+	Edge_Status_Creating = "creating"
+	Edge_Status_Deleted = "deleted"
+	Edge_Status_Deleting = "deleting"
 	Edge_Status_ReadyToUse = "ready_to_use"
 )
 
@@ -3921,7 +4483,7 @@ const (
 // Efficiency edges allow for multiple VDCs to share some edge resources. Performance edges do not share resources
 // between VDCs.
 const (
-	Edge_Type_Efficiency  = "efficiency"
+	Edge_Type_Efficiency = "efficiency"
 	Edge_Type_Performance = "performance"
 )
 
@@ -3930,34 +4492,163 @@ func UnmarshalEdge(m map[string]json.RawMessage, result interface{}) (err error)
 	obj := new(Edge)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "public_ips", &obj.PublicIps)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "public_ips-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "private_ips", &obj.PrivateIps)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "private_ips-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "private_only", &obj.PrivateOnly)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "private_only-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "size", &obj.Size)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "size-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "transit_gateways", &obj.TransitGateways, UnmarshalTransitGateway)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "transit_gateways-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// EnableVcdaOnDataCenterOptions : The EnableVcdaOnDataCenter options.
+type EnableVcdaOnDataCenterOptions struct {
+	// A unique ID for the Cloud Director site in which the virtual data center was created.
+	SiteID *string `json:"site_id" validate:"required,ne="`
+
+	// Indicates whether it is required to enable or disable a service.
+	Enable *bool `json:"enable" validate:"required"`
+
+	// Language.
+	AcceptLanguage *string `json:"Accept-Language,omitempty"`
+
+	// Transaction ID.
+	XGlobalTransactionID *string `json:"X-Global-Transaction-ID,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewEnableVcdaOnDataCenterOptions : Instantiate EnableVcdaOnDataCenterOptions
+func (*VmwareV1) NewEnableVcdaOnDataCenterOptions(siteID string, enable bool) *EnableVcdaOnDataCenterOptions {
+	return &EnableVcdaOnDataCenterOptions{
+		SiteID: core.StringPtr(siteID),
+		Enable: core.BoolPtr(enable),
+	}
+}
+
+// SetSiteID : Allow user to set SiteID
+func (_options *EnableVcdaOnDataCenterOptions) SetSiteID(siteID string) *EnableVcdaOnDataCenterOptions {
+	_options.SiteID = core.StringPtr(siteID)
+	return _options
+}
+
+// SetEnable : Allow user to set Enable
+func (_options *EnableVcdaOnDataCenterOptions) SetEnable(enable bool) *EnableVcdaOnDataCenterOptions {
+	_options.Enable = core.BoolPtr(enable)
+	return _options
+}
+
+// SetAcceptLanguage : Allow user to set AcceptLanguage
+func (_options *EnableVcdaOnDataCenterOptions) SetAcceptLanguage(acceptLanguage string) *EnableVcdaOnDataCenterOptions {
+	_options.AcceptLanguage = core.StringPtr(acceptLanguage)
+	return _options
+}
+
+// SetXGlobalTransactionID : Allow user to set XGlobalTransactionID
+func (_options *EnableVcdaOnDataCenterOptions) SetXGlobalTransactionID(xGlobalTransactionID string) *EnableVcdaOnDataCenterOptions {
+	_options.XGlobalTransactionID = core.StringPtr(xGlobalTransactionID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *EnableVcdaOnDataCenterOptions) SetHeaders(param map[string]string) *EnableVcdaOnDataCenterOptions {
+	options.Headers = param
+	return options
+}
+
+// EnableVeeamOnPvdcsListOptions : The EnableVeeamOnPvdcsList options.
+type EnableVeeamOnPvdcsListOptions struct {
+	// A unique ID for the Cloud Director site in which the virtual data center was created.
+	SiteID *string `json:"site_id" validate:"required,ne="`
+
+	// Indicates whether it is required to enable or disable a service.
+	Enable *bool `json:"enable" validate:"required"`
+
+	// Language.
+	AcceptLanguage *string `json:"Accept-Language,omitempty"`
+
+	// Transaction ID.
+	XGlobalTransactionID *string `json:"X-Global-Transaction-ID,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewEnableVeeamOnPvdcsListOptions : Instantiate EnableVeeamOnPvdcsListOptions
+func (*VmwareV1) NewEnableVeeamOnPvdcsListOptions(siteID string, enable bool) *EnableVeeamOnPvdcsListOptions {
+	return &EnableVeeamOnPvdcsListOptions{
+		SiteID: core.StringPtr(siteID),
+		Enable: core.BoolPtr(enable),
+	}
+}
+
+// SetSiteID : Allow user to set SiteID
+func (_options *EnableVeeamOnPvdcsListOptions) SetSiteID(siteID string) *EnableVeeamOnPvdcsListOptions {
+	_options.SiteID = core.StringPtr(siteID)
+	return _options
+}
+
+// SetEnable : Allow user to set Enable
+func (_options *EnableVeeamOnPvdcsListOptions) SetEnable(enable bool) *EnableVeeamOnPvdcsListOptions {
+	_options.Enable = core.BoolPtr(enable)
+	return _options
+}
+
+// SetAcceptLanguage : Allow user to set AcceptLanguage
+func (_options *EnableVeeamOnPvdcsListOptions) SetAcceptLanguage(acceptLanguage string) *EnableVeeamOnPvdcsListOptions {
+	_options.AcceptLanguage = core.StringPtr(acceptLanguage)
+	return _options
+}
+
+// SetXGlobalTransactionID : Allow user to set XGlobalTransactionID
+func (_options *EnableVeeamOnPvdcsListOptions) SetXGlobalTransactionID(xGlobalTransactionID string) *EnableVeeamOnPvdcsListOptions {
+	_options.XGlobalTransactionID = core.StringPtr(xGlobalTransactionID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *EnableVeeamOnPvdcsListOptions) SetHeaders(param map[string]string) *EnableVeeamOnPvdcsListOptions {
+	options.Headers = param
+	return options
 }
 
 // FileShares : Chosen storage policies and their sizes.
@@ -3980,18 +4671,22 @@ func UnmarshalFileShares(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(FileShares)
 	err = core.UnmarshalPrimitive(m, "STORAGE_POINT_TWO_FIVE_IOPS_GB", &obj.STORAGEPOINTTWOFIVEIOPSGB)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "STORAGE_POINT_TWO_FIVE_IOPS_GB-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "STORAGE_TWO_IOPS_GB", &obj.STORAGETWOIOPSGB)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "STORAGE_TWO_IOPS_GB-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "STORAGE_FOUR_IOPS_GB", &obj.STORAGEFOURIOPSGB)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "STORAGE_FOUR_IOPS_GB-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "STORAGE_TEN_IOPS_GB", &obj.STORAGETENIOPSGB)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "STORAGE_TEN_IOPS_GB-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4018,33 +4713,56 @@ func UnmarshalFileSharesPrototype(m map[string]json.RawMessage, result interface
 	obj := new(FileSharesPrototype)
 	err = core.UnmarshalPrimitive(m, "STORAGE_POINT_TWO_FIVE_IOPS_GB", &obj.STORAGEPOINTTWOFIVEIOPSGB)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "STORAGE_POINT_TWO_FIVE_IOPS_GB-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "STORAGE_TWO_IOPS_GB", &obj.STORAGETWOIOPSGB)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "STORAGE_TWO_IOPS_GB-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "STORAGE_FOUR_IOPS_GB", &obj.STORAGEFOURIOPSGB)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "STORAGE_FOUR_IOPS_GB-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "STORAGE_TEN_IOPS_GB", &obj.STORAGETENIOPSGB)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "STORAGE_TEN_IOPS_GB-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
+// asPatch returns a generic map representation of the FileSharesPrototype
+func (fileSharesPrototype *FileSharesPrototype) asPatch() (_patch map[string]interface{}) {
+	_patch = map[string]interface{}{}
+	if !core.IsNil(fileSharesPrototype.STORAGEPOINTTWOFIVEIOPSGB) {
+		_patch["STORAGE_POINT_TWO_FIVE_IOPS_GB"] = fileSharesPrototype.STORAGEPOINTTWOFIVEIOPSGB
+	}
+	if !core.IsNil(fileSharesPrototype.STORAGETWOIOPSGB) {
+		_patch["STORAGE_TWO_IOPS_GB"] = fileSharesPrototype.STORAGETWOIOPSGB
+	}
+	if !core.IsNil(fileSharesPrototype.STORAGEFOURIOPSGB) {
+		_patch["STORAGE_FOUR_IOPS_GB"] = fileSharesPrototype.STORAGEFOURIOPSGB
+	}
+	if !core.IsNil(fileSharesPrototype.STORAGETENIOPSGB) {
+		_patch["STORAGE_TEN_IOPS_GB"] = fileSharesPrototype.STORAGETENIOPSGB
+	}
+
+	return
+}
+
 // GetDirectorInstancesPvdcsClusterOptions : The GetDirectorInstancesPvdcsCluster options.
 type GetDirectorInstancesPvdcsClusterOptions struct {
-	// A unique identifier for the director site in which the virtual data center was created.
+	// A unique ID for the Cloud Director site in which the virtual data center was created.
 	SiteID *string `json:"site_id" validate:"required,ne="`
 
 	// The cluster to query.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// A unique identifier for the provider virtual data center in a director site.
+	// A unique ID for the resource pool in a Cloud Director site.
 	PvdcID *string `json:"pvdc_id" validate:"required,ne="`
 
 	// Language.
@@ -4053,7 +4771,7 @@ type GetDirectorInstancesPvdcsClusterOptions struct {
 	// Transaction ID.
 	XGlobalTransactionID *string `json:"X-Global-Transaction-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4061,7 +4779,7 @@ type GetDirectorInstancesPvdcsClusterOptions struct {
 func (*VmwareV1) NewGetDirectorInstancesPvdcsClusterOptions(siteID string, id string, pvdcID string) *GetDirectorInstancesPvdcsClusterOptions {
 	return &GetDirectorInstancesPvdcsClusterOptions{
 		SiteID: core.StringPtr(siteID),
-		ID:     core.StringPtr(id),
+		ID: core.StringPtr(id),
 		PvdcID: core.StringPtr(pvdcID),
 	}
 }
@@ -4104,7 +4822,7 @@ func (options *GetDirectorInstancesPvdcsClusterOptions) SetHeaders(param map[str
 
 // GetDirectorSiteOptions : The GetDirectorSite options.
 type GetDirectorSiteOptions struct {
-	// A unique identifier for the director site in which the virtual data center was created.
+	// A unique ID for the Cloud Director site in which the virtual data center was created.
 	ID *string `json:"id" validate:"required,ne="`
 
 	// Language.
@@ -4113,7 +4831,7 @@ type GetDirectorSiteOptions struct {
 	// Transaction ID.
 	XGlobalTransactionID *string `json:"X-Global-Transaction-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4150,10 +4868,10 @@ func (options *GetDirectorSiteOptions) SetHeaders(param map[string]string) *GetD
 
 // GetDirectorSitesPvdcsOptions : The GetDirectorSitesPvdcs options.
 type GetDirectorSitesPvdcsOptions struct {
-	// A unique identifier for the director site in which the virtual data center was created.
+	// A unique ID for the Cloud Director site in which the virtual data center was created.
 	SiteID *string `json:"site_id" validate:"required,ne="`
 
-	// A unique identifier for the provider virtual data center in a director site.
+	// A unique ID for the resource pool in a Cloud Director site.
 	ID *string `json:"id" validate:"required,ne="`
 
 	// Language.
@@ -4162,7 +4880,7 @@ type GetDirectorSitesPvdcsOptions struct {
 	// Transaction ID.
 	XGlobalTransactionID *string `json:"X-Global-Transaction-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4170,7 +4888,7 @@ type GetDirectorSitesPvdcsOptions struct {
 func (*VmwareV1) NewGetDirectorSitesPvdcsOptions(siteID string, id string) *GetDirectorSitesPvdcsOptions {
 	return &GetDirectorSitesPvdcsOptions{
 		SiteID: core.StringPtr(siteID),
-		ID:     core.StringPtr(id),
+		ID: core.StringPtr(id),
 	}
 }
 
@@ -4206,13 +4924,13 @@ func (options *GetDirectorSitesPvdcsOptions) SetHeaders(param map[string]string)
 
 // GetOidcConfigurationOptions : The GetOidcConfiguration options.
 type GetOidcConfigurationOptions struct {
-	// A unique identifier for the director site in which the virtual data center was created.
+	// A unique ID for the Cloud Director site in which the virtual data center was created.
 	SiteID *string `json:"site_id" validate:"required,ne="`
 
 	// Language.
 	AcceptLanguage *string `json:"Accept-Language,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4243,13 +4961,13 @@ func (options *GetOidcConfigurationOptions) SetHeaders(param map[string]string) 
 
 // GetVdcOptions : The GetVdc options.
 type GetVdcOptions struct {
-	// A unique identifier for a specified virtual data center.
+	// A unique ID for a specified virtual data center.
 	ID *string `json:"id" validate:"required,ne="`
 
 	// Language.
 	AcceptLanguage *string `json:"Accept-Language,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4286,7 +5004,7 @@ type ListDirectorSiteHostProfilesOptions struct {
 	// Transaction ID.
 	XGlobalTransactionID *string `json:"X-Global-Transaction-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4321,7 +5039,7 @@ type ListDirectorSiteRegionsOptions struct {
 	// Transaction ID.
 	XGlobalTransactionID *string `json:"X-Global-Transaction-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4356,7 +5074,7 @@ type ListDirectorSitesOptions struct {
 	// Transaction ID.
 	XGlobalTransactionID *string `json:"X-Global-Transaction-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4385,10 +5103,10 @@ func (options *ListDirectorSitesOptions) SetHeaders(param map[string]string) *Li
 
 // ListDirectorSitesPvdcsClustersOptions : The ListDirectorSitesPvdcsClusters options.
 type ListDirectorSitesPvdcsClustersOptions struct {
-	// A unique identifier for the director site in which the virtual data center was created.
+	// A unique ID for the Cloud Director site in which the virtual data center was created.
 	SiteID *string `json:"site_id" validate:"required,ne="`
 
-	// A unique identifier for the provider virtual data center in a director site.
+	// A unique ID for the resource pool in a Cloud Director site.
 	PvdcID *string `json:"pvdc_id" validate:"required,ne="`
 
 	// Language.
@@ -4397,7 +5115,7 @@ type ListDirectorSitesPvdcsClustersOptions struct {
 	// Transaction ID.
 	XGlobalTransactionID *string `json:"X-Global-Transaction-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4441,7 +5159,7 @@ func (options *ListDirectorSitesPvdcsClustersOptions) SetHeaders(param map[strin
 
 // ListDirectorSitesPvdcsOptions : The ListDirectorSitesPvdcs options.
 type ListDirectorSitesPvdcsOptions struct {
-	// A unique identifier for the director site in which the virtual data center was created.
+	// A unique ID for the Cloud Director site in which the virtual data center was created.
 	SiteID *string `json:"site_id" validate:"required,ne="`
 
 	// Language.
@@ -4450,7 +5168,7 @@ type ListDirectorSitesPvdcsOptions struct {
 	// Transaction ID.
 	XGlobalTransactionID *string `json:"X-Global-Transaction-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4493,7 +5211,7 @@ type ListMultitenantDirectorSitesOptions struct {
 	// Transaction ID.
 	XGlobalTransactionID *string `json:"X-Global-Transaction-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4525,7 +5243,7 @@ type ListVdcsOptions struct {
 	// Language.
 	AcceptLanguage *string `json:"Accept-Language,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4546,21 +5264,24 @@ func (options *ListVdcsOptions) SetHeaders(param map[string]string) *ListVdcsOpt
 	return options
 }
 
-// MultitenantDirectorSite : Multitenant director site detail.
+// MultitenantDirectorSite : Multitenant Cloud Director site details.
 type MultitenantDirectorSite struct {
-	// Multitenant director site name.
+	// Multitenant Cloud Director site name.
 	Name *string `json:"name" validate:"required"`
 
-	// Multitenant director site display name.
+	// Multitenant Cloud Director site display name.
 	DisplayName *string `json:"display_name" validate:"required"`
 
-	// Multitenant director site ID.
+	// Multitenant Cloud Director site ID.
 	ID *string `json:"id" validate:"required"`
 
-	// Multitenant director site region name.
+	// Indicates whether the site is private only.
+	PrivateOnly *bool `json:"private_only" validate:"required"`
+
+	// Multitenant Cloud Director site region name.
 	Region *string `json:"region" validate:"required"`
 
-	// Provider virtual data center details.
+	// Resource pool details.
 	Pvdcs []MultitenantPVDC `json:"pvdcs" validate:"required"`
 
 	// Installed services.
@@ -4569,7 +5290,7 @@ type MultitenantDirectorSite struct {
 
 // Constants associated with the MultitenantDirectorSite.Services property.
 const (
-	MultitenantDirectorSite_Services_Vcda  = "vcda"
+	MultitenantDirectorSite_Services_Vcda = "vcda"
 	MultitenantDirectorSite_Services_Veeam = "veeam"
 )
 
@@ -4578,26 +5299,37 @@ func UnmarshalMultitenantDirectorSite(m map[string]json.RawMessage, result inter
 	obj := new(MultitenantDirectorSite)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "display_name", &obj.DisplayName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "display_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "private_only", &obj.PrivateOnly)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "private_only-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "region", &obj.Region)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "region-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "pvdcs", &obj.Pvdcs, UnmarshalMultitenantPVDC)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pvdcs-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "services", &obj.Services)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "services-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4615,24 +5347,28 @@ func UnmarshalMultitenantDirectorSiteCollection(m map[string]json.RawMessage, re
 	obj := new(MultitenantDirectorSiteCollection)
 	err = core.UnmarshalModel(m, "multitenant_director_sites", &obj.MultitenantDirectorSites, UnmarshalMultitenantDirectorSite)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "multitenant_director_sites-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// MultitenantPVDC : Multitenant provider virtual data center detail.
+// MultitenantPVDC : Multitenant resource pool details.
 type MultitenantPVDC struct {
-	// Provider virtual data center name.
+	// Resource pool name.
 	Name *string `json:"name" validate:"required"`
 
-	// Provider virtual data center ID.
+	// Resource pool ID.
 	ID *string `json:"id" validate:"required"`
 
 	// Data center name.
 	DataCenterName *string `json:"data_center_name" validate:"required"`
 
-	// Provider types list.
+	// Indicates whether the resource pool is private only.
+	PrivateOnly *bool `json:"private_only" validate:"required"`
+
+	// List of resource pool types.
 	ProviderTypes []ProviderType `json:"provider_types" validate:"required"`
 }
 
@@ -4641,18 +5377,27 @@ func UnmarshalMultitenantPVDC(m map[string]json.RawMessage, result interface{}) 
 	obj := new(MultitenantPVDC)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "data_center_name", &obj.DataCenterName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "data_center_name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "private_only", &obj.PrivateOnly)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "private_only-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "provider_types", &obj.ProviderTypes, UnmarshalProviderType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "provider_types-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4671,8 +5416,8 @@ type OIDC struct {
 // Constants associated with the OIDC.Status property.
 // Status of the OIDC configuration on a Cloud Director site.
 const (
-	OIDC_Status_Deleted    = "deleted"
-	OIDC_Status_Pending    = "pending"
+	OIDC_Status_Deleted = "deleted"
+	OIDC_Status_Pending = "pending"
 	OIDC_Status_ReadyToUse = "ready_to_use"
 )
 
@@ -4681,49 +5426,51 @@ func UnmarshalOIDC(m map[string]json.RawMessage, result interface{}) (err error)
 	obj := new(OIDC)
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_set_at", &obj.LastSetAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_set_at-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// PVDC : VMware provider virtual data center information.
+// PVDC : VMware resource pool information.
 type PVDC struct {
-	// Name of the provider virtual data center. Provider virtual data center names must be unique per director site
-	// instance. Provider virtual data center names cannot be changed after creation.
+	// Name of the resource pool. Resource pool names must be unique per Cloud Director site instance and they cannot be
+	// changed after creation.
 	Name *string `json:"name" validate:"required"`
 
 	// Data center location to deploy the cluster. See `GET /director_site_regions` for supported data center locations.
 	DataCenterName *string `json:"data_center_name" validate:"required"`
 
-	// The provider virtual data center ID.
+	// The resource pool ID.
 	ID *string `json:"id" validate:"required"`
 
-	// The hyperlink of the provider virtual data center resource.
+	// The hyperlink of the resource pool resource.
 	Href *string `json:"href" validate:"required"`
 
 	// List of VMware clusters to deploy on the instance. Clusters form VMware workload availability boundaries.
-	Clusters []ClusterSummary `json:"clusters,omitempty"`
+	Clusters []ClusterSummary `json:"clusters" validate:"required"`
 
-	// The status of the provider virtual data center.
-	Status *string `json:"status,omitempty"`
+	// The status of the resource pool.
+	Status *string `json:"status" validate:"required"`
 
-	// Provider types list.
-	ProviderTypes []ProviderType `json:"provider_types,omitempty"`
+	// List of resource pool types.
+	ProviderTypes []ProviderType `json:"provider_types" validate:"required"`
 }
 
 // Constants associated with the PVDC.Status property.
-// The status of the provider virtual data center.
+// The status of the resource pool.
 const (
-	PVDC_Status_Creating   = "creating"
-	PVDC_Status_Deleted    = "deleted"
-	PVDC_Status_Deleting   = "deleting"
+	PVDC_Status_Creating = "creating"
+	PVDC_Status_Deleted = "deleted"
+	PVDC_Status_Deleting = "deleting"
 	PVDC_Status_ReadyToUse = "ready_to_use"
-	PVDC_Status_Updating   = "updating"
+	PVDC_Status_Updating = "updating"
 )
 
 // UnmarshalPVDC unmarshals an instance of PVDC from the specified map of raw messages.
@@ -4731,39 +5478,46 @@ func UnmarshalPVDC(m map[string]json.RawMessage, result interface{}) (err error)
 	obj := new(PVDC)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "data_center_name", &obj.DataCenterName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "data_center_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "clusters", &obj.Clusters, UnmarshalClusterSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "clusters-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "provider_types", &obj.ProviderTypes, UnmarshalProviderType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "provider_types-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// PVDCCollection : Return all provider virtual data center instances.
+// PVDCCollection : Return all resource pool instances.
 type PVDCCollection struct {
-	// List of provider virtual data center instances.
+	// List of resource pool instances.
 	Pvdcs []PVDC `json:"pvdcs" validate:"required"`
 }
 
@@ -4772,16 +5526,17 @@ func UnmarshalPVDCCollection(m map[string]json.RawMessage, result interface{}) (
 	obj := new(PVDCCollection)
 	err = core.UnmarshalModel(m, "pvdcs", &obj.Pvdcs, UnmarshalPVDC)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pvdcs-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// PVDCPrototype : VMware provider virtual data center order information.
+// PVDCPrototype : VMware resource pool order information.
 type PVDCPrototype struct {
-	// Name of the provider virtual data center. Provider virtual data center names must be unique per director site
-	// instance. Provider virtual data center names cannot be changed after creation.
+	// Name of the resource pool. Resource pool names must be unique per Cloud Director site instance and they cannot be
+	// changed after creation.
 	Name *string `json:"name" validate:"required"`
 
 	// Data center location to deploy the cluster. See `GET /director_site_regions` for supported data center locations.
@@ -4794,11 +5549,14 @@ type PVDCPrototype struct {
 // NewPVDCPrototype : Instantiate PVDCPrototype (Generic Model Constructor)
 func (*VmwareV1) NewPVDCPrototype(name string, dataCenterName string, clusters []ClusterPrototype) (_model *PVDCPrototype, err error) {
 	_model = &PVDCPrototype{
-		Name:           core.StringPtr(name),
+		Name: core.StringPtr(name),
 		DataCenterName: core.StringPtr(dataCenterName),
-		Clusters:       clusters,
+		Clusters: clusters,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -4807,28 +5565,31 @@ func UnmarshalPVDCPrototype(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(PVDCPrototype)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "data_center_name", &obj.DataCenterName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "data_center_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "clusters", &obj.Clusters, UnmarshalClusterPrototype)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "clusters-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// ProviderType : Provider type.
+// ProviderType : Resource pool type.
 type ProviderType struct {
-	// Provider type name.
+	// The name of the resource pool type.
 	Name *string `json:"name" validate:"required"`
 }
 
 // Constants associated with the ProviderType.Name property.
-// Provider type name.
+// The name of the resource pool type.
 const (
 	ProviderType_Name_OnDemand = "on_demand"
 	ProviderType_Name_Reserved = "reserved"
@@ -4839,6 +5600,7 @@ func UnmarshalProviderType(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(ProviderType)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4853,22 +5615,22 @@ type RemoveTransitGatewayConnectionsOptions struct {
 	// A unique ID for an edge.
 	EdgeID *string `json:"edge_id" validate:"required,ne="`
 
-	// A unique ID for a transit gateway.
+	// A unique ID for an IBM Transit Gateway.
 	ID *string `json:"id" validate:"required,ne="`
 
 	// Language.
 	AcceptLanguage *string `json:"Accept-Language,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewRemoveTransitGatewayConnectionsOptions : Instantiate RemoveTransitGatewayConnectionsOptions
 func (*VmwareV1) NewRemoveTransitGatewayConnectionsOptions(vdcID string, edgeID string, id string) *RemoveTransitGatewayConnectionsOptions {
 	return &RemoveTransitGatewayConnectionsOptions{
-		VdcID:  core.StringPtr(vdcID),
+		VdcID: core.StringPtr(vdcID),
 		EdgeID: core.StringPtr(edgeID),
-		ID:     core.StringPtr(id),
+		ID: core.StringPtr(id),
 	}
 }
 
@@ -4905,7 +5667,7 @@ func (options *RemoveTransitGatewayConnectionsOptions) SetHeaders(param map[stri
 // ResourceGroupIdentity : The resource group to associate with the resource instance. If not specified, the default resource group in the
 // account is used.
 type ResourceGroupIdentity struct {
-	// A unique identifier for the resource group.
+	// A unique ID for the resource group.
 	ID *string `json:"id" validate:"required"`
 }
 
@@ -4915,6 +5677,9 @@ func (*VmwareV1) NewResourceGroupIdentity(id string) (_model *ResourceGroupIdent
 		ID: core.StringPtr(id),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -4923,6 +5688,7 @@ func UnmarshalResourceGroupIdentity(m map[string]json.RawMessage, result interfa
 	obj := new(ResourceGroupIdentity)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4931,7 +5697,7 @@ func UnmarshalResourceGroupIdentity(m map[string]json.RawMessage, result interfa
 
 // ResourceGroupReference : The resource group information to associate with the resource instance.
 type ResourceGroupReference struct {
-	// A unique identifier for the resource group.
+	// A unique ID for the resource group.
 	ID *string `json:"id" validate:"required"`
 
 	// The name of the resource group.
@@ -4946,14 +5712,17 @@ func UnmarshalResourceGroupReference(m map[string]json.RawMessage, result interf
 	obj := new(ResourceGroupReference)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "crn", &obj.Crn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4962,10 +5731,10 @@ func UnmarshalResourceGroupReference(m map[string]json.RawMessage, result interf
 
 // Service : Service response body.
 type Service struct {
-	// Name of the service.
+	// The service name.
 	Name *string `json:"name" validate:"required"`
 
-	// A unique identifier for the service.
+	// A unique ID for the service.
 	ID *string `json:"id" validate:"required"`
 
 	// The time that the service instance is ordered.
@@ -4984,24 +5753,27 @@ type Service struct {
 	Replicators *int64 `json:"replicators,omitempty"`
 
 	// Connection on a VCDA instance.
-	Connections []VcdaConnection `json:"connections,omitempty"`
+	Connections []VcdaConnection `json:"connections" validate:"required"`
+
+	// Scale-out backup repositories created on the Veeam service instance.
+	Sobrs []Sobr `json:"sobrs" validate:"required"`
 }
 
 // Constants associated with the Service.Name property.
-// Name of the service.
+// The service name.
 const (
-	Service_Name_Vcda  = "vcda"
+	Service_Name_Vcda = "vcda"
 	Service_Name_Veeam = "veeam"
 )
 
 // Constants associated with the Service.Status property.
 // The service instance status.
 const (
-	Service_Status_Creating   = "creating"
-	Service_Status_Deleted    = "deleted"
-	Service_Status_Deleting   = "deleting"
+	Service_Status_Creating = "creating"
+	Service_Status_Deleted = "deleted"
+	Service_Status_Deleting = "deleting"
 	Service_Status_ReadyToUse = "ready_to_use"
-	Service_Status_Updating   = "updating"
+	Service_Status_Updating = "updating"
 )
 
 // UnmarshalService unmarshals an instance of Service from the specified map of raw messages.
@@ -5009,34 +5781,65 @@ func UnmarshalService(m map[string]json.RawMessage, result interface{}) (err err
 	obj := new(Service)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ordered_at", &obj.OrderedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ordered_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "provisioned_at", &obj.ProvisionedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "provisioned_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "console_url", &obj.ConsoleURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "console_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "replicators", &obj.Replicators)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "replicators-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "connections", &obj.Connections, UnmarshalVcdaConnection)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "connections-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "sobrs", &obj.Sobrs, UnmarshalSobr)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "sobrs-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ServiceEnabled : Enable Service response for accepted request.
+type ServiceEnabled struct {
+	// Request status.
+	Message *string `json:"message,omitempty"`
+}
+
+// UnmarshalServiceEnabled unmarshals an instance of ServiceEnabled from the specified map of raw messages.
+func UnmarshalServiceEnabled(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ServiceEnabled)
+	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5045,14 +5848,14 @@ func UnmarshalService(m map[string]json.RawMessage, result interface{}) (err err
 
 // ServiceIdentity : Create Service request body.
 type ServiceIdentity struct {
-	// Name of the service.
+	// The service name.
 	Name *string `json:"name" validate:"required"`
 }
 
 // Constants associated with the ServiceIdentity.Name property.
-// Name of the service.
+// The service name.
 const (
-	ServiceIdentity_Name_Vcda  = "vcda"
+	ServiceIdentity_Name_Vcda = "vcda"
 	ServiceIdentity_Name_Veeam = "veeam"
 )
 
@@ -5062,6 +5865,9 @@ func (*VmwareV1) NewServiceIdentity(name string) (_model *ServiceIdentity, err e
 		Name: core.StringPtr(name),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -5070,6 +5876,7 @@ func UnmarshalServiceIdentity(m map[string]json.RawMessage, result interface{}) 
 	obj := new(ServiceIdentity)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5078,23 +5885,23 @@ func UnmarshalServiceIdentity(m map[string]json.RawMessage, result interface{}) 
 
 // SetOidcConfigurationOptions : The SetOidcConfiguration options.
 type SetOidcConfigurationOptions struct {
-	// A unique identifier for the director site in which the virtual data center was created.
+	// A unique ID for the Cloud Director site in which the virtual data center was created.
 	SiteID *string `json:"site_id" validate:"required,ne="`
 
-	// size of the message body in bytes.
+	// Size of the message body in bytes.
 	ContentLength *int64 `json:"Content-Length" validate:"required"`
 
 	// Language.
 	AcceptLanguage *string `json:"Accept-Language,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewSetOidcConfigurationOptions : Instantiate SetOidcConfigurationOptions
 func (*VmwareV1) NewSetOidcConfigurationOptions(siteID string, contentLength int64) *SetOidcConfigurationOptions {
 	return &SetOidcConfigurationOptions{
-		SiteID:        core.StringPtr(siteID),
+		SiteID: core.StringPtr(siteID),
 		ContentLength: core.Int64Ptr(contentLength),
 	}
 }
@@ -5138,9 +5945,9 @@ type StatusReason struct {
 // Constants associated with the StatusReason.Code property.
 // An error code specific to the error encountered.
 const (
-	StatusReason_Code_InsufficentCpu       = "insufficent_cpu"
+	StatusReason_Code_InsufficentCpu = "insufficent_cpu"
 	StatusReason_Code_InsufficentCpuAndRam = "insufficent_cpu_and_ram"
-	StatusReason_Code_InsufficentRam       = "insufficent_ram"
+	StatusReason_Code_InsufficentRam = "insufficent_ram"
 )
 
 // UnmarshalStatusReason unmarshals an instance of StatusReason from the specified map of raw messages.
@@ -5148,38 +5955,44 @@ func UnmarshalStatusReason(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(StatusReason)
 	err = core.UnmarshalPrimitive(m, "code", &obj.Code)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "code-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// TransitGateway : An IBM transit gateway.
+// TransitGateway : An IBM Transit Gateway.
 type TransitGateway struct {
-	// A unique identifier for an IBM transit gateway.
+	// A unique ID for an IBM Transit Gateway.
 	ID *string `json:"id" validate:"required"`
 
-	// Transit gateway connections.
+	// IBM Transit Gateway connections.
 	Connections []TransitGatewayConnection `json:"connections" validate:"required"`
 
-	// Determines the state of the transit gateway based on its connections.
+	// Determines the state of the IBM Transit Gateway based on its connections.
 	Status *string `json:"status" validate:"required"`
+
+	// The region where the IBM Transit Gateway is deployed.
+	Region *string `json:"region" validate:"required"`
 }
 
 // Constants associated with the TransitGateway.Status property.
-// Determines the state of the transit gateway based on its connections.
+// Determines the state of the IBM Transit Gateway based on its connections.
 const (
-	TransitGateway_Status_Creating   = "creating"
-	TransitGateway_Status_Deleting   = "deleting"
-	TransitGateway_Status_Pending    = "pending"
+	TransitGateway_Status_Creating = "creating"
+	TransitGateway_Status_Deleting = "deleting"
+	TransitGateway_Status_Pending = "pending"
 	TransitGateway_Status_ReadyToUse = "ready_to_use"
 )
 
@@ -5188,26 +6001,34 @@ func UnmarshalTransitGateway(m map[string]json.RawMessage, result interface{}) (
 	obj := new(TransitGateway)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "connections", &obj.Connections, UnmarshalTransitGatewayConnection)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "connections-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "region", &obj.Region)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "region-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// TransitGatewayConnection : A connection to an IBM transit gateway.
+// TransitGatewayConnection : A connection to an IBM Transit Gateway.
 type TransitGatewayConnection struct {
 	// The autogenerated name for this connection.
 	Name *string `json:"name" validate:"required"`
 
-	// The user-defined name of the connection created on the IBM transit gateway.
+	// The user-defined name of the connection created on the IBM Transit Gateway.
 	TransitGatewayConnectionName *string `json:"transit_gateway_connection_name,omitempty"`
 
 	// Determines the state of the connection.
@@ -5247,10 +6068,10 @@ type TransitGatewayConnection struct {
 // Constants associated with the TransitGatewayConnection.Status property.
 // Determines the state of the connection.
 const (
-	TransitGatewayConnection_Status_Creating   = "creating"
-	TransitGatewayConnection_Status_Deleting   = "deleting"
-	TransitGatewayConnection_Status_Detached   = "detached"
-	TransitGatewayConnection_Status_Pending    = "pending"
+	TransitGatewayConnection_Status_Creating = "creating"
+	TransitGatewayConnection_Status_Deleting = "deleting"
+	TransitGatewayConnection_Status_Detached = "detached"
+	TransitGatewayConnection_Status_Pending = "pending"
 	TransitGatewayConnection_Status_ReadyToUse = "ready_to_use"
 )
 
@@ -5259,54 +6080,67 @@ func UnmarshalTransitGatewayConnection(m map[string]json.RawMessage, result inte
 	obj := new(TransitGatewayConnection)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "transit_gateway_connection_name", &obj.TransitGatewayConnectionName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "transit_gateway_connection_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "local_gateway_ip", &obj.LocalGatewayIp)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "local_gateway_ip-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "remote_gateway_ip", &obj.RemoteGatewayIp)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "remote_gateway_ip-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "local_tunnel_ip", &obj.LocalTunnelIp)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "local_tunnel_ip-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "remote_tunnel_ip", &obj.RemoteTunnelIp)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "remote_tunnel_ip-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "local_bgp_asn", &obj.LocalBgpAsn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "local_bgp_asn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "remote_bgp_asn", &obj.RemoteBgpAsn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "remote_bgp_asn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "network_account_id", &obj.NetworkAccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "network_account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "network_type", &obj.NetworkType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "network_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "base_network_type", &obj.BaseNetworkType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "base_network_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "zone", &obj.Zone)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "zone-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5333,13 +6167,13 @@ type UpdateCluster struct {
 	// The number of hosts in the cluster.
 	HostCount *int64 `json:"host_count" validate:"required"`
 
-	// The status of the director site cluster.
+	// The status of the Cloud Director site cluster.
 	Status *string `json:"status" validate:"required"`
 
 	// The location of deployed cluster.
 	DataCenterName *string `json:"data_center_name" validate:"required"`
 
-	// Back link to associated director site resource.
+	// Back link to associated Cloud Director site resource.
 	DirectorSite *DirectorSiteReference `json:"director_site" validate:"required"`
 
 	// The name of the host profile.
@@ -5378,62 +6212,77 @@ func UnmarshalUpdateCluster(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(UpdateCluster)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ordered_at", &obj.OrderedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ordered_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "provisioned_at", &obj.ProvisionedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "provisioned_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "host_count", &obj.HostCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "host_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "data_center_name", &obj.DataCenterName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "data_center_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "director_site", &obj.DirectorSite, UnmarshalDirectorSiteReference)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "director_site-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "host_profile", &obj.HostProfile)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "host_profile-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "storage_type", &obj.StorageType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "storage_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "billing_plan", &obj.BillingPlan)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "billing_plan-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "file_shares", &obj.FileShares, UnmarshalFileShares)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "file_shares-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "operation_id", &obj.OperationID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "operation_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5442,13 +6291,13 @@ func UnmarshalUpdateCluster(m map[string]json.RawMessage, result interface{}) (e
 
 // UpdateDirectorSitesPvdcsClusterOptions : The UpdateDirectorSitesPvdcsCluster options.
 type UpdateDirectorSitesPvdcsClusterOptions struct {
-	// A unique identifier for the director site in which the virtual data center was created.
+	// A unique ID for the Cloud Director site in which the virtual data center was created.
 	SiteID *string `json:"site_id" validate:"required,ne="`
 
 	// The cluster to query.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// A unique identifier for the provider virtual data center in a director site.
+	// A unique ID for the resource pool in a Cloud Director site.
 	PvdcID *string `json:"pvdc_id" validate:"required,ne="`
 
 	// JSON Merge-Patch content for update_director_sites_pvdcs_cluster.
@@ -5460,7 +6309,7 @@ type UpdateDirectorSitesPvdcsClusterOptions struct {
 	// Transaction ID.
 	XGlobalTransactionID *string `json:"X-Global-Transaction-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5468,9 +6317,9 @@ type UpdateDirectorSitesPvdcsClusterOptions struct {
 func (*VmwareV1) NewUpdateDirectorSitesPvdcsClusterOptions(siteID string, id string, pvdcID string, body map[string]interface{}) *UpdateDirectorSitesPvdcsClusterOptions {
 	return &UpdateDirectorSitesPvdcsClusterOptions{
 		SiteID: core.StringPtr(siteID),
-		ID:     core.StringPtr(id),
+		ID: core.StringPtr(id),
 		PvdcID: core.StringPtr(pvdcID),
-		Body:   body,
+		Body: body,
 	}
 }
 
@@ -5518,7 +6367,7 @@ func (options *UpdateDirectorSitesPvdcsClusterOptions) SetHeaders(param map[stri
 
 // UpdateDirectorSitesVcdaC2cConnectionOptions : The UpdateDirectorSitesVcdaC2cConnection options.
 type UpdateDirectorSitesVcdaC2cConnectionOptions struct {
-	// A unique identifier for the director site in which the virtual data center was created.
+	// A unique ID for the Cloud Director site in which the virtual data center was created.
 	SiteID *string `json:"site_id" validate:"required,ne="`
 
 	// A unique ID for the cloud-to-cloud connections in the relationship Cloud Director site.
@@ -5533,7 +6382,7 @@ type UpdateDirectorSitesVcdaC2cConnectionOptions struct {
 	// Transaction ID.
 	XGlobalTransactionID *string `json:"X-Global-Transaction-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5541,8 +6390,8 @@ type UpdateDirectorSitesVcdaC2cConnectionOptions struct {
 func (*VmwareV1) NewUpdateDirectorSitesVcdaC2cConnectionOptions(siteID string, id string, note string) *UpdateDirectorSitesVcdaC2cConnectionOptions {
 	return &UpdateDirectorSitesVcdaC2cConnectionOptions{
 		SiteID: core.StringPtr(siteID),
-		ID:     core.StringPtr(id),
-		Note:   core.StringPtr(note),
+		ID: core.StringPtr(id),
+		Note: core.StringPtr(note),
 	}
 }
 
@@ -5584,7 +6433,7 @@ func (options *UpdateDirectorSitesVcdaC2cConnectionOptions) SetHeaders(param map
 
 // UpdateDirectorSitesVcdaConnectionEndpointsOptions : The UpdateDirectorSitesVcdaConnectionEndpoints options.
 type UpdateDirectorSitesVcdaConnectionEndpointsOptions struct {
-	// A unique identifier for the director site in which the virtual data center was created.
+	// A unique ID for the Cloud Director site in which the virtual data center was created.
 	SiteID *string `json:"site_id" validate:"required,ne="`
 
 	// A unique ID for the VCDA connections in the relationship Cloud Director site.
@@ -5599,7 +6448,7 @@ type UpdateDirectorSitesVcdaConnectionEndpointsOptions struct {
 	// Transaction ID.
 	XGlobalTransactionID *string `json:"X-Global-Transaction-ID,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5607,7 +6456,7 @@ type UpdateDirectorSitesVcdaConnectionEndpointsOptions struct {
 func (*VmwareV1) NewUpdateDirectorSitesVcdaConnectionEndpointsOptions(siteID string, id string) *UpdateDirectorSitesVcdaConnectionEndpointsOptions {
 	return &UpdateDirectorSitesVcdaConnectionEndpointsOptions{
 		SiteID: core.StringPtr(siteID),
-		ID:     core.StringPtr(id),
+		ID: core.StringPtr(id),
 	}
 }
 
@@ -5649,7 +6498,7 @@ func (options *UpdateDirectorSitesVcdaConnectionEndpointsOptions) SetHeaders(par
 
 // UpdateVdcOptions : The UpdateVdc options.
 type UpdateVdcOptions struct {
-	// A unique identifier for a specified virtual data center.
+	// A unique ID for a specified virtual data center.
 	ID *string `json:"id" validate:"required,ne="`
 
 	// JSON Merge-Patch content for update_vdc.
@@ -5658,14 +6507,14 @@ type UpdateVdcOptions struct {
 	// Language.
 	AcceptLanguage *string `json:"Accept-Language,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewUpdateVdcOptions : Instantiate UpdateVdcOptions
 func (*VmwareV1) NewUpdateVdcOptions(id string, vDCPatch map[string]interface{}) *UpdateVdcOptions {
 	return &UpdateVdcOptions{
-		ID:       core.StringPtr(id),
+		ID: core.StringPtr(id),
 		VDCPatch: vDCPatch,
 	}
 }
@@ -5708,10 +6557,12 @@ func UnmarshalUpdatedVcdaC2c(m map[string]json.RawMessage, result interface{}) (
 	obj := new(UpdatedVcdaC2c)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "note", &obj.Note)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "note-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5732,10 +6583,12 @@ func UnmarshalUpdatedVcdaConnection(m map[string]json.RawMessage, result interfa
 	obj := new(UpdatedVcdaConnection)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5749,55 +6602,57 @@ func UnmarshalUpdatedVcdaConnection(m map[string]json.RawMessage, result interfa
 // instance configuration, you can start with just one VDC and a performance network edge of medium size until
 // additional hosts are added to the cluster.
 type VDC struct {
-	// The URL of this Virtual Data Center.
+	// The URL of this virtual data center (VDC).
 	Href *string `json:"href" validate:"required"`
 
-	// A unique identifier for the Virtual Data Center.
+	// A unique ID for the virtual data center (VDC).
 	ID *string `json:"id" validate:"required"`
 
-	// The time that the Virtual Data Center is provisioned and available to use.
+	// The time that the virtual data center (VDC) is provisioned and available to use.
 	ProvisionedAt *strfmt.DateTime `json:"provisioned_at,omitempty"`
 
-	// The vCPU usage limit on the Virtual Data Center. Supported for Virtual Data Centers deployed on a multitenant
-	// director site. This property is applicable when provider type is reserved.
+	// The vCPU usage limit on the virtual data center (VDC). Supported for VDCs deployed on a multitenant Cloud Director
+	// site. This property is applicable when the resource pool type is reserved.
 	Cpu *int64 `json:"cpu,omitempty"`
 
-	// A unique identifier for the Virtual Data Center in IBM Cloud.
+	// A unique ID for the virtual data center (VDC) in IBM Cloud.
 	Crn *string `json:"crn" validate:"required"`
 
-	// The time that the Virtual Data Center is deleted.
+	// The time that the virtual data center (VDC) is deleted.
 	DeletedAt *strfmt.DateTime `json:"deleted_at,omitempty"`
 
-	// The director site in which to deploy the Virtual Data Center.
+	// The Cloud Director site in which to deploy the virtual data center (VDC).
 	DirectorSite *VDCDirectorSite `json:"director_site" validate:"required"`
 
-	// The VMware NSX-T networking Edges deployed on the Virtual Data Center. NSX-T edges are used for bridging
+	// The VMware NSX-T networking edges deployed on the virtual data center (VDC). NSX-T edges are used for bridging
 	// virtualization networking to the physical public-internet and IBM private networking.
 	Edges []Edge `json:"edges" validate:"required"`
 
-	// Information about why the request to create the Virtual Data Center cannot be completed.
+	// Information about why the request to create the virtual data center (VDC) cannot be completed.
 	StatusReasons []StatusReason `json:"status_reasons" validate:"required"`
 
-	// A human readable identifier for the Virtual Data Center.
+	// A human readable ID for the virtual data center (VDC).
 	Name *string `json:"name" validate:"required"`
 
-	// The time that the Virtual Data Center is ordered.
+	// The time that the virtual data center (VDC) is ordered.
 	OrderedAt *strfmt.DateTime `json:"ordered_at" validate:"required"`
 
-	// The name of the VMware Cloud Director organization that contains this Virtual Data Center. VMware Cloud Director
-	// organizations are used to create strong boundaries between virtual data centers. There is a complete isolation of
-	// user administration, networking, workloads, and VMware Cloud Director catalogs between different Director
-	// organizations.
+	// The URL of the organization that owns the VDC.
+	OrgHref *string `json:"org_href" validate:"required"`
+
+	// The name of the VMware Cloud Director organization that contains this virtual data center (VDC). VMware Cloud
+	// Director organizations are used to create strong boundaries between VDCs. There is a complete isolation of user
+	// administration, networking, workloads, and VMware Cloud Director catalogs between different Director organizations.
 	OrgName *string `json:"org_name" validate:"required"`
 
-	// The RAM usage limit on the Virtual Data Center in GB (1024^3 bytes). Supported for Virtual Data Centers deployed on
-	// a multitenant director site. This property is applicable when provider type is reserved.
+	// The RAM usage limit on the virtual data center (VDC) in GB (1024^3 bytes). Supported for VDCs deployed on a
+	// multitenant Cloud Director site. This property is applicable when the resource pool type is reserved.
 	Ram *int64 `json:"ram,omitempty"`
 
 	// Determines the state of the virtual data center.
 	Status *string `json:"status" validate:"required"`
 
-	// Determines whether this virtual data center is in a single-tenant or multitenant director site.
+	// Determines whether this virtual data center is in a single-tenant or multitenant Cloud Director site.
 	Type *string `json:"type" validate:"required"`
 
 	// Determines whether this virtual data center has fast provisioning enabled or not.
@@ -5814,18 +6669,18 @@ type VDC struct {
 // Constants associated with the VDC.Status property.
 // Determines the state of the virtual data center.
 const (
-	VDC_Status_Creating   = "creating"
-	VDC_Status_Deleted    = "deleted"
-	VDC_Status_Deleting   = "deleting"
-	VDC_Status_Failed     = "failed"
-	VDC_Status_Modifying  = "modifying"
+	VDC_Status_Creating = "creating"
+	VDC_Status_Deleted = "deleted"
+	VDC_Status_Deleting = "deleting"
+	VDC_Status_Failed = "failed"
+	VDC_Status_Modifying = "modifying"
 	VDC_Status_ReadyToUse = "ready_to_use"
 )
 
 // Constants associated with the VDC.Type property.
-// Determines whether this virtual data center is in a single-tenant or multitenant director site.
+// Determines whether this virtual data center is in a single-tenant or multitenant Cloud Director site.
 const (
-	VDC_Type_Multitenant  = "multitenant"
+	VDC_Type_Multitenant = "multitenant"
 	VDC_Type_SingleTenant = "single_tenant"
 )
 
@@ -5834,83 +6689,106 @@ func UnmarshalVDC(m map[string]json.RawMessage, result interface{}) (err error) 
 	obj := new(VDC)
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "provisioned_at", &obj.ProvisionedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "provisioned_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cpu", &obj.Cpu)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cpu-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "crn", &obj.Crn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "deleted_at", &obj.DeletedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deleted_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "director_site", &obj.DirectorSite, UnmarshalVDCDirectorSite)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "director_site-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "edges", &obj.Edges, UnmarshalEdge)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "edges-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "status_reasons", &obj.StatusReasons, UnmarshalStatusReason)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status_reasons-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ordered_at", &obj.OrderedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ordered_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "org_href", &obj.OrgHref)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "org_href-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "org_name", &obj.OrgName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "org_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ram", &obj.Ram)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ram-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "fast_provisioning_enabled", &obj.FastProvisioningEnabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "fast_provisioning_enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "rhel_byol", &obj.RhelByol)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rhel_byol-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "windows_byol", &obj.WindowsByol)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "windows_byol-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// VDCCollection : A list of Virtual Data Centers.
+// VDCCollection : A list of virtual data centers (VDCs).
 type VDCCollection struct {
-	// A List of Virtual Data Centers.
+	// A list of virtual data centers (VDCs).
 	Vdcs []VDC `json:"vdcs" validate:"required"`
 }
 
@@ -5919,21 +6797,22 @@ func UnmarshalVDCCollection(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(VDCCollection)
 	err = core.UnmarshalModel(m, "vdcs", &obj.Vdcs, UnmarshalVDC)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "vdcs-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// VDCDirectorSite : The director site in which to deploy the Virtual Data Center.
+// VDCDirectorSite : The Cloud Director site in which to deploy the virtual data center (VDC).
 type VDCDirectorSite struct {
-	// A unique identifier for the director site.
+	// A unique ID for the Cloud Director site.
 	ID *string `json:"id" validate:"required"`
 
-	// The PVDC within the Director Site in which to deploy the Virtual Data Center.
+	// The resource pool within the Director Site in which to deploy the virtual data center (VDC).
 	Pvdc *DirectorSitePVDC `json:"pvdc" validate:"required"`
 
-	// The URL of the VMware Cloud Director tenant portal where this Virtual Data Center can be managed.
+	// The URL of the VMware Cloud Director tenant portal where this virtual data center (VDC) can be managed.
 	URL *string `json:"url" validate:"required"`
 }
 
@@ -5942,36 +6821,42 @@ func UnmarshalVDCDirectorSite(m map[string]json.RawMessage, result interface{}) 
 	obj := new(VDCDirectorSite)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "pvdc", &obj.Pvdc, UnmarshalDirectorSitePVDC)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pvdc-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// VDCDirectorSitePrototype : The director site in which to deploy the Virtual Data Center.
+// VDCDirectorSitePrototype : The Cloud Director site in which to deploy the virtual data center (VDC).
 type VDCDirectorSitePrototype struct {
-	// A unique identifier for the director site.
+	// A unique ID for the Cloud Director site.
 	ID *string `json:"id" validate:"required"`
 
-	// The PVDC within the Director Site in which to deploy the Virtual Data Center.
+	// The resource pool within the Director Site in which to deploy the virtual data center (VDC).
 	Pvdc *DirectorSitePVDC `json:"pvdc" validate:"required"`
 }
 
 // NewVDCDirectorSitePrototype : Instantiate VDCDirectorSitePrototype (Generic Model Constructor)
 func (*VmwareV1) NewVDCDirectorSitePrototype(id string, pvdc *DirectorSitePVDC) (_model *VDCDirectorSitePrototype, err error) {
 	_model = &VDCDirectorSitePrototype{
-		ID:   core.StringPtr(id),
+		ID: core.StringPtr(id),
 		Pvdc: pvdc,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -5980,37 +6865,43 @@ func UnmarshalVDCDirectorSitePrototype(m map[string]json.RawMessage, result inte
 	obj := new(VDCDirectorSitePrototype)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "pvdc", &obj.Pvdc, UnmarshalDirectorSitePVDC)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pvdc-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// VDCEdgePrototype : The networking Edge to be deployed on the Virtual Data Center.
+// VDCEdgePrototype : The networking edge to be deployed on the virtual data center (VDC).
 type VDCEdgePrototype struct {
-	// The size of the Edge. Only used for Edges of type performance.
+	// The size of the edge. Only used for edges of type performance.
 	Size *string `json:"size,omitempty"`
 
-	// The type of Edge to be deployed on the Virtual Data Center.
+	// The type of edge to be deployed on the virtual data center (VDC).
 	Type *string `json:"type" validate:"required"`
+
+	// Indicates whether the edge is private only. The default value is True for a private Cloud Director site and False
+	// for a public Cloud Director site.
+	PrivateOnly *bool `json:"private_only,omitempty"`
 }
 
 // Constants associated with the VDCEdgePrototype.Size property.
-// The size of the Edge. Only used for Edges of type performance.
+// The size of the edge. Only used for edges of type performance.
 const (
 	VDCEdgePrototype_Size_ExtraLarge = "extra_large"
-	VDCEdgePrototype_Size_Large      = "large"
-	VDCEdgePrototype_Size_Medium     = "medium"
+	VDCEdgePrototype_Size_Large = "large"
+	VDCEdgePrototype_Size_Medium = "medium"
 )
 
 // Constants associated with the VDCEdgePrototype.Type property.
-// The type of Edge to be deployed on the Virtual Data Center.
+// The type of edge to be deployed on the virtual data center (VDC).
 const (
-	VDCEdgePrototype_Type_Efficiency  = "efficiency"
+	VDCEdgePrototype_Type_Efficiency = "efficiency"
 	VDCEdgePrototype_Type_Performance = "performance"
 )
 
@@ -6020,6 +6911,9 @@ func (*VmwareV1) NewVDCEdgePrototype(typeVar string) (_model *VDCEdgePrototype, 
 		Type: core.StringPtr(typeVar),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -6028,27 +6922,34 @@ func UnmarshalVDCEdgePrototype(m map[string]json.RawMessage, result interface{})
 	obj := new(VDCEdgePrototype)
 	err = core.UnmarshalPrimitive(m, "size", &obj.Size)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "size-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "private_only", &obj.PrivateOnly)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "private_only-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// VDCPatch : Information required to update a Virtual Data Center.
+// VDCPatch : Information required to update a virtual data center (VDC).
 type VDCPatch struct {
-	// The vCPU usage limit on the Virtual Data Center. Supported for Virtual Data Centers deployed on a multitenant
-	// director site. This property is required when provider type is reserved.
+	// The vCPU usage limit on the virtual data center (VDC). Supported for VDCs deployed on a multitenant Cloud Director
+	// site. This property is required when the resource pool type is reserved.
 	Cpu *int64 `json:"cpu,omitempty"`
 
-	// Flag to determine whether to enable or not fast provisioning.
+	// Indicates whether to enable or not fast provisioning.
 	FastProvisioningEnabled *bool `json:"fast_provisioning_enabled,omitempty"`
 
-	// The RAM usage limit on the Virtual Data Center in GB (1024^3 bytes). Supported for Virtual Data Centers deployed on
-	// a multitenant director site. This property is required when provider type is reserved.
+	// The RAM usage limit on the virtual data center (VDC) in GB (1024^3 bytes). Supported for VDCs deployed on a
+	// multitenant Cloud Director site. This property is required when the resource pool type is reserved.
 	Ram *int64 `json:"ram,omitempty"`
 }
 
@@ -6057,14 +6958,17 @@ func UnmarshalVDCPatch(m map[string]json.RawMessage, result interface{}) (err er
 	obj := new(VDCPatch)
 	err = core.UnmarshalPrimitive(m, "cpu", &obj.Cpu)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cpu-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "fast_provisioning_enabled", &obj.FastProvisioningEnabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "fast_provisioning_enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ram", &obj.Ram)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ram-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6073,26 +6977,32 @@ func UnmarshalVDCPatch(m map[string]json.RawMessage, result interface{}) (err er
 
 // AsPatch returns a generic map representation of the VDCPatch
 func (vDCPatch *VDCPatch) AsPatch() (_patch map[string]interface{}, err error) {
-	var jsonData []byte
-	jsonData, err = json.Marshal(vDCPatch)
-	if err == nil {
-		err = json.Unmarshal(jsonData, &_patch)
+	_patch = map[string]interface{}{}
+	if !core.IsNil(vDCPatch.Cpu) {
+		_patch["cpu"] = vDCPatch.Cpu
 	}
+	if !core.IsNil(vDCPatch.FastProvisioningEnabled) {
+		_patch["fast_provisioning_enabled"] = vDCPatch.FastProvisioningEnabled
+	}
+	if !core.IsNil(vDCPatch.Ram) {
+		_patch["ram"] = vDCPatch.Ram
+	}
+
 	return
 }
 
-// VDCProviderType : Determines how resources are made available to the Virtual Data Center. Required for Virtual Data Centers deployed on
-// a multitenant director site.
+// VDCProviderType : Determines how resources are made available to the virtual data center (VDC). Required for VDCs deployed on a
+// multitenant Cloud Director site.
 type VDCProviderType struct {
-	// The name of the provider type.
+	// The name of the resource pool type.
 	Name *string `json:"name" validate:"required"`
 }
 
 // Constants associated with the VDCProviderType.Name property.
-// The name of the provider type.
+// The name of the resource pool type.
 const (
 	VDCProviderType_Name_OnDemand = "on_demand"
-	VDCProviderType_Name_Paygo    = "paygo"
+	VDCProviderType_Name_Paygo = "paygo"
 	VDCProviderType_Name_Reserved = "reserved"
 )
 
@@ -6102,6 +7012,9 @@ func (*VmwareV1) NewVDCProviderType(name string) (_model *VDCProviderType, err e
 		Name: core.StringPtr(name),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -6110,6 +7023,7 @@ func UnmarshalVDCProviderType(m map[string]json.RawMessage, result interface{}) 
 	obj := new(VDCProviderType)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6146,11 +7060,11 @@ type VcdaC2c struct {
 // Constants associated with the VcdaC2c.Status property.
 // Status of the VCDA connection.
 const (
-	VcdaC2c_Status_Creating   = "creating"
-	VcdaC2c_Status_Deleted    = "deleted"
-	VcdaC2c_Status_Deleting   = "deleting"
+	VcdaC2c_Status_Creating = "creating"
+	VcdaC2c_Status_Deleted = "deleted"
+	VcdaC2c_Status_Deleting = "deleting"
 	VcdaC2c_Status_ReadyToUse = "ready_to_use"
-	VcdaC2c_Status_Updating   = "updating"
+	VcdaC2c_Status_Updating = "updating"
 )
 
 // UnmarshalVcdaC2c unmarshals an instance of VcdaC2c from the specified map of raw messages.
@@ -6158,34 +7072,42 @@ func UnmarshalVcdaC2c(m map[string]json.RawMessage, result interface{}) (err err
 	obj := new(VcdaC2c)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "peer_offering", &obj.PeerOffering)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "peer_offering-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "local_data_center_name", &obj.LocalDataCenterName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "local_data_center_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "local_site_name", &obj.LocalSiteName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "local_site_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "peer_site_name", &obj.PeerSiteName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "peer_site_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "peer_region", &obj.PeerRegion)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "peer_region-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "note", &obj.Note)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "note-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6204,30 +7126,30 @@ type VcdaConnection struct {
 	Type *string `json:"type" validate:"required"`
 
 	// Connection speed.
-	Speed *string `json:"speed,omitempty"`
+	Speed *string `json:"speed" validate:"required"`
 
 	// Where to deploy the cluster.
 	DataCenterName *string `json:"data_center_name" validate:"required"`
 
 	// List of IP addresses allowed in the public connection.
-	AllowList []string `json:"allow_list,omitempty"`
+	AllowList []string `json:"allow_list" validate:"required"`
 }
 
 // Constants associated with the VcdaConnection.Status property.
 // Status of the VCDA connection.
 const (
-	VcdaConnection_Status_Creating   = "creating"
-	VcdaConnection_Status_Deleted    = "deleted"
-	VcdaConnection_Status_Deleting   = "deleting"
+	VcdaConnection_Status_Creating = "creating"
+	VcdaConnection_Status_Deleted = "deleted"
+	VcdaConnection_Status_Deleting = "deleting"
 	VcdaConnection_Status_ReadyToUse = "ready_to_use"
-	VcdaConnection_Status_Updating   = "updating"
+	VcdaConnection_Status_Updating = "updating"
 )
 
 // Constants associated with the VcdaConnection.Type property.
 // Connection type.
 const (
 	VcdaConnection_Type_Private = "private"
-	VcdaConnection_Type_Public  = "public"
+	VcdaConnection_Type_Public = "public"
 )
 
 // Constants associated with the VcdaConnection.Speed property.
@@ -6241,26 +7163,147 @@ func UnmarshalVcdaConnection(m map[string]json.RawMessage, result interface{}) (
 	obj := new(VcdaConnection)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "speed", &obj.Speed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "speed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "data_center_name", &obj.DataCenterName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "data_center_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "allow_list", &obj.AllowList)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "allow_list-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Sobr : Configuration details of the scale-out backup repository.
+type Sobr struct {
+	// The ID of the scale-out backup repository.
+	ID *string `json:"id,omitempty"`
+
+	// The name of the scale-out backup repository.
+	Name *string `json:"name,omitempty"`
+
+	// The size of the scale-out backup repository.
+	Size *int64 `json:"size,omitempty"`
+
+	// The data center location where to create the scale-out backup repository.
+	DataCenter *string `json:"data_center,omitempty"`
+
+	// The immutability time of the backup files stored in the scale-out backup repository.
+	ImmutabilityTime *int64 `json:"immutability_time,omitempty"`
+
+	// The type of storage for the scale-out backup repository.
+	StorageType *string `json:"storage_type" validate:"required"`
+
+	// The type of scale-out backup repository.
+	Type *string `json:"type" validate:"required"`
+
+	// The ID of the Veeam organization configuration.
+	VeeamOrgConfigID *string `json:"veeam_org_config_id,omitempty"`
+
+	// The status of the scale-out backup repository on the Veeam service instance.
+	Status *string `json:"status" validate:"required"`
+
+	// The date and time when the scale-out backup repository is ordered.
+	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
+}
+
+// Constants associated with the Sobr.StorageType property.
+// The type of storage for the scale-out backup repository.
+const (
+	Sobr_StorageType_Cos = "cos"
+	Sobr_StorageType_Hybrid = "hybrid"
+	Sobr_StorageType_Vsan = "vsan"
+)
+
+// Constants associated with the Sobr.Type property.
+// The type of scale-out backup repository.
+const (
+	Sobr_Type_Custom = "custom"
+	Sobr_Type_Default = "default"
+)
+
+// Constants associated with the Sobr.Status property.
+// The status of the scale-out backup repository on the Veeam service instance.
+const (
+	Sobr_Status_Creating = "creating"
+	Sobr_Status_Deleted = "deleted"
+	Sobr_Status_Deleting = "deleting"
+	Sobr_Status_ReadyToUse = "ready_to_use"
+	Sobr_Status_Updating = "updating"
+)
+
+// UnmarshalSobr unmarshals an instance of Sobr from the specified map of raw messages.
+func UnmarshalSobr(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Sobr)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "size", &obj.Size)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "size-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "data_center", &obj.DataCenter)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "data_center-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "immutability_time", &obj.ImmutabilityTime)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "immutability_time-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "storage_type", &obj.StorageType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "storage_type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "veeam_org_config_id", &obj.VeeamOrgConfigID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "veeam_org_config_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))

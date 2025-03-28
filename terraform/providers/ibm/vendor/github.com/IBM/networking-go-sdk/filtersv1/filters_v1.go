@@ -177,7 +177,7 @@ func (filters *FiltersV1) ListAllFiltersWithContext(ctx context.Context, listAll
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *listAllFiltersOptions.Crn,
+		"crn":             *listAllFiltersOptions.Crn,
 		"zone_identifier": *listAllFiltersOptions.ZoneIdentifier,
 	}
 
@@ -241,7 +241,7 @@ func (filters *FiltersV1) CreateFilterWithContext(ctx context.Context, createFil
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *createFilterOptions.Crn,
+		"crn":             *createFilterOptions.Crn,
 		"zone_identifier": *createFilterOptions.ZoneIdentifier,
 	}
 
@@ -313,7 +313,7 @@ func (filters *FiltersV1) UpdateFiltersWithContext(ctx context.Context, updateFi
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *updateFiltersOptions.Crn,
+		"crn":             *updateFiltersOptions.Crn,
 		"zone_identifier": *updateFiltersOptions.ZoneIdentifier,
 	}
 
@@ -385,7 +385,7 @@ func (filters *FiltersV1) DeleteFiltersWithContext(ctx context.Context, deleteFi
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *deleteFiltersOptions.Crn,
+		"crn":             *deleteFiltersOptions.Crn,
 		"zone_identifier": *deleteFiltersOptions.ZoneIdentifier,
 	}
 
@@ -451,8 +451,8 @@ func (filters *FiltersV1) DeleteFilterWithContext(ctx context.Context, deleteFil
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *deleteFilterOptions.Crn,
-		"zone_identifier": *deleteFilterOptions.ZoneIdentifier,
+		"crn":               *deleteFilterOptions.Crn,
+		"zone_identifier":   *deleteFilterOptions.ZoneIdentifier,
 		"filter_identifier": *deleteFilterOptions.FilterIdentifier,
 	}
 
@@ -516,8 +516,8 @@ func (filters *FiltersV1) GetFilterWithContext(ctx context.Context, getFilterOpt
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *getFilterOptions.Crn,
-		"zone_identifier": *getFilterOptions.ZoneIdentifier,
+		"crn":               *getFilterOptions.Crn,
+		"zone_identifier":   *getFilterOptions.ZoneIdentifier,
 		"filter_identifier": *getFilterOptions.FilterIdentifier,
 	}
 
@@ -581,8 +581,8 @@ func (filters *FiltersV1) UpdateFilterWithContext(ctx context.Context, updateFil
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *updateFilterOptions.Crn,
-		"zone_identifier": *updateFilterOptions.ZoneIdentifier,
+		"crn":               *updateFilterOptions.Crn,
+		"zone_identifier":   *updateFilterOptions.ZoneIdentifier,
 		"filter_identifier": *updateFilterOptions.FilterIdentifier,
 	}
 
@@ -669,7 +669,7 @@ type CreateFilterOptions struct {
 func (*FiltersV1) NewCreateFilterOptions(xAuthUserToken string, crn string, zoneIdentifier string) *CreateFilterOptions {
 	return &CreateFilterOptions{
 		XAuthUserToken: core.StringPtr(xAuthUserToken),
-		Crn: core.StringPtr(crn),
+		Crn:            core.StringPtr(crn),
 		ZoneIdentifier: core.StringPtr(zoneIdentifier),
 	}
 }
@@ -725,9 +725,9 @@ type DeleteFilterOptions struct {
 // NewDeleteFilterOptions : Instantiate DeleteFilterOptions
 func (*FiltersV1) NewDeleteFilterOptions(xAuthUserToken string, crn string, zoneIdentifier string, filterIdentifier string) *DeleteFilterOptions {
 	return &DeleteFilterOptions{
-		XAuthUserToken: core.StringPtr(xAuthUserToken),
-		Crn: core.StringPtr(crn),
-		ZoneIdentifier: core.StringPtr(zoneIdentifier),
+		XAuthUserToken:   core.StringPtr(xAuthUserToken),
+		Crn:              core.StringPtr(crn),
+		ZoneIdentifier:   core.StringPtr(zoneIdentifier),
 		FilterIdentifier: core.StringPtr(filterIdentifier),
 	}
 }
@@ -801,9 +801,9 @@ type DeleteFiltersOptions struct {
 func (*FiltersV1) NewDeleteFiltersOptions(xAuthUserToken string, crn string, zoneIdentifier string, id string) *DeleteFiltersOptions {
 	return &DeleteFiltersOptions{
 		XAuthUserToken: core.StringPtr(xAuthUserToken),
-		Crn: core.StringPtr(crn),
+		Crn:            core.StringPtr(crn),
 		ZoneIdentifier: core.StringPtr(zoneIdentifier),
-		ID: core.StringPtr(id),
+		ID:             core.StringPtr(id),
 	}
 }
 
@@ -875,9 +875,9 @@ type GetFilterOptions struct {
 // NewGetFilterOptions : Instantiate GetFilterOptions
 func (*FiltersV1) NewGetFilterOptions(xAuthUserToken string, crn string, zoneIdentifier string, filterIdentifier string) *GetFilterOptions {
 	return &GetFilterOptions{
-		XAuthUserToken: core.StringPtr(xAuthUserToken),
-		Crn: core.StringPtr(crn),
-		ZoneIdentifier: core.StringPtr(zoneIdentifier),
+		XAuthUserToken:   core.StringPtr(xAuthUserToken),
+		Crn:              core.StringPtr(crn),
+		ZoneIdentifier:   core.StringPtr(zoneIdentifier),
 		FilterIdentifier: core.StringPtr(filterIdentifier),
 	}
 }
@@ -931,7 +931,7 @@ type ListAllFiltersOptions struct {
 func (*FiltersV1) NewListAllFiltersOptions(xAuthUserToken string, crn string, zoneIdentifier string) *ListAllFiltersOptions {
 	return &ListAllFiltersOptions{
 		XAuthUserToken: core.StringPtr(xAuthUserToken),
-		Crn: core.StringPtr(crn),
+		Crn:            core.StringPtr(crn),
 		ZoneIdentifier: core.StringPtr(zoneIdentifier),
 	}
 }
@@ -1031,9 +1031,9 @@ type UpdateFilterOptions struct {
 // NewUpdateFilterOptions : Instantiate UpdateFilterOptions
 func (*FiltersV1) NewUpdateFilterOptions(xAuthUserToken string, crn string, zoneIdentifier string, filterIdentifier string) *UpdateFilterOptions {
 	return &UpdateFilterOptions{
-		XAuthUserToken: core.StringPtr(xAuthUserToken),
-		Crn: core.StringPtr(crn),
-		ZoneIdentifier: core.StringPtr(zoneIdentifier),
+		XAuthUserToken:   core.StringPtr(xAuthUserToken),
+		Crn:              core.StringPtr(crn),
+		ZoneIdentifier:   core.StringPtr(zoneIdentifier),
 		FilterIdentifier: core.StringPtr(filterIdentifier),
 	}
 }
@@ -1113,7 +1113,7 @@ type UpdateFiltersOptions struct {
 func (*FiltersV1) NewUpdateFiltersOptions(xAuthUserToken string, crn string, zoneIdentifier string) *UpdateFiltersOptions {
 	return &UpdateFiltersOptions{
 		XAuthUserToken: core.StringPtr(xAuthUserToken),
-		Crn: core.StringPtr(crn),
+		Crn:            core.StringPtr(crn),
 		ZoneIdentifier: core.StringPtr(zoneIdentifier),
 	}
 }
@@ -1371,7 +1371,7 @@ type FilterUpdateInput struct {
 // NewFilterUpdateInput : Instantiate FilterUpdateInput (Generic Model Constructor)
 func (*FiltersV1) NewFilterUpdateInput(id string, expression string) (model *FilterUpdateInput, err error) {
 	model = &FilterUpdateInput{
-		ID: core.StringPtr(id),
+		ID:         core.StringPtr(id),
 		Expression: core.StringPtr(expression),
 	}
 	err = core.ValidateStruct(model, "required parameters")

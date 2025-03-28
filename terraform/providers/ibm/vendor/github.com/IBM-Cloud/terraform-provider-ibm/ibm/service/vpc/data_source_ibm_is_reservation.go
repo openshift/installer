@@ -310,7 +310,7 @@ func dataSourceIBMIsReservationRead(context context.Context, d *schema.ResourceD
 	if reservation.Profile != nil {
 		profileList := []map[string]interface{}{}
 		profile := reservation.Profile
-		profileMap := dataSourceReservationProfileToMap(*profile)
+		profileMap := dataSourceReservationProfileToMap(profile)
 		profileList = append(profileList, profileMap)
 		if err = d.Set("profile", profileList); err != nil {
 			return diag.FromErr(fmt.Errorf("[ERROR] Error setting profile: %s", err))
@@ -349,17 +349,25 @@ func dataSourceIBMIsReservationRead(context context.Context, d *schema.ResourceD
 	return nil
 }
 
-func dataSourceReservationProfileToMap(profileItem vpcv1.ReservationProfile) (profileMap map[string]interface{}) {
-	profileMap = map[string]interface{}{}
+func dataSourceReservationProfileToMap(profileItem vpcv1.ReservationProfileIntf) (profileMap map[string]interface{}) {
+	var profile *vpcv1.ReservationProfile
+	if profileItem == nil {
+		return
+	}
+	if profile = profileItem.(*vpcv1.ReservationProfile); profile == nil {
+		return
+	}
 
-	if profileItem.Href != nil {
-		profileMap["href"] = profileItem.Href
+	profileMap = make(map[string]interface{})
+
+	if profile.Href != nil {
+		profileMap["href"] = profile.Href
 	}
-	if profileItem.Name != nil {
-		profileMap["name"] = profileItem.Name
+	if profile.Name != nil {
+		profileMap["name"] = profile.Name
 	}
-	if profileItem.ResourceType != nil {
-		profileMap["resource_type"] = profileItem.ResourceType
+	if profile.ResourceType != nil {
+		profileMap["resource_type"] = profile.ResourceType
 	}
 	return profileMap
 }

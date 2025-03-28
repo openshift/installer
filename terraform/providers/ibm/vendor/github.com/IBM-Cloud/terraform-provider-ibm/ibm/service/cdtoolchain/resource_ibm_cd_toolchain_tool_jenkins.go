@@ -1,5 +1,9 @@
-// Copyright IBM Corp. 2023 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
+
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.96.0-d6dec9d7-20241008-212902
+ */
 
 package cdtoolchain
 
@@ -16,7 +20,7 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
-	"github.com/IBM/continuous-delivery-go-sdk/cdtoolchainv2"
+	"github.com/IBM/continuous-delivery-go-sdk/v2/cdtoolchainv2"
 	"github.com/IBM/go-sdk-core/v5/core"
 )
 
@@ -62,6 +66,7 @@ func ResourceIBMCdToolchainToolJenkins() *schema.Resource {
 						},
 						"webhook_url": &schema.Schema{
 							Type:        schema.TypeString,
+							Optional:    true,
 							Computed:    true,
 							Sensitive:   true,
 							Description: "The webhook to use in your Jenkins jobs to send notifications to other tools in your toolchain.",
@@ -110,11 +115,13 @@ func ResourceIBMCdToolchainToolJenkins() *schema.Resource {
 						"ui_href": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
+							Computed:    true,
 							Description: "URI representing this resource through the UI.",
 						},
 						"api_href": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
+							Computed:    true,
 							Description: "URI representing this resource through an API.",
 						},
 					},
@@ -169,7 +176,9 @@ func ResourceIBMCdToolchainToolJenkinsValidator() *validate.ResourceValidator {
 func resourceIBMCdToolchainToolJenkinsCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_jenkins", "create", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	createToolOptions := &cdtoolchainv2.CreateToolOptions{}
@@ -182,10 +191,11 @@ func resourceIBMCdToolchainToolJenkinsCreate(context context.Context, d *schema.
 		createToolOptions.SetName(d.Get("name").(string))
 	}
 
-	toolchainToolPost, response, err := cdToolchainClient.CreateToolWithContext(context, createToolOptions)
+	toolchainToolPost, _, err := cdToolchainClient.CreateToolWithContext(context, createToolOptions)
 	if err != nil {
-		log.Printf("[DEBUG] CreateToolWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateToolWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateToolWithContext failed: %s", err.Error()), "ibm_cd_toolchain_tool_jenkins", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *createToolOptions.ToolchainID, *toolchainToolPost.ID))
@@ -196,14 +206,16 @@ func resourceIBMCdToolchainToolJenkinsCreate(context context.Context, d *schema.
 func resourceIBMCdToolchainToolJenkinsRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_jenkins", "read", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getToolByIDOptions := &cdtoolchainv2.GetToolByIDOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_jenkins", "read", "sep-id-parts").GetDiag()
 	}
 
 	getToolByIDOptions.SetToolchainID(parts[0])
@@ -229,49 +241,61 @@ func resourceIBMCdToolchainToolJenkinsRead(context context.Context, d *schema.Re
 			d.SetId("")
 			return nil
 		}
-		log.Printf("[DEBUG] GetToolByIDWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetToolByIDWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetToolByIDWithContext failed: %s", err.Error()), "ibm_cd_toolchain_tool_jenkins", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("toolchain_id", toolchainTool.ToolchainID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting toolchain_id: %s", err))
+		err = fmt.Errorf("Error setting toolchain_id: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_jenkins", "read", "set-toolchain_id").GetDiag()
 	}
 	if !core.IsNil(toolchainTool.Name) {
 		if err = d.Set("name", toolchainTool.Name); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+			err = fmt.Errorf("Error setting name: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_jenkins", "read", "set-name").GetDiag()
 		}
 	}
 	parametersMap := GetParametersFromRead(toolchainTool.Parameters, ResourceIBMCdToolchainToolJenkins(), nil)
 	if err = d.Set("parameters", []map[string]interface{}{parametersMap}); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting parameters: %s", err))
+		err = fmt.Errorf("Error setting parameters: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_jenkins", "read", "set-parameters").GetDiag()
 	}
 	if err = d.Set("resource_group_id", toolchainTool.ResourceGroupID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting resource_group_id: %s", err))
+		err = fmt.Errorf("Error setting resource_group_id: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_jenkins", "read", "set-resource_group_id").GetDiag()
 	}
 	if err = d.Set("crn", toolchainTool.CRN); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
+		err = fmt.Errorf("Error setting crn: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_jenkins", "read", "set-crn").GetDiag()
 	}
 	if err = d.Set("toolchain_crn", toolchainTool.ToolchainCRN); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting toolchain_crn: %s", err))
+		err = fmt.Errorf("Error setting toolchain_crn: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_jenkins", "read", "set-toolchain_crn").GetDiag()
 	}
 	if err = d.Set("href", toolchainTool.Href); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
+		err = fmt.Errorf("Error setting href: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_jenkins", "read", "set-href").GetDiag()
 	}
-	referentMap, err := resourceIBMCdToolchainToolJenkinsToolModelReferentToMap(toolchainTool.Referent)
+	referentMap, err := ResourceIBMCdToolchainToolJenkinsToolModelReferentToMap(toolchainTool.Referent)
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_jenkins", "read", "referent-to-map").GetDiag()
 	}
 	if err = d.Set("referent", []map[string]interface{}{referentMap}); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting referent: %s", err))
+		err = fmt.Errorf("Error setting referent: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_jenkins", "read", "set-referent").GetDiag()
 	}
 	if err = d.Set("updated_at", flex.DateTimeToString(toolchainTool.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
+		err = fmt.Errorf("Error setting updated_at: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_jenkins", "read", "set-updated_at").GetDiag()
 	}
 	if err = d.Set("state", toolchainTool.State); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting state: %s", err))
+		err = fmt.Errorf("Error setting state: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_jenkins", "read", "set-state").GetDiag()
 	}
 	if err = d.Set("tool_id", toolchainTool.ID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting tool_id: %s", err))
+		err = fmt.Errorf("Error setting tool_id: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_jenkins", "read", "set-tool_id").GetDiag()
 	}
 
 	return nil
@@ -280,14 +304,16 @@ func resourceIBMCdToolchainToolJenkinsRead(context context.Context, d *schema.Re
 func resourceIBMCdToolchainToolJenkinsUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_jenkins", "update", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	updateToolOptions := &cdtoolchainv2.UpdateToolOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_jenkins", "update", "sep-id-parts").GetDiag()
 	}
 
 	updateToolOptions.SetToolchainID(parts[0])
@@ -297,8 +323,9 @@ func resourceIBMCdToolchainToolJenkinsUpdate(context context.Context, d *schema.
 
 	patchVals := &cdtoolchainv2.ToolchainToolPrototypePatch{}
 	if d.HasChange("toolchain_id") {
-		return diag.FromErr(fmt.Errorf("Cannot update resource property \"%s\" with the ForceNew annotation."+
-			" The resource must be re-created to update this property.", "toolchain_id"))
+		errMsg := fmt.Sprintf("Cannot update resource property \"%s\" with the ForceNew annotation."+
+			" The resource must be re-created to update this property.", "toolchain_id")
+		return flex.DiscriminatedTerraformErrorf(nil, errMsg, "ibm_cd_toolchain_tool_jenkins", "update", "toolchain_id-forces-new").GetDiag()
 	}
 	if d.HasChange("name") {
 		newName := d.Get("name").(string)
@@ -312,11 +339,16 @@ func resourceIBMCdToolchainToolJenkinsUpdate(context context.Context, d *schema.
 	}
 
 	if hasChange {
-		updateToolOptions.ToolchainToolPrototypePatch, _ = patchVals.AsPatch()
-		_, response, err := cdToolchainClient.UpdateToolWithContext(context, updateToolOptions)
+		// Fields with `nil` values are omitted from the generic map,
+		// so we need to re-add them to support removing arguments
+		// in merge-patch operations sent to the service.
+		updateToolOptions.ToolchainToolPrototypePatch = ResourceIBMCdToolchainToolJenkinsToolchainToolPrototypePatchAsPatch(patchVals, d)
+
+		_, _, err = cdToolchainClient.UpdateToolWithContext(context, updateToolOptions)
 		if err != nil {
-			log.Printf("[DEBUG] UpdateToolWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("UpdateToolWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateToolWithContext failed: %s", err.Error()), "ibm_cd_toolchain_tool_jenkins", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -326,23 +358,26 @@ func resourceIBMCdToolchainToolJenkinsUpdate(context context.Context, d *schema.
 func resourceIBMCdToolchainToolJenkinsDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_jenkins", "delete", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	deleteToolOptions := &cdtoolchainv2.DeleteToolOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_jenkins", "delete", "sep-id-parts").GetDiag()
 	}
 
 	deleteToolOptions.SetToolchainID(parts[0])
 	deleteToolOptions.SetToolID(parts[1])
 
-	response, err := cdToolchainClient.DeleteToolWithContext(context, deleteToolOptions)
+	_, err = cdToolchainClient.DeleteToolWithContext(context, deleteToolOptions)
 	if err != nil {
-		log.Printf("[DEBUG] DeleteToolWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteToolWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteToolWithContext failed: %s", err.Error()), "ibm_cd_toolchain_tool_jenkins", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")
@@ -350,13 +385,52 @@ func resourceIBMCdToolchainToolJenkinsDelete(context context.Context, d *schema.
 	return nil
 }
 
-func resourceIBMCdToolchainToolJenkinsToolModelReferentToMap(model *cdtoolchainv2.ToolModelReferent) (map[string]interface{}, error) {
+func ResourceIBMCdToolchainToolJenkinsToolModelReferentToMap(model *cdtoolchainv2.ToolModelReferent) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.UIHref != nil {
-		modelMap["ui_href"] = model.UIHref
+		modelMap["ui_href"] = *model.UIHref
 	}
 	if model.APIHref != nil {
-		modelMap["api_href"] = model.APIHref
+		modelMap["api_href"] = *model.APIHref
 	}
 	return modelMap, nil
+}
+
+func ResourceIBMCdToolchainToolJenkinsToolchainToolPrototypePatchAsPatch(patchVals *cdtoolchainv2.ToolchainToolPrototypePatch, d *schema.ResourceData) map[string]interface{} {
+	patch, _ := patchVals.AsPatch()
+	var path string
+
+	path = "name"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["name"] = nil
+	}
+	path = "tool_type_id"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["tool_type_id"] = nil
+	}
+	path = "parameters"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["parameters"] = nil
+	} else if exists && patch["parameters"] != nil {
+		ResourceIBMCdToolchainToolJenkinsToolModelParametersAsPatch(patch["parameters"].(map[string]interface{}), d)
+	}
+
+	return patch
+}
+
+func ResourceIBMCdToolchainToolJenkinsToolModelParametersAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+	var path string
+
+	path = "parameters.0.webhook_url"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["webhook_url"] = nil
+	}
+	path = "parameters.0.api_user_name"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["api_user_name"] = nil
+	}
+	path = "parameters.0.api_token"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["api_token"] = nil
+	}
 }

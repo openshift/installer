@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2021.
+ * (C) Copyright IBM Corp. 2024.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.33.0-caf29bd0-20210603-225214
+ * IBM OpenAPI SDK Code Generator Version: 3.96.1-5136e54a-20241108-203028
  */
 
 // Package ibmcloudshellv1 : Operations and models for the IBMCloudShellV1 service
@@ -24,7 +24,6 @@ package ibmcloudshellv1
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"reflect"
 	"time"
@@ -35,7 +34,7 @@ import (
 
 // IBMCloudShellV1 : API docs for IBM Cloud Shell repository
 //
-// Version: 1.0
+// API Version: 1.0
 type IBMCloudShellV1 struct {
 	Service *core.BaseService
 }
@@ -62,22 +61,26 @@ func NewIBMCloudShellV1UsingExternalConfig(options *IBMCloudShellV1Options) (ibm
 	if options.Authenticator == nil {
 		options.Authenticator, err = core.GetAuthenticatorFromEnvironment(options.ServiceName)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "env-auth-error", common.GetComponentInfo())
 			return
 		}
 	}
 
 	ibmCloudShell, err = NewIBMCloudShellV1(options)
+	err = core.RepurposeSDKProblem(err, "new-client-error")
 	if err != nil {
 		return
 	}
 
 	err = ibmCloudShell.Service.ConfigureService(options.ServiceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client-config-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = ibmCloudShell.Service.SetServiceURL(options.URL)
+		err = core.RepurposeSDKProblem(err, "url-set-error")
 	}
 	return
 }
@@ -91,12 +94,14 @@ func NewIBMCloudShellV1(options *IBMCloudShellV1Options) (service *IBMCloudShell
 
 	baseService, err := core.NewBaseService(serviceOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "new-base-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = baseService.SetServiceURL(options.URL)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "set-url-error", common.GetComponentInfo())
 			return
 		}
 	}
@@ -110,7 +115,7 @@ func NewIBMCloudShellV1(options *IBMCloudShellV1Options) (service *IBMCloudShell
 
 // GetServiceURLForRegion returns the service URL to be used for the specified region
 func GetServiceURLForRegion(region string) (string, error) {
-	return "", fmt.Errorf("service does not support regional URLs")
+	return "", core.SDKErrorf(nil, "service does not support regional URLs", "no-regional-support", common.GetComponentInfo())
 }
 
 // Clone makes a copy of "ibmCloudShell" suitable for processing requests.
@@ -125,7 +130,11 @@ func (ibmCloudShell *IBMCloudShellV1) Clone() *IBMCloudShellV1 {
 
 // SetServiceURL sets the service URL
 func (ibmCloudShell *IBMCloudShellV1) SetServiceURL(url string) error {
-	return ibmCloudShell.Service.SetServiceURL(url)
+	err := ibmCloudShell.Service.SetServiceURL(url)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-set-error", common.GetComponentInfo())
+	}
+	return err
 }
 
 // GetServiceURL returns the service URL
@@ -165,17 +174,21 @@ func (ibmCloudShell *IBMCloudShellV1) DisableRetries() {
 // be an account owner or users need to be assigned an IAM policy with the Administrator role for the Cloud Shell
 // account management service.
 func (ibmCloudShell *IBMCloudShellV1) GetAccountSettings(getAccountSettingsOptions *GetAccountSettingsOptions) (result *AccountSettings, response *core.DetailedResponse, err error) {
-	return ibmCloudShell.GetAccountSettingsWithContext(context.Background(), getAccountSettingsOptions)
+	result, response, err = ibmCloudShell.GetAccountSettingsWithContext(context.Background(), getAccountSettingsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAccountSettingsWithContext is an alternate form of the GetAccountSettings method which supports a Context parameter
 func (ibmCloudShell *IBMCloudShellV1) GetAccountSettingsWithContext(ctx context.Context, getAccountSettingsOptions *GetAccountSettingsOptions) (result *AccountSettings, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getAccountSettingsOptions, "getAccountSettingsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getAccountSettingsOptions, "getAccountSettingsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -188,6 +201,7 @@ func (ibmCloudShell *IBMCloudShellV1) GetAccountSettingsWithContext(ctx context.
 	builder.EnableGzipCompression = ibmCloudShell.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(ibmCloudShell.Service.Options.URL, `/api/v1/user/accounts/{account_id}/settings`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -203,17 +217,21 @@ func (ibmCloudShell *IBMCloudShellV1) GetAccountSettingsWithContext(ctx context.
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = ibmCloudShell.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_account_settings", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettings)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -228,17 +246,21 @@ func (ibmCloudShell *IBMCloudShellV1) GetAccountSettingsWithContext(ctx context.
 // settings, users need to be an account owner or users need to be assigned an IAM policy with the Administrator role
 // for the Cloud Shell account management service.
 func (ibmCloudShell *IBMCloudShellV1) UpdateAccountSettings(updateAccountSettingsOptions *UpdateAccountSettingsOptions) (result *AccountSettings, response *core.DetailedResponse, err error) {
-	return ibmCloudShell.UpdateAccountSettingsWithContext(context.Background(), updateAccountSettingsOptions)
+	result, response, err = ibmCloudShell.UpdateAccountSettingsWithContext(context.Background(), updateAccountSettingsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateAccountSettingsWithContext is an alternate form of the UpdateAccountSettings method which supports a Context parameter
 func (ibmCloudShell *IBMCloudShellV1) UpdateAccountSettingsWithContext(ctx context.Context, updateAccountSettingsOptions *UpdateAccountSettingsOptions) (result *AccountSettings, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateAccountSettingsOptions, "updateAccountSettingsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateAccountSettingsOptions, "updateAccountSettingsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -251,6 +273,7 @@ func (ibmCloudShell *IBMCloudShellV1) UpdateAccountSettingsWithContext(ctx conte
 	builder.EnableGzipCompression = ibmCloudShell.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(ibmCloudShell.Service.Options.URL, `/api/v1/user/accounts/{account_id}/settings`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -286,28 +309,36 @@ func (ibmCloudShell *IBMCloudShellV1) UpdateAccountSettingsWithContext(ctx conte
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = ibmCloudShell.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_account_settings", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettings)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
 	}
 
 	return
+}
+func getServiceComponentInfo() *core.ProblemComponent {
+	return core.NewProblemComponent(DefaultServiceName, "1.0")
 }
 
 // AccountSettings : Definition of Cloud Shell account settings.
@@ -359,54 +390,67 @@ func UnmarshalAccountSettings(m map[string]json.RawMessage, result interface{}) 
 	obj := new(AccountSettings)
 	err = core.UnmarshalPrimitive(m, "_id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "_rev", &obj.Rev)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_rev-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_by", &obj.CreatedBy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "default_enable_new_features", &obj.DefaultEnableNewFeatures)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "default_enable_new_features-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "default_enable_new_regions", &obj.DefaultEnableNewRegions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "default_enable_new_regions-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "features", &obj.Features, UnmarshalFeature)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "features-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "regions", &obj.Regions, UnmarshalRegionSetting)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "regions-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_by", &obj.UpdatedBy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_by-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -427,10 +471,12 @@ func UnmarshalFeature(m map[string]json.RawMessage, result interface{}) (err err
 	obj := new(Feature)
 	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "key", &obj.Key)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "key-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -440,9 +486,9 @@ func UnmarshalFeature(m map[string]json.RawMessage, result interface{}) (err err
 // GetAccountSettingsOptions : The GetAccountSettings options.
 type GetAccountSettingsOptions struct {
 	// The account ID in which the account settings belong to.
-	AccountID *string `validate:"required,ne="`
+	AccountID *string `json:"account_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -479,10 +525,12 @@ func UnmarshalRegionSetting(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(RegionSetting)
 	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "key", &obj.Key)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "key-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -492,29 +540,29 @@ func UnmarshalRegionSetting(m map[string]json.RawMessage, result interface{}) (e
 // UpdateAccountSettingsOptions : The UpdateAccountSettings options.
 type UpdateAccountSettingsOptions struct {
 	// The account ID in which the account settings belong to.
-	AccountID *string `validate:"required,ne="`
+	AccountID *string `json:"account_id" validate:"required,ne="`
 
 	// Unique revision number for the settings object.
-	Rev *string
+	Rev *string `json:"_rev,omitempty"`
 
 	// You can choose which Cloud Shell features are available in the account and whether any new features are enabled as
 	// they become available. The feature settings apply only to the enabled Cloud Shell locations.
-	DefaultEnableNewFeatures *bool
+	DefaultEnableNewFeatures *bool `json:"default_enable_new_features,omitempty"`
 
 	// Set whether Cloud Shell is enabled in a specific location for the account. The location determines where user and
 	// session data are stored. By default, users are routed to the nearest available location.
-	DefaultEnableNewRegions *bool
+	DefaultEnableNewRegions *bool `json:"default_enable_new_regions,omitempty"`
 
 	// When enabled, Cloud Shell is available to all users in the account.
-	Enabled *bool
+	Enabled *bool `json:"enabled,omitempty"`
 
 	// List of Cloud Shell features.
-	Features []Feature
+	Features []Feature `json:"features,omitempty"`
 
 	// List of Cloud Shell region settings.
-	Regions []RegionSetting
+	Regions []RegionSetting `json:"regions,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 

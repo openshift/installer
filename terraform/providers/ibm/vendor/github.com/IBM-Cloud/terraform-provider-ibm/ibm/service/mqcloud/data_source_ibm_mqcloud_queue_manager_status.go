@@ -2,7 +2,7 @@
 // Licensed under the Mozilla Public License v2.0
 
 /*
- * IBM OpenAPI Terraform Generator Version: 3.90.0-5aad763d-20240506-203857
+ * IBM OpenAPI Terraform Generator Version: 3.95.2-120e65bc-20240924-152329
  */
 
 package mqcloud
@@ -29,7 +29,7 @@ func DataSourceIbmMqcloudQueueManagerStatus() *schema.Resource {
 			"service_instance_guid": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The GUID that uniquely identifies the MQ on Cloud service instance.",
+				Description: "The GUID that uniquely identifies the MQaaS service instance.",
 			},
 			"queue_manager_id": {
 				Type:        schema.TypeString,

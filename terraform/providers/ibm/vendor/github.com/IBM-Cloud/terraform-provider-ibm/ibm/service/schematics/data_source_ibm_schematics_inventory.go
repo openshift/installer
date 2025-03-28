@@ -92,7 +92,9 @@ func DataSourceIBMSchematicsInventory() *schema.Resource {
 func dataSourceIBMSchematicsInventoryRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsInventoryRead schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_inventory", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if r, ok := d.GetOk("location"); ok {
 		region := r.(string)
@@ -108,40 +110,62 @@ func dataSourceIBMSchematicsInventoryRead(context context.Context, d *schema.Res
 
 	inventoryResourceRecord, response, err := schematicsClient.GetInventoryWithContext(context, getInventoryOptions)
 	if err != nil {
-		log.Printf("[DEBUG] GetInventoryWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetInventoryWithContext failed %s\n%s", err, response))
+
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsInventoryRead GetInventoryWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_inventory", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(*getInventoryOptions.InventoryID)
 	if err = d.Set("name", inventoryResourceRecord.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsInventoryRead failed with error: %s", err), "ibm_schematics_inventory", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("id", inventoryResourceRecord.ID); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsInventoryRead failed with error: %s", err), "ibm_schematics_inventory", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("description", inventoryResourceRecord.Description); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting description: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsInventoryRead failed with error: %s", err), "ibm_schematics_inventory", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("location", inventoryResourceRecord.Location); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting location: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsInventoryRead failed with error: %s", err), "ibm_schematics_inventory", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("resource_group", inventoryResourceRecord.ResourceGroup); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting resource_group: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsInventoryRead failed with error: %s", err), "ibm_schematics_inventory", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("created_at", flex.DateTimeToString(inventoryResourceRecord.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting created_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsInventoryRead failed with error: %s", err), "ibm_schematics_inventory", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("created_by", inventoryResourceRecord.CreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting created_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsInventoryRead failed with error: %s", err), "ibm_schematics_inventory", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("updated_at", flex.DateTimeToString(inventoryResourceRecord.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsInventoryRead failed with error: %s", err), "ibm_schematics_inventory", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("updated_by", inventoryResourceRecord.UpdatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting updated_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsInventoryRead failed with error: %s", err), "ibm_schematics_inventory", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("inventories_ini", inventoryResourceRecord.InventoriesIni); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting inventories_ini: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsInventoryRead failed with error: %s", err), "ibm_schematics_inventory", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	return nil

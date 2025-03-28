@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -87,7 +88,9 @@ func DataSourceIBMEnTemplates() *schema.Resource {
 func dataSourceIBMEnEmailTemplatesRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_en_email_templates", "list")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.ListTemplatesOptions{}
@@ -109,12 +112,14 @@ func dataSourceIBMEnEmailTemplatesRead(context context.Context, d *schema.Resour
 	for {
 		options.SetOffset(offset)
 
-		result, response, err := enClient.ListTemplatesWithContext(context, options)
+		result, _, err := enClient.ListTemplatesWithContext(context, options)
 
 		templateList = result
 
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("ListTemplatesWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ListTemplatesWithContext failed: %s", err.Error()), "(Data) ibm_en_email_templates", "list")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 
 		offset = offset + limit
@@ -131,12 +136,14 @@ func dataSourceIBMEnEmailTemplatesRead(context context.Context, d *schema.Resour
 	d.SetId(fmt.Sprintf("Templates/%s", *options.InstanceID))
 
 	if err = d.Set("total_count", flex.IntValue(templateList.TotalCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting total_count: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting total_count: %s", err), "(Data) ibm_en_email_templates", "list")
+		return tfErr.GetDiag()
 	}
 
 	if templateList.Templates != nil {
 		if err = d.Set("templates", enFlattentemplatesList(templateList.Templates)); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting Templates %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting Templates: %s", err), "(Data) ibm_en_email_templates", "list")
+			return tfErr.GetDiag()
 		}
 	}
 

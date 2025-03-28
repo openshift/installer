@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2024.
+ * (C) Copyright IBM Corp. 2025.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.84.0-a4533f12-20240103-170852
+ * IBM OpenAPI SDK Code Generator Version: 3.98.0-8be2046a-20241205-162752
  */
 
 // Package zonessettingsv1 : Operations and models for the ZonesSettingsV1 service
@@ -24,7 +24,6 @@ package zonessettingsv1
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"reflect"
 	"time"
@@ -75,22 +74,26 @@ func NewZonesSettingsV1UsingExternalConfig(options *ZonesSettingsV1Options) (zon
 	if options.Authenticator == nil {
 		options.Authenticator, err = core.GetAuthenticatorFromEnvironment(options.ServiceName)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "env-auth-error", common.GetComponentInfo())
 			return
 		}
 	}
 
 	zonesSettings, err = NewZonesSettingsV1(options)
+	err = core.RepurposeSDKProblem(err, "new-client-error")
 	if err != nil {
 		return
 	}
 
 	err = zonesSettings.Service.ConfigureService(options.ServiceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client-config-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = zonesSettings.Service.SetServiceURL(options.URL)
+		err = core.RepurposeSDKProblem(err, "url-set-error")
 	}
 	return
 }
@@ -104,17 +107,20 @@ func NewZonesSettingsV1(options *ZonesSettingsV1Options) (service *ZonesSettings
 
 	err = core.ValidateStruct(options, "options")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "invalid-global-options", common.GetComponentInfo())
 		return
 	}
 
 	baseService, err := core.NewBaseService(serviceOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "new-base-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = baseService.SetServiceURL(options.URL)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "set-url-error", common.GetComponentInfo())
 			return
 		}
 	}
@@ -130,7 +136,7 @@ func NewZonesSettingsV1(options *ZonesSettingsV1Options) (service *ZonesSettings
 
 // GetServiceURLForRegion returns the service URL to be used for the specified region
 func GetServiceURLForRegion(region string) (string, error) {
-	return "", fmt.Errorf("service does not support regional URLs")
+	return "", core.SDKErrorf(nil, "service does not support regional URLs", "no-regional-support", common.GetComponentInfo())
 }
 
 // Clone makes a copy of "zonesSettings" suitable for processing requests.
@@ -145,7 +151,11 @@ func (zonesSettings *ZonesSettingsV1) Clone() *ZonesSettingsV1 {
 
 // SetServiceURL sets the service URL
 func (zonesSettings *ZonesSettingsV1) SetServiceURL(url string) error {
-	return zonesSettings.Service.SetServiceURL(url)
+	err := zonesSettings.Service.SetServiceURL(url)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-set-error", common.GetComponentInfo())
+	}
+	return err
 }
 
 // GetServiceURL returns the service URL
@@ -182,13 +192,16 @@ func (zonesSettings *ZonesSettingsV1) DisableRetries() {
 // GetZoneDnssec : Get zone DNSSEC
 // Get DNSSEC setting for a given zone.
 func (zonesSettings *ZonesSettingsV1) GetZoneDnssec(getZoneDnssecOptions *GetZoneDnssecOptions) (result *ZonesDnssecResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetZoneDnssecWithContext(context.Background(), getZoneDnssecOptions)
+	result, response, err = zonesSettings.GetZoneDnssecWithContext(context.Background(), getZoneDnssecOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetZoneDnssecWithContext is an alternate form of the GetZoneDnssec method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetZoneDnssecWithContext(ctx context.Context, getZoneDnssecOptions *GetZoneDnssecOptions) (result *ZonesDnssecResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getZoneDnssecOptions, "getZoneDnssecOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -202,6 +215,7 @@ func (zonesSettings *ZonesSettingsV1) GetZoneDnssecWithContext(ctx context.Conte
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/dnssec`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -217,17 +231,21 @@ func (zonesSettings *ZonesSettingsV1) GetZoneDnssecWithContext(ctx context.Conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_zone_dnssec", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalZonesDnssecResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -239,13 +257,16 @@ func (zonesSettings *ZonesSettingsV1) GetZoneDnssecWithContext(ctx context.Conte
 // UpdateZoneDnssec : Update zone DNSSEC
 // Update DNSSEC setting for given zone.
 func (zonesSettings *ZonesSettingsV1) UpdateZoneDnssec(updateZoneDnssecOptions *UpdateZoneDnssecOptions) (result *ZonesDnssecResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateZoneDnssecWithContext(context.Background(), updateZoneDnssecOptions)
+	result, response, err = zonesSettings.UpdateZoneDnssecWithContext(context.Background(), updateZoneDnssecOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateZoneDnssecWithContext is an alternate form of the UpdateZoneDnssec method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateZoneDnssecWithContext(ctx context.Context, updateZoneDnssecOptions *UpdateZoneDnssecOptions) (result *ZonesDnssecResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateZoneDnssecOptions, "updateZoneDnssecOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -259,6 +280,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateZoneDnssecWithContext(ctx context.Co
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/dnssec`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -279,22 +301,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateZoneDnssecWithContext(ctx context.Co
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_zone_dnssec", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalZonesDnssecResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -306,13 +333,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateZoneDnssecWithContext(ctx context.Co
 // GetZoneCnameFlattening : Get zone CNAME flattening
 // Get CNAME flattening setting for a given zone.
 func (zonesSettings *ZonesSettingsV1) GetZoneCnameFlattening(getZoneCnameFlatteningOptions *GetZoneCnameFlatteningOptions) (result *ZonesCnameFlatteningResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetZoneCnameFlatteningWithContext(context.Background(), getZoneCnameFlatteningOptions)
+	result, response, err = zonesSettings.GetZoneCnameFlatteningWithContext(context.Background(), getZoneCnameFlatteningOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetZoneCnameFlatteningWithContext is an alternate form of the GetZoneCnameFlattening method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetZoneCnameFlatteningWithContext(ctx context.Context, getZoneCnameFlatteningOptions *GetZoneCnameFlatteningOptions) (result *ZonesCnameFlatteningResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getZoneCnameFlatteningOptions, "getZoneCnameFlatteningOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -326,6 +356,7 @@ func (zonesSettings *ZonesSettingsV1) GetZoneCnameFlatteningWithContext(ctx cont
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/cname_flattening`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -341,17 +372,21 @@ func (zonesSettings *ZonesSettingsV1) GetZoneCnameFlatteningWithContext(ctx cont
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_zone_cname_flattening", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalZonesCnameFlatteningResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -363,13 +398,16 @@ func (zonesSettings *ZonesSettingsV1) GetZoneCnameFlatteningWithContext(ctx cont
 // UpdateZoneCnameFlattening : Update zone CNAME flattening
 // Update CNAME flattening setting for given zone.
 func (zonesSettings *ZonesSettingsV1) UpdateZoneCnameFlattening(updateZoneCnameFlatteningOptions *UpdateZoneCnameFlatteningOptions) (result *ZonesCnameFlatteningResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateZoneCnameFlatteningWithContext(context.Background(), updateZoneCnameFlatteningOptions)
+	result, response, err = zonesSettings.UpdateZoneCnameFlatteningWithContext(context.Background(), updateZoneCnameFlatteningOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateZoneCnameFlatteningWithContext is an alternate form of the UpdateZoneCnameFlattening method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateZoneCnameFlatteningWithContext(ctx context.Context, updateZoneCnameFlatteningOptions *UpdateZoneCnameFlatteningOptions) (result *ZonesCnameFlatteningResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateZoneCnameFlatteningOptions, "updateZoneCnameFlatteningOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -383,6 +421,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateZoneCnameFlatteningWithContext(ctx c
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/cname_flattening`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -403,22 +442,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateZoneCnameFlatteningWithContext(ctx c
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_zone_cname_flattening", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalZonesCnameFlatteningResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -430,13 +474,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateZoneCnameFlatteningWithContext(ctx c
 // GetOpportunisticEncryption : Get opportunistic encryption setting
 // Get opportunistic encryption setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetOpportunisticEncryption(getOpportunisticEncryptionOptions *GetOpportunisticEncryptionOptions) (result *OpportunisticEncryptionResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetOpportunisticEncryptionWithContext(context.Background(), getOpportunisticEncryptionOptions)
+	result, response, err = zonesSettings.GetOpportunisticEncryptionWithContext(context.Background(), getOpportunisticEncryptionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetOpportunisticEncryptionWithContext is an alternate form of the GetOpportunisticEncryption method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetOpportunisticEncryptionWithContext(ctx context.Context, getOpportunisticEncryptionOptions *GetOpportunisticEncryptionOptions) (result *OpportunisticEncryptionResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getOpportunisticEncryptionOptions, "getOpportunisticEncryptionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -450,6 +497,7 @@ func (zonesSettings *ZonesSettingsV1) GetOpportunisticEncryptionWithContext(ctx 
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/opportunistic_encryption`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -465,17 +513,21 @@ func (zonesSettings *ZonesSettingsV1) GetOpportunisticEncryptionWithContext(ctx 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_opportunistic_encryption", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOpportunisticEncryptionResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -487,13 +539,16 @@ func (zonesSettings *ZonesSettingsV1) GetOpportunisticEncryptionWithContext(ctx 
 // UpdateOpportunisticEncryption : Update opportunistic encryption setting
 // Update opportunistic encryption setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateOpportunisticEncryption(updateOpportunisticEncryptionOptions *UpdateOpportunisticEncryptionOptions) (result *OpportunisticEncryptionResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateOpportunisticEncryptionWithContext(context.Background(), updateOpportunisticEncryptionOptions)
+	result, response, err = zonesSettings.UpdateOpportunisticEncryptionWithContext(context.Background(), updateOpportunisticEncryptionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateOpportunisticEncryptionWithContext is an alternate form of the UpdateOpportunisticEncryption method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateOpportunisticEncryptionWithContext(ctx context.Context, updateOpportunisticEncryptionOptions *UpdateOpportunisticEncryptionOptions) (result *OpportunisticEncryptionResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateOpportunisticEncryptionOptions, "updateOpportunisticEncryptionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -507,6 +562,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateOpportunisticEncryptionWithContext(c
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/opportunistic_encryption`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -527,22 +583,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateOpportunisticEncryptionWithContext(c
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_opportunistic_encryption", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOpportunisticEncryptionResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -554,13 +615,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateOpportunisticEncryptionWithContext(c
 // GetOpportunisticOnion : Get opportunistic onion setting
 // Get opportunistic onion setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetOpportunisticOnion(getOpportunisticOnionOptions *GetOpportunisticOnionOptions) (result *OpportunisticOnionResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetOpportunisticOnionWithContext(context.Background(), getOpportunisticOnionOptions)
+	result, response, err = zonesSettings.GetOpportunisticOnionWithContext(context.Background(), getOpportunisticOnionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetOpportunisticOnionWithContext is an alternate form of the GetOpportunisticOnion method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetOpportunisticOnionWithContext(ctx context.Context, getOpportunisticOnionOptions *GetOpportunisticOnionOptions) (result *OpportunisticOnionResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getOpportunisticOnionOptions, "getOpportunisticOnionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -574,6 +638,7 @@ func (zonesSettings *ZonesSettingsV1) GetOpportunisticOnionWithContext(ctx conte
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/opportunistic_onion`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -589,17 +654,21 @@ func (zonesSettings *ZonesSettingsV1) GetOpportunisticOnionWithContext(ctx conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_opportunistic_onion", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOpportunisticOnionResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -611,13 +680,16 @@ func (zonesSettings *ZonesSettingsV1) GetOpportunisticOnionWithContext(ctx conte
 // UpdateOpportunisticOnion : Update opportunistic onion setting
 // Update opportunistic onion setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateOpportunisticOnion(updateOpportunisticOnionOptions *UpdateOpportunisticOnionOptions) (result *OpportunisticOnionResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateOpportunisticOnionWithContext(context.Background(), updateOpportunisticOnionOptions)
+	result, response, err = zonesSettings.UpdateOpportunisticOnionWithContext(context.Background(), updateOpportunisticOnionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateOpportunisticOnionWithContext is an alternate form of the UpdateOpportunisticOnion method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateOpportunisticOnionWithContext(ctx context.Context, updateOpportunisticOnionOptions *UpdateOpportunisticOnionOptions) (result *OpportunisticOnionResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateOpportunisticOnionOptions, "updateOpportunisticOnionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -631,6 +703,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateOpportunisticOnionWithContext(ctx co
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/opportunistic_onion`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -651,22 +724,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateOpportunisticOnionWithContext(ctx co
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_opportunistic_onion", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOpportunisticOnionResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -678,13 +756,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateOpportunisticOnionWithContext(ctx co
 // GetChallengeTTL : Get challenge TTL setting
 // Get challenge TTL setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetChallengeTTL(getChallengeTtlOptions *GetChallengeTtlOptions) (result *ChallengeTtlResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetChallengeTTLWithContext(context.Background(), getChallengeTtlOptions)
+	result, response, err = zonesSettings.GetChallengeTTLWithContext(context.Background(), getChallengeTtlOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetChallengeTTLWithContext is an alternate form of the GetChallengeTTL method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetChallengeTTLWithContext(ctx context.Context, getChallengeTtlOptions *GetChallengeTtlOptions) (result *ChallengeTtlResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getChallengeTtlOptions, "getChallengeTtlOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -698,6 +779,7 @@ func (zonesSettings *ZonesSettingsV1) GetChallengeTTLWithContext(ctx context.Con
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/challenge_ttl`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -713,17 +795,21 @@ func (zonesSettings *ZonesSettingsV1) GetChallengeTTLWithContext(ctx context.Con
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_challenge_ttl", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalChallengeTtlResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -735,13 +821,16 @@ func (zonesSettings *ZonesSettingsV1) GetChallengeTTLWithContext(ctx context.Con
 // UpdateChallengeTTL : Update challenge TTL setting
 // Update challenge TTL setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateChallengeTTL(updateChallengeTtlOptions *UpdateChallengeTtlOptions) (result *ChallengeTtlResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateChallengeTTLWithContext(context.Background(), updateChallengeTtlOptions)
+	result, response, err = zonesSettings.UpdateChallengeTTLWithContext(context.Background(), updateChallengeTtlOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateChallengeTTLWithContext is an alternate form of the UpdateChallengeTTL method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateChallengeTTLWithContext(ctx context.Context, updateChallengeTtlOptions *UpdateChallengeTtlOptions) (result *ChallengeTtlResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateChallengeTtlOptions, "updateChallengeTtlOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -755,6 +844,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateChallengeTTLWithContext(ctx context.
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/challenge_ttl`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -775,22 +865,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateChallengeTTLWithContext(ctx context.
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_challenge_ttl", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalChallengeTtlResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -802,13 +897,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateChallengeTTLWithContext(ctx context.
 // GetAutomaticHttpsRewrites : Get automatic https rewrites setting
 // Get automatic https rewrites setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetAutomaticHttpsRewrites(getAutomaticHttpsRewritesOptions *GetAutomaticHttpsRewritesOptions) (result *AutomaticHttpsRewritesResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetAutomaticHttpsRewritesWithContext(context.Background(), getAutomaticHttpsRewritesOptions)
+	result, response, err = zonesSettings.GetAutomaticHttpsRewritesWithContext(context.Background(), getAutomaticHttpsRewritesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAutomaticHttpsRewritesWithContext is an alternate form of the GetAutomaticHttpsRewrites method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetAutomaticHttpsRewritesWithContext(ctx context.Context, getAutomaticHttpsRewritesOptions *GetAutomaticHttpsRewritesOptions) (result *AutomaticHttpsRewritesResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getAutomaticHttpsRewritesOptions, "getAutomaticHttpsRewritesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -822,6 +920,7 @@ func (zonesSettings *ZonesSettingsV1) GetAutomaticHttpsRewritesWithContext(ctx c
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/automatic_https_rewrites`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -837,17 +936,21 @@ func (zonesSettings *ZonesSettingsV1) GetAutomaticHttpsRewritesWithContext(ctx c
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_automatic_https_rewrites", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAutomaticHttpsRewritesResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -859,13 +962,16 @@ func (zonesSettings *ZonesSettingsV1) GetAutomaticHttpsRewritesWithContext(ctx c
 // UpdateAutomaticHttpsRewrites : Update automatic https rewrites setting
 // Update automatic https rewrites setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateAutomaticHttpsRewrites(updateAutomaticHttpsRewritesOptions *UpdateAutomaticHttpsRewritesOptions) (result *AutomaticHttpsRewritesResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateAutomaticHttpsRewritesWithContext(context.Background(), updateAutomaticHttpsRewritesOptions)
+	result, response, err = zonesSettings.UpdateAutomaticHttpsRewritesWithContext(context.Background(), updateAutomaticHttpsRewritesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateAutomaticHttpsRewritesWithContext is an alternate form of the UpdateAutomaticHttpsRewrites method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateAutomaticHttpsRewritesWithContext(ctx context.Context, updateAutomaticHttpsRewritesOptions *UpdateAutomaticHttpsRewritesOptions) (result *AutomaticHttpsRewritesResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateAutomaticHttpsRewritesOptions, "updateAutomaticHttpsRewritesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -879,6 +985,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateAutomaticHttpsRewritesWithContext(ct
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/automatic_https_rewrites`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -899,22 +1006,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateAutomaticHttpsRewritesWithContext(ct
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_automatic_https_rewrites", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAutomaticHttpsRewritesResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -926,13 +1038,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateAutomaticHttpsRewritesWithContext(ct
 // GetTrueClientIp : Get true client IP setting
 // Get true client IP setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetTrueClientIp(getTrueClientIpOptions *GetTrueClientIpOptions) (result *TrueClientIpResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetTrueClientIpWithContext(context.Background(), getTrueClientIpOptions)
+	result, response, err = zonesSettings.GetTrueClientIpWithContext(context.Background(), getTrueClientIpOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetTrueClientIpWithContext is an alternate form of the GetTrueClientIp method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetTrueClientIpWithContext(ctx context.Context, getTrueClientIpOptions *GetTrueClientIpOptions) (result *TrueClientIpResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getTrueClientIpOptions, "getTrueClientIpOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -946,6 +1061,7 @@ func (zonesSettings *ZonesSettingsV1) GetTrueClientIpWithContext(ctx context.Con
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/true_client_ip_header`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -961,17 +1077,21 @@ func (zonesSettings *ZonesSettingsV1) GetTrueClientIpWithContext(ctx context.Con
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_true_client_ip", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrueClientIpResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -983,13 +1103,16 @@ func (zonesSettings *ZonesSettingsV1) GetTrueClientIpWithContext(ctx context.Con
 // UpdateTrueClientIp : Update true client IP setting
 // Update true client IP setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateTrueClientIp(updateTrueClientIpOptions *UpdateTrueClientIpOptions) (result *TrueClientIpResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateTrueClientIpWithContext(context.Background(), updateTrueClientIpOptions)
+	result, response, err = zonesSettings.UpdateTrueClientIpWithContext(context.Background(), updateTrueClientIpOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateTrueClientIpWithContext is an alternate form of the UpdateTrueClientIp method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateTrueClientIpWithContext(ctx context.Context, updateTrueClientIpOptions *UpdateTrueClientIpOptions) (result *TrueClientIpResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateTrueClientIpOptions, "updateTrueClientIpOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1003,6 +1126,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateTrueClientIpWithContext(ctx context.
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/true_client_ip_header`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1023,22 +1147,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateTrueClientIpWithContext(ctx context.
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_true_client_ip", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrueClientIpResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1050,13 +1179,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateTrueClientIpWithContext(ctx context.
 // GetAlwaysUseHttps : Get always use https setting
 // Get always use https setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetAlwaysUseHttps(getAlwaysUseHttpsOptions *GetAlwaysUseHttpsOptions) (result *AlwaysUseHttpsResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetAlwaysUseHttpsWithContext(context.Background(), getAlwaysUseHttpsOptions)
+	result, response, err = zonesSettings.GetAlwaysUseHttpsWithContext(context.Background(), getAlwaysUseHttpsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAlwaysUseHttpsWithContext is an alternate form of the GetAlwaysUseHttps method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetAlwaysUseHttpsWithContext(ctx context.Context, getAlwaysUseHttpsOptions *GetAlwaysUseHttpsOptions) (result *AlwaysUseHttpsResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getAlwaysUseHttpsOptions, "getAlwaysUseHttpsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1070,6 +1202,7 @@ func (zonesSettings *ZonesSettingsV1) GetAlwaysUseHttpsWithContext(ctx context.C
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/always_use_https`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1085,17 +1218,21 @@ func (zonesSettings *ZonesSettingsV1) GetAlwaysUseHttpsWithContext(ctx context.C
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_always_use_https", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAlwaysUseHttpsResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1107,13 +1244,16 @@ func (zonesSettings *ZonesSettingsV1) GetAlwaysUseHttpsWithContext(ctx context.C
 // UpdateAlwaysUseHttps : Update always use https setting
 // Update always use https setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateAlwaysUseHttps(updateAlwaysUseHttpsOptions *UpdateAlwaysUseHttpsOptions) (result *AlwaysUseHttpsResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateAlwaysUseHttpsWithContext(context.Background(), updateAlwaysUseHttpsOptions)
+	result, response, err = zonesSettings.UpdateAlwaysUseHttpsWithContext(context.Background(), updateAlwaysUseHttpsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateAlwaysUseHttpsWithContext is an alternate form of the UpdateAlwaysUseHttps method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateAlwaysUseHttpsWithContext(ctx context.Context, updateAlwaysUseHttpsOptions *UpdateAlwaysUseHttpsOptions) (result *AlwaysUseHttpsResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateAlwaysUseHttpsOptions, "updateAlwaysUseHttpsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1127,6 +1267,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateAlwaysUseHttpsWithContext(ctx contex
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/always_use_https`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1147,22 +1288,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateAlwaysUseHttpsWithContext(ctx contex
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_always_use_https", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAlwaysUseHttpsResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1174,13 +1320,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateAlwaysUseHttpsWithContext(ctx contex
 // GetImageSizeOptimization : Get image size optimization setting
 // Get image size optimization setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetImageSizeOptimization(getImageSizeOptimizationOptions *GetImageSizeOptimizationOptions) (result *ImageSizeOptimizationResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetImageSizeOptimizationWithContext(context.Background(), getImageSizeOptimizationOptions)
+	result, response, err = zonesSettings.GetImageSizeOptimizationWithContext(context.Background(), getImageSizeOptimizationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetImageSizeOptimizationWithContext is an alternate form of the GetImageSizeOptimization method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetImageSizeOptimizationWithContext(ctx context.Context, getImageSizeOptimizationOptions *GetImageSizeOptimizationOptions) (result *ImageSizeOptimizationResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getImageSizeOptimizationOptions, "getImageSizeOptimizationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1194,6 +1343,7 @@ func (zonesSettings *ZonesSettingsV1) GetImageSizeOptimizationWithContext(ctx co
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/image_size_optimization`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1209,17 +1359,21 @@ func (zonesSettings *ZonesSettingsV1) GetImageSizeOptimizationWithContext(ctx co
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_image_size_optimization", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalImageSizeOptimizationResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1231,13 +1385,16 @@ func (zonesSettings *ZonesSettingsV1) GetImageSizeOptimizationWithContext(ctx co
 // UpdateImageSizeOptimization : Update image size optimization setting
 // Update image size optimization setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateImageSizeOptimization(updateImageSizeOptimizationOptions *UpdateImageSizeOptimizationOptions) (result *ImageSizeOptimizationResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateImageSizeOptimizationWithContext(context.Background(), updateImageSizeOptimizationOptions)
+	result, response, err = zonesSettings.UpdateImageSizeOptimizationWithContext(context.Background(), updateImageSizeOptimizationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateImageSizeOptimizationWithContext is an alternate form of the UpdateImageSizeOptimization method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateImageSizeOptimizationWithContext(ctx context.Context, updateImageSizeOptimizationOptions *UpdateImageSizeOptimizationOptions) (result *ImageSizeOptimizationResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateImageSizeOptimizationOptions, "updateImageSizeOptimizationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1251,6 +1408,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateImageSizeOptimizationWithContext(ctx
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/image_size_optimization`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1271,22 +1429,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateImageSizeOptimizationWithContext(ctx
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_image_size_optimization", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalImageSizeOptimizationResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1298,13 +1461,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateImageSizeOptimizationWithContext(ctx
 // GetScriptLoadOptimization : Get script load optimization setting
 // Get script load optimization setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetScriptLoadOptimization(getScriptLoadOptimizationOptions *GetScriptLoadOptimizationOptions) (result *ScriptLoadOptimizationResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetScriptLoadOptimizationWithContext(context.Background(), getScriptLoadOptimizationOptions)
+	result, response, err = zonesSettings.GetScriptLoadOptimizationWithContext(context.Background(), getScriptLoadOptimizationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetScriptLoadOptimizationWithContext is an alternate form of the GetScriptLoadOptimization method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetScriptLoadOptimizationWithContext(ctx context.Context, getScriptLoadOptimizationOptions *GetScriptLoadOptimizationOptions) (result *ScriptLoadOptimizationResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getScriptLoadOptimizationOptions, "getScriptLoadOptimizationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1318,6 +1484,7 @@ func (zonesSettings *ZonesSettingsV1) GetScriptLoadOptimizationWithContext(ctx c
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/script_load_optimization`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1333,17 +1500,21 @@ func (zonesSettings *ZonesSettingsV1) GetScriptLoadOptimizationWithContext(ctx c
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_script_load_optimization", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalScriptLoadOptimizationResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1355,13 +1526,16 @@ func (zonesSettings *ZonesSettingsV1) GetScriptLoadOptimizationWithContext(ctx c
 // UpdateScriptLoadOptimization : Update script load optimization setting
 // Update script load optimization setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateScriptLoadOptimization(updateScriptLoadOptimizationOptions *UpdateScriptLoadOptimizationOptions) (result *ScriptLoadOptimizationResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateScriptLoadOptimizationWithContext(context.Background(), updateScriptLoadOptimizationOptions)
+	result, response, err = zonesSettings.UpdateScriptLoadOptimizationWithContext(context.Background(), updateScriptLoadOptimizationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateScriptLoadOptimizationWithContext is an alternate form of the UpdateScriptLoadOptimization method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateScriptLoadOptimizationWithContext(ctx context.Context, updateScriptLoadOptimizationOptions *UpdateScriptLoadOptimizationOptions) (result *ScriptLoadOptimizationResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateScriptLoadOptimizationOptions, "updateScriptLoadOptimizationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1375,6 +1549,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateScriptLoadOptimizationWithContext(ct
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/script_load_optimization`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1395,22 +1570,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateScriptLoadOptimizationWithContext(ct
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_script_load_optimization", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalScriptLoadOptimizationResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1422,13 +1602,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateScriptLoadOptimizationWithContext(ct
 // GetImageLoadOptimization : Get image load optimizationn setting
 // Get image load optimizationn setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetImageLoadOptimization(getImageLoadOptimizationOptions *GetImageLoadOptimizationOptions) (result *ImageLoadOptimizationResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetImageLoadOptimizationWithContext(context.Background(), getImageLoadOptimizationOptions)
+	result, response, err = zonesSettings.GetImageLoadOptimizationWithContext(context.Background(), getImageLoadOptimizationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetImageLoadOptimizationWithContext is an alternate form of the GetImageLoadOptimization method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetImageLoadOptimizationWithContext(ctx context.Context, getImageLoadOptimizationOptions *GetImageLoadOptimizationOptions) (result *ImageLoadOptimizationResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getImageLoadOptimizationOptions, "getImageLoadOptimizationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1442,6 +1625,7 @@ func (zonesSettings *ZonesSettingsV1) GetImageLoadOptimizationWithContext(ctx co
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/image_load_optimization`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1457,17 +1641,21 @@ func (zonesSettings *ZonesSettingsV1) GetImageLoadOptimizationWithContext(ctx co
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_image_load_optimization", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalImageLoadOptimizationResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1479,13 +1667,16 @@ func (zonesSettings *ZonesSettingsV1) GetImageLoadOptimizationWithContext(ctx co
 // UpdateImageLoadOptimization : Update image load optimizationn setting
 // Update image load optimizationn setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateImageLoadOptimization(updateImageLoadOptimizationOptions *UpdateImageLoadOptimizationOptions) (result *ImageLoadOptimizationResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateImageLoadOptimizationWithContext(context.Background(), updateImageLoadOptimizationOptions)
+	result, response, err = zonesSettings.UpdateImageLoadOptimizationWithContext(context.Background(), updateImageLoadOptimizationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateImageLoadOptimizationWithContext is an alternate form of the UpdateImageLoadOptimization method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateImageLoadOptimizationWithContext(ctx context.Context, updateImageLoadOptimizationOptions *UpdateImageLoadOptimizationOptions) (result *ImageLoadOptimizationResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateImageLoadOptimizationOptions, "updateImageLoadOptimizationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1499,6 +1690,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateImageLoadOptimizationWithContext(ctx
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/image_load_optimization`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1519,22 +1711,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateImageLoadOptimizationWithContext(ctx
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_image_load_optimization", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalImageLoadOptimizationResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1546,13 +1743,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateImageLoadOptimizationWithContext(ctx
 // GetMinify : Get minify setting
 // Get minify setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetMinify(getMinifyOptions *GetMinifyOptions) (result *MinifyResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetMinifyWithContext(context.Background(), getMinifyOptions)
+	result, response, err = zonesSettings.GetMinifyWithContext(context.Background(), getMinifyOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetMinifyWithContext is an alternate form of the GetMinify method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetMinifyWithContext(ctx context.Context, getMinifyOptions *GetMinifyOptions) (result *MinifyResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getMinifyOptions, "getMinifyOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1566,6 +1766,7 @@ func (zonesSettings *ZonesSettingsV1) GetMinifyWithContext(ctx context.Context, 
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/minify`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1581,17 +1782,21 @@ func (zonesSettings *ZonesSettingsV1) GetMinifyWithContext(ctx context.Context, 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_minify", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMinifyResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1603,13 +1808,16 @@ func (zonesSettings *ZonesSettingsV1) GetMinifyWithContext(ctx context.Context, 
 // UpdateMinify : Update minify setting
 // Update minify setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateMinify(updateMinifyOptions *UpdateMinifyOptions) (result *MinifyResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateMinifyWithContext(context.Background(), updateMinifyOptions)
+	result, response, err = zonesSettings.UpdateMinifyWithContext(context.Background(), updateMinifyOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateMinifyWithContext is an alternate form of the UpdateMinify method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateMinifyWithContext(ctx context.Context, updateMinifyOptions *UpdateMinifyOptions) (result *MinifyResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateMinifyOptions, "updateMinifyOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1623,6 +1831,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateMinifyWithContext(ctx context.Contex
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/minify`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1643,22 +1852,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateMinifyWithContext(ctx context.Contex
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_minify", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMinifyResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1670,13 +1884,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateMinifyWithContext(ctx context.Contex
 // GetMinTlsVersion : Get minimum TLS version setting
 // Get minimum TLS version setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetMinTlsVersion(getMinTlsVersionOptions *GetMinTlsVersionOptions) (result *MinTlsVersionResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetMinTlsVersionWithContext(context.Background(), getMinTlsVersionOptions)
+	result, response, err = zonesSettings.GetMinTlsVersionWithContext(context.Background(), getMinTlsVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetMinTlsVersionWithContext is an alternate form of the GetMinTlsVersion method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetMinTlsVersionWithContext(ctx context.Context, getMinTlsVersionOptions *GetMinTlsVersionOptions) (result *MinTlsVersionResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getMinTlsVersionOptions, "getMinTlsVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1690,6 +1907,7 @@ func (zonesSettings *ZonesSettingsV1) GetMinTlsVersionWithContext(ctx context.Co
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/min_tls_version`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1705,17 +1923,21 @@ func (zonesSettings *ZonesSettingsV1) GetMinTlsVersionWithContext(ctx context.Co
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_min_tls_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMinTlsVersionResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1727,13 +1949,16 @@ func (zonesSettings *ZonesSettingsV1) GetMinTlsVersionWithContext(ctx context.Co
 // UpdateMinTlsVersion : Update minimum TLS version setting
 // Update minimum TLS version setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateMinTlsVersion(updateMinTlsVersionOptions *UpdateMinTlsVersionOptions) (result *MinTlsVersionResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateMinTlsVersionWithContext(context.Background(), updateMinTlsVersionOptions)
+	result, response, err = zonesSettings.UpdateMinTlsVersionWithContext(context.Background(), updateMinTlsVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateMinTlsVersionWithContext is an alternate form of the UpdateMinTlsVersion method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateMinTlsVersionWithContext(ctx context.Context, updateMinTlsVersionOptions *UpdateMinTlsVersionOptions) (result *MinTlsVersionResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateMinTlsVersionOptions, "updateMinTlsVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1747,6 +1972,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateMinTlsVersionWithContext(ctx context
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/min_tls_version`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1767,22 +1993,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateMinTlsVersionWithContext(ctx context
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_min_tls_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMinTlsVersionResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1794,13 +2025,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateMinTlsVersionWithContext(ctx context
 // GetIpGeolocation : Get IP geolocation setting
 // Get IP geolocation setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetIpGeolocation(getIpGeolocationOptions *GetIpGeolocationOptions) (result *IpGeolocationResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetIpGeolocationWithContext(context.Background(), getIpGeolocationOptions)
+	result, response, err = zonesSettings.GetIpGeolocationWithContext(context.Background(), getIpGeolocationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetIpGeolocationWithContext is an alternate form of the GetIpGeolocation method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetIpGeolocationWithContext(ctx context.Context, getIpGeolocationOptions *GetIpGeolocationOptions) (result *IpGeolocationResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getIpGeolocationOptions, "getIpGeolocationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1814,6 +2048,7 @@ func (zonesSettings *ZonesSettingsV1) GetIpGeolocationWithContext(ctx context.Co
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/ip_geolocation`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1829,17 +2064,21 @@ func (zonesSettings *ZonesSettingsV1) GetIpGeolocationWithContext(ctx context.Co
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_ip_geolocation", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIpGeolocationResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1851,13 +2090,16 @@ func (zonesSettings *ZonesSettingsV1) GetIpGeolocationWithContext(ctx context.Co
 // UpdateIpGeolocation : Update IP geolocation setting
 // Update IP geolocation setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateIpGeolocation(updateIpGeolocationOptions *UpdateIpGeolocationOptions) (result *IpGeolocationResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateIpGeolocationWithContext(context.Background(), updateIpGeolocationOptions)
+	result, response, err = zonesSettings.UpdateIpGeolocationWithContext(context.Background(), updateIpGeolocationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateIpGeolocationWithContext is an alternate form of the UpdateIpGeolocation method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateIpGeolocationWithContext(ctx context.Context, updateIpGeolocationOptions *UpdateIpGeolocationOptions) (result *IpGeolocationResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateIpGeolocationOptions, "updateIpGeolocationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1871,6 +2113,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateIpGeolocationWithContext(ctx context
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/ip_geolocation`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1891,22 +2134,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateIpGeolocationWithContext(ctx context
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_ip_geolocation", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIpGeolocationResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1918,13 +2166,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateIpGeolocationWithContext(ctx context
 // GetServerSideExclude : Get server side exclude setting
 // Get server side exclude setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetServerSideExclude(getServerSideExcludeOptions *GetServerSideExcludeOptions) (result *ServerSideExcludeResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetServerSideExcludeWithContext(context.Background(), getServerSideExcludeOptions)
+	result, response, err = zonesSettings.GetServerSideExcludeWithContext(context.Background(), getServerSideExcludeOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetServerSideExcludeWithContext is an alternate form of the GetServerSideExclude method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetServerSideExcludeWithContext(ctx context.Context, getServerSideExcludeOptions *GetServerSideExcludeOptions) (result *ServerSideExcludeResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getServerSideExcludeOptions, "getServerSideExcludeOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1938,6 +2189,7 @@ func (zonesSettings *ZonesSettingsV1) GetServerSideExcludeWithContext(ctx contex
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/server_side_exclude`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1953,17 +2205,21 @@ func (zonesSettings *ZonesSettingsV1) GetServerSideExcludeWithContext(ctx contex
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_server_side_exclude", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalServerSideExcludeResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1975,13 +2231,16 @@ func (zonesSettings *ZonesSettingsV1) GetServerSideExcludeWithContext(ctx contex
 // UpdateServerSideExclude : Update server side exclude setting
 // Update server side exclude setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateServerSideExclude(updateServerSideExcludeOptions *UpdateServerSideExcludeOptions) (result *ServerSideExcludeResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateServerSideExcludeWithContext(context.Background(), updateServerSideExcludeOptions)
+	result, response, err = zonesSettings.UpdateServerSideExcludeWithContext(context.Background(), updateServerSideExcludeOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateServerSideExcludeWithContext is an alternate form of the UpdateServerSideExclude method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateServerSideExcludeWithContext(ctx context.Context, updateServerSideExcludeOptions *UpdateServerSideExcludeOptions) (result *ServerSideExcludeResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateServerSideExcludeOptions, "updateServerSideExcludeOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1995,6 +2254,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateServerSideExcludeWithContext(ctx con
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/server_side_exclude`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2015,22 +2275,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateServerSideExcludeWithContext(ctx con
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_server_side_exclude", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalServerSideExcludeResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2042,13 +2307,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateServerSideExcludeWithContext(ctx con
 // GetSecurityHeader : Get HTTP strict transport security setting
 // Get HTTP strict transport security setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetSecurityHeader(getSecurityHeaderOptions *GetSecurityHeaderOptions) (result *SecurityHeaderResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetSecurityHeaderWithContext(context.Background(), getSecurityHeaderOptions)
+	result, response, err = zonesSettings.GetSecurityHeaderWithContext(context.Background(), getSecurityHeaderOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetSecurityHeaderWithContext is an alternate form of the GetSecurityHeader method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetSecurityHeaderWithContext(ctx context.Context, getSecurityHeaderOptions *GetSecurityHeaderOptions) (result *SecurityHeaderResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getSecurityHeaderOptions, "getSecurityHeaderOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2062,6 +2330,7 @@ func (zonesSettings *ZonesSettingsV1) GetSecurityHeaderWithContext(ctx context.C
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/security_header`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2077,17 +2346,21 @@ func (zonesSettings *ZonesSettingsV1) GetSecurityHeaderWithContext(ctx context.C
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_security_header", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSecurityHeaderResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2099,13 +2372,16 @@ func (zonesSettings *ZonesSettingsV1) GetSecurityHeaderWithContext(ctx context.C
 // UpdateSecurityHeader : Update HTTP strict transport security setting
 // Update HTTP strict transport security setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateSecurityHeader(updateSecurityHeaderOptions *UpdateSecurityHeaderOptions) (result *SecurityHeaderResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateSecurityHeaderWithContext(context.Background(), updateSecurityHeaderOptions)
+	result, response, err = zonesSettings.UpdateSecurityHeaderWithContext(context.Background(), updateSecurityHeaderOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateSecurityHeaderWithContext is an alternate form of the UpdateSecurityHeader method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateSecurityHeaderWithContext(ctx context.Context, updateSecurityHeaderOptions *UpdateSecurityHeaderOptions) (result *SecurityHeaderResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateSecurityHeaderOptions, "updateSecurityHeaderOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2119,6 +2395,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateSecurityHeaderWithContext(ctx contex
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/security_header`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2139,22 +2416,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateSecurityHeaderWithContext(ctx contex
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_security_header", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSecurityHeaderResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2166,13 +2448,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateSecurityHeaderWithContext(ctx contex
 // GetMobileRedirect : Get mobile redirect setting
 // Get mobile redirect setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetMobileRedirect(getMobileRedirectOptions *GetMobileRedirectOptions) (result *MobileRedirectResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetMobileRedirectWithContext(context.Background(), getMobileRedirectOptions)
+	result, response, err = zonesSettings.GetMobileRedirectWithContext(context.Background(), getMobileRedirectOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetMobileRedirectWithContext is an alternate form of the GetMobileRedirect method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetMobileRedirectWithContext(ctx context.Context, getMobileRedirectOptions *GetMobileRedirectOptions) (result *MobileRedirectResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getMobileRedirectOptions, "getMobileRedirectOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2186,6 +2471,7 @@ func (zonesSettings *ZonesSettingsV1) GetMobileRedirectWithContext(ctx context.C
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/mobile_redirect`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2201,17 +2487,21 @@ func (zonesSettings *ZonesSettingsV1) GetMobileRedirectWithContext(ctx context.C
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_mobile_redirect", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMobileRedirectResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2223,13 +2513,16 @@ func (zonesSettings *ZonesSettingsV1) GetMobileRedirectWithContext(ctx context.C
 // UpdateMobileRedirect : Update mobile redirect setting
 // Update mobile redirect setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateMobileRedirect(updateMobileRedirectOptions *UpdateMobileRedirectOptions) (result *MobileRedirectResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateMobileRedirectWithContext(context.Background(), updateMobileRedirectOptions)
+	result, response, err = zonesSettings.UpdateMobileRedirectWithContext(context.Background(), updateMobileRedirectOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateMobileRedirectWithContext is an alternate form of the UpdateMobileRedirect method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateMobileRedirectWithContext(ctx context.Context, updateMobileRedirectOptions *UpdateMobileRedirectOptions) (result *MobileRedirectResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateMobileRedirectOptions, "updateMobileRedirectOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2243,6 +2536,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateMobileRedirectWithContext(ctx contex
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/mobile_redirect`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2263,22 +2557,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateMobileRedirectWithContext(ctx contex
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_mobile_redirect", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMobileRedirectResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2290,13 +2589,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateMobileRedirectWithContext(ctx contex
 // GetPrefetchPreload : Get prefetch URLs from header setting
 // Get prefetch URLs from header setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetPrefetchPreload(getPrefetchPreloadOptions *GetPrefetchPreloadOptions) (result *PrefetchPreloadResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetPrefetchPreloadWithContext(context.Background(), getPrefetchPreloadOptions)
+	result, response, err = zonesSettings.GetPrefetchPreloadWithContext(context.Background(), getPrefetchPreloadOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetPrefetchPreloadWithContext is an alternate form of the GetPrefetchPreload method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetPrefetchPreloadWithContext(ctx context.Context, getPrefetchPreloadOptions *GetPrefetchPreloadOptions) (result *PrefetchPreloadResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getPrefetchPreloadOptions, "getPrefetchPreloadOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2310,6 +2612,7 @@ func (zonesSettings *ZonesSettingsV1) GetPrefetchPreloadWithContext(ctx context.
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/prefetch_preload`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2325,17 +2628,21 @@ func (zonesSettings *ZonesSettingsV1) GetPrefetchPreloadWithContext(ctx context.
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_prefetch_preload", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPrefetchPreloadResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2347,13 +2654,16 @@ func (zonesSettings *ZonesSettingsV1) GetPrefetchPreloadWithContext(ctx context.
 // UpdatePrefetchPreload : Update prefetch URLs from header setting
 // Update prefetch URLs from header setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdatePrefetchPreload(updatePrefetchPreloadOptions *UpdatePrefetchPreloadOptions) (result *PrefetchPreloadResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdatePrefetchPreloadWithContext(context.Background(), updatePrefetchPreloadOptions)
+	result, response, err = zonesSettings.UpdatePrefetchPreloadWithContext(context.Background(), updatePrefetchPreloadOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdatePrefetchPreloadWithContext is an alternate form of the UpdatePrefetchPreload method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdatePrefetchPreloadWithContext(ctx context.Context, updatePrefetchPreloadOptions *UpdatePrefetchPreloadOptions) (result *PrefetchPreloadResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updatePrefetchPreloadOptions, "updatePrefetchPreloadOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2367,6 +2677,7 @@ func (zonesSettings *ZonesSettingsV1) UpdatePrefetchPreloadWithContext(ctx conte
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/prefetch_preload`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2387,22 +2698,27 @@ func (zonesSettings *ZonesSettingsV1) UpdatePrefetchPreloadWithContext(ctx conte
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_prefetch_preload", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPrefetchPreloadResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2414,13 +2730,16 @@ func (zonesSettings *ZonesSettingsV1) UpdatePrefetchPreloadWithContext(ctx conte
 // GetHttp2 : Get http/2 setting
 // Get http/2 setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetHttp2(getHttp2Options *GetHttp2Options) (result *Http2Resp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetHttp2WithContext(context.Background(), getHttp2Options)
+	result, response, err = zonesSettings.GetHttp2WithContext(context.Background(), getHttp2Options)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetHttp2WithContext is an alternate form of the GetHttp2 method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetHttp2WithContext(ctx context.Context, getHttp2Options *GetHttp2Options) (result *Http2Resp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getHttp2Options, "getHttp2Options")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2434,6 +2753,7 @@ func (zonesSettings *ZonesSettingsV1) GetHttp2WithContext(ctx context.Context, g
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/http2`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2449,17 +2769,21 @@ func (zonesSettings *ZonesSettingsV1) GetHttp2WithContext(ctx context.Context, g
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_http2", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalHttp2Resp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2471,13 +2795,16 @@ func (zonesSettings *ZonesSettingsV1) GetHttp2WithContext(ctx context.Context, g
 // UpdateHttp2 : Update http/2 setting
 // Update http/2 setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateHttp2(updateHttp2Options *UpdateHttp2Options) (result *Http2Resp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateHttp2WithContext(context.Background(), updateHttp2Options)
+	result, response, err = zonesSettings.UpdateHttp2WithContext(context.Background(), updateHttp2Options)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateHttp2WithContext is an alternate form of the UpdateHttp2 method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateHttp2WithContext(ctx context.Context, updateHttp2Options *UpdateHttp2Options) (result *Http2Resp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateHttp2Options, "updateHttp2Options")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2491,6 +2818,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateHttp2WithContext(ctx context.Context
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/http2`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2511,22 +2839,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateHttp2WithContext(ctx context.Context
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_http2", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalHttp2Resp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2538,13 +2871,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateHttp2WithContext(ctx context.Context
 // GetHttp3 : Get http/3 setting
 // Get http/3 setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetHttp3(getHttp3Options *GetHttp3Options) (result *Http3Resp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetHttp3WithContext(context.Background(), getHttp3Options)
+	result, response, err = zonesSettings.GetHttp3WithContext(context.Background(), getHttp3Options)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetHttp3WithContext is an alternate form of the GetHttp3 method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetHttp3WithContext(ctx context.Context, getHttp3Options *GetHttp3Options) (result *Http3Resp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getHttp3Options, "getHttp3Options")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2558,6 +2894,7 @@ func (zonesSettings *ZonesSettingsV1) GetHttp3WithContext(ctx context.Context, g
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/http3`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2573,17 +2910,21 @@ func (zonesSettings *ZonesSettingsV1) GetHttp3WithContext(ctx context.Context, g
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_http3", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalHttp3Resp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2595,13 +2936,16 @@ func (zonesSettings *ZonesSettingsV1) GetHttp3WithContext(ctx context.Context, g
 // UpdateHttp3 : Update http/3 setting
 // Update http/3 setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateHttp3(updateHttp3Options *UpdateHttp3Options) (result *Http3Resp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateHttp3WithContext(context.Background(), updateHttp3Options)
+	result, response, err = zonesSettings.UpdateHttp3WithContext(context.Background(), updateHttp3Options)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateHttp3WithContext is an alternate form of the UpdateHttp3 method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateHttp3WithContext(ctx context.Context, updateHttp3Options *UpdateHttp3Options) (result *Http3Resp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateHttp3Options, "updateHttp3Options")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2615,6 +2959,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateHttp3WithContext(ctx context.Context
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/http3`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2635,22 +2980,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateHttp3WithContext(ctx context.Context
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_http3", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalHttp3Resp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2662,13 +3012,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateHttp3WithContext(ctx context.Context
 // GetIpv6 : Get IPv6 compatibility setting
 // Get IPv6 compatibility setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetIpv6(getIpv6Options *GetIpv6Options) (result *Ipv6Resp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetIpv6WithContext(context.Background(), getIpv6Options)
+	result, response, err = zonesSettings.GetIpv6WithContext(context.Background(), getIpv6Options)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetIpv6WithContext is an alternate form of the GetIpv6 method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetIpv6WithContext(ctx context.Context, getIpv6Options *GetIpv6Options) (result *Ipv6Resp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getIpv6Options, "getIpv6Options")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2682,6 +3035,7 @@ func (zonesSettings *ZonesSettingsV1) GetIpv6WithContext(ctx context.Context, ge
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/ipv6`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2697,17 +3051,21 @@ func (zonesSettings *ZonesSettingsV1) GetIpv6WithContext(ctx context.Context, ge
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_ipv6", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIpv6Resp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2719,13 +3077,16 @@ func (zonesSettings *ZonesSettingsV1) GetIpv6WithContext(ctx context.Context, ge
 // UpdateIpv6 : Update IPv6 compatibility setting
 // Update IPv6 compatibility setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateIpv6(updateIpv6Options *UpdateIpv6Options) (result *Ipv6Resp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateIpv6WithContext(context.Background(), updateIpv6Options)
+	result, response, err = zonesSettings.UpdateIpv6WithContext(context.Background(), updateIpv6Options)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateIpv6WithContext is an alternate form of the UpdateIpv6 method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateIpv6WithContext(ctx context.Context, updateIpv6Options *UpdateIpv6Options) (result *Ipv6Resp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateIpv6Options, "updateIpv6Options")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2739,6 +3100,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateIpv6WithContext(ctx context.Context,
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/ipv6`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2759,22 +3121,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateIpv6WithContext(ctx context.Context,
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_ipv6", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIpv6Resp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2786,13 +3153,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateIpv6WithContext(ctx context.Context,
 // GetWebSockets : Get web sockets setting
 // Get web sockets setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetWebSockets(getWebSocketsOptions *GetWebSocketsOptions) (result *WebsocketsResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetWebSocketsWithContext(context.Background(), getWebSocketsOptions)
+	result, response, err = zonesSettings.GetWebSocketsWithContext(context.Background(), getWebSocketsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetWebSocketsWithContext is an alternate form of the GetWebSockets method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetWebSocketsWithContext(ctx context.Context, getWebSocketsOptions *GetWebSocketsOptions) (result *WebsocketsResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getWebSocketsOptions, "getWebSocketsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2806,6 +3176,7 @@ func (zonesSettings *ZonesSettingsV1) GetWebSocketsWithContext(ctx context.Conte
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/websockets`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2821,17 +3192,21 @@ func (zonesSettings *ZonesSettingsV1) GetWebSocketsWithContext(ctx context.Conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_web_sockets", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalWebsocketsResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2843,13 +3218,16 @@ func (zonesSettings *ZonesSettingsV1) GetWebSocketsWithContext(ctx context.Conte
 // UpdateWebSockets : Update web sockets setting
 // Update web sockets setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateWebSockets(updateWebSocketsOptions *UpdateWebSocketsOptions) (result *WebsocketsResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateWebSocketsWithContext(context.Background(), updateWebSocketsOptions)
+	result, response, err = zonesSettings.UpdateWebSocketsWithContext(context.Background(), updateWebSocketsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateWebSocketsWithContext is an alternate form of the UpdateWebSockets method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateWebSocketsWithContext(ctx context.Context, updateWebSocketsOptions *UpdateWebSocketsOptions) (result *WebsocketsResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateWebSocketsOptions, "updateWebSocketsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2863,6 +3241,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateWebSocketsWithContext(ctx context.Co
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/websockets`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2883,22 +3262,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateWebSocketsWithContext(ctx context.Co
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_web_sockets", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalWebsocketsResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2910,13 +3294,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateWebSocketsWithContext(ctx context.Co
 // GetPseudoIpv4 : Get pseudo IPv4 setting
 // Get pseudo IPv4 setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetPseudoIpv4(getPseudoIpv4Options *GetPseudoIpv4Options) (result *PseudoIpv4Resp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetPseudoIpv4WithContext(context.Background(), getPseudoIpv4Options)
+	result, response, err = zonesSettings.GetPseudoIpv4WithContext(context.Background(), getPseudoIpv4Options)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetPseudoIpv4WithContext is an alternate form of the GetPseudoIpv4 method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetPseudoIpv4WithContext(ctx context.Context, getPseudoIpv4Options *GetPseudoIpv4Options) (result *PseudoIpv4Resp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getPseudoIpv4Options, "getPseudoIpv4Options")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2930,6 +3317,7 @@ func (zonesSettings *ZonesSettingsV1) GetPseudoIpv4WithContext(ctx context.Conte
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/pseudo_ipv4`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2945,17 +3333,21 @@ func (zonesSettings *ZonesSettingsV1) GetPseudoIpv4WithContext(ctx context.Conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_pseudo_ipv4", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPseudoIpv4Resp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2967,13 +3359,16 @@ func (zonesSettings *ZonesSettingsV1) GetPseudoIpv4WithContext(ctx context.Conte
 // UpdatePseudoIpv4 : Update pseudo IPv4 setting
 // Update pseudo IPv4 setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdatePseudoIpv4(updatePseudoIpv4Options *UpdatePseudoIpv4Options) (result *PseudoIpv4Resp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdatePseudoIpv4WithContext(context.Background(), updatePseudoIpv4Options)
+	result, response, err = zonesSettings.UpdatePseudoIpv4WithContext(context.Background(), updatePseudoIpv4Options)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdatePseudoIpv4WithContext is an alternate form of the UpdatePseudoIpv4 method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdatePseudoIpv4WithContext(ctx context.Context, updatePseudoIpv4Options *UpdatePseudoIpv4Options) (result *PseudoIpv4Resp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updatePseudoIpv4Options, "updatePseudoIpv4Options")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2987,6 +3382,7 @@ func (zonesSettings *ZonesSettingsV1) UpdatePseudoIpv4WithContext(ctx context.Co
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/pseudo_ipv4`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3007,22 +3403,27 @@ func (zonesSettings *ZonesSettingsV1) UpdatePseudoIpv4WithContext(ctx context.Co
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_pseudo_ipv4", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPseudoIpv4Resp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3034,13 +3435,16 @@ func (zonesSettings *ZonesSettingsV1) UpdatePseudoIpv4WithContext(ctx context.Co
 // GetResponseBuffering : Get response buffering setting
 // Get response buffering setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetResponseBuffering(getResponseBufferingOptions *GetResponseBufferingOptions) (result *ResponseBufferingResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetResponseBufferingWithContext(context.Background(), getResponseBufferingOptions)
+	result, response, err = zonesSettings.GetResponseBufferingWithContext(context.Background(), getResponseBufferingOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetResponseBufferingWithContext is an alternate form of the GetResponseBuffering method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetResponseBufferingWithContext(ctx context.Context, getResponseBufferingOptions *GetResponseBufferingOptions) (result *ResponseBufferingResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getResponseBufferingOptions, "getResponseBufferingOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3054,6 +3458,7 @@ func (zonesSettings *ZonesSettingsV1) GetResponseBufferingWithContext(ctx contex
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/response_buffering`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3069,17 +3474,21 @@ func (zonesSettings *ZonesSettingsV1) GetResponseBufferingWithContext(ctx contex
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_response_buffering", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResponseBufferingResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3091,13 +3500,16 @@ func (zonesSettings *ZonesSettingsV1) GetResponseBufferingWithContext(ctx contex
 // UpdateResponseBuffering : Update response buffering setting
 // Update response buffering setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateResponseBuffering(updateResponseBufferingOptions *UpdateResponseBufferingOptions) (result *ResponseBufferingResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateResponseBufferingWithContext(context.Background(), updateResponseBufferingOptions)
+	result, response, err = zonesSettings.UpdateResponseBufferingWithContext(context.Background(), updateResponseBufferingOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateResponseBufferingWithContext is an alternate form of the UpdateResponseBuffering method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateResponseBufferingWithContext(ctx context.Context, updateResponseBufferingOptions *UpdateResponseBufferingOptions) (result *ResponseBufferingResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateResponseBufferingOptions, "updateResponseBufferingOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3111,6 +3523,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateResponseBufferingWithContext(ctx con
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/response_buffering`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3131,22 +3544,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateResponseBufferingWithContext(ctx con
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_response_buffering", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResponseBufferingResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3158,13 +3576,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateResponseBufferingWithContext(ctx con
 // GetHotlinkProtection : Get hotlink protection setting
 // Get hotlink protection setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetHotlinkProtection(getHotlinkProtectionOptions *GetHotlinkProtectionOptions) (result *HotlinkProtectionResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetHotlinkProtectionWithContext(context.Background(), getHotlinkProtectionOptions)
+	result, response, err = zonesSettings.GetHotlinkProtectionWithContext(context.Background(), getHotlinkProtectionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetHotlinkProtectionWithContext is an alternate form of the GetHotlinkProtection method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetHotlinkProtectionWithContext(ctx context.Context, getHotlinkProtectionOptions *GetHotlinkProtectionOptions) (result *HotlinkProtectionResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getHotlinkProtectionOptions, "getHotlinkProtectionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3178,6 +3599,7 @@ func (zonesSettings *ZonesSettingsV1) GetHotlinkProtectionWithContext(ctx contex
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/hotlink_protection`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3193,17 +3615,21 @@ func (zonesSettings *ZonesSettingsV1) GetHotlinkProtectionWithContext(ctx contex
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_hotlink_protection", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalHotlinkProtectionResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3215,13 +3641,16 @@ func (zonesSettings *ZonesSettingsV1) GetHotlinkProtectionWithContext(ctx contex
 // UpdateHotlinkProtection : Update hotlink protection setting
 // Update hotlink protection setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateHotlinkProtection(updateHotlinkProtectionOptions *UpdateHotlinkProtectionOptions) (result *HotlinkProtectionResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateHotlinkProtectionWithContext(context.Background(), updateHotlinkProtectionOptions)
+	result, response, err = zonesSettings.UpdateHotlinkProtectionWithContext(context.Background(), updateHotlinkProtectionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateHotlinkProtectionWithContext is an alternate form of the UpdateHotlinkProtection method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateHotlinkProtectionWithContext(ctx context.Context, updateHotlinkProtectionOptions *UpdateHotlinkProtectionOptions) (result *HotlinkProtectionResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateHotlinkProtectionOptions, "updateHotlinkProtectionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3235,6 +3664,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateHotlinkProtectionWithContext(ctx con
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/hotlink_protection`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3255,22 +3685,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateHotlinkProtectionWithContext(ctx con
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_hotlink_protection", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalHotlinkProtectionResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3282,13 +3717,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateHotlinkProtectionWithContext(ctx con
 // GetMaxUpload : Get maximum upload size setting
 // Get maximum upload size setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetMaxUpload(getMaxUploadOptions *GetMaxUploadOptions) (result *MaxUploadResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetMaxUploadWithContext(context.Background(), getMaxUploadOptions)
+	result, response, err = zonesSettings.GetMaxUploadWithContext(context.Background(), getMaxUploadOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetMaxUploadWithContext is an alternate form of the GetMaxUpload method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetMaxUploadWithContext(ctx context.Context, getMaxUploadOptions *GetMaxUploadOptions) (result *MaxUploadResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getMaxUploadOptions, "getMaxUploadOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3302,6 +3740,7 @@ func (zonesSettings *ZonesSettingsV1) GetMaxUploadWithContext(ctx context.Contex
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/max_upload`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3317,17 +3756,21 @@ func (zonesSettings *ZonesSettingsV1) GetMaxUploadWithContext(ctx context.Contex
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_max_upload", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMaxUploadResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3339,13 +3782,16 @@ func (zonesSettings *ZonesSettingsV1) GetMaxUploadWithContext(ctx context.Contex
 // UpdateMaxUpload : Update maximum upload size setting
 // Update maximum upload size setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateMaxUpload(updateMaxUploadOptions *UpdateMaxUploadOptions) (result *MaxUploadResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateMaxUploadWithContext(context.Background(), updateMaxUploadOptions)
+	result, response, err = zonesSettings.UpdateMaxUploadWithContext(context.Background(), updateMaxUploadOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateMaxUploadWithContext is an alternate form of the UpdateMaxUpload method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateMaxUploadWithContext(ctx context.Context, updateMaxUploadOptions *UpdateMaxUploadOptions) (result *MaxUploadResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateMaxUploadOptions, "updateMaxUploadOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3359,6 +3805,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateMaxUploadWithContext(ctx context.Con
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/max_upload`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3379,22 +3826,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateMaxUploadWithContext(ctx context.Con
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_max_upload", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMaxUploadResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3406,13 +3858,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateMaxUploadWithContext(ctx context.Con
 // GetTlsClientAuth : Get TLS Client Auth setting
 // Get TLS Client Auth setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetTlsClientAuth(getTlsClientAuthOptions *GetTlsClientAuthOptions) (result *TlsClientAuthResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetTlsClientAuthWithContext(context.Background(), getTlsClientAuthOptions)
+	result, response, err = zonesSettings.GetTlsClientAuthWithContext(context.Background(), getTlsClientAuthOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetTlsClientAuthWithContext is an alternate form of the GetTlsClientAuth method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetTlsClientAuthWithContext(ctx context.Context, getTlsClientAuthOptions *GetTlsClientAuthOptions) (result *TlsClientAuthResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getTlsClientAuthOptions, "getTlsClientAuthOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3426,6 +3881,7 @@ func (zonesSettings *ZonesSettingsV1) GetTlsClientAuthWithContext(ctx context.Co
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/tls_client_auth`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3441,17 +3897,21 @@ func (zonesSettings *ZonesSettingsV1) GetTlsClientAuthWithContext(ctx context.Co
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_tls_client_auth", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTlsClientAuthResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3463,13 +3923,16 @@ func (zonesSettings *ZonesSettingsV1) GetTlsClientAuthWithContext(ctx context.Co
 // UpdateTlsClientAuth : Update TLS Client Auth setting
 // Update TLS Client Auth setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateTlsClientAuth(updateTlsClientAuthOptions *UpdateTlsClientAuthOptions) (result *TlsClientAuthResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateTlsClientAuthWithContext(context.Background(), updateTlsClientAuthOptions)
+	result, response, err = zonesSettings.UpdateTlsClientAuthWithContext(context.Background(), updateTlsClientAuthOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateTlsClientAuthWithContext is an alternate form of the UpdateTlsClientAuth method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateTlsClientAuthWithContext(ctx context.Context, updateTlsClientAuthOptions *UpdateTlsClientAuthOptions) (result *TlsClientAuthResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateTlsClientAuthOptions, "updateTlsClientAuthOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3483,6 +3946,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateTlsClientAuthWithContext(ctx context
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/tls_client_auth`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3503,22 +3967,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateTlsClientAuthWithContext(ctx context
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_tls_client_auth", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTlsClientAuthResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3530,13 +3999,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateTlsClientAuthWithContext(ctx context
 // GetBrotli : Get brotli setting
 // Get brotli setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetBrotli(getBrotliOptions *GetBrotliOptions) (result *BrotliResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetBrotliWithContext(context.Background(), getBrotliOptions)
+	result, response, err = zonesSettings.GetBrotliWithContext(context.Background(), getBrotliOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetBrotliWithContext is an alternate form of the GetBrotli method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetBrotliWithContext(ctx context.Context, getBrotliOptions *GetBrotliOptions) (result *BrotliResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getBrotliOptions, "getBrotliOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3550,6 +4022,7 @@ func (zonesSettings *ZonesSettingsV1) GetBrotliWithContext(ctx context.Context, 
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/brotli`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3565,17 +4038,21 @@ func (zonesSettings *ZonesSettingsV1) GetBrotliWithContext(ctx context.Context, 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_brotli", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalBrotliResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3587,13 +4064,16 @@ func (zonesSettings *ZonesSettingsV1) GetBrotliWithContext(ctx context.Context, 
 // UpdateBrotli : Update brotli setting
 // Update brotli setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateBrotli(updateBrotliOptions *UpdateBrotliOptions) (result *BrotliResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateBrotliWithContext(context.Background(), updateBrotliOptions)
+	result, response, err = zonesSettings.UpdateBrotliWithContext(context.Background(), updateBrotliOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateBrotliWithContext is an alternate form of the UpdateBrotli method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateBrotliWithContext(ctx context.Context, updateBrotliOptions *UpdateBrotliOptions) (result *BrotliResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateBrotliOptions, "updateBrotliOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3607,6 +4087,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateBrotliWithContext(ctx context.Contex
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/brotli`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3627,22 +4108,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateBrotliWithContext(ctx context.Contex
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_brotli", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalBrotliResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3654,13 +4140,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateBrotliWithContext(ctx context.Contex
 // GetProxyReadTimeout : Get proxy read timeout setting
 // Get proxy read timeout setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetProxyReadTimeout(getProxyReadTimeoutOptions *GetProxyReadTimeoutOptions) (result *ProxyReadTimeoutResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetProxyReadTimeoutWithContext(context.Background(), getProxyReadTimeoutOptions)
+	result, response, err = zonesSettings.GetProxyReadTimeoutWithContext(context.Background(), getProxyReadTimeoutOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetProxyReadTimeoutWithContext is an alternate form of the GetProxyReadTimeout method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetProxyReadTimeoutWithContext(ctx context.Context, getProxyReadTimeoutOptions *GetProxyReadTimeoutOptions) (result *ProxyReadTimeoutResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getProxyReadTimeoutOptions, "getProxyReadTimeoutOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3674,6 +4163,7 @@ func (zonesSettings *ZonesSettingsV1) GetProxyReadTimeoutWithContext(ctx context
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/proxy_read_timeout`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3689,17 +4179,21 @@ func (zonesSettings *ZonesSettingsV1) GetProxyReadTimeoutWithContext(ctx context
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_proxy_read_timeout", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProxyReadTimeoutResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3711,13 +4205,16 @@ func (zonesSettings *ZonesSettingsV1) GetProxyReadTimeoutWithContext(ctx context
 // UpdateProxyReadTimeout : Update proxy read timeout setting
 // Update proxy read timeout setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateProxyReadTimeout(updateProxyReadTimeoutOptions *UpdateProxyReadTimeoutOptions) (result *ProxyReadTimeoutResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateProxyReadTimeoutWithContext(context.Background(), updateProxyReadTimeoutOptions)
+	result, response, err = zonesSettings.UpdateProxyReadTimeoutWithContext(context.Background(), updateProxyReadTimeoutOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateProxyReadTimeoutWithContext is an alternate form of the UpdateProxyReadTimeout method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateProxyReadTimeoutWithContext(ctx context.Context, updateProxyReadTimeoutOptions *UpdateProxyReadTimeoutOptions) (result *ProxyReadTimeoutResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateProxyReadTimeoutOptions, "updateProxyReadTimeoutOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3731,6 +4228,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateProxyReadTimeoutWithContext(ctx cont
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/proxy_read_timeout`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3751,22 +4249,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateProxyReadTimeoutWithContext(ctx cont
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_proxy_read_timeout", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProxyReadTimeoutResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3778,13 +4281,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateProxyReadTimeoutWithContext(ctx cont
 // GetBrowserCheck : Get browser check setting
 // Get browser check setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetBrowserCheck(getBrowserCheckOptions *GetBrowserCheckOptions) (result *BrowserCheckResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetBrowserCheckWithContext(context.Background(), getBrowserCheckOptions)
+	result, response, err = zonesSettings.GetBrowserCheckWithContext(context.Background(), getBrowserCheckOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetBrowserCheckWithContext is an alternate form of the GetBrowserCheck method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetBrowserCheckWithContext(ctx context.Context, getBrowserCheckOptions *GetBrowserCheckOptions) (result *BrowserCheckResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getBrowserCheckOptions, "getBrowserCheckOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3798,6 +4304,7 @@ func (zonesSettings *ZonesSettingsV1) GetBrowserCheckWithContext(ctx context.Con
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/browser_check`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3813,17 +4320,21 @@ func (zonesSettings *ZonesSettingsV1) GetBrowserCheckWithContext(ctx context.Con
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_browser_check", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalBrowserCheckResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3835,13 +4346,16 @@ func (zonesSettings *ZonesSettingsV1) GetBrowserCheckWithContext(ctx context.Con
 // UpdateBrowserCheck : Update browser check setting
 // Update browser check setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateBrowserCheck(updateBrowserCheckOptions *UpdateBrowserCheckOptions) (result *BrowserCheckResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateBrowserCheckWithContext(context.Background(), updateBrowserCheckOptions)
+	result, response, err = zonesSettings.UpdateBrowserCheckWithContext(context.Background(), updateBrowserCheckOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateBrowserCheckWithContext is an alternate form of the UpdateBrowserCheck method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateBrowserCheckWithContext(ctx context.Context, updateBrowserCheckOptions *UpdateBrowserCheckOptions) (result *BrowserCheckResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateBrowserCheckOptions, "updateBrowserCheckOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3855,6 +4369,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateBrowserCheckWithContext(ctx context.
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/browser_check`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3875,22 +4390,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateBrowserCheckWithContext(ctx context.
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_browser_check", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalBrowserCheckResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3902,13 +4422,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateBrowserCheckWithContext(ctx context.
 // GetEnableErrorPagesOn : Get enable error pages on setting
 // Get enable error pages on setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetEnableErrorPagesOn(getEnableErrorPagesOnOptions *GetEnableErrorPagesOnOptions) (result *OriginErrorPagePassThruResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetEnableErrorPagesOnWithContext(context.Background(), getEnableErrorPagesOnOptions)
+	result, response, err = zonesSettings.GetEnableErrorPagesOnWithContext(context.Background(), getEnableErrorPagesOnOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetEnableErrorPagesOnWithContext is an alternate form of the GetEnableErrorPagesOn method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetEnableErrorPagesOnWithContext(ctx context.Context, getEnableErrorPagesOnOptions *GetEnableErrorPagesOnOptions) (result *OriginErrorPagePassThruResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getEnableErrorPagesOnOptions, "getEnableErrorPagesOnOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3922,6 +4445,7 @@ func (zonesSettings *ZonesSettingsV1) GetEnableErrorPagesOnWithContext(ctx conte
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/origin_error_page_pass_thru`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3937,17 +4461,21 @@ func (zonesSettings *ZonesSettingsV1) GetEnableErrorPagesOnWithContext(ctx conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_enable_error_pages_on", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOriginErrorPagePassThruResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3959,13 +4487,16 @@ func (zonesSettings *ZonesSettingsV1) GetEnableErrorPagesOnWithContext(ctx conte
 // UpdateEnableErrorPagesOn : Update enable error pages on setting
 // Update enable error pages on setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateEnableErrorPagesOn(updateEnableErrorPagesOnOptions *UpdateEnableErrorPagesOnOptions) (result *OriginErrorPagePassThruResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateEnableErrorPagesOnWithContext(context.Background(), updateEnableErrorPagesOnOptions)
+	result, response, err = zonesSettings.UpdateEnableErrorPagesOnWithContext(context.Background(), updateEnableErrorPagesOnOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateEnableErrorPagesOnWithContext is an alternate form of the UpdateEnableErrorPagesOn method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateEnableErrorPagesOnWithContext(ctx context.Context, updateEnableErrorPagesOnOptions *UpdateEnableErrorPagesOnOptions) (result *OriginErrorPagePassThruResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateEnableErrorPagesOnOptions, "updateEnableErrorPagesOnOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3979,6 +4510,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateEnableErrorPagesOnWithContext(ctx co
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/origin_error_page_pass_thru`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3999,22 +4531,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateEnableErrorPagesOnWithContext(ctx co
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_enable_error_pages_on", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOriginErrorPagePassThruResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4026,13 +4563,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateEnableErrorPagesOnWithContext(ctx co
 // GetWebApplicationFirewall : Get web application firewall setting
 // Get web application firewall setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetWebApplicationFirewall(getWebApplicationFirewallOptions *GetWebApplicationFirewallOptions) (result *WafResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetWebApplicationFirewallWithContext(context.Background(), getWebApplicationFirewallOptions)
+	result, response, err = zonesSettings.GetWebApplicationFirewallWithContext(context.Background(), getWebApplicationFirewallOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetWebApplicationFirewallWithContext is an alternate form of the GetWebApplicationFirewall method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetWebApplicationFirewallWithContext(ctx context.Context, getWebApplicationFirewallOptions *GetWebApplicationFirewallOptions) (result *WafResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getWebApplicationFirewallOptions, "getWebApplicationFirewallOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4046,6 +4586,7 @@ func (zonesSettings *ZonesSettingsV1) GetWebApplicationFirewallWithContext(ctx c
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/waf`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4061,17 +4602,21 @@ func (zonesSettings *ZonesSettingsV1) GetWebApplicationFirewallWithContext(ctx c
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_web_application_firewall", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalWafResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4083,13 +4628,16 @@ func (zonesSettings *ZonesSettingsV1) GetWebApplicationFirewallWithContext(ctx c
 // UpdateWebApplicationFirewall : Update web application firewall setting
 // A Web Application Firewall (WAF) blocks requests that contain malicious content.
 func (zonesSettings *ZonesSettingsV1) UpdateWebApplicationFirewall(updateWebApplicationFirewallOptions *UpdateWebApplicationFirewallOptions) (result *WafResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateWebApplicationFirewallWithContext(context.Background(), updateWebApplicationFirewallOptions)
+	result, response, err = zonesSettings.UpdateWebApplicationFirewallWithContext(context.Background(), updateWebApplicationFirewallOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateWebApplicationFirewallWithContext is an alternate form of the UpdateWebApplicationFirewall method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateWebApplicationFirewallWithContext(ctx context.Context, updateWebApplicationFirewallOptions *UpdateWebApplicationFirewallOptions) (result *WafResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateWebApplicationFirewallOptions, "updateWebApplicationFirewallOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4103,6 +4651,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateWebApplicationFirewallWithContext(ct
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/waf`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4123,22 +4672,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateWebApplicationFirewallWithContext(ct
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_web_application_firewall", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalWafResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4150,13 +4704,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateWebApplicationFirewallWithContext(ct
 // GetCiphers : Get ciphers setting
 // Get ciphers setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetCiphers(getCiphersOptions *GetCiphersOptions) (result *CiphersResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetCiphersWithContext(context.Background(), getCiphersOptions)
+	result, response, err = zonesSettings.GetCiphersWithContext(context.Background(), getCiphersOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetCiphersWithContext is an alternate form of the GetCiphers method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetCiphersWithContext(ctx context.Context, getCiphersOptions *GetCiphersOptions) (result *CiphersResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getCiphersOptions, "getCiphersOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4170,6 +4727,7 @@ func (zonesSettings *ZonesSettingsV1) GetCiphersWithContext(ctx context.Context,
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/ciphers`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4185,17 +4743,21 @@ func (zonesSettings *ZonesSettingsV1) GetCiphersWithContext(ctx context.Context,
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_ciphers", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCiphersResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4207,13 +4769,16 @@ func (zonesSettings *ZonesSettingsV1) GetCiphersWithContext(ctx context.Context,
 // UpdateCiphers : Update ciphers setting
 // Update ciphers setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateCiphers(updateCiphersOptions *UpdateCiphersOptions) (result *CiphersResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateCiphersWithContext(context.Background(), updateCiphersOptions)
+	result, response, err = zonesSettings.UpdateCiphersWithContext(context.Background(), updateCiphersOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateCiphersWithContext is an alternate form of the UpdateCiphers method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateCiphersWithContext(ctx context.Context, updateCiphersOptions *UpdateCiphersOptions) (result *CiphersResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateCiphersOptions, "updateCiphersOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4227,6 +4792,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateCiphersWithContext(ctx context.Conte
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/ciphers`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4247,22 +4813,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateCiphersWithContext(ctx context.Conte
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_ciphers", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCiphersResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4274,13 +4845,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateCiphersWithContext(ctx context.Conte
 // GetOriginMaxHttpVersion : Get origin max http version setting
 // Get origin max http version setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetOriginMaxHttpVersion(getOriginMaxHttpVersionOptions *GetOriginMaxHttpVersionOptions) (result *OriginMaxHttpVersionResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetOriginMaxHttpVersionWithContext(context.Background(), getOriginMaxHttpVersionOptions)
+	result, response, err = zonesSettings.GetOriginMaxHttpVersionWithContext(context.Background(), getOriginMaxHttpVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetOriginMaxHttpVersionWithContext is an alternate form of the GetOriginMaxHttpVersion method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetOriginMaxHttpVersionWithContext(ctx context.Context, getOriginMaxHttpVersionOptions *GetOriginMaxHttpVersionOptions) (result *OriginMaxHttpVersionResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getOriginMaxHttpVersionOptions, "getOriginMaxHttpVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4294,6 +4868,7 @@ func (zonesSettings *ZonesSettingsV1) GetOriginMaxHttpVersionWithContext(ctx con
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/origin_max_http_version`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4309,17 +4884,21 @@ func (zonesSettings *ZonesSettingsV1) GetOriginMaxHttpVersionWithContext(ctx con
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_origin_max_http_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOriginMaxHttpVersionResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4331,13 +4910,16 @@ func (zonesSettings *ZonesSettingsV1) GetOriginMaxHttpVersionWithContext(ctx con
 // UpdateOriginMaxHttpVersion : Update origin max http version setting
 // Update origin max http version setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateOriginMaxHttpVersion(updateOriginMaxHttpVersionOptions *UpdateOriginMaxHttpVersionOptions) (result *OriginMaxHttpVersionResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateOriginMaxHttpVersionWithContext(context.Background(), updateOriginMaxHttpVersionOptions)
+	result, response, err = zonesSettings.UpdateOriginMaxHttpVersionWithContext(context.Background(), updateOriginMaxHttpVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateOriginMaxHttpVersionWithContext is an alternate form of the UpdateOriginMaxHttpVersion method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateOriginMaxHttpVersionWithContext(ctx context.Context, updateOriginMaxHttpVersionOptions *UpdateOriginMaxHttpVersionOptions) (result *OriginMaxHttpVersionResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateOriginMaxHttpVersionOptions, "updateOriginMaxHttpVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4351,6 +4933,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateOriginMaxHttpVersionWithContext(ctx 
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/origin_max_http_version`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4371,22 +4954,27 @@ func (zonesSettings *ZonesSettingsV1) UpdateOriginMaxHttpVersionWithContext(ctx 
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_origin_max_http_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOriginMaxHttpVersionResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4398,13 +4986,16 @@ func (zonesSettings *ZonesSettingsV1) UpdateOriginMaxHttpVersionWithContext(ctx 
 // GetOriginPostQuantumEncryption : Get origin post quantum encryption setting
 // Get origin post quantum encryption setting for a zone.
 func (zonesSettings *ZonesSettingsV1) GetOriginPostQuantumEncryption(getOriginPostQuantumEncryptionOptions *GetOriginPostQuantumEncryptionOptions) (result *OriginPostQuantumEncryptionResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.GetOriginPostQuantumEncryptionWithContext(context.Background(), getOriginPostQuantumEncryptionOptions)
+	result, response, err = zonesSettings.GetOriginPostQuantumEncryptionWithContext(context.Background(), getOriginPostQuantumEncryptionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetOriginPostQuantumEncryptionWithContext is an alternate form of the GetOriginPostQuantumEncryption method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) GetOriginPostQuantumEncryptionWithContext(ctx context.Context, getOriginPostQuantumEncryptionOptions *GetOriginPostQuantumEncryptionOptions) (result *OriginPostQuantumEncryptionResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getOriginPostQuantumEncryptionOptions, "getOriginPostQuantumEncryptionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4418,6 +5009,7 @@ func (zonesSettings *ZonesSettingsV1) GetOriginPostQuantumEncryptionWithContext(
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/cache/origin_post_quantum_encryption`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4433,17 +5025,21 @@ func (zonesSettings *ZonesSettingsV1) GetOriginPostQuantumEncryptionWithContext(
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_origin_post_quantum_encryption", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOriginPostQuantumEncryptionResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4455,13 +5051,16 @@ func (zonesSettings *ZonesSettingsV1) GetOriginPostQuantumEncryptionWithContext(
 // UpdateOriginPostQuantumEncryption : Update origin post quantum encryption setting
 // Update origin post quantum encryption setting for a zone.
 func (zonesSettings *ZonesSettingsV1) UpdateOriginPostQuantumEncryption(updateOriginPostQuantumEncryptionOptions *UpdateOriginPostQuantumEncryptionOptions) (result *OriginPostQuantumEncryptionResp, response *core.DetailedResponse, err error) {
-	return zonesSettings.UpdateOriginPostQuantumEncryptionWithContext(context.Background(), updateOriginPostQuantumEncryptionOptions)
+	result, response, err = zonesSettings.UpdateOriginPostQuantumEncryptionWithContext(context.Background(), updateOriginPostQuantumEncryptionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateOriginPostQuantumEncryptionWithContext is an alternate form of the UpdateOriginPostQuantumEncryption method which supports a Context parameter
 func (zonesSettings *ZonesSettingsV1) UpdateOriginPostQuantumEncryptionWithContext(ctx context.Context, updateOriginPostQuantumEncryptionOptions *UpdateOriginPostQuantumEncryptionOptions) (result *OriginPostQuantumEncryptionResp, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateOriginPostQuantumEncryptionOptions, "updateOriginPostQuantumEncryptionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4475,6 +5074,7 @@ func (zonesSettings *ZonesSettingsV1) UpdateOriginPostQuantumEncryptionWithConte
 	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/cache/origin_post_quantum_encryption`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4495,28 +5095,36 @@ func (zonesSettings *ZonesSettingsV1) UpdateOriginPostQuantumEncryptionWithConte
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = zonesSettings.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_origin_post_quantum_encryption", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOriginPostQuantumEncryptionResp)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
 	}
 
 	return
+}
+func getServiceComponentInfo() *core.ProblemComponent {
+	return core.NewProblemComponent(DefaultServiceName, "1.0.1")
 }
 
 // AlwaysUseHttpsRespResult : Container for response information.
@@ -4539,18 +5147,22 @@ func UnmarshalAlwaysUseHttpsRespResult(m map[string]json.RawMessage, result inte
 	obj := new(AlwaysUseHttpsRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4577,18 +5189,22 @@ func UnmarshalAutomaticHttpsRewritesRespResult(m map[string]json.RawMessage, res
 	obj := new(AutomaticHttpsRewritesRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4615,18 +5231,22 @@ func UnmarshalBrotliRespResult(m map[string]json.RawMessage, result interface{})
 	obj := new(BrotliRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4653,18 +5273,22 @@ func UnmarshalBrowserCheckRespResult(m map[string]json.RawMessage, result interf
 	obj := new(BrowserCheckRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4691,18 +5315,22 @@ func UnmarshalChallengeTtlRespResult(m map[string]json.RawMessage, result interf
 	obj := new(ChallengeTtlRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4729,18 +5357,22 @@ func UnmarshalCiphersRespResult(m map[string]json.RawMessage, result interface{}
 	obj := new(CiphersRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4750,7 +5382,7 @@ func UnmarshalCiphersRespResult(m map[string]json.RawMessage, result interface{}
 // GetAlwaysUseHttpsOptions : The GetAlwaysUseHttps options.
 type GetAlwaysUseHttpsOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4768,7 +5400,7 @@ func (options *GetAlwaysUseHttpsOptions) SetHeaders(param map[string]string) *Ge
 // GetAutomaticHttpsRewritesOptions : The GetAutomaticHttpsRewrites options.
 type GetAutomaticHttpsRewritesOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4786,7 +5418,7 @@ func (options *GetAutomaticHttpsRewritesOptions) SetHeaders(param map[string]str
 // GetBrotliOptions : The GetBrotli options.
 type GetBrotliOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4804,7 +5436,7 @@ func (options *GetBrotliOptions) SetHeaders(param map[string]string) *GetBrotliO
 // GetBrowserCheckOptions : The GetBrowserCheck options.
 type GetBrowserCheckOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4822,7 +5454,7 @@ func (options *GetBrowserCheckOptions) SetHeaders(param map[string]string) *GetB
 // GetChallengeTtlOptions : The GetChallengeTTL options.
 type GetChallengeTtlOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4840,7 +5472,7 @@ func (options *GetChallengeTtlOptions) SetHeaders(param map[string]string) *GetC
 // GetCiphersOptions : The GetCiphers options.
 type GetCiphersOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4858,7 +5490,7 @@ func (options *GetCiphersOptions) SetHeaders(param map[string]string) *GetCipher
 // GetEnableErrorPagesOnOptions : The GetEnableErrorPagesOn options.
 type GetEnableErrorPagesOnOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4876,7 +5508,7 @@ func (options *GetEnableErrorPagesOnOptions) SetHeaders(param map[string]string)
 // GetHotlinkProtectionOptions : The GetHotlinkProtection options.
 type GetHotlinkProtectionOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4894,7 +5526,7 @@ func (options *GetHotlinkProtectionOptions) SetHeaders(param map[string]string) 
 // GetHttp2Options : The GetHttp2 options.
 type GetHttp2Options struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4912,7 +5544,7 @@ func (options *GetHttp2Options) SetHeaders(param map[string]string) *GetHttp2Opt
 // GetHttp3Options : The GetHttp3 options.
 type GetHttp3Options struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4930,7 +5562,7 @@ func (options *GetHttp3Options) SetHeaders(param map[string]string) *GetHttp3Opt
 // GetImageLoadOptimizationOptions : The GetImageLoadOptimization options.
 type GetImageLoadOptimizationOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4948,7 +5580,7 @@ func (options *GetImageLoadOptimizationOptions) SetHeaders(param map[string]stri
 // GetImageSizeOptimizationOptions : The GetImageSizeOptimization options.
 type GetImageSizeOptimizationOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4966,7 +5598,7 @@ func (options *GetImageSizeOptimizationOptions) SetHeaders(param map[string]stri
 // GetIpGeolocationOptions : The GetIpGeolocation options.
 type GetIpGeolocationOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4984,7 +5616,7 @@ func (options *GetIpGeolocationOptions) SetHeaders(param map[string]string) *Get
 // GetIpv6Options : The GetIpv6 options.
 type GetIpv6Options struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5002,7 +5634,7 @@ func (options *GetIpv6Options) SetHeaders(param map[string]string) *GetIpv6Optio
 // GetMaxUploadOptions : The GetMaxUpload options.
 type GetMaxUploadOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5020,7 +5652,7 @@ func (options *GetMaxUploadOptions) SetHeaders(param map[string]string) *GetMaxU
 // GetMinTlsVersionOptions : The GetMinTlsVersion options.
 type GetMinTlsVersionOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5038,7 +5670,7 @@ func (options *GetMinTlsVersionOptions) SetHeaders(param map[string]string) *Get
 // GetMinifyOptions : The GetMinify options.
 type GetMinifyOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5056,7 +5688,7 @@ func (options *GetMinifyOptions) SetHeaders(param map[string]string) *GetMinifyO
 // GetMobileRedirectOptions : The GetMobileRedirect options.
 type GetMobileRedirectOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5074,7 +5706,7 @@ func (options *GetMobileRedirectOptions) SetHeaders(param map[string]string) *Ge
 // GetOpportunisticEncryptionOptions : The GetOpportunisticEncryption options.
 type GetOpportunisticEncryptionOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5092,7 +5724,7 @@ func (options *GetOpportunisticEncryptionOptions) SetHeaders(param map[string]st
 // GetOpportunisticOnionOptions : The GetOpportunisticOnion options.
 type GetOpportunisticOnionOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5110,7 +5742,7 @@ func (options *GetOpportunisticOnionOptions) SetHeaders(param map[string]string)
 // GetOriginMaxHttpVersionOptions : The GetOriginMaxHttpVersion options.
 type GetOriginMaxHttpVersionOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5128,7 +5760,7 @@ func (options *GetOriginMaxHttpVersionOptions) SetHeaders(param map[string]strin
 // GetOriginPostQuantumEncryptionOptions : The GetOriginPostQuantumEncryption options.
 type GetOriginPostQuantumEncryptionOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5146,7 +5778,7 @@ func (options *GetOriginPostQuantumEncryptionOptions) SetHeaders(param map[strin
 // GetPrefetchPreloadOptions : The GetPrefetchPreload options.
 type GetPrefetchPreloadOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5164,7 +5796,7 @@ func (options *GetPrefetchPreloadOptions) SetHeaders(param map[string]string) *G
 // GetProxyReadTimeoutOptions : The GetProxyReadTimeout options.
 type GetProxyReadTimeoutOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5182,7 +5814,7 @@ func (options *GetProxyReadTimeoutOptions) SetHeaders(param map[string]string) *
 // GetPseudoIpv4Options : The GetPseudoIpv4 options.
 type GetPseudoIpv4Options struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5200,7 +5832,7 @@ func (options *GetPseudoIpv4Options) SetHeaders(param map[string]string) *GetPse
 // GetResponseBufferingOptions : The GetResponseBuffering options.
 type GetResponseBufferingOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5218,7 +5850,7 @@ func (options *GetResponseBufferingOptions) SetHeaders(param map[string]string) 
 // GetScriptLoadOptimizationOptions : The GetScriptLoadOptimization options.
 type GetScriptLoadOptimizationOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5236,7 +5868,7 @@ func (options *GetScriptLoadOptimizationOptions) SetHeaders(param map[string]str
 // GetSecurityHeaderOptions : The GetSecurityHeader options.
 type GetSecurityHeaderOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5254,7 +5886,7 @@ func (options *GetSecurityHeaderOptions) SetHeaders(param map[string]string) *Ge
 // GetServerSideExcludeOptions : The GetServerSideExclude options.
 type GetServerSideExcludeOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5272,7 +5904,7 @@ func (options *GetServerSideExcludeOptions) SetHeaders(param map[string]string) 
 // GetTlsClientAuthOptions : The GetTlsClientAuth options.
 type GetTlsClientAuthOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5290,7 +5922,7 @@ func (options *GetTlsClientAuthOptions) SetHeaders(param map[string]string) *Get
 // GetTrueClientIpOptions : The GetTrueClientIp options.
 type GetTrueClientIpOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5308,7 +5940,7 @@ func (options *GetTrueClientIpOptions) SetHeaders(param map[string]string) *GetT
 // GetWebApplicationFirewallOptions : The GetWebApplicationFirewall options.
 type GetWebApplicationFirewallOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5326,7 +5958,7 @@ func (options *GetWebApplicationFirewallOptions) SetHeaders(param map[string]str
 // GetWebSocketsOptions : The GetWebSockets options.
 type GetWebSocketsOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5344,7 +5976,7 @@ func (options *GetWebSocketsOptions) SetHeaders(param map[string]string) *GetWeb
 // GetZoneCnameFlatteningOptions : The GetZoneCnameFlattening options.
 type GetZoneCnameFlatteningOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5362,7 +5994,7 @@ func (options *GetZoneCnameFlatteningOptions) SetHeaders(param map[string]string
 // GetZoneDnssecOptions : The GetZoneDnssec options.
 type GetZoneDnssecOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5397,18 +6029,22 @@ func UnmarshalHotlinkProtectionRespResult(m map[string]json.RawMessage, result i
 	obj := new(HotlinkProtectionRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5435,18 +6071,22 @@ func UnmarshalHttp2RespResult(m map[string]json.RawMessage, result interface{}) 
 	obj := new(Http2RespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5473,18 +6113,22 @@ func UnmarshalHttp3RespResult(m map[string]json.RawMessage, result interface{}) 
 	obj := new(Http3RespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5511,18 +6155,22 @@ func UnmarshalImageLoadOptimizationRespResult(m map[string]json.RawMessage, resu
 	obj := new(ImageLoadOptimizationRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5549,18 +6197,22 @@ func UnmarshalImageSizeOptimizationRespResult(m map[string]json.RawMessage, resu
 	obj := new(ImageSizeOptimizationRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5587,18 +6239,22 @@ func UnmarshalIpGeolocationRespResult(m map[string]json.RawMessage, result inter
 	obj := new(IpGeolocationRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5625,18 +6281,22 @@ func UnmarshalIpv6RespResult(m map[string]json.RawMessage, result interface{}) (
 	obj := new(Ipv6RespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5663,18 +6323,22 @@ func UnmarshalMaxUploadRespResult(m map[string]json.RawMessage, result interface
 	obj := new(MaxUploadRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5701,18 +6365,22 @@ func UnmarshalMinTlsVersionRespResult(m map[string]json.RawMessage, result inter
 	obj := new(MinTlsVersionRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5739,18 +6407,22 @@ func UnmarshalMinifyRespResult(m map[string]json.RawMessage, result interface{})
 	obj := new(MinifyRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "value", &obj.Value, UnmarshalMinifyRespResultValue)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5774,14 +6446,17 @@ func UnmarshalMinifyRespResultValue(m map[string]json.RawMessage, result interfa
 	obj := new(MinifyRespResultValue)
 	err = core.UnmarshalPrimitive(m, "css", &obj.Css)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "css-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "html", &obj.HTML)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "html-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "js", &obj.Js)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "js-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5829,6 +6504,9 @@ func (*ZonesSettingsV1) NewMinifySettingValue(css string, html string, js string
 		Js:   core.StringPtr(js),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -5837,14 +6515,17 @@ func UnmarshalMinifySettingValue(m map[string]json.RawMessage, result interface{
 	obj := new(MinifySettingValue)
 	err = core.UnmarshalPrimitive(m, "css", &obj.Css)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "css-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "html", &obj.HTML)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "html-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "js", &obj.Js)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "js-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5879,6 +6560,9 @@ func (*ZonesSettingsV1) NewMobileRedirecSettingValue(status string, mobileSubdom
 		StripURI:        core.BoolPtr(stripURI),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -5887,14 +6571,17 @@ func UnmarshalMobileRedirecSettingValue(m map[string]json.RawMessage, result int
 	obj := new(MobileRedirecSettingValue)
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "mobile_subdomain", &obj.MobileSubdomain)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "mobile_subdomain-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "strip_uri", &obj.StripURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "strip_uri-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5921,18 +6608,22 @@ func UnmarshalMobileRedirectRespResult(m map[string]json.RawMessage, result inte
 	obj := new(MobileRedirectRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "value", &obj.Value, UnmarshalMobileRedirectRespResultValue)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5957,14 +6648,17 @@ func UnmarshalMobileRedirectRespResultValue(m map[string]json.RawMessage, result
 	obj := new(MobileRedirectRespResultValue)
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "mobile_subdomain", &obj.MobileSubdomain)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "mobile_subdomain-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "strip_uri", &obj.StripURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "strip_uri-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5991,18 +6685,22 @@ func UnmarshalOpportunisticEncryptionRespResult(m map[string]json.RawMessage, re
 	obj := new(OpportunisticEncryptionRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6029,18 +6727,22 @@ func UnmarshalOpportunisticOnionRespResult(m map[string]json.RawMessage, result 
 	obj := new(OpportunisticOnionRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6067,18 +6769,22 @@ func UnmarshalOriginErrorPagePassThruRespResult(m map[string]json.RawMessage, re
 	obj := new(OriginErrorPagePassThruRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6105,18 +6811,22 @@ func UnmarshalOriginMaxHttpVersionRespResult(m map[string]json.RawMessage, resul
 	obj := new(OriginMaxHttpVersionRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6151,18 +6861,22 @@ func UnmarshalOriginPostQuantumEncryptionRespResult(m map[string]json.RawMessage
 	obj := new(OriginPostQuantumEncryptionRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6189,18 +6903,22 @@ func UnmarshalPrefetchPreloadRespResult(m map[string]json.RawMessage, result int
 	obj := new(PrefetchPreloadRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6213,7 +6931,7 @@ type ProxyReadTimeoutRespResult struct {
 	ID *string `json:"id" validate:"required"`
 
 	// Value.
-	Value *float64 `json:"value" validate:"required"`
+	Value *string `json:"value" validate:"required"`
 
 	// Editable.
 	Editable *bool `json:"editable" validate:"required"`
@@ -6227,18 +6945,22 @@ func UnmarshalProxyReadTimeoutRespResult(m map[string]json.RawMessage, result in
 	obj := new(ProxyReadTimeoutRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6265,18 +6987,22 @@ func UnmarshalPseudoIpv4RespResult(m map[string]json.RawMessage, result interfac
 	obj := new(PseudoIpv4RespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6303,18 +7029,22 @@ func UnmarshalResponseBufferingRespResult(m map[string]json.RawMessage, result i
 	obj := new(ResponseBufferingRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6341,18 +7071,22 @@ func UnmarshalScriptLoadOptimizationRespResult(m map[string]json.RawMessage, res
 	obj := new(ScriptLoadOptimizationRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6379,18 +7113,22 @@ func UnmarshalSecurityHeaderRespResult(m map[string]json.RawMessage, result inte
 	obj := new(SecurityHeaderRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "value", &obj.Value, UnmarshalSecurityHeaderRespResultValue)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6408,6 +7146,7 @@ func UnmarshalSecurityHeaderRespResultValue(m map[string]json.RawMessage, result
 	obj := new(SecurityHeaderRespResultValue)
 	err = core.UnmarshalModel(m, "strict_transport_security", &obj.StrictTransportSecurity, UnmarshalSecurityHeaderRespResultValueStrictTransportSecurity)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "strict_transport_security-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6437,22 +7176,27 @@ func UnmarshalSecurityHeaderRespResultValueStrictTransportSecurity(m map[string]
 	obj := new(SecurityHeaderRespResultValueStrictTransportSecurity)
 	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "max_age", &obj.MaxAge)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "max_age-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "include_subdomains", &obj.IncludeSubdomains)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "include_subdomains-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "preload", &obj.Preload)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "preload-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "nosniff", &obj.Nosniff)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "nosniff-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6471,6 +7215,9 @@ func (*ZonesSettingsV1) NewSecurityHeaderSettingValue(strictTransportSecurity *S
 		StrictTransportSecurity: strictTransportSecurity,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -6479,6 +7226,7 @@ func UnmarshalSecurityHeaderSettingValue(m map[string]json.RawMessage, result in
 	obj := new(SecurityHeaderSettingValue)
 	err = core.UnmarshalModel(m, "strict_transport_security", &obj.StrictTransportSecurity, UnmarshalSecurityHeaderSettingValueStrictTransportSecurity)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "strict_transport_security-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6513,6 +7261,9 @@ func (*ZonesSettingsV1) NewSecurityHeaderSettingValueStrictTransportSecurity(ena
 		Nosniff:           core.BoolPtr(nosniff),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -6521,22 +7272,27 @@ func UnmarshalSecurityHeaderSettingValueStrictTransportSecurity(m map[string]jso
 	obj := new(SecurityHeaderSettingValueStrictTransportSecurity)
 	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "max_age", &obj.MaxAge)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "max_age-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "include_subdomains", &obj.IncludeSubdomains)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "include_subdomains-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "preload", &obj.Preload)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "preload-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "nosniff", &obj.Nosniff)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "nosniff-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6563,18 +7319,22 @@ func UnmarshalServerSideExcludeRespResult(m map[string]json.RawMessage, result i
 	obj := new(ServerSideExcludeRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6601,18 +7361,22 @@ func UnmarshalTlsClientAuthRespResult(m map[string]json.RawMessage, result inter
 	obj := new(TlsClientAuthRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6639,18 +7403,22 @@ func UnmarshalTrueClientIpRespResult(m map[string]json.RawMessage, result interf
 	obj := new(TrueClientIpRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6662,7 +7430,7 @@ type UpdateAlwaysUseHttpsOptions struct {
 	// Value.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6695,7 +7463,7 @@ type UpdateAutomaticHttpsRewritesOptions struct {
 	// Value.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6728,7 +7496,7 @@ type UpdateBrotliOptions struct {
 	// Value.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6761,7 +7529,7 @@ type UpdateBrowserCheckOptions struct {
 	// Value.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6794,7 +7562,7 @@ type UpdateChallengeTtlOptions struct {
 	// Value.
 	Value *int64 `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6820,7 +7588,7 @@ type UpdateCiphersOptions struct {
 	// Value.
 	Value []string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6870,7 +7638,7 @@ type UpdateEnableErrorPagesOnOptions struct {
 	// Value.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6903,7 +7671,7 @@ type UpdateHotlinkProtectionOptions struct {
 	// Value.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6936,7 +7704,7 @@ type UpdateHttp2Options struct {
 	// Value.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6969,7 +7737,7 @@ type UpdateHttp3Options struct {
 	// Value.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7002,7 +7770,7 @@ type UpdateImageLoadOptimizationOptions struct {
 	// Value.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7037,7 +7805,7 @@ type UpdateImageSizeOptimizationOptions struct {
 	// of image files without impacting visual quality.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7073,7 +7841,7 @@ type UpdateIpGeolocationOptions struct {
 	// Value.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7106,7 +7874,7 @@ type UpdateIpv6Options struct {
 	// Value.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7140,7 +7908,7 @@ type UpdateMaxUploadOptions struct {
 	// 475, 500. Values 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 475, 500 are only for Enterprise Plan.
 	Value *int64 `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7166,7 +7934,7 @@ type UpdateMinTlsVersionOptions struct {
 	// Value.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7192,7 +7960,7 @@ type UpdateMinifyOptions struct {
 	// Value.
 	Value *MinifySettingValue `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7218,7 +7986,7 @@ type UpdateMobileRedirectOptions struct {
 	// Value.
 	Value *MobileRedirecSettingValue `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7244,7 +8012,7 @@ type UpdateOpportunisticEncryptionOptions struct {
 	// Value.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7277,7 +8045,7 @@ type UpdateOpportunisticOnionOptions struct {
 	// Value.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7310,7 +8078,7 @@ type UpdateOriginMaxHttpVersionOptions struct {
 	// Value.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7340,7 +8108,7 @@ type UpdateOriginPostQuantumEncryptionOptions struct {
 	// - `off`: The PQ algorithms are not advertised.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7378,7 +8146,7 @@ type UpdatePrefetchPreloadOptions struct {
 	// Value.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7411,7 +8179,7 @@ type UpdateProxyReadTimeoutOptions struct {
 	// Value.
 	Value *float64 `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7437,7 +8205,7 @@ type UpdatePseudoIpv4Options struct {
 	// Value.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7471,7 +8239,7 @@ type UpdateResponseBufferingOptions struct {
 	// Value.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7504,7 +8272,7 @@ type UpdateScriptLoadOptimizationOptions struct {
 	// Value.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7537,7 +8305,7 @@ type UpdateSecurityHeaderOptions struct {
 	// Value.
 	Value *SecurityHeaderSettingValue `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7563,7 +8331,7 @@ type UpdateServerSideExcludeOptions struct {
 	// Value.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7596,7 +8364,7 @@ type UpdateTlsClientAuthOptions struct {
 	// Value.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7629,7 +8397,7 @@ type UpdateTrueClientIpOptions struct {
 	// Value.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7662,7 +8430,7 @@ type UpdateWebApplicationFirewallOptions struct {
 	// Value.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7695,7 +8463,7 @@ type UpdateWebSocketsOptions struct {
 	// Value.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7729,7 +8497,7 @@ type UpdateZoneCnameFlatteningOptions struct {
 	// default value. "flatten_all" - Flatten all CNAME records under your domain.
 	Value *string `json:"value,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7763,7 +8531,7 @@ type UpdateZoneDnssecOptions struct {
 	// Status.
 	Status *string `json:"status,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7811,18 +8579,22 @@ func UnmarshalWafRespResult(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(WafRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7849,18 +8621,22 @@ func UnmarshalWebsocketsRespResult(m map[string]json.RawMessage, result interfac
 	obj := new(WebsocketsRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7915,42 +8691,52 @@ func UnmarshalZonesDnssecRespResult(m map[string]json.RawMessage, result interfa
 	obj := new(ZonesDnssecRespResult)
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "flags", &obj.Flags)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "flags-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "algorithm", &obj.Algorithm)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "algorithm-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "key_type", &obj.KeyType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "key_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "digest_type", &obj.DigestType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "digest_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "digest_algorithm", &obj.DigestAlgorithm)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "digest_algorithm-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "digest", &obj.Digest)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "digest-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ds", &obj.Ds)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ds-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "key_tag", &obj.KeyTag)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "key_tag-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "public_key", &obj.PublicKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "public_key-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7977,18 +8763,22 @@ func UnmarshalAlwaysUseHttpsResp(m map[string]json.RawMessage, result interface{
 	obj := new(AlwaysUseHttpsResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalAlwaysUseHttpsRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8015,18 +8805,22 @@ func UnmarshalAutomaticHttpsRewritesResp(m map[string]json.RawMessage, result in
 	obj := new(AutomaticHttpsRewritesResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalAutomaticHttpsRewritesRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8053,18 +8847,22 @@ func UnmarshalBrotliResp(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(BrotliResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalBrotliRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8091,18 +8889,22 @@ func UnmarshalBrowserCheckResp(m map[string]json.RawMessage, result interface{})
 	obj := new(BrowserCheckResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalBrowserCheckRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8129,18 +8931,22 @@ func UnmarshalChallengeTtlResp(m map[string]json.RawMessage, result interface{})
 	obj := new(ChallengeTtlResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalChallengeTtlRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8167,18 +8973,22 @@ func UnmarshalCiphersResp(m map[string]json.RawMessage, result interface{}) (err
 	obj := new(CiphersResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalCiphersRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8212,18 +9022,22 @@ func UnmarshalCnameFlatteningResponse(m map[string]json.RawMessage, result inter
 	obj := new(CnameFlatteningResponse)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_on-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "editable-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8250,18 +9064,22 @@ func UnmarshalHotlinkProtectionResp(m map[string]json.RawMessage, result interfa
 	obj := new(HotlinkProtectionResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalHotlinkProtectionRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8288,18 +9106,22 @@ func UnmarshalHttp2Resp(m map[string]json.RawMessage, result interface{}) (err e
 	obj := new(Http2Resp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalHttp2RespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8326,18 +9148,22 @@ func UnmarshalHttp3Resp(m map[string]json.RawMessage, result interface{}) (err e
 	obj := new(Http3Resp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalHttp3RespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8364,18 +9190,22 @@ func UnmarshalImageLoadOptimizationResp(m map[string]json.RawMessage, result int
 	obj := new(ImageLoadOptimizationResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalImageLoadOptimizationRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8402,18 +9232,22 @@ func UnmarshalImageSizeOptimizationResp(m map[string]json.RawMessage, result int
 	obj := new(ImageSizeOptimizationResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalImageSizeOptimizationRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8440,18 +9274,22 @@ func UnmarshalIpGeolocationResp(m map[string]json.RawMessage, result interface{}
 	obj := new(IpGeolocationResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalIpGeolocationRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8478,18 +9316,22 @@ func UnmarshalIpv6Resp(m map[string]json.RawMessage, result interface{}) (err er
 	obj := new(Ipv6Resp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalIpv6RespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8516,18 +9358,22 @@ func UnmarshalMaxUploadResp(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(MaxUploadResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalMaxUploadRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8554,18 +9400,22 @@ func UnmarshalMinTlsVersionResp(m map[string]json.RawMessage, result interface{}
 	obj := new(MinTlsVersionResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalMinTlsVersionRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8592,18 +9442,22 @@ func UnmarshalMinifyResp(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(MinifyResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalMinifyRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8630,18 +9484,22 @@ func UnmarshalMobileRedirectResp(m map[string]json.RawMessage, result interface{
 	obj := new(MobileRedirectResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalMobileRedirectRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8668,18 +9526,22 @@ func UnmarshalOpportunisticEncryptionResp(m map[string]json.RawMessage, result i
 	obj := new(OpportunisticEncryptionResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalOpportunisticEncryptionRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8706,18 +9568,22 @@ func UnmarshalOpportunisticOnionResp(m map[string]json.RawMessage, result interf
 	obj := new(OpportunisticOnionResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalOpportunisticOnionRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8744,18 +9610,22 @@ func UnmarshalOriginErrorPagePassThruResp(m map[string]json.RawMessage, result i
 	obj := new(OriginErrorPagePassThruResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalOriginErrorPagePassThruRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8782,18 +9652,22 @@ func UnmarshalOriginMaxHttpVersionResp(m map[string]json.RawMessage, result inte
 	obj := new(OriginMaxHttpVersionResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalOriginMaxHttpVersionRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8820,18 +9694,22 @@ func UnmarshalOriginPostQuantumEncryptionResp(m map[string]json.RawMessage, resu
 	obj := new(OriginPostQuantumEncryptionResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalOriginPostQuantumEncryptionRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8858,18 +9736,22 @@ func UnmarshalPrefetchPreloadResp(m map[string]json.RawMessage, result interface
 	obj := new(PrefetchPreloadResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalPrefetchPreloadRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8896,18 +9778,22 @@ func UnmarshalProxyReadTimeoutResp(m map[string]json.RawMessage, result interfac
 	obj := new(ProxyReadTimeoutResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalProxyReadTimeoutRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8934,18 +9820,22 @@ func UnmarshalPseudoIpv4Resp(m map[string]json.RawMessage, result interface{}) (
 	obj := new(PseudoIpv4Resp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalPseudoIpv4RespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8972,18 +9862,22 @@ func UnmarshalResponseBufferingResp(m map[string]json.RawMessage, result interfa
 	obj := new(ResponseBufferingResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalResponseBufferingRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9010,18 +9904,22 @@ func UnmarshalScriptLoadOptimizationResp(m map[string]json.RawMessage, result in
 	obj := new(ScriptLoadOptimizationResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalScriptLoadOptimizationRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9048,18 +9946,22 @@ func UnmarshalSecurityHeaderResp(m map[string]json.RawMessage, result interface{
 	obj := new(SecurityHeaderResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalSecurityHeaderRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9086,18 +9988,22 @@ func UnmarshalServerSideExcludeResp(m map[string]json.RawMessage, result interfa
 	obj := new(ServerSideExcludeResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalServerSideExcludeRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9124,18 +10030,22 @@ func UnmarshalTlsClientAuthResp(m map[string]json.RawMessage, result interface{}
 	obj := new(TlsClientAuthResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalTlsClientAuthRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9162,18 +10072,22 @@ func UnmarshalTrueClientIpResp(m map[string]json.RawMessage, result interface{})
 	obj := new(TrueClientIpResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalTrueClientIpRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9200,18 +10114,22 @@ func UnmarshalWafResp(m map[string]json.RawMessage, result interface{}) (err err
 	obj := new(WafResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalWafRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9238,18 +10156,22 @@ func UnmarshalWebsocketsResp(m map[string]json.RawMessage, result interface{}) (
 	obj := new(WebsocketsResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalWebsocketsRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9276,18 +10198,22 @@ func UnmarshalZonesCnameFlatteningResp(m map[string]json.RawMessage, result inte
 	obj := new(ZonesCnameFlatteningResp)
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalCnameFlatteningResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9314,18 +10240,22 @@ func UnmarshalZonesDnssecResp(m map[string]json.RawMessage, result interface{}) 
 	obj := new(ZonesDnssecResp)
 	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "success-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalZonesDnssecRespResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))

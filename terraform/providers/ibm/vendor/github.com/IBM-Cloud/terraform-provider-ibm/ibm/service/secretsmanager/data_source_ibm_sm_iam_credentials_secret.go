@@ -81,7 +81,7 @@ func DataSourceIbmSmIamCredentialsSecret() *schema.Resource {
 			"secret_group_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "A v4 UUID identifier, or `default` secret group.",
+				Description: "A UUID identifier, or `default` secret group.",
 			},
 			"secret_group_name": &schema.Schema{
 				Type:         schema.TypeString,
