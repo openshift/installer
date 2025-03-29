@@ -3,6 +3,7 @@ package validation
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 	"unicode"
 
@@ -33,8 +34,22 @@ func ValidateMachinePool(platform *gcp.Platform, p *gcp.MachinePool, fldPath *fi
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("diskType"), diskType, sets.List(gcp.ComputeSupportedDisks)))
 	}
 
-	if p.ConfidentialCompute == string(gcp.EnabledFeature) && p.OnHostMaintenance != string(gcp.OnHostMaintenanceTerminate) {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("OnHostMaintenance"), p.OnHostMaintenance, "OnHostMaintenace must be set to Terminate when ConfidentialCompute is Enabled"))
+	if p.ConfidentialCompute != "" && p.ConfidentialCompute != string(gcp.DisabledFeature) {
+		if p.OnHostMaintenance != string(gcp.OnHostMaintenanceTerminate) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("OnHostMaintenance"), p.OnHostMaintenance, fmt.Sprintf("OnHostMaintenace must be set to Terminate when ConfidentialCompute is %s", p.ConfidentialCompute)))
+		}
+
+		instanceType, _, _ := strings.Cut(p.InstanceType, "-")
+		confidentialCompute := gcp.ConfidentialComputePolicy(p.ConfidentialCompute)
+		if confidentialCompute == gcp.ConfidentialComputePolicy(gcp.EnabledFeature) {
+			confidentialCompute = gcp.ConfidentialComputePolicySEV
+		}
+		supportedMachineTypes, ok := gcp.ConfidentialComputePolicyToSupportedInstanceType[confidentialCompute]
+		if !ok {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("confidentialCompute"), p.ConfidentialCompute, fmt.Sprintf("Unknown confidential computing technology %s", p.ConfidentialCompute)))
+		} else if !slices.Contains(supportedMachineTypes, instanceType) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), p.InstanceType, fmt.Sprintf("Machine type do not support %s. Machine types supporting %s: %s", p.ConfidentialCompute, p.ConfidentialCompute, strings.Join(supportedMachineTypes, ", "))))
+		}
 	}
 
 	for i, tag := range p.Tags {
