@@ -23,6 +23,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/rhcos/cache"
+	"github.com/openshift/installer/pkg/types"
 )
 
 const (
@@ -49,20 +50,15 @@ type ReleasePayload interface {
 	ExtractFile(image string, filename string, architecture string) ([]string, error)
 }
 
-type MirrorConfig interface {
-	HasMirrors() bool
-	GetICSPContents() ([]byte, error)
-}
-
 type releasePayload struct {
 	config       ExtractConfig
 	releaseImage string
 	pullSecret   string
-	mirrorConfig MirrorConfig
+	mirrorConfig types.MirrorConfig
 }
 
 // NewReleasePayload is used to set up the executor to run oc commands.
-func NewReleasePayload(config ExtractConfig, releaseImage string, pullSecret string, mirrorConfig MirrorConfig) ReleasePayload {
+func NewReleasePayload(config ExtractConfig, releaseImage string, pullSecret string, mirrorConfig types.MirrorConfig) ReleasePayload {
 	if config.MaxTries == 0 {
 		config.MaxTries = ocDefaultTries
 	}
@@ -368,7 +364,7 @@ func removeCacheFile(path string) error {
 }
 
 // Create a temporary file containing the ImageContentPolicySources.
-func getMirrorArg(mirrorConfig MirrorConfig) (string, func(), error) {
+func getMirrorArg(mirrorConfig types.MirrorConfig) (string, func(), error) {
 	if !mirrorConfig.HasMirrors() {
 		logrus.Debugf("No registry entries to build ICSP file")
 		return "", nil, nil
