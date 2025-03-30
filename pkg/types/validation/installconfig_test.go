@@ -2895,6 +2895,26 @@ func TestValidateTNF(t *testing.T) {
 			checkCompute: true,
 			expected:     `compute\[\d+\]\.fencing: Invalid value: types\.Fencing\{Credentials:\[\]\*types\.Credential\{\(\*types\.Credential\)\(\S+\)\}\}: fencing is only valid for control plane`,
 		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(c1(), c2())).
+				CpReplicas(2).
+				build(),
+			name:     "fencing_hosts_mutually_exclusive",
+			expected: "controlPlane.fencing: Forbidden: fencing is mutually exclusive with hosts, please remove either of them",
+		},
+		{
+			config: installConfig().
+				PlatformAWS().
+				MachinePoolCP(machinePool().
+					Credential(c1(), c2())).
+				CpReplicas(2).
+				build(),
+			name:     "supported_platforms",
+			expected: "controlPlane.fencing: Forbidden: fencing is only supported on baremetal or none platforms, instead aws platform was found",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -3022,9 +3042,22 @@ type installConfigBuilder struct {
 }
 
 func installConfig() *installConfigBuilder {
+	bmPlatform := validBareMetalPlatform()
+	bmPlatform.Hosts = nil
 	return &installConfigBuilder{
-		InstallConfig: types.InstallConfig{},
+		InstallConfig: types.InstallConfig{Platform: types.Platform{BareMetal: bmPlatform}},
 	}
+}
+
+func (icb *installConfigBuilder) PlatformAWS() *installConfigBuilder {
+	icb.InstallConfig.Platform.BareMetal = nil
+	icb.InstallConfig.Platform = types.Platform{AWS: validAWSPlatform()}
+	return icb
+}
+
+func (icb *installConfigBuilder) PlatformBMWithHosts() *installConfigBuilder {
+	icb.InstallConfig.Platform = types.Platform{BareMetal: validBareMetalPlatform()}
+	return icb
 }
 
 func (icb *installConfigBuilder) CpReplicas(numOfCpReplicas int64) *installConfigBuilder {

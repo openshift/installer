@@ -39,6 +39,7 @@ import (
 	gcpvalidation "github.com/openshift/installer/pkg/types/gcp/validation"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	ibmcloudvalidation "github.com/openshift/installer/pkg/types/ibmcloud/validation"
+	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	nutanixvalidation "github.com/openshift/installer/pkg/types/nutanix/validation"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -1589,8 +1590,26 @@ func validateFencingCredentials(installConfig *types.InstallConfig) (errors fiel
 	allErrs := field.ErrorList{}
 	if fencingCredentials != nil {
 		allErrs = append(allErrs, common.ValidateUniqueAndRequiredFields(fencingCredentials.Credentials, fldPath, func([]byte) bool { return false }, "credentials")...)
+		allErrs = append(allErrs, validateFencingAllowedPlatforms(installConfig, fldPath)...)
+		allErrs = append(allErrs, validateFencingAndHostsMutuallyExclusive(installConfig, fldPath)...)
 	}
 	allErrs = append(allErrs, validateCredentialsNumber(installConfig.ControlPlane, fencingCredentials, fldPath.Child("credentials"))...)
 
 	return allErrs
+}
+
+func validateFencingAllowedPlatforms(config *types.InstallConfig, fldPath *field.Path) field.ErrorList {
+	errs := field.ErrorList{}
+	if config.Platform.Name() != none.Name && config.Platform.Name() != baremetal.Name {
+		errs = append(errs, field.Forbidden(fldPath, fmt.Sprintf("fencing is only supported on baremetal or none platforms, instead %s platform was found", config.Platform.Name())))
+	}
+	return errs
+}
+
+func validateFencingAndHostsMutuallyExclusive(config *types.InstallConfig, fldPath *field.Path) field.ErrorList {
+	errs := field.ErrorList{}
+	if config.Platform.Name() == baremetal.Name && len(config.Platform.BareMetal.Hosts) > 0 {
+		errs = append(errs, field.Forbidden(fldPath, "fencing is mutually exclusive with hosts, please remove either of them"))
+	}
+	return errs
 }
