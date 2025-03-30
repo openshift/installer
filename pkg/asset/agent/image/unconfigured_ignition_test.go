@@ -17,6 +17,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	"github.com/openshift/installer/pkg/types"
 )
 
 func TestUnconfiguredIgnition_Generate(t *testing.T) {
@@ -58,7 +59,7 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 						Filename: mirror.RegistriesConfFilename,
 						Data:     []byte(""),
 					},
-					MirrorConfig: []mirror.RegistriesConfig{
+					MirrorConfig: types.MirrorConfig{
 						{
 							Location: "some.registry.org/release",
 							Mirrors:  []string{"some.mirror.org"},
