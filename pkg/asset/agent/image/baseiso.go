@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/rhcos"
+	"github.com/openshift/installer/pkg/types"
 )
 
 // BaseIso generates the base ISO file for the image
@@ -72,7 +73,7 @@ func (i *BaseIso) Generate(ctx context.Context, dependencies asset.Parents) erro
 	dependencies.Get(agentManifests, registriesConf, agentWorkflow, clusterInfo)
 
 	baseIsoFileName, err := rhcos.NewBaseISOFetcher(
-		i.getRelease(agentManifests, registriesConf),
+		i.getRelease(agentManifests, registriesConf.MirrorConfig),
 		customStreamGetter(agentWorkflow, clusterInfo)).GetBaseISOFilename(ctx, agentManifests.InfraEnv.Spec.CpuArchitecture)
 
 	if err == nil {
@@ -94,7 +95,7 @@ func customStreamGetter(agentWorkflow *workflow.AgentWorkflow, clusterInfo *join
 	return nil
 }
 
-func (i *BaseIso) getRelease(agentManifests *manifests.AgentManifests, registriesConf *mirror.RegistriesConf) rhcos.ReleasePayload {
+func (i *BaseIso) getRelease(agentManifests *manifests.AgentManifests, mirrorConfig types.MirrorConfig) rhcos.ReleasePayload {
 	if i.ocRelease != nil {
 		return i.ocRelease
 	}
@@ -108,7 +109,7 @@ func (i *BaseIso) getRelease(agentManifests *manifests.AgentManifests, registrie
 
 	i.ocRelease = rhcos.NewReleasePayload(
 		rhcos.ExtractConfig{},
-		releaseImage, pullSecret, registriesConf)
+		releaseImage, pullSecret, mirrorConfig)
 
 	return i.ocRelease
 }
