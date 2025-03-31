@@ -1,34 +1,24 @@
 package baremetal
 
 import (
+	"context"
 	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
 	"net/url"
 	"os"
+	"runtime"
 	"strings"
 
+	"github.com/coreos/stream-metadata-go/arch"
 	"github.com/digitalocean/go-libvirt"
 	"github.com/sirupsen/logrus"
 	"libvirt.org/go/libvirtxml"
+
+	"github.com/openshift/assisted-image-service/pkg/isoeditor"
+	"github.com/openshift/installer/pkg/asset/rhcos"
 )
-
-func newCopier(virConn *libvirt.Libvirt, volume libvirt.StorageVol, size uint64) func(src io.Reader) error {
-	copier := func(src io.Reader) error {
-		return virConn.StorageVolUpload(volume, src, 0, size, 0)
-	}
-	return copier
-}
-
-func newVolumeFromXML(s string) (libvirtxml.StorageVolume, error) {
-	var volumeDef libvirtxml.StorageVolume
-	err := xml.Unmarshal([]byte(s), &volumeDef)
-	if err != nil {
-		return libvirtxml.StorageVolume{}, err
-	}
-	return volumeDef, nil
-}
 
 func newDomain(name string) libvirtxml.Domain {
 	domainDef := libvirtxml.Domain{
@@ -124,24 +114,6 @@ func newDomain(name string) libvirtxml.Domain {
 	return domainDef
 }
 
-func newVolume(name string) libvirtxml.StorageVolume {
-	return libvirtxml.StorageVolume{
-		Name: name,
-		Target: &libvirtxml.StorageVolumeTarget{
-			Format: &libvirtxml.StorageVolumeTargetFormat{
-				Type: "qcow2",
-			},
-			Permissions: &libvirtxml.StorageVolumeTargetPermissions{
-				Mode: "644",
-			},
-		},
-		Capacity: &libvirtxml.StorageVolumeSize{
-			Unit:  "bytes",
-			Value: 1,
-		},
-	}
-}
-
 func createStoragePool(virConn *libvirt.Libvirt, config baremetalConfig) (libvirt.StoragePool, error) {
 	// TODO: check if unique
 	bootstrapPool := libvirtxml.StoragePool{
@@ -184,94 +156,75 @@ func createStoragePool(virConn *libvirt.Libvirt, config baremetalConfig) (libvir
 	return pool, nil
 }
 
-func createBaseVolume(virConn *libvirt.Libvirt, config baremetalConfig, pool libvirt.StoragePool) (libvirt.StorageVol, error) {
-	bootstrapBaseVolume := newVolume(fmt.Sprintf("%s-bootstrap-base", config.ClusterID))
-	image, err := newImage(config.BootstrapOSImage)
-	if err != nil {
-		return libvirt.StorageVol{}, err
-	}
-
-	isQCOW2, err := image.IsQCOW2()
-	if err != nil {
-		return libvirt.StorageVol{}, err
-	}
-	if isQCOW2 {
-		bootstrapBaseVolume.Target.Format.Type = "qcow2"
-	}
-
-	size, err := image.Size()
-	if err != nil {
-		return libvirt.StorageVol{}, err
-	}
-
-	bootstrapBaseVolume.Capacity.Unit = "B"
-	bootstrapBaseVolume.Capacity.Value = size
-
-	bootstrapBaseVolumeXML, err := xml.Marshal(bootstrapBaseVolume)
-	if err != nil {
-		return libvirt.StorageVol{}, err
-	}
-
-	baseVolume, err := virConn.StorageVolCreateXML(pool, string(bootstrapBaseVolumeXML), 0)
-
-	if err != nil {
-		return libvirt.StorageVol{}, err
-	}
-
-	err = image.Import(newCopier(virConn, baseVolume, bootstrapBaseVolume.Capacity.Value), bootstrapBaseVolume)
-	if err != nil {
-		return libvirt.StorageVol{}, err
-	}
-
-	return baseVolume, nil
+func getLiveISO(config baremetalConfig) (string, error) {
+	fetcher := rhcos.NewBaseISOFetcher(
+		rhcos.NewReleasePayload(
+			rhcos.ExtractConfig{},
+			config.ReleaseImagePullSpec,
+			config.PullSecret,
+			config.MirrorConfig,
+		),
+		nil)
+	return fetcher.GetBaseISOFilename(context.Background(), arch.RpmArch(runtime.GOARCH))
 }
 
-func createMainVolume(virConn *libvirt.Libvirt, config baremetalConfig, pool libvirt.StoragePool, baseVolume libvirt.StorageVol) (libvirt.StorageVol, error) {
-	bootstrapVolume := newVolume(fmt.Sprintf("%s-bootstrap", config.ClusterID))
-	bootstrapVolume.Capacity.Value = 34359738368
+func createLiveVolume(virConn *libvirt.Libvirt, config baremetalConfig, pool libvirt.StoragePool) (libvirt.StorageVol, error) {
+	isoFile, err := getLiveISO(config)
+	if err != nil {
+		return libvirt.StorageVol{}, err
+	}
+	defer os.Remove(isoFile)
 
-	volPath, err := virConn.StorageVolGetPath(baseVolume)
+	stream, err := isoeditor.NewRHCOSStreamReader(
+		isoFile,
+		&isoeditor.IgnitionContent{Config: []byte(config.IgnitionBootstrap)},
+		nil,
+		nil, // TODO(zaneb): FIPS
+	)
+	if err != nil {
+		return libvirt.StorageVol{}, err
+	}
+	defer stream.Close()
+	size, err := stream.Seek(0, io.SeekEnd)
+	if err != nil {
+		return libvirt.StorageVol{}, err
+	}
+	_, err = stream.Seek(0, io.SeekStart)
 	if err != nil {
 		return libvirt.StorageVol{}, err
 	}
 
-	baseVolumeXMLDesc, err := virConn.StorageVolGetXMLDesc(baseVolume, 0)
+	bootstrapLiveVolume := libvirtxml.StorageVolume{
+		Name: fmt.Sprintf("%s-live-provisioner", config.ClusterID),
+		Type: "file",
+		Target: &libvirtxml.StorageVolumeTarget{
+			Format: &libvirtxml.StorageVolumeTargetFormat{
+				Type: "iso",
+			},
+			Permissions: &libvirtxml.StorageVolumeTargetPermissions{
+				Mode: "644",
+			},
+		},
+		Capacity: &libvirtxml.StorageVolumeSize{
+			Value: uint64(size),
+		},
+	}
+	bootstrapLiveVolumeXML, err := xml.Marshal(bootstrapLiveVolume)
 	if err != nil {
 		return libvirt.StorageVol{}, err
 	}
 
-	baseVolFromLibvirt, err := newVolumeFromXML(baseVolumeXMLDesc)
+	liveVolume, err := virConn.StorageVolCreateXML(pool, string(bootstrapLiveVolumeXML), 0)
 	if err != nil {
 		return libvirt.StorageVol{}, err
 	}
 
-	backingStoreVolumeDef := libvirtxml.StorageVolumeBackingStore{
-		Path:   volPath,
-		Format: baseVolFromLibvirt.Target.Format,
-	}
-
-	bootstrapVolume.BackingStore = &backingStoreVolumeDef
-
-	bootstrapVolumeXML, err := xml.Marshal(bootstrapVolume)
+	err = virConn.StorageVolUpload(liveVolume, stream, 0, uint64(size), 0)
 	if err != nil {
 		return libvirt.StorageVol{}, err
 	}
 
-	return virConn.StorageVolCreateXML(pool, string(bootstrapVolumeXML), 0)
-}
-func createIgnition(virConn *libvirt.Libvirt, config baremetalConfig, pool libvirt.StoragePool) error {
-	bootstrapIgnition := defIgnition{
-		Name:     fmt.Sprintf("%s-bootstrap.ign", config.ClusterID),
-		PoolName: pool.Name,
-		Content:  config.IgnitionBootstrap,
-	}
-
-	_, err := bootstrapIgnition.CreateAndUpload(virConn)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return liveVolume, nil
 }
 
 func getHostCapabilities(virConn *libvirt.Libvirt) (libvirtxml.Caps, error) {
@@ -290,7 +243,7 @@ func getHostCapabilities(virConn *libvirt.Libvirt) (libvirtxml.Caps, error) {
 	return caps, nil
 }
 
-func createBootstrapDomain(virConn *libvirt.Libvirt, config baremetalConfig, pool libvirt.StoragePool, volume libvirt.StorageVol) error {
+func createBootstrapDomain(virConn *libvirt.Libvirt, config baremetalConfig, pool libvirt.StoragePool, liveCDVolume libvirt.StorageVol) error {
 	bootstrapDom := newDomain(fmt.Sprintf("%s-bootstrap", config.ClusterID))
 
 	capabilities, err := getHostCapabilities(virConn)
@@ -330,42 +283,25 @@ func createBootstrapDomain(virConn *libvirt.Libvirt, config baremetalConfig, poo
 		bootstrapDom.Devices.Interfaces = append(bootstrapDom.Devices.Interfaces, netIface)
 	}
 
-	disk := libvirtxml.DomainDisk{
-		Device: "disk",
+	liveCD := libvirtxml.DomainDisk{
+		Device: "cdrom",
 		Target: &libvirtxml.DomainDiskTarget{
-			Bus: "virtio",
-			Dev: "vda",
+			Bus: "sata",
+			Dev: "sda",
 		},
 		Driver: &libvirtxml.DomainDiskDriver{
 			Name: "qemu",
 			Type: "raw",
 		},
 		Source: &libvirtxml.DomainDiskSource{
-			Index: 0,
 			Volume: &libvirtxml.DomainDiskSourceVolume{
 				Pool:   pool.Name,
-				Volume: volume.Name,
+				Volume: liveCDVolume.Name,
 			},
 		},
 	}
 
-	disk.Driver = &libvirtxml.DomainDiskDriver{
-		Name: "qemu",
-		Type: "qcow2",
-	}
-	bootstrapDom.Devices.Disks = append(bootstrapDom.Devices.Disks, disk)
-
-	ignitionKey := fmt.Sprintf("/var/lib/libvirt/openshift-images/%s-bootstrap/%s-bootstrap.ign", config.ClusterID, config.ClusterID)
-	bootstrapDom.QEMUCommandline = &libvirtxml.DomainQEMUCommandline{
-		Args: []libvirtxml.DomainQEMUCommandlineArg{
-			{
-				Value: "-fw_cfg",
-			},
-			{
-				Value: fmt.Sprintf("name=%s,file=%s", "opt/com.coreos/config", ignitionKey),
-			},
-		},
-	}
+	bootstrapDom.Devices.Disks = append(bootstrapDom.Devices.Disks, liveCD)
 
 	bootstrapDom.Resource = nil
 
@@ -405,26 +341,14 @@ func createBootstrap(config baremetalConfig) error {
 		return err
 	}
 
-	logrus.Debug("  Creating base volume")
-	baseVolume, err := createBaseVolume(virConn, config, pool)
-	if err != nil {
-		return err
-	}
-
-	logrus.Debug("  Creating main volume")
-	mainVolume, err := createMainVolume(virConn, config, pool, baseVolume)
-	if err != nil {
-		return err
-	}
-
-	logrus.Debug("  Creating ignition")
-	err = createIgnition(virConn, config, pool)
+	logrus.Debug("  Creating live volume")
+	liveVolume, err := createLiveVolume(virConn, config, pool)
 	if err != nil {
 		return err
 	}
 
 	logrus.Debug("  Creating bootstrap domain")
-	err = createBootstrapDomain(virConn, config, pool, mainVolume)
+	err = createBootstrapDomain(virConn, config, pool, liveVolume)
 	if err != nil {
 		return err
 	}
@@ -482,34 +406,12 @@ func destroyBootstrap(config baremetalConfig) error {
 		return err
 	}
 
-	vol, err := virConn.StorageVolLookupByName(pool, name)
+	vol, err := virConn.StorageVolLookupByName(pool, fmt.Sprintf("%s-live-provisioner", config.ClusterID))
 	if err != nil {
 		return err
 	}
 
-	logrus.Debug("  Deleting main volume")
-	err = virConn.StorageVolDelete(vol, libvirt.StorageVolDeleteNormal)
-	if err != nil {
-		return err
-	}
-
-	vol, err = virConn.StorageVolLookupByName(pool, fmt.Sprintf("%s-bootstrap-base", config.ClusterID))
-	if err != nil {
-		return err
-	}
-
-	logrus.Debug("  Deleting base volume")
-	err = virConn.StorageVolDelete(vol, libvirt.StorageVolDeleteNormal)
-	if err != nil {
-		return err
-	}
-
-	vol, err = virConn.StorageVolLookupByName(pool, fmt.Sprintf("%s-bootstrap.ign", config.ClusterID))
-	if err != nil {
-		return err
-	}
-
-	logrus.Debug("  Deleting ignition volume")
+	logrus.Debug("  Deleting live volume")
 	err = virConn.StorageVolDelete(vol, libvirt.StorageVolDeleteNormal)
 	if err != nil {
 		return err
@@ -521,7 +423,7 @@ func destroyBootstrap(config baremetalConfig) error {
 		return err
 	}
 
-	logrus.Debug("  Deleting pool pool")
+	logrus.Debug("  Deleting pool")
 	err = virConn.StoragePoolDelete(pool, libvirt.StoragePoolDeleteNormal)
 	if err != nil {
 		return err
