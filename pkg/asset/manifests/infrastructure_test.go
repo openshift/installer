@@ -253,6 +253,12 @@ func (b icBuildNamespace) forVSphere() icOption {
 	}
 }
 
+func (b icBuildNamespace) withPublish(publish types.PublishingStrategy) icOption {
+	return func(ic *types.InstallConfig) {
+		ic.Publish = publish
+	}
+}
+
 func (b icBuildNamespace) withMachineNetwork(cidr string) icOption {
 	return func(ic *types.InstallConfig) {
 		b.forVSphere()(ic)
@@ -308,6 +314,13 @@ func (b icBuildNamespace) withAWSUserProvisionedDNS(enabled string) icOption {
 			ic.Platform.AWS.UserProvisionedDNS = dns.UserProvisionedDNSEnabled
 			ic.FeatureGates = []string{"AWSClusterHostedDNS=true"}
 		}
+	}
+}
+
+func (b icBuildNamespace) withAWSBYOSubnets(subnets ...awstypes.Subnet) icOption {
+	return func(ic *types.InstallConfig) {
+		b.forAWS()(ic)
+		ic.Platform.AWS.VPC.Subnets = append(ic.Platform.AWS.VPC.Subnets, subnets...)
 	}
 }
 
