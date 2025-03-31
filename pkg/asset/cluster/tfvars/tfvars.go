@@ -35,6 +35,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
+	"github.com/openshift/installer/pkg/asset/releaseimage"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/tfvars"
 	awstfvars "github.com/openshift/installer/pkg/tfvars/aws"
@@ -101,6 +102,7 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 		new(rhcos.Image),
 		new(rhcos.Release),
 		new(rhcos.BootstrapImage),
+		&releaseimage.Image{},
 		&bootstrap.Bootstrap{},
 		&machine.Master{},
 		&machine.Arbiter{},
@@ -129,8 +131,9 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 	rhcosImage := new(rhcos.Image)
 	rhcosRelease := new(rhcos.Release)
 	rhcosBootstrapImage := new(rhcos.BootstrapImage)
+	releaseImage := &releaseimage.Image{}
 	ironicCreds := &baremetalbootstrap.IronicCreds{}
-	parents.Get(clusterID, installConfig, bootstrapIgnAsset, arbiterIgnAsset, arbiterAsset, masterIgnAsset, mastersAsset, workersAsset, manifestsAsset, rhcosImage, rhcosRelease, rhcosBootstrapImage, ironicCreds)
+	parents.Get(clusterID, installConfig, bootstrapIgnAsset, arbiterIgnAsset, arbiterAsset, masterIgnAsset, mastersAsset, workersAsset, manifestsAsset, rhcosImage, rhcosRelease, rhcosBootstrapImage, releaseImage, ironicCreds)
 
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -764,7 +767,9 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 	case baremetal.Name:
 		data, err = baremetaltfvars.TFVars(
 			installConfig.Config.Platform.BareMetal.LibvirtURI,
-			string(*rhcosBootstrapImage),
+			releaseImage.PullSpec,
+			installConfig.Config.PullSecret,
+			types.BuildMirrorConfig(installConfig.Config),
 			installConfig.Config.Platform.BareMetal.ExternalBridge,
 			installConfig.Config.Platform.BareMetal.ExternalMACAddress,
 			installConfig.Config.Platform.BareMetal.ProvisioningBridge,
