@@ -18,6 +18,28 @@ type Mirror struct {
 // MirrorConfig holds the registry mirror data
 type MirrorConfig []Mirror
 
+func BuildMirrorConfig(ic *InstallConfig) MirrorConfig {
+	var mc MirrorConfig
+
+	if len(ic.ImageDigestSources) > 0 {
+		for _, src := range ic.ImageDigestSources {
+			mc = append(mc, Mirror{
+				Location: src.Source,
+				Mirrors:  src.Mirrors,
+			})
+		}
+	} else if len(ic.DeprecatedImageContentSources) > 0 {
+		for _, src := range ic.DeprecatedImageContentSources {
+			mc = append(mc, Mirror{
+				Location: src.Source,
+				Mirrors:  src.Mirrors,
+			})
+		}
+	}
+
+	return mc
+}
+
 // HasMirrors returns whether there are any mirrors configured.
 func (mc MirrorConfig) HasMirrors() bool {
 	return len(mc) > 0
