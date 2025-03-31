@@ -4,16 +4,18 @@ package baremetal
 import (
 	"encoding/json"
 
-	"github.com/pkg/errors"
-
-	"github.com/openshift/installer/pkg/rhcos/cache"
+	"github.com/openshift/installer/pkg/types"
 )
+
+type Bridge struct {
+	Name string `json:"name"`
+	MAC  string `json:"mac"`
+}
 
 // Config represents the baremetal platform parts of install config needed for bootstrapping.
 type Config struct {
-	LibvirtURI       string              `json:"libvirt_uri,omitempty"`
-	BootstrapOSImage string              `json:"bootstrap_os_image,omitempty"`
-	Bridges          []map[string]string `json:"bridges"`
+	LibvirtURI  string    `json:"libvirt_uri,omitempty"`
+	Bridges     []Bridge  `json:"bridges"`
 }
 
 type imageDownloadFunc func(baseURL, applicationName string) (string, error)
@@ -33,20 +35,19 @@ func TFVars(libvirtURI string, bootstrapOSImage, externalBridge, externalMAC, pr
 		return nil, errors.Wrap(err, "failed to use cached bootstrap libvirt image")
 	}
 
-	var bridges []map[string]string
+	var bridges []Bridge
 
 	bridges = append(bridges,
-		map[string]string{
-			"name": externalBridge,
-			"mac":  externalMAC,
+		Bridge{
+			Name: externalBridge,
+			MAC:  externalMAC,
 		})
 
 	if provisioningBridge != "" {
-		bridges = append(
-			bridges,
-			map[string]string{
-				"name": provisioningBridge,
-				"mac":  provisioningMAC,
+		bridges = append(bridges,
+			Bridge{
+				Name: provisioningBridge,
+				MAC:  provisioningMAC,
 			})
 	}
 
