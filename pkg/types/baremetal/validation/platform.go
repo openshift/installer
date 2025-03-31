@@ -6,7 +6,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"reflect"
 	"strings"
 
 	"github.com/apparentlymart/go-cidr/cidr"
@@ -202,40 +201,26 @@ func validateHostsBMCOnly(hosts []*baremetal.Host, fldPath *field.Path) field.Er
 }
 
 func validateOSImages(p *baremetal.Platform, fldPath *field.Path) field.ErrorList {
-	platformErrs := field.ErrorList{}
+	var errs field.ErrorList
 
-	validate := validator.New()
-
-	customErrs := make(map[string]error)
-	validate.RegisterValidation("osimageuri", func(fl validator.FieldLevel) bool {
-		err := validateOSImageURI(fl.Field().String())
-		if err != nil {
-			customErrs[fl.FieldName()] = err
-		}
-		return err == nil
-	})
-	validate.RegisterValidation("urlexist", func(fl validator.FieldLevel) bool {
-		if res, err := http.Head(fl.Field().String()); err == nil {
-			return res.StatusCode == http.StatusOK
-		}
-		return false
-	})
-	err := validate.Struct(p)
-
-	if err != nil {
-		baseType := reflect.TypeOf(p).Elem().Name()
-		for _, err := range err.(validator.ValidationErrors) {
-			childName := fldPath.Child(err.Namespace()[len(baseType)+1:])
-			switch err.Tag() {
-			case "osimageuri":
-				platformErrs = append(platformErrs, field.Invalid(childName, err.Value(), customErrs[err.Field()].Error()))
-			case "urlexist":
-				platformErrs = append(platformErrs, field.NotFound(childName, err.Value()))
-			}
-		}
+	fields := map[string]string{
+		"bootstrapOSImage": p.BootstrapOSImage,
+		"clusterOSImage":   p.ClusterOSImage,
 	}
 
-	return platformErrs
+	for fieldName, url := range fields {
+		if url == "" {
+			continue
+		}
+		if err := validateOSImageURI(url); err != nil {
+			errs = append(errs,
+				field.Invalid(fldPath.Child(fieldName), url, err.Error()))
+		} else if res, err := http.Head(url); err != nil || res.StatusCode != http.StatusOK /* #nosec G107 */ {
+			errs = append(errs,
+				field.NotFound(fldPath.Child(fieldName), url))
+		}
+	}
+	return errs
 }
 
 func validateHostsName(hosts []*baremetal.Host, fldPath *field.Path) (errors field.ErrorList) {

@@ -487,49 +487,49 @@ func TestValidateProvisioning(t *testing.T) {
 			name: "invalid_bootstraposimage",
 			platform: platform().
 				BootstrapOSImage("192.168.111.1/images/qemu.x86_64.qcow2.gz?sha256=3b5a882c2af3e19d515b961855d144f293cab30190c2bdedd661af31a1fc4e2f").build(),
-			expected: "baremetal.BootstrapOSImage: Invalid value:.*: the URI provided:.*is invalid",
+			expected: "baremetal.bootstrapOSImage: Invalid value:.*: the URI provided:.*is invalid",
 		},
 		{
 			name: "invalid_clusterosimage",
 			platform: platform().
 				ClusterOSImage("http//192.168.111.1/images/metal.x86_64.qcow2.gz?sha256=340dfa4d92450f2eee852ed1e2d02e3138cc68d824827ef9cf0a40a7ea2f93da").build(),
-			expected: "baremetal.ClusterOSImage: Invalid value:.*: the URI provided:.*is invalid",
+			expected: "baremetal.clusterOSImage: Invalid value:.*: the URI provided:.*is invalid",
 		},
 		{
 			name: "invalid_bootstraposimage_checksum",
 			platform: platform().
 				BootstrapOSImage("http://192.168.111.1/images/qemu.x86_64.qcow2.gz?md5sum=3b5a882c2af3e19d515b961855d144f293cab30190c2bdedd661af31a1fc4e2f").build(),
-			expected: "baremetal.BootstrapOSImage: Invalid value:.*: the sha256 parameter in the.*URI is missing",
+			expected: "baremetal.bootstrapOSImage: Invalid value:.*: the sha256 parameter in the.*URI is missing",
 		},
 		{
 			name: "invalid_clusterosimage_checksum",
 			platform: platform().
 				ClusterOSImage("http://192.168.111.1/images/metal.x86_64.qcow2.gz?sha256=3ee852ed1e2d02e3138cc68d824827ef9cf0a40a7ea2f93da").build(),
-			expected: "baremetal.ClusterOSImage: Invalid value:.*: the sha256 parameter in the.*URI is invalid",
+			expected: "baremetal.clusterOSImage: Invalid value:.*: the sha256 parameter in the.*URI is invalid",
 		},
 		{
 			name: "invalid_bootstraposimage_uri_scheme",
 			platform: platform().
 				BootstrapOSImage("xttp://192.168.111.1/images/qemu.x86_64.qcow2.gz?sha256=3b5a882c2af3e19d515b961855d144f293cab30190c2bdedd661af31a1fc4e2f").build(),
-			expected: "baremetal.BootstrapOSImage: Invalid value:.*: the URI provided.*must begin with http/https",
+			expected: "baremetal.bootstrapOSImage: Invalid value:.*: the URI provided.*must begin with http/https",
 		},
 		{
 			name: "invalid_clusterosimage_uri_scheme",
 			platform: platform().
 				ClusterOSImage("xttp://192.168.111.1/images/qemu.x86_64.qcow2.gz?sha256=3b5a882c2af3e19d515b961855d144f293cab30190c2bdedd661af31a1fc4e2f").build(),
-			expected: "baremetal.ClusterOSImage: Invalid value:.*: the URI provided.*must begin with http/https",
+			expected: "baremetal.clusterOSImage: Invalid value:.*: the URI provided.*must begin with http/https",
 		},
 		{
 			name: "notfound_bootstraposimage",
 			platform: platform().
 				BootstrapOSImage(imagesServer.URL + "/images/notexistent.x86_64.qcow2.gz?sha256=3b5a882c2af3e19d515b961855d144f293cab30190c2bdedd661af31a1fc4e2f").build(),
-			expected: "baremetal.BootstrapOSImage: Not found:.*",
+			expected: "baremetal.bootstrapOSImage: Not found:.*",
 		},
 		{
 			name: "notfound_clusterosimageimage",
 			platform: platform().
 				ClusterOSImage(imagesServer.URL + "/images/notexistent.x86_64.qcow2.gz?sha256=3b5a882c2af3e19d515b961855d144f293cab30190c2bdedd661af31a1fc4e2f").build(),
-			expected: "baremetal.ClusterOSImage: Not found:.*",
+			expected: "baremetal.clusterOSImage: Not found:.*",
 		},
 		{
 			name: "invalid_extbridge",
