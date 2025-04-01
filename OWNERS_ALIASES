@@ -133,6 +133,7 @@ aliases:
     - yasminvalim
     - jbtrystram
     - madhu-pillai
+    - Johan-Liebert1
   coreos-reviewers:
     - c4rt0
     - cgwalters
@@ -153,6 +154,7 @@ aliases:
     - yasminvalim
     - jbtrystram
     - madhu-pillai
+    - Johan-Liebert1
   agent-reviewers:
     - andfasano
     - bfournie
