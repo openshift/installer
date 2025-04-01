@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/none"
+	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -41,7 +42,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: Platform: Unsupported value: "aws": supported values: "baremetal", "vsphere", "none", "external"`,
+			expectedError: `invalid install-config configuration: Platform: Unsupported value: "aws": supported values: "baremetal", "vsphere", "nutanix", "none", "external"`,
 		},
 		{
 			name: "apiVips not set for baremetal Compact platform",
@@ -88,6 +89,420 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
 			expectedError: "invalid install-config configuration: [platform.baremetal.apiVIPs: Required value: must specify at least one VIP for the API, platform.baremetal.apiVIPs: Required value: must specify VIP for API, when VIP for ingress is set]",
+		},
+		{
+			name: "apiVIPs are missing for nutanix platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  nutanix:
+    ingressVips:
+      - 192.168.122.11
+    prismCentral:
+      endpoint:
+        address: pc1.test.metalkube.org
+        port: 9440
+      password: testPassword
+      username: testUser
+    prismElements:
+    - endpoint:
+        address: pe1.test.metalkube.org
+        port: 9440
+      uuid: 00061f7f-44f7-19dc-72gc-7cc25586ee53
+    subnetUUIDs:
+    - a2e46975-2cde-4a49-9dda-815eb4fcd681
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [platform.nutanix.apiVIPs: Required value: must specify at least one VIP for the API, platform.nutanix.apiVIPs: Required value: must specify VIP for API, when VIP for ingress is set]`,
+		},
+		{
+			name: "ingressVIP missing for nutanix platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  nutanix:
+    apiVips:
+      - 192.168.122.10
+    prismCentral:
+      endpoint:
+        address: pc1.test.metalkube.org
+        port: 9440
+      password: testPassword
+      username: testUser
+    prismElements:
+    - endpoint:
+        address: pe1.test.metalkube.org
+        port: 9440
+      uuid: 00061f7f-44f7-19dc-72gc-7cc25586ee53
+    subnetUUIDs:
+    - a2e46975-2cde-4a49-9dda-815eb4fcd681
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [platform.nutanix.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, platform.nutanix.ingressVIPs: Required value: must specify at least one VIP for the Ingress]`,
+		},
+		{
+			name: "ingress and apiVip's must be from machine network CIDR when loadbalancer type is not usermanaged for nutanix platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  nutanix:
+    apiVips:
+      - 10.0.0.1
+    ingressVips:
+      - 10.0.0.2
+    prismCentral:
+      endpoint:
+        address: pc1.test.metalkube.org
+        port: 9440
+      password: testPassword
+      username: testUser
+    prismElements:
+    - endpoint:
+        address: pe1.test.metalkube.org
+        port: 9440
+      uuid: 00061f7f-44f7-19dc-72gc-7cc25586ee53
+    subnetUUIDs:
+    - a2e46975-2cde-4a49-9dda-815eb4fcd681
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [platform.nutanix.apiVIPs: Invalid value: "10.0.0.1": IP expected to be in one of the machine networks: 192.168.122.0/23, platform.nutanix.ingressVIPs: Invalid value: "10.0.0.2": IP expected to be in one of the machine networks: 192.168.122.0/23]`,
+		},
+		{
+			name: "missing prismCentral endpoint address and port for nutanix platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  nutanix:
+    apiVips:
+      - 192.168.122.10
+    ingressVips:
+      - 192.168.122.11
+    prismCentral:
+      endpoint:
+        address:
+        port:
+      password: testPassword
+      username: testUser
+    prismElements:
+    - endpoint:
+        address: pe1.test.metalkube.org
+        port: 9440
+      uuid: 00061f7f-44f7-19dc-72gc-7cc25586ee53
+    subnetUUIDs:
+    - a2e46975-2cde-4a49-9dda-815eb4fcd681
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [platform.nutanix.prismCentral.endpoint.address: Required value: must specify the Prism Central endpoint address, platform.nutanix.prismCentral.endpoint.port: Invalid value: 0: The Prism Central endpoint port is invalid, must be in the range of 1 to 65535]`,
+		},
+		{
+			name: "missing prismCentral username and password for nutanix platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  nutanix:
+    apiVips:
+      - 192.168.122.10
+    ingressVips:
+      - 192.168.122.11
+    prismCentral:
+      endpoint:
+        address: pc1.test.metalkube.org
+        port: 9440
+      password: 
+      username: 
+    prismElements:
+    - endpoint:
+        address: pe1.test.metalkube.org
+        port: 9440
+      uuid: 00061f7f-44f7-19dc-72gc-7cc25586ee53
+    subnetUUIDs:
+    - a2e46975-2cde-4a49-9dda-815eb4fcd681
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [platform.nutanix.prismCentral.username: Required value: must specify the Prism Central username, platform.nutanix.prismCentral.password: Required value: must specify the Prism Central password]`,
+		},
+		{
+			name: "missing prismElements for nutanix platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  nutanix:
+    apiVips:
+      - 192.168.122.10
+    ingressVips:
+      - 192.168.122.11
+    prismCentral:
+      endpoint:
+        address: pc1.test.metalkube.org
+        port: 9440
+      password: testPassword
+      username: testUser
+    prismElements:
+    subnetUUIDs:
+    - a2e46975-2cde-4a49-9dda-815eb4fcd681
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: platform.nutanix.prismElements: Required value: must specify one Prism Element`,
+		},
+		{
+			name: "missing prismElement uuid for nutanix platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  nutanix:
+    apiVips:
+      - 192.168.122.10
+    ingressVips:
+      - 192.168.122.11
+    prismCentral:
+      endpoint:
+        address: pc1.test.metalkube.org
+        port: 9440
+      password: testPassword
+      username: testUser
+    prismElements:
+    - endpoint:
+        address: pe1.test.metalkube.org
+        port: 9440
+      uuid:
+    subnetUUIDs:
+    - a2e46975-2cde-4a49-9dda-815eb4fcd681
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: platform.nutanix.prismElements.uuid: Required value: must specify the Prism Element UUID`,
+		},
+		{
+			name: "missing subnetUUIDs for nutanix platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  nutanix:
+    apiVips:
+      - 192.168.122.10
+    ingressVips:
+      - 192.168.122.11
+    prismCentral:
+      endpoint:
+        address: pc1.test.metalkube.org
+        port: 9440
+      password: testPassword
+      username: testUser
+    prismElements:
+    - endpoint:
+        address: pe1.test.metalkube.org
+        port: 9440
+      uuid: 00061f7f-44f7-19dc-72gc-7cc25586ee53
+    subnetUUIDs:
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: platform.nutanix.subnetUUIDs: Required value: must specify at least one subnet`,
+		},
+		{
+			name: "duplicate subnetUUIDs for nutanix platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  nutanix:
+    apiVips:
+      - 192.168.122.10
+    ingressVips:
+      - 192.168.122.11
+    prismCentral:
+      endpoint:
+        address: pc1.test.metalkube.org
+        port: 9440
+      password: testPassword
+      username: testUser
+    prismElements:
+    - endpoint:
+        address: pe1.test.metalkube.org
+        port: 9440
+      uuid: 00061f7f-44f7-19dc-72gc-7cc25586ee53
+    subnetUUIDs:
+    - a2e46975-2cde-4a49-9dda-815eb4fcd681
+    - a2e46975-2cde-4a49-9dda-815eb4fcd681
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: platform.nutanix.subnetUUIDs: Invalid value: "a2e46975-2cde-4a49-9dda-815eb4fcd681": should not configure duplicate value`,
+		},
+		{
+			name: "valid configuration for nutanix platform for compact cluster",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+  serviceNetwork: 
+  - 172.30.0.0/16
+compute:
+  - architecture: amd64
+    hyperthreading: Enabled
+    name: worker
+    platform: {}
+    replicas: 0
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 3
+platform:
+  nutanix:
+    apiVips:
+      - 192.168.122.10
+    ingressVips:
+      - 192.168.122.11
+    prismCentral:
+      endpoint:
+        address: pc1.test.metalkube.org
+        port: 9440
+      password: testPassword
+      username: testUser
+    prismElements:
+    - endpoint:
+        address: pe1.test.metalkube.org
+        port: 9440
+      uuid: 00061f7f-44f7-19dc-72gc-7cc25586ee53
+    subnetUUIDs:
+    - a2e46975-2cde-4a49-9dda-815eb4fcd681
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: true,
+			expectedConfig: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+				BaseDomain:                  "test-domain",
+				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("192.168.122.0/23")},
+					},
+					NetworkType:    "OVNKubernetes",
+					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+					ClusterNetwork: []types.ClusterNetworkEntry{
+						{
+							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+							HostPrefix: 23,
+						},
+					},
+				},
+				ControlPlane: &types.MachinePool{
+					Name:           "master",
+					Replicas:       pointer.Int64(3),
+					Hyperthreading: types.HyperthreadingEnabled,
+					Architecture:   types.ArchitectureAMD64,
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:           "worker",
+						Replicas:       pointer.Int64(0),
+						Hyperthreading: types.HyperthreadingEnabled,
+						Architecture:   types.ArchitectureAMD64,
+					},
+				},
+				Platform: types.Platform{
+					Nutanix: &nutanix.Platform{
+						APIVIPs:     []string{"192.168.122.10"},
+						IngressVIPs: []string{"192.168.122.11"},
+						PrismCentral: nutanix.PrismCentral{
+							Endpoint: nutanix.PrismEndpoint{Address: "pc1.test.metalkube.org", Port: 9440},
+							Username: "testUser",
+							Password: "testPassword",
+						},
+						PrismElements: []nutanix.PrismElement{{
+							Endpoint: nutanix.PrismEndpoint{Address: "pe1.test.metalkube.org", Port: 9440},
+							UUID:     "00061f7f-44f7-19dc-72gc-7cc25586ee53",
+						}},
+						SubnetUUIDs: []string{"a2e46975-2cde-4a49-9dda-815eb4fcd681"},
+					},
+				},
+				PullSecret:      `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+				Publish:         types.ExternalPublishingStrategy,
+				CredentialsMode: types.ManualCredentialsMode,
+			},
 		},
 		{
 			name: "ingressVIP missing and deprecated vSphere credentials are present",
@@ -503,7 +918,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: [Platform: Unsupported value: \"aws\": supported values: \"baremetal\", \"vsphere\", \"none\", \"external\", Platform: Invalid value: \"aws\": Only platform none and external supports 1 ControlPlane and 0 Compute nodes]",
+			expectedError: "invalid install-config configuration: [Platform: Unsupported value: \"aws\": supported values: \"baremetal\", \"vsphere\", \"nutanix\", \"none\", \"external\", Platform: Invalid value: \"aws\": Only platform none and external supports 1 ControlPlane and 0 Compute nodes]",
 		},
 		{
 			name: "invalid platform.baremetal for architecture ppc64le",
