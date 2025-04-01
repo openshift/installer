@@ -23,6 +23,12 @@ const (
 	// for annotation formatting rules.
 	VMTagsLastAppliedAnnotation = "sigs.k8s.io/cluster-api-provider-azure-last-applied-tags-vm"
 
+	// VMSSTagsLastAppliedAnnotation is the key for the machine object annotation
+	// which tracks the AdditionalTags in the MachinePool Provider Config.
+	// See https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+	// for annotation formatting rules.
+	VMSSTagsLastAppliedAnnotation = "sigs.k8s.io/cluster-api-provider-azure-last-applied-tags-vmss"
+
 	// RGTagsLastAppliedAnnotation is the key for the Azure Cluster object annotation
 	// which tracks the AdditionalTags for Resource Group which is part in the Azure Cluster.
 	// See https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/

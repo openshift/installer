@@ -20,9 +20,9 @@ settings = {
     "deploy_cert_manager": True,
     "preload_images_for_kind": True,
     "kind_cluster_name": "capz",
-    "capi_version": "v1.7.3",
-    "caaph_version": "v0.2.1",
-    "cert_manager_version": "v1.15.0",
+    "capi_version": "v1.8.10",
+    "caaph_version": "v0.2.5",
+    "cert_manager_version": "v1.16.1",
     "kubernetes_version": "v1.28.3",
     "aks_kubernetes_version": "v1.28.3",
     "flatcar_version": "3374.2.1",
@@ -51,6 +51,9 @@ if "default_registry" in settings:
     default_registry(settings.get("default_registry"))
 
 os_arch = str(local("go env GOARCH")).rstrip("\n")
+if "aks" in settings.get("kustomize_substitutions", {}).get("MGMT_CLUSTER_NAME", ""):
+    print("Using AKS as management cluster, setting os_arch to amd64")
+    os_arch = "amd64"
 
 # deploy CAPI
 def deploy_capi():
@@ -126,7 +129,7 @@ def validate_auth():
 
 tilt_helper_dockerfile_header = """
 # Tilt image
-FROM golang:1.21 as tilt-helper
+FROM golang:1.22 as tilt-helper
 # Support live reloading with Tilt
 RUN wget --output-document /restart.sh --quiet https://raw.githubusercontent.com/windmilleng/rerun-process-wrapper/master/restart.sh  && \
     wget --output-document /start.sh --quiet https://raw.githubusercontent.com/windmilleng/rerun-process-wrapper/master/start.sh && \
@@ -242,10 +245,18 @@ def capz():
     if extra_args:
         entrypoint.extend(extra_args)
 
+    # use the user REGISTRY if set, otherwise use the default
+    if settings.get("kustomize_substitutions", {}).get("REGISTRY", "") != "":
+        registry = settings.get("kustomize_substitutions", {}).get("REGISTRY", "")
+        print("Using REGISTRY: " + registry + " from tilt-settings.yaml")
+        image = registry + "/cluster-api-azure-controller"
+    else:
+        image = "gcr.io/cluster-api-provider-azure/cluster-api-azure-controller"
+
     # Set up an image build for the provider. The live update configuration syncs the output from the local_resource
     # build into the container.
     docker_build(
-        ref = "gcr.io/k8s-staging-cluster-api-azure/cluster-api-azure-controller",
+        ref = image,
         context = "./.tiltbuild/",
         dockerfile_contents = dockerfile_contents,
         target = "tilt",

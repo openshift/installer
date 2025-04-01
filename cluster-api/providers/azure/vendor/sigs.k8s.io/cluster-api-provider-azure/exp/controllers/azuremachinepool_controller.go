@@ -18,12 +18,16 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/client-go/tools/record"
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
@@ -48,7 +52,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 type (
@@ -60,6 +63,7 @@ type (
 		Timeouts                      reconciler.Timeouts
 		WatchFilterValue              string
 		createAzureMachinePoolService azureMachinePoolServiceCreator
+		BootstrapConfigGVK            schema.GroupVersionKind
 	}
 
 	// annotationReaderWriter provides an interface to read and write annotations.
@@ -72,12 +76,20 @@ type (
 type azureMachinePoolServiceCreator func(machinePoolScope *scope.MachinePoolScope) (*azureMachinePoolService, error)
 
 // NewAzureMachinePoolReconciler returns a new AzureMachinePoolReconciler instance.
-func NewAzureMachinePoolReconciler(client client.Client, recorder record.EventRecorder, timeouts reconciler.Timeouts, watchFilterValue string) *AzureMachinePoolReconciler {
+func NewAzureMachinePoolReconciler(client client.Client, recorder record.EventRecorder, timeouts reconciler.Timeouts, watchFilterValue, bootstrapConfigGVK string) *AzureMachinePoolReconciler {
+	gvk := schema.FromAPIVersionAndKind(kubeadmv1.GroupVersion.String(), reflect.TypeOf((*kubeadmv1.KubeadmConfig)(nil)).Elem().Name())
+	userGVK, _ := schema.ParseKindArg(bootstrapConfigGVK)
+
+	if userGVK != nil {
+		gvk = *userGVK
+	}
+
 	ampr := &AzureMachinePoolReconciler{
-		Client:           client,
-		Recorder:         recorder,
-		Timeouts:         timeouts,
-		WatchFilterValue: watchFilterValue,
+		Client:             client,
+		Recorder:           recorder,
+		Timeouts:           timeouts,
+		WatchFilterValue:   watchFilterValue,
+		BootstrapConfigGVK: gvk,
 	}
 
 	ampr.createAzureMachinePoolService = newAzureMachinePoolService
@@ -108,7 +120,14 @@ func (ampr *AzureMachinePoolReconciler) SetupWithManager(ctx context.Context, mg
 		return errors.Wrapf(err, "failed to create AzureManagedCluster to AzureMachinePools mapper")
 	}
 
-	c, err := ctrl.NewControllerManagedBy(mgr).
+	azureMachinePoolMapper, err := util.ClusterToTypedObjectsMapper(ampr.Client, &infrav1exp.AzureMachinePoolList{}, mgr.GetScheme())
+	if err != nil {
+		return errors.Wrap(err, "failed to create mapper for Cluster to AzureMachines")
+	}
+
+	config := &metav1.PartialObjectMetadata{}
+	config.SetGroupVersionKind(ampr.BootstrapConfigGVK)
+	return ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options.Options).
 		For(&infrav1exp.AzureMachinePool{}).
 		WithEventFilter(predicates.ResourceHasFilterLabel(log, ampr.WatchFilterValue)).
@@ -127,42 +146,30 @@ func (ampr *AzureMachinePoolReconciler) SetupWithManager(ctx context.Context, mg
 			&infrav1.AzureManagedControlPlane{},
 			handler.EnqueueRequestsFromMapFunc(azureManagedControlPlaneMapper),
 		).
-		// watch for changes in KubeadmConfig to sync bootstrap token
+		// watch for changes in KubeadmConfig (or any BootstrapConfig) to sync bootstrap token
 		Watches(
-			&kubeadmv1.KubeadmConfig{},
-			handler.EnqueueRequestsFromMapFunc(KubeadmConfigToInfrastructureMapFunc(ctx, ampr.Client, log)),
+			config,
+			handler.EnqueueRequestsFromMapFunc(BootstrapConfigToInfrastructureMapFunc(ctx, ampr.Client, log)),
 			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
 		).
-		Build(r)
-	if err != nil {
-		return errors.Wrap(err, "error creating controller")
-	}
-
-	if err := c.Watch(
-		source.Kind(mgr.GetCache(), &infrav1exp.AzureMachinePoolMachine{}),
-		handler.EnqueueRequestsFromMapFunc(AzureMachinePoolMachineMapper(mgr.GetScheme(), log)),
-		MachinePoolMachineHasStateOrVersionChange(log),
-		predicates.ResourceHasFilterLabel(log, ampr.WatchFilterValue),
-	); err != nil {
-		return errors.Wrap(err, "failed adding a watch for AzureMachinePoolMachine")
-	}
-
-	azureMachinePoolMapper, err := util.ClusterToTypedObjectsMapper(ampr.Client, &infrav1exp.AzureMachinePoolList{}, mgr.GetScheme())
-	if err != nil {
-		return errors.Wrap(err, "failed to create mapper for Cluster to AzureMachines")
-	}
-
-	// Add a watch on clusterv1.Cluster object for unpause & ready notifications.
-	if err := c.Watch(
-		source.Kind(mgr.GetCache(), &clusterv1.Cluster{}),
-		handler.EnqueueRequestsFromMapFunc(azureMachinePoolMapper),
-		infracontroller.ClusterPauseChangeAndInfrastructureReady(log),
-		predicates.ResourceHasFilterLabel(log, ampr.WatchFilterValue),
-	); err != nil {
-		return errors.Wrap(err, "failed adding a watch for ready clusters")
-	}
-
-	return nil
+		Watches(
+			&infrav1exp.AzureMachinePoolMachine{},
+			handler.EnqueueRequestsFromMapFunc(AzureMachinePoolMachineMapper(mgr.GetScheme(), log)),
+			builder.WithPredicates(
+				MachinePoolMachineHasStateOrVersionChange(log),
+				predicates.ResourceHasFilterLabel(log, ampr.WatchFilterValue),
+			),
+		).
+		// Add a watch on clusterv1.Cluster object for unpause & ready notifications.
+		Watches(
+			&clusterv1.Cluster{},
+			handler.EnqueueRequestsFromMapFunc(azureMachinePoolMapper),
+			builder.WithPredicates(
+				infracontroller.ClusterPauseChangeAndInfrastructureReady(log),
+				predicates.ResourceHasFilterLabel(log, ampr.WatchFilterValue),
+			),
+		).
+		Complete(r)
 }
 
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=azuremachinepools,verbs=get;list;watch;create;update;patch;delete
@@ -323,7 +330,11 @@ func (ampr *AzureMachinePoolReconciler) reconcileNormal(ctx context.Context, mac
 			}
 
 			if reconcileError.IsTransient() {
-				log.Error(err, "failed to reconcile AzureMachinePool", "name", machinePoolScope.Name())
+				if azure.IsOperationNotDoneError(reconcileError) {
+					log.V(2).Info(fmt.Sprintf("AzureMachinePool reconcile not done: %s", reconcileError.Error()))
+				} else {
+					log.V(2).Info(fmt.Sprintf("transient failure to reconcile AzureMachinePool, retrying: %s", reconcileError.Error()))
+				}
 				return reconcile.Result{RequeueAfter: reconcileError.RequeueAfter()}, nil
 			}
 

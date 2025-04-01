@@ -293,6 +293,11 @@ type ExtendedLocationType_STATUS string
 
 const ExtendedLocationType_STATUS_EdgeZone = ExtendedLocationType_STATUS("EdgeZone")
 
+// Mapping from string to ExtendedLocationType_STATUS
+var extendedLocationType_STATUS_Values = map[string]ExtendedLocationType_STATUS{
+	"edgezone": ExtendedLocationType_STATUS_EdgeZone,
+}
+
 // For more details see [managed AAD on AKS](https://docs.microsoft.com/azure/aks/managed-aad).
 type ManagedClusterAADProfile_STATUS_ARM struct {
 	// AdminGroupObjectIDs: The list of AAD group object IDs that will have admin role of the cluster.
@@ -556,6 +561,13 @@ const (
 	ManagedClusterIdentity_Type_STATUS_UserAssigned   = ManagedClusterIdentity_Type_STATUS("UserAssigned")
 )
 
+// Mapping from string to ManagedClusterIdentity_Type_STATUS
+var managedClusterIdentity_Type_STATUS_Values = map[string]ManagedClusterIdentity_Type_STATUS{
+	"none":           ManagedClusterIdentity_Type_STATUS_None,
+	"systemassigned": ManagedClusterIdentity_Type_STATUS_SystemAssigned,
+	"userassigned":   ManagedClusterIdentity_Type_STATUS_UserAssigned,
+}
+
 type ManagedClusterIdentity_UserAssignedIdentities_STATUS_ARM struct {
 	// ClientId: The client id of user assigned identity.
 	ClientId *string `json:"clientId,omitempty"`
@@ -682,12 +694,23 @@ type ManagedClusterSKU_Name_STATUS string
 
 const ManagedClusterSKU_Name_STATUS_Base = ManagedClusterSKU_Name_STATUS("Base")
 
+// Mapping from string to ManagedClusterSKU_Name_STATUS
+var managedClusterSKU_Name_STATUS_Values = map[string]ManagedClusterSKU_Name_STATUS{
+	"base": ManagedClusterSKU_Name_STATUS_Base,
+}
+
 type ManagedClusterSKU_Tier_STATUS string
 
 const (
 	ManagedClusterSKU_Tier_STATUS_Free     = ManagedClusterSKU_Tier_STATUS("Free")
 	ManagedClusterSKU_Tier_STATUS_Standard = ManagedClusterSKU_Tier_STATUS("Standard")
 )
+
+// Mapping from string to ManagedClusterSKU_Tier_STATUS
+var managedClusterSKU_Tier_STATUS_Values = map[string]ManagedClusterSKU_Tier_STATUS{
+	"free":     ManagedClusterSKU_Tier_STATUS_Free,
+	"standard": ManagedClusterSKU_Tier_STATUS_Standard,
+}
 
 // Storage profile for the container service cluster.
 type ManagedClusterStorageProfile_STATUS_ARM struct {
@@ -706,18 +729,6 @@ type ManagedClusterStorageProfile_STATUS_ARM struct {
 
 // Profile for Windows VMs in the managed cluster.
 type ManagedClusterWindowsProfile_STATUS_ARM struct {
-	// AdminPassword: Specifies the password of the administrator account.
-	// Minimum-length: 8 characters
-	// Max-length: 123 characters
-	// Complexity requirements: 3 out of 4 conditions below need to be fulfilled
-	// Has lower characters
-	// Has upper characters
-	// Has a digit
-	// Has a special character (Regex match [\W_])
-	// Disallowed values: "abc@123", "P@$$w0rd", "P@ssw0rd", "P@ssword123", "Pa$$word", "pass@word1", "Password!", "Password1",
-	// "Password22", "iloveyou!"
-	AdminPassword *string `json:"adminPassword,omitempty"`
-
 	// AdminUsername: Specifies the name of the administrator account.
 	// Restriction: Cannot end in "."
 	// Disallowed values: "administrator", "admin", "user", "user1", "test", "user2", "test1", "user3", "admin1", "1", "123",
@@ -781,6 +792,14 @@ const (
 	SystemData_CreatedByType_STATUS_User            = SystemData_CreatedByType_STATUS("User")
 )
 
+// Mapping from string to SystemData_CreatedByType_STATUS
+var systemData_CreatedByType_STATUS_Values = map[string]SystemData_CreatedByType_STATUS{
+	"application":     SystemData_CreatedByType_STATUS_Application,
+	"key":             SystemData_CreatedByType_STATUS_Key,
+	"managedidentity": SystemData_CreatedByType_STATUS_ManagedIdentity,
+	"user":            SystemData_CreatedByType_STATUS_User,
+}
+
 type SystemData_LastModifiedByType_STATUS string
 
 const (
@@ -789,6 +808,14 @@ const (
 	SystemData_LastModifiedByType_STATUS_ManagedIdentity = SystemData_LastModifiedByType_STATUS("ManagedIdentity")
 	SystemData_LastModifiedByType_STATUS_User            = SystemData_LastModifiedByType_STATUS("User")
 )
+
+// Mapping from string to SystemData_LastModifiedByType_STATUS
+var systemData_LastModifiedByType_STATUS_Values = map[string]SystemData_LastModifiedByType_STATUS{
+	"application":     SystemData_LastModifiedByType_STATUS_Application,
+	"key":             SystemData_LastModifiedByType_STATUS_Key,
+	"managedidentity": SystemData_LastModifiedByType_STATUS_ManagedIdentity,
+	"user":            SystemData_LastModifiedByType_STATUS_User,
+}
 
 // Details about a user assigned identity.
 type UserAssignedIdentity_STATUS_ARM struct {

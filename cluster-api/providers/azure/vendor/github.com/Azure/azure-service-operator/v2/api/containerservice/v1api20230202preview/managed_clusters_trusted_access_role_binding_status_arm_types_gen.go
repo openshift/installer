@@ -43,3 +43,12 @@ const (
 	TrustedAccessRoleBindingProperties_ProvisioningState_STATUS_Succeeded = TrustedAccessRoleBindingProperties_ProvisioningState_STATUS("Succeeded")
 	TrustedAccessRoleBindingProperties_ProvisioningState_STATUS_Updating  = TrustedAccessRoleBindingProperties_ProvisioningState_STATUS("Updating")
 )
+
+// Mapping from string to TrustedAccessRoleBindingProperties_ProvisioningState_STATUS
+var trustedAccessRoleBindingProperties_ProvisioningState_STATUS_Values = map[string]TrustedAccessRoleBindingProperties_ProvisioningState_STATUS{
+	"canceled":  TrustedAccessRoleBindingProperties_ProvisioningState_STATUS_Canceled,
+	"deleting":  TrustedAccessRoleBindingProperties_ProvisioningState_STATUS_Deleting,
+	"failed":    TrustedAccessRoleBindingProperties_ProvisioningState_STATUS_Failed,
+	"succeeded": TrustedAccessRoleBindingProperties_ProvisioningState_STATUS_Succeeded,
+	"updating":  TrustedAccessRoleBindingProperties_ProvisioningState_STATUS_Updating,
+}

@@ -17,6 +17,7 @@ limitations under the License.
 package resourceskus
 
 import (
+	"math"
 	"strconv"
 	"strings"
 
@@ -112,10 +113,11 @@ func (s SKU) HasCapabilityWithCapacity(name string, value int64) (bool, error) {
 			continue
 		}
 
-		intVal, err := strconv.ParseInt(*capability.Value, 10, 64)
+		floatVal, err := strconv.ParseFloat(*capability.Value, 64)
 		if err != nil {
-			return false, errors.Wrapf(err, "failed to parse string '%s' as int64", *capability.Value)
+			return false, errors.Wrapf(err, "failed to parse string '%s' as float", *capability.Value)
 		}
+		intVal := int64(math.Round(floatVal))
 
 		if intVal >= value {
 			return true, nil

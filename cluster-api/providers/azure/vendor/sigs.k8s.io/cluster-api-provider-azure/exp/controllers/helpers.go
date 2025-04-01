@@ -32,7 +32,6 @@ import (
 	infrav1exp "sigs.k8s.io/cluster-api-provider-azure/exp/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -372,28 +371,22 @@ func MachinePoolMachineHasStateOrVersionChange(logger logr.Logger) predicate.Fun
 	}
 }
 
-// KubeadmConfigToInfrastructureMapFunc returns a handler.ToRequestsFunc that watches for KubeadmConfig events and returns.
-func KubeadmConfigToInfrastructureMapFunc(ctx context.Context, c client.Client, log logr.Logger) handler.MapFunc {
+// BootstrapConfigToInfrastructureMapFunc returns a handler.ToRequestsFunc that watches for <Bootstrap>Config events and returns.
+func BootstrapConfigToInfrastructureMapFunc(ctx context.Context, c client.Client, log logr.Logger) handler.MapFunc {
 	return func(ctx context.Context, o client.Object) []reconcile.Request {
 		ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultMappingTimeout)
 		defer cancel()
 
-		kc, ok := o.(*kubeadmv1.KubeadmConfig)
-		if !ok {
-			log.V(4).Info("attempt to map incorrect type", "type", fmt.Sprintf("%T", o))
-			return nil
-		}
-
 		mpKey := client.ObjectKey{
-			Namespace: kc.Namespace,
-			Name:      kc.Name,
+			Namespace: o.GetNamespace(),
+			Name:      o.GetName(),
 		}
 
 		// fetch MachinePool to get reference
 		mp := &expv1.MachinePool{}
 		if err := c.Get(ctx, mpKey, mp); err != nil {
 			if !apierrors.IsNotFound(err) {
-				log.Error(err, "failed to fetch MachinePool for KubeadmConfig")
+				log.Error(err, "failed to fetch MachinePool to validate Bootstrap.ConfigRef")
 			}
 			return []reconcile.Request{}
 		}
@@ -404,8 +397,8 @@ func KubeadmConfigToInfrastructureMapFunc(ctx context.Context, c client.Client, 
 			return []reconcile.Request{}
 		}
 		sameKind := ref.Kind != o.GetObjectKind().GroupVersionKind().Kind
-		sameName := ref.Name == kc.Name
-		sameNamespace := ref.Namespace == kc.Namespace
+		sameName := ref.Name == o.GetName()
+		sameNamespace := ref.Namespace == o.GetNamespace()
 		if !sameKind || !sameName || !sameNamespace {
 			log.V(4).Info("Bootstrap.ConfigRef does not match",
 				"sameKind", sameKind,
@@ -417,10 +410,7 @@ func KubeadmConfigToInfrastructureMapFunc(ctx context.Context, c client.Client, 
 			return []reconcile.Request{}
 		}
 
-		key := client.ObjectKey{
-			Namespace: kc.Namespace,
-			Name:      kc.Name,
-		}
+		key := client.ObjectKeyFromObject(o)
 		log.V(4).Info("adding KubeadmConfig to watch", "key", key)
 
 		return []reconcile.Request{
