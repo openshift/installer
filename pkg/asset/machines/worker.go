@@ -383,26 +383,20 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 
 		switch ic.Platform.Name() {
 		case awstypes.Name:
-			subnets := icaws.Subnets{}
-			zones := icaws.Zones{}
-			if len(ic.Platform.AWS.VPC.Subnets) > 0 {
-				var subnetsMeta icaws.Subnets
-				switch pool.Name {
-				case types.MachinePoolEdgeRoleName:
-					subnetsMeta, err = installConfig.AWS.EdgeSubnets(ctx)
-					if err != nil {
-						return err
-					}
-				default:
-					subnetsMeta, err = installConfig.AWS.PrivateSubnets(ctx)
-					if err != nil {
-						return err
-					}
+			var subnets icaws.SubnetsByZone
+			switch pool.Name {
+			case types.MachinePoolEdgeRoleName:
+				subnets, err = aws.MachineSubnetsByZones(ctx, installConfig, awstypes.EdgeNodeSubnetRole)
+				if err != nil {
+					return err
 				}
-				for _, subnet := range subnetsMeta {
-					subnets[subnet.Zone.Name] = subnet
+			default:
+				subnets, err = aws.MachineSubnetsByZones(ctx, installConfig, awstypes.ClusterNodeSubnetRole)
+				if err != nil {
+					return err
 				}
 			}
+
 			mpool := defaultAWSMachinePoolPlatform(pool.Name)
 
 			osImage := strings.SplitN(rhcosImage.Compute, ",", 2)
@@ -414,6 +408,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 
 			mpool.Set(ic.Platform.AWS.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.AWS)
+			zones := icaws.Zones{}
 			zoneDefaults := false
 			if len(mpool.Zones) == 0 {
 				if len(subnets) > 0 {

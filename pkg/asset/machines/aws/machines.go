@@ -15,8 +15,9 @@ import (
 	v1 "github.com/openshift/api/config/v1"
 	machinev1 "github.com/openshift/api/machine/v1"
 	machineapi "github.com/openshift/api/machine/v1beta1"
+	"github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/aws"
+	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
 
 type machineProviderInput struct {
@@ -29,16 +30,16 @@ type machineProviderInput struct {
 	role             string
 	userDataSecret   string
 	instanceProfile  string
-	root             *aws.EC2RootVolume
-	imds             aws.EC2Metadata
+	root             *awstypes.EC2RootVolume
+	imds             awstypes.EC2Metadata
 	userTags         map[string]string
 	publicSubnet     bool
 	securityGroupIDs []string
 }
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, region string, subnets map[string]string, pool *types.MachinePool, role, userDataSecret string, userTags map[string]string, publicSubnet bool) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
-	if poolPlatform := pool.Platform.Name(); poolPlatform != aws.Name {
+func Machines(clusterID string, region string, subnets aws.SubnetsByZone, pool *types.MachinePool, role, userDataSecret string, userTags map[string]string, publicSubnet bool) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
+	if poolPlatform := pool.Platform.Name(); poolPlatform != awstypes.Name {
 		return nil, nil, fmt.Errorf("non-AWS machine-pool: %q", poolPlatform)
 	}
 	mpool := pool.Platform.AWS
@@ -64,7 +65,7 @@ func Machines(clusterID string, region string, subnets map[string]string, pool *
 		provider, err := provider(&machineProviderInput{
 			clusterID:        clusterID,
 			region:           region,
-			subnet:           subnet,
+			subnet:           subnet.ID,
 			instanceType:     mpool.InstanceType,
 			osImage:          mpool.AMIID,
 			zone:             zone,
@@ -117,7 +118,7 @@ func Machines(clusterID string, region string, subnets map[string]string, pool *
 				AvailabilityZone: zone,
 			},
 		}
-		if subnet == "" {
+		if subnet.ID == "" {
 			domain.Subnet.Type = machinev1.AWSFiltersReferenceType
 			subnetFilterValue := fmt.Sprintf("%s-subnet-private-%s", clusterID, zone)
 			if publicSubnet {
@@ -131,7 +132,7 @@ func Machines(clusterID string, region string, subnets map[string]string, pool *
 			}
 		} else {
 			domain.Subnet.Type = machinev1.AWSIDReferenceType
-			domain.Subnet.ID = pointer.String(subnet)
+			domain.Subnet.ID = pointer.String(subnet.ID)
 		}
 		failureDomains = append(failureDomains, domain)
 	}

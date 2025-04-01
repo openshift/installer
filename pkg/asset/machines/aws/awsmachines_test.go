@@ -12,6 +12,7 @@ import (
 	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
@@ -27,7 +28,7 @@ var stubMachineInputManagedVpc = &MachineInput{
 			},
 		},
 	},
-	Subnets:  make(map[string]string, 0),
+	Subnets:  make(aws.SubnetsByZone),
 	Tags:     capa.Tags{},
 	PublicIP: false,
 	Ignition: &capa.Ignition{
@@ -45,7 +46,7 @@ func stubDeepCopyMachineInput(in *MachineInput) *MachineInput {
 		*out.Pool = *in.Pool
 	}
 	if len(in.Subnets) > 0 {
-		out.Subnets = make(map[string]string, len(in.Subnets))
+		out.Subnets = make(aws.SubnetsByZone)
 		for k, v := range in.Subnets {
 			out.Subnets[k] = v
 		}
@@ -136,7 +137,7 @@ func TestGenerateMachines(t *testing.T) {
 			input: func() *MachineInput {
 				in := stubGetMachineManagedVpc()
 				in.Pool.Platform.AWS.Zones = []string{"A", "B"}
-				in.Subnets = map[string]string{"A": "subnet-id-A", "B": "subnet-id-B"}
+				in.Subnets = aws.SubnetsByZone{"A": aws.Subnet{ID: "subnet-id-A"}, "B": aws.Subnet{ID: "subnet-id-B"}}
 				return in
 			}(),
 			// generate 3 AWSMachine manifests for control plane nodes in two subnets/zones
@@ -249,7 +250,7 @@ func TestGenerateMachines(t *testing.T) {
 			input: func() *MachineInput {
 				in := stubGetMachineManagedVpc()
 				in.Pool.Platform.AWS.Zones = []string{"A", "B"}
-				in.Subnets = map[string]string{"C": "subnet-id-C", "D": "subnet-id-D"}
+				in.Subnets = aws.SubnetsByZone{"C": aws.Subnet{ID: "subnet-id-C"}, "D": aws.Subnet{ID: "subnet-id-D"}}
 				return in
 			}(),
 			wantErr: `no subnet for zone A`,
@@ -260,7 +261,7 @@ func TestGenerateMachines(t *testing.T) {
 			input: func() *MachineInput {
 				in := stubGetMachineManagedVpc()
 				in.Pool.Platform.AWS.Zones = []string{"A", "B"}
-				in.Subnets = map[string]string{"A": "subnet-id-A", "B": ""}
+				in.Subnets = aws.SubnetsByZone{"A": aws.Subnet{ID: "subnet-id-A"}, "B": aws.Subnet{ID: ""}}
 				return in
 			}(),
 			wantErr: `invalid subnet ID for zone B`,

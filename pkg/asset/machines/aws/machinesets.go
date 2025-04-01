@@ -20,7 +20,7 @@ type MachineSetInput struct {
 	ClusterID                string
 	InstallConfigPlatformAWS *aws.Platform
 	PublicSubnet             bool
-	Subnets                  icaws.Subnets
+	Subnets                  icaws.SubnetsByZone
 	Zones                    icaws.Zones
 	Pool                     *types.MachinePool
 	Role                     string
