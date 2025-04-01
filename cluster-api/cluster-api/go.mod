@@ -4,7 +4,7 @@ go 1.22.0
 
 toolchain go1.22.7
 
-require sigs.k8s.io/cluster-api v1.9.4
+require sigs.k8s.io/cluster-api v1.9.5
 
 require (
 	dario.cat/mergo v1.0.1 // indirect
@@ -103,7 +103,7 @@ require (
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.30.3 // indirect
-	sigs.k8s.io/controller-runtime v0.19.4 // indirect
+	sigs.k8s.io/controller-runtime v0.19.6 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
