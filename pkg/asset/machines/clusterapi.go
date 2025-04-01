@@ -93,29 +93,16 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 
 	switch ic.Platform.Name() {
 	case awstypes.Name:
-		subnets := map[string]string{}
-		bootstrapSubnets := map[string]string{}
-		if len(ic.Platform.AWS.VPC.Subnets) > 0 {
-			// fetch private subnets to master nodes.
-			subnetMeta, err := installConfig.AWS.PrivateSubnets(ctx)
-			if err != nil {
-				return err
-			}
-			for id, subnet := range subnetMeta {
-				subnets[subnet.Zone.Name] = id
-			}
-			// fetch public subnets for bootstrap, when exists, otherwise use private.
-			if installConfig.Config.Publish == types.ExternalPublishingStrategy {
-				subnetMeta, err := installConfig.AWS.PublicSubnets(ctx)
-				if err != nil {
-					return err
-				}
-				for id, subnet := range subnetMeta {
-					bootstrapSubnets[subnet.Zone.Name] = id
-				}
-			} else {
-				bootstrapSubnets = subnets
-			}
+		// Get subnets for master machines if any.
+		subnets, err := aws.MachineSubnetsByZones(ctx, installConfig, awstypes.ClusterNodeSubnetRole)
+		if err != nil {
+			return err
+		}
+
+		// Get subnets for bootstrap machine if any.
+		bootstrapSubnets, err := aws.MachineSubnetsByZones(ctx, installConfig, awstypes.BootstrapNodeSubnetRole)
+		if err != nil {
+			return err
 		}
 
 		mpool := defaultAWSMachinePoolPlatform("master")
@@ -198,6 +185,14 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		pool := *ic.ControlPlane
 		pool.Name = "bootstrap"
 		pool.Replicas = ptr.To[int64](1)
+		// If there are dedicated subnets for the bootstrap machine (i.e. byo subnets),
+		// use AZs from those subnets.
+		if len(bootstrapSubnets) > 0 {
+			mpool.Zones = make([]string, 0)
+			for zone := range bootstrapSubnets {
+				mpool.Zones = append(mpool.Zones, zone)
+			}
+		}
 		pool.Platform.AWS = &mpool
 		bootstrapAWSMachine, err := aws.GenerateMachines(clusterID.InfraID, &aws.MachineInput{
 			Role:           "bootstrap",
