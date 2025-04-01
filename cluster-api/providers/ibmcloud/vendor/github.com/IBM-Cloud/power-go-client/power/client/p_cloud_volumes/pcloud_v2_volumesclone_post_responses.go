@@ -54,6 +54,12 @@ func (o *PcloudV2VolumesclonePostReader) ReadResponse(response runtime.ClientRes
 			return nil, err
 		}
 		return nil, result
+	case 409:
+		result := NewPcloudV2VolumesclonePostConflict()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 500:
 		result := NewPcloudV2VolumesclonePostInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -404,6 +410,76 @@ func (o *PcloudV2VolumesclonePostNotFound) GetPayload() *models.Error {
 }
 
 func (o *PcloudV2VolumesclonePostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudV2VolumesclonePostConflict creates a PcloudV2VolumesclonePostConflict with default headers values
+func NewPcloudV2VolumesclonePostConflict() *PcloudV2VolumesclonePostConflict {
+	return &PcloudV2VolumesclonePostConflict{}
+}
+
+/*
+PcloudV2VolumesclonePostConflict describes a response with status code 409, with default header values.
+
+Conflict
+*/
+type PcloudV2VolumesclonePostConflict struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud v2 volumesclone post conflict response has a 2xx status code
+func (o *PcloudV2VolumesclonePostConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v2 volumesclone post conflict response has a 3xx status code
+func (o *PcloudV2VolumesclonePostConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 volumesclone post conflict response has a 4xx status code
+func (o *PcloudV2VolumesclonePostConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v2 volumesclone post conflict response has a 5xx status code
+func (o *PcloudV2VolumesclonePostConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v2 volumesclone post conflict response a status code equal to that given
+func (o *PcloudV2VolumesclonePostConflict) IsCode(code int) bool {
+	return code == 409
+}
+
+// Code gets the status code for the pcloud v2 volumesclone post conflict response
+func (o *PcloudV2VolumesclonePostConflict) Code() int {
+	return 409
+}
+
+func (o *PcloudV2VolumesclonePostConflict) Error() string {
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone][%d] pcloudV2VolumesclonePostConflict %s", 409, payload)
+}
+
+func (o *PcloudV2VolumesclonePostConflict) String() string {
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone][%d] pcloudV2VolumesclonePostConflict %s", 409, payload)
+}
+
+func (o *PcloudV2VolumesclonePostConflict) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudV2VolumesclonePostConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

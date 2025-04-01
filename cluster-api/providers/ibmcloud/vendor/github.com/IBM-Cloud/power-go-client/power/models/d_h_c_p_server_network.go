@@ -26,6 +26,12 @@ type DHCPServerNetwork struct {
 	// The name of the network
 	// Required: true
 	Name *string `json:"name"`
+
+	// The ID of the network interface
+	NetworkInterfaceID string `json:"networkInterfaceID,omitempty"`
+
+	// Links to the network security groups that the network interface is a member of
+	NetworkSecurityGroupsHref []string `json:"networkSecurityGroupsHref,omitempty"`
 }
 
 // Validate validates this d h c p server network

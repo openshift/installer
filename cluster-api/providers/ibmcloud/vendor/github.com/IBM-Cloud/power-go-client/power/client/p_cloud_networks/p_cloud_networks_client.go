@@ -198,6 +198,8 @@ func (a *Client) PcloudNetworksGetall(params *PcloudNetworksGetallParams, authIn
 
 /*
 PcloudNetworksPortsDelete deletes a network port
+
+This API is deprecated for /v1/networks/{network_id}/network-interfaces/{network_interface_id}.
 */
 func (a *Client) PcloudNetworksPortsDelete(params *PcloudNetworksPortsDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudNetworksPortsDeleteOK, error) {
 	// TODO: Validate the params before sending
@@ -237,6 +239,8 @@ func (a *Client) PcloudNetworksPortsDelete(params *PcloudNetworksPortsDeletePara
 
 /*
 PcloudNetworksPortsGet gets a port s information
+
+This API is deprecated for /v1/networks/{network_id}/network-interfaces/{network_interface_id}.
 */
 func (a *Client) PcloudNetworksPortsGet(params *PcloudNetworksPortsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudNetworksPortsGetOK, error) {
 	// TODO: Validate the params before sending
@@ -276,6 +280,8 @@ func (a *Client) PcloudNetworksPortsGet(params *PcloudNetworksPortsGetParams, au
 
 /*
 PcloudNetworksPortsGetall gets all ports for this network
+
+This API is deprecated for /v1/networks/{network_id}/network-interfaces.
 */
 func (a *Client) PcloudNetworksPortsGetall(params *PcloudNetworksPortsGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudNetworksPortsGetallOK, error) {
 	// TODO: Validate the params before sending
@@ -315,6 +321,8 @@ func (a *Client) PcloudNetworksPortsGetall(params *PcloudNetworksPortsGetallPara
 
 /*
 PcloudNetworksPortsPost performs port addition deletion and listing
+
+This API is deprecated for /v1/networks/{network_id}/network-interfaces.
 */
 func (a *Client) PcloudNetworksPortsPost(params *PcloudNetworksPortsPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudNetworksPortsPostCreated, error) {
 	// TODO: Validate the params before sending
@@ -354,6 +362,8 @@ func (a *Client) PcloudNetworksPortsPost(params *PcloudNetworksPortsPostParams, 
 
 /*
 PcloudNetworksPortsPut updates a port s information
+
+This API is deprecated for /v1/networks/{network_id}/network-interfaces/{network_interface_id}.
 */
 func (a *Client) PcloudNetworksPortsPut(params *PcloudNetworksPortsPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudNetworksPortsPutOK, error) {
 	// TODO: Validate the params before sending

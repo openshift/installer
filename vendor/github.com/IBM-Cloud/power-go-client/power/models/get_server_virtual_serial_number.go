@@ -23,7 +23,7 @@ type GetServerVirtualSerialNumber struct {
 	// Required: true
 	Description *string `json:"description"`
 
-	// Provide an existing reserved Virtual Serial Number or specify 'auto-assign' for auto generated Virtual Serial Number.
+	// Virtual Serial Number
 	// Required: true
 	Serial *string `json:"serial"`
 }

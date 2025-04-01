@@ -5,10 +5,9 @@ import (
 	"fmt"
 
 	"github.com/IBM-Cloud/power-go-client/errors"
-	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_shared_processor_pools"
-
 	"github.com/IBM-Cloud/power-go-client/helpers"
 	"github.com/IBM-Cloud/power-go-client/ibmpisession"
+	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_shared_processor_pools"
 	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 

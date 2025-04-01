@@ -6,7 +6,6 @@ import (
 
 	"github.com/IBM-Cloud/power-go-client/errors"
 	"github.com/IBM-Cloud/power-go-client/helpers"
-
 	"github.com/IBM-Cloud/power-go-client/ibmpisession"
 	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_service_d_h_c_p"
 	"github.com/IBM-Cloud/power-go-client/power/models"
