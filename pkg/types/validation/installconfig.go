@@ -1560,9 +1560,10 @@ func isV4NodeSubnetLargeEnough(cn []types.ClusterNetworkEntry, nodeSubnet *ipnet
 }
 
 // validateCredentialsNumber in case fencing credentials exists validates there are exactly 2.
-func validateCredentialsNumber(controlPlane *types.MachinePool, fencing *types.Fencing, fldPath *field.Path) field.ErrorList {
+func validateCredentialsNumber(installConfig *types.InstallConfig, fencing *types.Fencing, fldPath *field.Path) field.ErrorList {
 	errs := field.ErrorList{}
-	if controlPlane == nil || controlPlane.Replicas == nil {
+	controlPlane := installConfig.ControlPlane
+	if controlPlane == nil || controlPlane.Replicas == nil || installConfig.IsArbiterEnabled() {
 		// invalid use case covered by a different validation.
 		return errs
 	}
@@ -1590,7 +1591,7 @@ func validateFencingCredentials(installConfig *types.InstallConfig) (errors fiel
 	if fencingCredentials != nil {
 		allErrs = append(allErrs, common.ValidateUniqueAndRequiredFields(fencingCredentials.Credentials, fldPath, func([]byte) bool { return false }, "credentials")...)
 	}
-	allErrs = append(allErrs, validateCredentialsNumber(installConfig.ControlPlane, fencingCredentials, fldPath.Child("credentials"))...)
+	allErrs = append(allErrs, validateCredentialsNumber(installConfig, fencingCredentials, fldPath.Child("credentials"))...)
 
 	return allErrs
 }
