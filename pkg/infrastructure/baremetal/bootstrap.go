@@ -59,7 +59,7 @@ func newDomain(name string) libvirtxml.Domain {
 			Mode: "host-passthrough",
 		},
 		Memory: &libvirtxml.DomainMemory{
-			Value: 20,
+			Value: 18,
 			Unit:  "GiB",
 		},
 		VCPU: &libvirtxml.DomainVCPU{

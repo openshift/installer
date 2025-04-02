@@ -3,8 +3,8 @@ Description=Customized Machine OS Image Server
 BindsTo=ironic-volume.service
 Requires=build-ironic-env.service
 PartOf=ironic.service
-Wants=network-online.target extract-machine-os.service
-After=network-online.target ironic-volume.service build-ironic-env.service extract-machine-os.service
+Wants=network-online.target
+After=network-online.target ironic-volume.service build-ironic-env.service
 
 [Container]
 ContainerName=image-customization
@@ -17,8 +17,11 @@ Volume=/etc/containers:/tmp/containers:z
 Volume=${AUTH_DIR}:/auth:z,ro
 Volume=/opt/openshift:/opt/openshift:z,ro
 Volume=/etc/pki/ca-trust/source/anchors/ca.crt:/tmp/ca.crt:z,ro
-Environment="DEPLOY_ISO=/shared/html/images/ironic-python-agent.iso"
-Environment="DEPLOY_INITRD=/shared/html/images/ironic-python-agent.initramfs"
+AddDevice=/dev/sr0:/images/live.iso:r
+Volume=/run/media/iso/images/pxeboot:/images/pxe:ro
+SecurityLabelDisable=true
+Environment="DEPLOY_ISO=/images/live.iso"
+Environment="DEPLOY_INITRD=/images/pxe/initrd.img"
 Environment="IRONIC_BASE_URL=${IRONIC_BASE_URL}"
 Environment="IRONIC_RAMDISK_SSH_KEY=${IRONIC_RAMDISK_SSH_KEY}"
 Environment="IRONIC_AGENT_IMAGE=${IRONIC_AGENT_IMAGE}"
