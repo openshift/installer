@@ -633,21 +633,6 @@ else
     fi
 fi
 
-if [ ! -f api-dns-check.done ]; then
-  echo "Check if API URL is reachable during bootstrap"
-
-  if check_url "API_URL" "${API_SERVER_URL}"; then
-    touch api-dns-check.done
-  fi
-fi
-
-if [ ! -f api-int-dns-check.done ]; then
-  echo "Check if API-Int URL is reachable during bootstrap"
-  if check_url "API_INT_URL" "${API_INT_SERVER_URL}"; then
-    touch api-int-dns-check.done
-  fi
-fi
-
 # Workaround for https://github.com/opencontainers/runc/pull/1807
 touch /opt/openshift/.bootkube.done
 echo "bootkube.service complete"
