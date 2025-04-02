@@ -84,13 +84,11 @@ func (a *AgentPXEFiles) Generate(_ context.Context, dependencies asset.Parents) 
 func (a *AgentPXEFiles) PersistToFile(directory string) error {
 	defer os.RemoveAll(a.tmpPath)
 
-	// If the imageReader is not set then it means that either one of the AgentPXEFiles
-	// dependencies or the asset itself failed for some reason
 	if a.imageReader == nil {
 		return errors.New("cannot generate PXE assets due to configuration errors")
 	}
-
 	defer a.imageReader.Close()
+
 	bootArtifactsFullPath := filepath.Join(directory, bootArtifactsPath)
 
 	err := createDir(bootArtifactsFullPath)
@@ -109,11 +107,14 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 		return err
 	}
 
+	// Explicitly call handleAdditionals390xArtifacts when generating s390x artifacts
 	if a.cpuArch == arch.RpmArch(types.ArchitectureS390X) {
+		logrus.Infof("Generating additional s390x artifacts...")
 		err = a.handleAdditionals390xArtifacts(bootArtifactsFullPath)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to generate additional s390x artifacts: %v", err)
 		}
+		logrus.Infof("Additional s390x artifacts successfully generated.")
 	}
 
 	agentVmlinuzFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("%s.%s-%s", a.filePrefix, a.cpuArch, "vmlinuz"))
@@ -130,14 +131,11 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 		}
 		defer gzipReader.Close()
 		err = copyfile(agentVmlinuzFile, gzipReader)
-		if err != nil {
-			return err
-		}
 	} else {
 		err = copyfile(agentVmlinuzFile, kernelReader)
-		if err != nil {
-			return err
-		}
+	}
+	if err != nil {
+		return err
 	}
 
 	if a.bootArtifactsBaseURL != "" {
