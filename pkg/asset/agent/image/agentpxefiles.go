@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/coreos/stream-metadata-go/arch"
 	"github.com/sirupsen/logrus"
@@ -234,12 +235,13 @@ func getKernelArgs(filepath string) (string, error) {
 }
 
 func (a *AgentPXEFiles) handleAdditionals390xArtifacts(bootArtifactsFullPath string) error {
-	// initrd is already copied and file pointer is at EOF so move it to start again.
+	// Move the imageReader pointer to the start for reading initrd again.
 	_, err := a.imageReader.Seek(0, io.SeekStart)
 	if err != nil {
 		return err
 	}
 
+	// Copy initrd.addrsize
 	agentInitrdAddrFilePath := filepath.Join(a.tmpPath, "images", "initrd.addrsize")
 	addrsizeFile, err := isoeditor.NewInitrdAddrsizeReader(agentInitrdAddrFilePath, a.imageReader)
 	if err != nil {
@@ -252,14 +254,21 @@ func (a *AgentPXEFiles) handleAdditionals390xArtifacts(bootArtifactsFullPath str
 		return err
 	}
 
-	agentINSFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("%s.%s-generic.ins", a.filePrefix, a.cpuArch))
-	genericReader, err := os.Open(filepath.Join(a.tmpPath, "generic.ins"))
+	// Read and update generic.ins
+	genericInsPath := filepath.Join(a.tmpPath, "generic.ins")
+	data, err := os.ReadFile(genericInsPath)
 	if err != nil {
 		return err
 	}
-	defer genericReader.Close()
 
-	err = copyfile(agentINSFile, genericReader)
+	// Replace file names with dynamically generated names
+	updatedContent := strings.ReplaceAll(string(data), "kernel.img", fmt.Sprintf("%s.%s-vmlinuz", a.filePrefix, a.cpuArch))
+	updatedContent = strings.ReplaceAll(updatedContent, "initrd.img", fmt.Sprintf("%s.%s-initrd.img", a.filePrefix, a.cpuArch))
+	updatedContent = strings.ReplaceAll(updatedContent, "initrd.addrsize", fmt.Sprintf("%s.%s-initrd.addrsize", a.filePrefix, a.cpuArch))
+
+	// Write the updated content back
+	agentINSFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("%s.%s-generic.ins", a.filePrefix, a.cpuArch))
+	err = os.WriteFile(agentINSFile, []byte(updatedContent), 0600)
 	if err != nil {
 		return err
 	}
