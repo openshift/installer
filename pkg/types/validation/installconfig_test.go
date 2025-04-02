@@ -3050,7 +3050,6 @@ func installConfig() *installConfigBuilder {
 }
 
 func (icb *installConfigBuilder) PlatformAWS() *installConfigBuilder {
-	icb.InstallConfig.Platform.BareMetal = nil
 	icb.InstallConfig.Platform = types.Platform{AWS: validAWSPlatform()}
 	return icb
 }
