@@ -135,6 +135,7 @@ aliases:
     - madhu-pillai
     - Johan-Liebert1
     - tlbueno
+    - jcapiitao
   coreos-reviewers:
     - c4rt0
     - cgwalters
@@ -157,6 +158,7 @@ aliases:
     - madhu-pillai
     - Johan-Liebert1
     - tlbueno
+    - jcapiitao
   agent-reviewers:
     - andfasano
     - bfournie
