@@ -15,7 +15,7 @@ Volume=/opt/openshift:/opt/openshift:z,ro
 Volume=/opt/openshift/tls/ironic/:/certs/ironic/:z
 Environment="XDG_RUNTIME_DIR=/run/user/${UID}"
 Environment="KUBECONFIG=/opt/openshift/auth/kubeconfig-loopback"
-Environment="DEPLOY_KERNEL_URL=file:///shared/html/images/ironic-python-agent.kernel"
+Environment="DEPLOY_KERNEL_URL=file:///images/pxe/vmlinuz"
 Environment="IRONIC_KERNEL_PARAMS=${IRONIC_KERNEL_PARAMS}"
 Environment="HTTP_PORT=${HTTP_PORT}"
 Environment="IRONIC_ENDPOINT=${IRONIC_ENDPOINT}"
