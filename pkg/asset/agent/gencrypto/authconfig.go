@@ -43,6 +43,7 @@ const (
 // AuthConfig is an asset that generates ECDSA public/private keys, JWT token.
 type AuthConfig struct {
 	PublicKey, AgentAuthToken, UserAuthToken, WatcherAuthToken, AuthTokenExpiry, AuthType string
+	Client                                                                                kubernetes.Interface
 }
 
 var _ asset.Asset = (*AuthConfig)(nil)
@@ -209,19 +210,30 @@ func initClient(kubeconfig string) (*kubernetes.Clientset, error) {
 }
 
 func (a *AuthConfig) createOrUpdateAuthTokenSecret(kubeconfigPath string) error {
-	k8sclientset, err := initClient(kubeconfigPath)
-	if err != nil {
-		return err
-	}
-	// check if secret exists
-	retrievedSecret, err := k8sclientset.CoreV1().Secrets(authTokenSecretNamespace).Get(context.Background(), authTokenSecretName, metav1.GetOptions{})
-	// if the secret does not exist
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return a.createSecret(k8sclientset)
+	var retrievedSecret *corev1.Secret
+	var k8sclientset *kubernetes.Clientset
+	var err error
+	if a.Client != nil {
+		// useful when fakeclient is set in testing
+		retrievedSecret, err = a.Client.CoreV1().Secrets(authTokenSecretNamespace).Get(context.Background(), authTokenSecretName, metav1.GetOptions{})
+		if err != nil {
+			return err
 		}
-		// Other errors while trying to get the secret
-		return fmt.Errorf("unable to retrieve secret %s/%s: %w", authTokenSecretNamespace, authTokenSecretName, err)
+	} else {
+		k8sclientset, err := initClient(kubeconfigPath)
+		if err != nil {
+			return err
+		}
+		// check if secret exists
+		retrievedSecret, err = k8sclientset.CoreV1().Secrets(authTokenSecretNamespace).Get(context.Background(), authTokenSecretName, metav1.GetOptions{})
+		// if the secret does not exist
+		if err != nil {
+			if errors.IsNotFound(err) {
+				return a.createSecret(k8sclientset)
+			}
+			// Other errors while trying to get the secret
+			return fmt.Errorf("unable to retrieve secret %s/%s: %w", authTokenSecretNamespace, authTokenSecretName, err)
+		}
 	}
 
 	// if the secret exists in the cluster, get the token
@@ -305,9 +317,16 @@ func (a *AuthConfig) refreshAuthTokenSecret(k8sclientset kubernetes.Interface, r
 	retrievedSecret.Annotations["updatedAt"] = time.Now().UTC().Format(time.RFC3339)
 	retrievedSecret.Annotations["expiresAt"] = a.AuthTokenExpiry
 
-	_, err := k8sclientset.CoreV1().Secrets(authTokenSecretNamespace).Update(context.TODO(), retrievedSecret, metav1.UpdateOptions{})
-	if err != nil {
-		return err
+	if a.Client != nil {
+		_, err := a.Client.CoreV1().Secrets(authTokenSecretNamespace).Update(context.TODO(), retrievedSecret, metav1.UpdateOptions{})
+		if err != nil {
+			return err
+		}
+	} else {
+		_, err := k8sclientset.CoreV1().Secrets(authTokenSecretNamespace).Update(context.TODO(), retrievedSecret, metav1.UpdateOptions{})
+		if err != nil {
+			return err
+		}
 	}
 	logrus.Infof("Auth token regenerated (valid up to %s)", a.AuthTokenExpiry)
 	logrus.Infof("Updated secret %s/%s", authTokenSecretNamespace, authTokenSecretName)
