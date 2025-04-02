@@ -1,6 +1,10 @@
 // Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.94.1-71478489-20240820-161623
+ */
+
 package codeengine
 
 import (
@@ -8,12 +12,12 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/code-engine-go-sdk/codeenginev2"
+	"github.com/IBM/go-sdk-core/v5/core"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func DataSourceIbmCodeEngineFunction() *schema.Resource {
@@ -50,6 +54,45 @@ func DataSourceIbmCodeEngineFunction() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The name of the secret that is used to access the specified `code_reference`. The secret is used to authenticate with a non-public endpoint that is specified as`code_reference`.",
+			},
+			"computed_env_variables": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "References to config maps, secrets or literal values, which are defined and set by Code Engine and are exposed as environment variables in the function.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"key": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The key to reference as environment variable.",
+						},
+						"name": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The name of the environment variable.",
+						},
+						"prefix": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A prefix that can be added to all keys of a full secret or config map reference.",
+						},
+						"reference": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The name of the secret or config map.",
+						},
+						"type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Specify the type of the environment variable.",
+						},
+						"value": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The literal value of the environment variable.",
+						},
+					},
+				},
 			},
 			"created_at": {
 				Type:        schema.TypeString,
@@ -191,7 +234,7 @@ func DataSourceIbmCodeEngineFunction() *schema.Resource {
 func dataSourceIbmCodeEngineFunctionRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_function", "read")
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_function", "read", "initialize-client")
 		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
 		return tfErr.GetDiag()
 	}
@@ -211,139 +254,145 @@ func dataSourceIbmCodeEngineFunctionRead(context context.Context, d *schema.Reso
 	d.SetId(fmt.Sprintf("%s/%s", *getFunctionOptions.ProjectID, *getFunctionOptions.Name))
 
 	if err = d.Set("code_binary", function.CodeBinary); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting code_binary: %s", err), "(Data) ibm_code_engine_function", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting code_binary: %s", err), "(Data) ibm_code_engine_function", "read", "set-code_binary").GetDiag()
 	}
 
-	if err = d.Set("code_main", function.CodeMain); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting code_main: %s", err), "(Data) ibm_code_engine_function", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(function.CodeMain) {
+		if err = d.Set("code_main", function.CodeMain); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting code_main: %s", err), "(Data) ibm_code_engine_function", "read", "set-code_main").GetDiag()
+		}
 	}
 
 	if err = d.Set("code_reference", function.CodeReference); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting code_reference: %s", err), "(Data) ibm_code_engine_function", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting code_reference: %s", err), "(Data) ibm_code_engine_function", "read", "set-code_reference").GetDiag()
 	}
 
-	if err = d.Set("code_secret", function.CodeSecret); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting code_secret: %s", err), "(Data) ibm_code_engine_function", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(function.CodeSecret) {
+		if err = d.Set("code_secret", function.CodeSecret); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting code_secret: %s", err), "(Data) ibm_code_engine_function", "read", "set-code_secret").GetDiag()
+		}
 	}
 
-	if err = d.Set("created_at", function.CreatedAt); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting created_at: %s", err), "(Data) ibm_code_engine_function", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(function.ComputedEnvVariables) {
+		computedEnvVariables := []map[string]interface{}{}
+		for _, computedEnvVariablesItem := range function.ComputedEnvVariables {
+			computedEnvVariablesItemMap, err := DataSourceIbmCodeEngineFunctionEnvVarToMap(&computedEnvVariablesItem) // #nosec G601
+			if err != nil {
+				return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_function", "read", "computed_env_variables-to-map").GetDiag()
+			}
+			computedEnvVariables = append(computedEnvVariables, computedEnvVariablesItemMap)
+		}
+		if err = d.Set("computed_env_variables", computedEnvVariables); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting computed_env_variables: %s", err), "(Data) ibm_code_engine_function", "read", "set-computed_env_variables").GetDiag()
+		}
 	}
 
-	if err = d.Set("endpoint", function.Endpoint); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting endpoint: %s", err), "(Data) ibm_code_engine_function", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(function.CreatedAt) {
+		if err = d.Set("created_at", function.CreatedAt); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting created_at: %s", err), "(Data) ibm_code_engine_function", "read", "set-created_at").GetDiag()
+		}
 	}
 
-	if err = d.Set("endpoint_internal", function.EndpointInternal); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting endpoint_internal: %s", err), "(Data) ibm_code_engine_function", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(function.Endpoint) {
+		if err = d.Set("endpoint", function.Endpoint); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting endpoint: %s", err), "(Data) ibm_code_engine_function", "read", "set-endpoint").GetDiag()
+		}
+	}
+
+	if !core.IsNil(function.EndpointInternal) {
+		if err = d.Set("endpoint_internal", function.EndpointInternal); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting endpoint_internal: %s", err), "(Data) ibm_code_engine_function", "read", "set-endpoint_internal").GetDiag()
+		}
 	}
 
 	if err = d.Set("entity_tag", function.EntityTag); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting entity_tag: %s", err), "(Data) ibm_code_engine_function", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting entity_tag: %s", err), "(Data) ibm_code_engine_function", "read", "set-entity_tag").GetDiag()
 	}
 
-	if err = d.Set("href", function.Href); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting href: %s", err), "(Data) ibm_code_engine_function", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(function.Href) {
+		if err = d.Set("href", function.Href); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting href: %s", err), "(Data) ibm_code_engine_function", "read", "set-href").GetDiag()
+		}
 	}
 
-	if err = d.Set("function_id", function.ID); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting function_id: %s", err), "(Data) ibm_code_engine_function", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(function.ID) {
+		if err = d.Set("function_id", function.ID); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting function_id: %s", err), "(Data) ibm_code_engine_function", "read", "set-function_id").GetDiag()
+		}
 	}
 
 	if err = d.Set("managed_domain_mappings", function.ManagedDomainMappings); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting managed_domain_mappings: %s", err), "(Data) ibm_code_engine_function", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting managed_domain_mappings: %s", err), "(Data) ibm_code_engine_function", "read", "set-managed_domain_mappings").GetDiag()
 	}
 
-	if err = d.Set("region", function.Region); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting region: %s", err), "(Data) ibm_code_engine_function", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(function.Region) {
+		if err = d.Set("region", function.Region); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting region: %s", err), "(Data) ibm_code_engine_function", "read", "set-region").GetDiag()
+		}
 	}
 
-	if err = d.Set("resource_type", function.ResourceType); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting resource_type: %s", err), "(Data) ibm_code_engine_function", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(function.ResourceType) {
+		if err = d.Set("resource_type", function.ResourceType); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting resource_type: %s", err), "(Data) ibm_code_engine_function", "read", "set-resource_type").GetDiag()
+		}
 	}
 
 	runEnvVariables := []map[string]interface{}{}
-	if function.RunEnvVariables != nil {
-		for _, modelItem := range function.RunEnvVariables {
-			modelMap, err := dataSourceIbmCodeEngineFunctionEnvVarToMap(&modelItem) /* #nosec G601 */
-			if err != nil {
-				tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_function", "read")
-				return tfErr.GetDiag()
-			}
-			runEnvVariables = append(runEnvVariables, modelMap)
+	for _, runEnvVariablesItem := range function.RunEnvVariables {
+		runEnvVariablesItemMap, err := DataSourceIbmCodeEngineFunctionEnvVarToMap(&runEnvVariablesItem) // #nosec G601
+		if err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_function", "read", "run_env_variables-to-map").GetDiag()
 		}
+		runEnvVariables = append(runEnvVariables, runEnvVariablesItemMap)
 	}
 	if err = d.Set("run_env_variables", runEnvVariables); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting run_env_variables: %s", err), "(Data) ibm_code_engine_function", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting run_env_variables: %s", err), "(Data) ibm_code_engine_function", "read", "set-run_env_variables").GetDiag()
 	}
 
 	if err = d.Set("runtime", function.Runtime); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting runtime: %s", err), "(Data) ibm_code_engine_function", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting runtime: %s", err), "(Data) ibm_code_engine_function", "read", "set-runtime").GetDiag()
 	}
 
 	if err = d.Set("scale_concurrency", flex.IntValue(function.ScaleConcurrency)); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting scale_concurrency: %s", err), "(Data) ibm_code_engine_function", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting scale_concurrency: %s", err), "(Data) ibm_code_engine_function", "read", "set-scale_concurrency").GetDiag()
 	}
 
 	if err = d.Set("scale_cpu_limit", function.ScaleCpuLimit); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting scale_cpu_limit: %s", err), "(Data) ibm_code_engine_function", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting scale_cpu_limit: %s", err), "(Data) ibm_code_engine_function", "read", "set-scale_cpu_limit").GetDiag()
 	}
 
 	if err = d.Set("scale_down_delay", flex.IntValue(function.ScaleDownDelay)); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting scale_down_delay: %s", err), "(Data) ibm_code_engine_function", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting scale_down_delay: %s", err), "(Data) ibm_code_engine_function", "read", "set-scale_down_delay").GetDiag()
 	}
 
 	if err = d.Set("scale_max_execution_time", flex.IntValue(function.ScaleMaxExecutionTime)); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting scale_max_execution_time: %s", err), "(Data) ibm_code_engine_function", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting scale_max_execution_time: %s", err), "(Data) ibm_code_engine_function", "read", "set-scale_max_execution_time").GetDiag()
 	}
 
 	if err = d.Set("scale_memory_limit", function.ScaleMemoryLimit); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting scale_memory_limit: %s", err), "(Data) ibm_code_engine_function", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting scale_memory_limit: %s", err), "(Data) ibm_code_engine_function", "read", "set-scale_memory_limit").GetDiag()
 	}
 
-	if err = d.Set("status", function.Status); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting status: %s", err), "(Data) ibm_code_engine_function", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(function.Status) {
+		if err = d.Set("status", function.Status); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting status: %s", err), "(Data) ibm_code_engine_function", "read", "set-status").GetDiag()
+		}
 	}
 
 	statusDetails := []map[string]interface{}{}
-	if function.StatusDetails != nil {
-		modelMap, err := dataSourceIbmCodeEngineFunctionFunctionStatusToMap(function.StatusDetails)
-		if err != nil {
-			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_function", "read")
-			return tfErr.GetDiag()
-		}
-		statusDetails = append(statusDetails, modelMap)
+	statusDetailsMap, err := DataSourceIbmCodeEngineFunctionFunctionStatusToMap(function.StatusDetails)
+	if err != nil {
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_function", "read", "status_details-to-map").GetDiag()
 	}
+	statusDetails = append(statusDetails, statusDetailsMap)
 	if err = d.Set("status_details", statusDetails); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting status_details: %s", err), "(Data) ibm_code_engine_function", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting status_details: %s", err), "(Data) ibm_code_engine_function", "read", "set-status_details").GetDiag()
 	}
 
 	return nil
 }
 
-func dataSourceIbmCodeEngineFunctionEnvVarToMap(model *codeenginev2.EnvVar) (map[string]interface{}, error) {
+func DataSourceIbmCodeEngineFunctionEnvVarToMap(model *codeenginev2.EnvVar) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Key != nil {
 		modelMap["key"] = *model.Key
@@ -364,7 +413,7 @@ func dataSourceIbmCodeEngineFunctionEnvVarToMap(model *codeenginev2.EnvVar) (map
 	return modelMap, nil
 }
 
-func dataSourceIbmCodeEngineFunctionFunctionStatusToMap(model *codeenginev2.FunctionStatus) (map[string]interface{}, error) {
+func DataSourceIbmCodeEngineFunctionFunctionStatusToMap(model *codeenginev2.FunctionStatus) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Reason != nil {
 		modelMap["reason"] = *model.Reason

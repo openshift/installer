@@ -21,12 +21,12 @@ const str string = ".cdn.appdomain.cloud"
 
 func ResourceIBMCDN() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceIBMCDNCreate,
-		Read:   resourceIBMCDNRead,
-		Update: resourceIBMCDNUpdate,
-		Delete: resourceIBMCDNDelete,
-		Exists: resourceIBMCDNExists,
-
+		Create:             resourceIBMCDNCreate,
+		Read:               resourceIBMCDNRead,
+		Update:             resourceIBMCDNUpdate,
+		Delete:             resourceIBMCDNDelete,
+		Exists:             resourceIBMCDNExists,
+		DeprecationMessage: "This service is deprecated",
 		Schema: map[string]*schema.Schema{
 			"host_name": {
 				Type:        schema.TypeString,

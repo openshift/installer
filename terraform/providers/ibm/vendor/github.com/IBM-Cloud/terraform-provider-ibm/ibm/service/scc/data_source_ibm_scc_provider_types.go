@@ -144,7 +144,7 @@ func dataSourceIbmSccProviderTypesRead(context context.Context, d *schema.Resour
 	return nil
 }
 
-func dataSourceIbmSccProviderToMap(model *securityandcompliancecenterapiv3.ProviderTypeItem) (map[string]interface{}, error) {
+func dataSourceIbmSccProviderToMap(model *securityandcompliancecenterapiv3.ProviderType) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ID != nil {
 		modelMap["id"] = model.ID

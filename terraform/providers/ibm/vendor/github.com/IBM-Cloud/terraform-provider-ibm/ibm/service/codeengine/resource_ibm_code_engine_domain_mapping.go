@@ -1,6 +1,10 @@
 // Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.94.1-71478489-20240820-161623
+ */
+
 package codeengine
 
 import (
@@ -9,15 +13,14 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/code-engine-go-sdk/codeenginev2"
 	"github.com/IBM/go-sdk-core/v5/core"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func ResourceIbmCodeEngineDomainMapping() *schema.Resource {
@@ -185,7 +188,7 @@ func ResourceIbmCodeEngineDomainMappingValidator() *validate.ResourceValidator {
 func resourceIbmCodeEngineDomainMappingCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "create")
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "create", "initialize-client")
 		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
 		return tfErr.GetDiag()
 	}
@@ -193,9 +196,9 @@ func resourceIbmCodeEngineDomainMappingCreate(context context.Context, d *schema
 	createDomainMappingOptions := &codeenginev2.CreateDomainMappingOptions{}
 
 	createDomainMappingOptions.SetProjectID(d.Get("project_id").(string))
-	componentModel, err := resourceIbmCodeEngineDomainMappingMapToComponentRef(d.Get("component.0").(map[string]interface{}))
+	componentModel, err := ResourceIbmCodeEngineDomainMappingMapToComponentRef(d.Get("component.0").(map[string]interface{}))
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "create", "parse-component").GetDiag()
 	}
 	createDomainMappingOptions.SetComponent(componentModel)
 	createDomainMappingOptions.SetName(d.Get("name").(string))
@@ -213,8 +216,7 @@ func resourceIbmCodeEngineDomainMappingCreate(context context.Context, d *schema
 	_, err = waitForIbmCodeEngineDomainMappingCreate(d, meta)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error waiting for resource IbmCodeEngineDomainMapping (%s) to be created: %s", d.Id(), err)
-		tfErr := flex.TerraformErrorf(err, errMsg, "ibm_code_engine_domain_mapping", "create")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, errMsg, "ibm_code_engine_domain_mapping", "create", "wait-for-state").GetDiag()
 	}
 
 	return resourceIbmCodeEngineDomainMappingRead(context, d, meta)
@@ -249,7 +251,7 @@ func waitForIbmCodeEngineDomainMappingCreate(d *schema.ResourceData, meta interf
 			}
 			failStates := map[string]bool{"failure": true, "failed": true}
 			if failStates[*stateObj.Status] {
-				return stateObj, *stateObj.Status, fmt.Errorf("the instance %s failed: %s", "getDomainMappingOptions", err)
+				return stateObj, *stateObj.Status, fmt.Errorf("The instance %s failed: %s", "getDomainMappingOptions", err)
 			}
 			return stateObj, *stateObj.Status, nil
 		},
@@ -258,13 +260,13 @@ func waitForIbmCodeEngineDomainMappingCreate(d *schema.ResourceData, meta interf
 		MinTimeout: 60 * time.Second,
 	}
 
-	return stateConf.WaitForState()
+	return stateConf.WaitForStateContext(context.Background())
 }
 
 func resourceIbmCodeEngineDomainMappingRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "read")
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "read", "initialize-client")
 		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
 		return tfErr.GetDiag()
 	}
@@ -273,8 +275,7 @@ func resourceIbmCodeEngineDomainMappingRead(context context.Context, d *schema.R
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "read", "sep-id-parts").GetDiag()
 	}
 
 	getDomainMappingOptions.SetProjectID(parts[0])
@@ -292,81 +293,95 @@ func resourceIbmCodeEngineDomainMappingRead(context context.Context, d *schema.R
 	}
 
 	if err = d.Set("project_id", domainMapping.ProjectID); err != nil {
-		return diag.FromErr(fmt.Errorf("error setting project_id: %s", err))
+		err = fmt.Errorf("Error setting project_id: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "read", "set-project_id").GetDiag()
 	}
-	componentMap, err := resourceIbmCodeEngineDomainMappingComponentRefToMap(domainMapping.Component)
+	componentMap, err := ResourceIbmCodeEngineDomainMappingComponentRefToMap(domainMapping.Component)
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "read", "component-to-map").GetDiag()
 	}
 	if err = d.Set("component", []map[string]interface{}{componentMap}); err != nil {
-		return diag.FromErr(fmt.Errorf("error setting component: %s", err))
+		err = fmt.Errorf("Error setting component: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "read", "set-component").GetDiag()
 	}
 	if err = d.Set("name", domainMapping.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("error setting name: %s", err))
+		err = fmt.Errorf("Error setting name: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "read", "set-name").GetDiag()
 	}
 	if err = d.Set("tls_secret", domainMapping.TlsSecret); err != nil {
-		return diag.FromErr(fmt.Errorf("error setting tls_secret: %s", err))
+		err = fmt.Errorf("Error setting tls_secret: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "read", "set-tls_secret").GetDiag()
 	}
 	if !core.IsNil(domainMapping.CnameTarget) {
 		if err = d.Set("cname_target", domainMapping.CnameTarget); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting cname_target: %s", err))
+			err = fmt.Errorf("Error setting cname_target: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "read", "set-cname_target").GetDiag()
 		}
 	}
 	if !core.IsNil(domainMapping.CreatedAt) {
 		if err = d.Set("created_at", domainMapping.CreatedAt); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting created_at: %s", err))
+			err = fmt.Errorf("Error setting created_at: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "read", "set-created_at").GetDiag()
 		}
 	}
 	if err = d.Set("entity_tag", domainMapping.EntityTag); err != nil {
-		return diag.FromErr(fmt.Errorf("error setting entity_tag: %s", err))
+		err = fmt.Errorf("Error setting entity_tag: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "read", "set-entity_tag").GetDiag()
 	}
 	if !core.IsNil(domainMapping.Href) {
 		if err = d.Set("href", domainMapping.Href); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting href: %s", err))
+			err = fmt.Errorf("Error setting href: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "read", "set-href").GetDiag()
 		}
 	}
 	if !core.IsNil(domainMapping.ID) {
 		if err = d.Set("domain_mapping_id", domainMapping.ID); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting domain_mapping_id: %s", err))
+			err = fmt.Errorf("Error setting domain_mapping_id: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "read", "set-domain_mapping_id").GetDiag()
 		}
 	}
 	if !core.IsNil(domainMapping.Region) {
 		if err = d.Set("region", domainMapping.Region); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting region: %s", err))
+			err = fmt.Errorf("Error setting region: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "read", "set-region").GetDiag()
 		}
 	}
 	if !core.IsNil(domainMapping.ResourceType) {
 		if err = d.Set("resource_type", domainMapping.ResourceType); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting resource_type: %s", err))
+			err = fmt.Errorf("Error setting resource_type: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "read", "set-resource_type").GetDiag()
 		}
 	}
 	if !core.IsNil(domainMapping.Status) {
 		if err = d.Set("status", domainMapping.Status); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting status: %s", err))
+			err = fmt.Errorf("Error setting status: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "read", "set-status").GetDiag()
 		}
 	}
 	if !core.IsNil(domainMapping.StatusDetails) {
-		statusDetailsMap, err := resourceIbmCodeEngineDomainMappingDomainMappingStatusToMap(domainMapping.StatusDetails)
+		statusDetailsMap, err := ResourceIbmCodeEngineDomainMappingDomainMappingStatusToMap(domainMapping.StatusDetails)
 		if err != nil {
-			return diag.FromErr(err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "read", "status_details-to-map").GetDiag()
 		}
 		if err = d.Set("status_details", []map[string]interface{}{statusDetailsMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting status_details: %s", err))
+			err = fmt.Errorf("Error setting status_details: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "read", "set-status_details").GetDiag()
 		}
 	}
 	if !core.IsNil(domainMapping.UserManaged) {
 		if err = d.Set("user_managed", domainMapping.UserManaged); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting user_managed: %s", err))
+			err = fmt.Errorf("Error setting user_managed: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "read", "set-user_managed").GetDiag()
 		}
 	}
 	if !core.IsNil(domainMapping.Visibility) {
 		if err = d.Set("visibility", domainMapping.Visibility); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting visibility: %s", err))
+			err = fmt.Errorf("Error setting visibility: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "read", "set-visibility").GetDiag()
 		}
 	}
 	if err = d.Set("etag", response.Headers.Get("Etag")); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting etag: %s", err), "ibm_code_engine_domain_mapping", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting etag: %s", err), "ibm_code_engine_domain_mapping", "read", "set-etag").GetDiag()
 	}
 
 	return nil
@@ -375,7 +390,7 @@ func resourceIbmCodeEngineDomainMappingRead(context context.Context, d *schema.R
 func resourceIbmCodeEngineDomainMappingUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "update")
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "update", "initialize-client")
 		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
 		return tfErr.GetDiag()
 	}
@@ -384,8 +399,7 @@ func resourceIbmCodeEngineDomainMappingUpdate(context context.Context, d *schema
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "update")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "update", "sep-id-parts").GetDiag()
 	}
 
 	updateDomainMappingOptions.SetProjectID(parts[0])
@@ -397,13 +411,12 @@ func resourceIbmCodeEngineDomainMappingUpdate(context context.Context, d *schema
 	if d.HasChange("project_id") {
 		errMsg := fmt.Sprintf("Cannot update resource property \"%s\" with the ForceNew annotation."+
 			" The resource must be re-created to update this property.", "project_id")
-		tfErr := flex.TerraformErrorf(err, errMsg, "ibm_code_engine_domain_mapping", "update")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(nil, errMsg, "ibm_code_engine_domain_mapping", "update", "project_id-forces-new").GetDiag()
 	}
 	if d.HasChange("component") {
-		component, err := resourceIbmCodeEngineDomainMappingMapToComponentRef(d.Get("component.0").(map[string]interface{}))
+		component, err := ResourceIbmCodeEngineDomainMappingMapToComponentRef(d.Get("component.0").(map[string]interface{}))
 		if err != nil {
-			return diag.FromErr(err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "update", "parse-component").GetDiag()
 		}
 		patchVals.Component = component
 		hasChange = true
@@ -416,7 +429,11 @@ func resourceIbmCodeEngineDomainMappingUpdate(context context.Context, d *schema
 	updateDomainMappingOptions.SetIfMatch(d.Get("etag").(string))
 
 	if hasChange {
-		updateDomainMappingOptions.DomainMapping, _ = patchVals.AsPatch()
+		// Fields with `nil` values are omitted from the generic map,
+		// so we need to re-add them to support removing arguments
+		// in merge-patch operations sent to the service.
+		updateDomainMappingOptions.DomainMapping = ResourceIbmCodeEngineDomainMappingDomainMappingPatchAsPatch(patchVals, d)
+
 		_, _, err = codeEngineClient.UpdateDomainMappingWithContext(context, updateDomainMappingOptions)
 		if err != nil {
 			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateDomainMappingWithContext failed: %s", err.Error()), "ibm_code_engine_domain_mapping", "update")
@@ -431,7 +448,7 @@ func resourceIbmCodeEngineDomainMappingUpdate(context context.Context, d *schema
 func resourceIbmCodeEngineDomainMappingDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "delete")
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "delete", "initialize-client")
 		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
 		return tfErr.GetDiag()
 	}
@@ -440,8 +457,7 @@ func resourceIbmCodeEngineDomainMappingDelete(context context.Context, d *schema
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "delete")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_code_engine_domain_mapping", "delete", "sep-id-parts").GetDiag()
 	}
 
 	deleteDomainMappingOptions.SetProjectID(parts[0])
@@ -459,24 +475,40 @@ func resourceIbmCodeEngineDomainMappingDelete(context context.Context, d *schema
 	return nil
 }
 
-func resourceIbmCodeEngineDomainMappingMapToComponentRef(modelMap map[string]interface{}) (*codeenginev2.ComponentRef, error) {
+func ResourceIbmCodeEngineDomainMappingMapToComponentRef(modelMap map[string]interface{}) (*codeenginev2.ComponentRef, error) {
 	model := &codeenginev2.ComponentRef{}
 	model.Name = core.StringPtr(modelMap["name"].(string))
 	model.ResourceType = core.StringPtr(modelMap["resource_type"].(string))
 	return model, nil
 }
 
-func resourceIbmCodeEngineDomainMappingComponentRefToMap(model *codeenginev2.ComponentRef) (map[string]interface{}, error) {
+func ResourceIbmCodeEngineDomainMappingComponentRefToMap(model *codeenginev2.ComponentRef) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	modelMap["name"] = model.Name
-	modelMap["resource_type"] = model.ResourceType
+	modelMap["name"] = *model.Name
+	modelMap["resource_type"] = *model.ResourceType
 	return modelMap, nil
 }
 
-func resourceIbmCodeEngineDomainMappingDomainMappingStatusToMap(model *codeenginev2.DomainMappingStatus) (map[string]interface{}, error) {
+func ResourceIbmCodeEngineDomainMappingDomainMappingStatusToMap(model *codeenginev2.DomainMappingStatus) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Reason != nil {
-		modelMap["reason"] = model.Reason
+		modelMap["reason"] = *model.Reason
 	}
 	return modelMap, nil
+}
+
+func ResourceIbmCodeEngineDomainMappingDomainMappingPatchAsPatch(patchVals *codeenginev2.DomainMappingPatch, d *schema.ResourceData) map[string]interface{} {
+	patch, _ := patchVals.AsPatch()
+	var path string
+
+	path = "component"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["component"] = nil
+	}
+	path = "tls_secret"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["tls_secret"] = nil
+	}
+
+	return patch
 }

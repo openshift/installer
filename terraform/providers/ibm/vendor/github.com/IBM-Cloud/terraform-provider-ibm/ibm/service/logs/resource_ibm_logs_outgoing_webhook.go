@@ -63,6 +63,12 @@ func ResourceIbmLogsOutgoingWebhook() *schema.Resource {
 							Required:    true,
 							Description: "The region ID of the selected IBM Event Notifications instance.",
 						},
+						"endpoint_type": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: "The endpoint type of integration.",
+						},
 						"source_id": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
@@ -342,6 +348,9 @@ func ResourceIbmLogsOutgoingWebhookMapToOutgoingWebhooksV1IbmEventNotificationsC
 	model := &logsv0.OutgoingWebhooksV1IbmEventNotificationsConfig{}
 	model.EventNotificationsInstanceID = core.UUIDPtr(strfmt.UUID(modelMap["event_notifications_instance_id"].(string)))
 	model.RegionID = core.StringPtr(modelMap["region_id"].(string))
+	if modelMap["endpoint_type"] != nil && modelMap["endpoint_type"].(string) != "" {
+		model.EndpointType = core.StringPtr(modelMap["endpoint_type"].(string))
+	}
 	if modelMap["source_id"] != nil && modelMap["source_id"].(string) != "" {
 		model.SourceID = core.StringPtr(modelMap["source_id"].(string))
 	}
@@ -389,6 +398,9 @@ func ResourceIbmLogsOutgoingWebhookOutgoingWebhooksV1IbmEventNotificationsConfig
 	modelMap := make(map[string]interface{})
 	modelMap["event_notifications_instance_id"] = model.EventNotificationsInstanceID.String()
 	modelMap["region_id"] = *model.RegionID
+	if model.EndpointType != nil {
+		modelMap["endpoint_type"] = *model.EndpointType
+	}
 	if model.SourceID != nil {
 		modelMap["source_id"] = *model.SourceID
 	}

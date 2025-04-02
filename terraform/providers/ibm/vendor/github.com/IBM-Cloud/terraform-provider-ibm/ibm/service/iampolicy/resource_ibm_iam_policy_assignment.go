@@ -317,7 +317,7 @@ func resourceIBMPolicyAssignmentRead(context context.Context, d *schema.Resource
 
 	assignmentResponse, response, err := iamPolicyManagementClient.GetPolicyAssignmentWithContext(context, getPolicyAssignmentOptions)
 
-	assignmentDetails := assignmentResponse.(*iampolicymanagementv1.GetPolicyAssignmentResponse)
+	assignmentDetails := assignmentResponse.(*iampolicymanagementv1.PolicyTemplateAssignmentItems)
 	if err != nil {
 		if response != nil && response.StatusCode == 404 {
 			d.SetId("")
@@ -584,7 +584,7 @@ func isAccessPolicyAssigned(id string, meta interface{}) resource.StateRefreshFu
 			return nil, failed, err
 		}
 
-		assignment, ok := assignmentDetails.(*iampolicymanagementv1.GetPolicyAssignmentResponse)
+		assignment, ok := assignmentDetails.(*iampolicymanagementv1.PolicyTemplateAssignmentItems)
 
 		if !ok {
 			return nil, failed, fmt.Errorf("[ERROR] Type assertion failed for assignment details : %s", id)
@@ -632,7 +632,7 @@ func isAccessPolicyAssignedDeleted(id string, meta interface{}) resource.StateRe
 			return nil, failed, err
 		}
 
-		assignment, ok := assignmentDetails.(*iampolicymanagementv1.GetPolicyAssignmentResponse)
+		assignment, ok := assignmentDetails.(*iampolicymanagementv1.PolicyTemplateAssignmentItems)
 
 		if !ok {
 			return nil, failed, fmt.Errorf("[ERROR] Type assertion failed for assignment details : %s", id)

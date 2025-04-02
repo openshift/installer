@@ -14,7 +14,7 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -32,8 +32,14 @@ func ResourceIBMPISnapshot() *schema.Resource {
 			Update: schema.DefaultTimeout(60 * time.Minute),
 			Delete: schema.DefaultTimeout(10 * time.Minute),
 		},
+		CustomizeDiff: customdiff.Sequence(
+			func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+				return flex.ResourcePowerUserTagsCustomizeDiff(diff)
+			},
+		),
 
 		Schema: map[string]*schema.Schema{
+
 			// Arguments
 			Arg_CloudInstanceID: {
 				Description:  "The GUID of the service instance associated with an account.",
@@ -59,6 +65,7 @@ func ResourceIBMPISnapshot() *schema.Resource {
 				ValidateFunc: validation.NoZeroValues,
 			},
 			Arg_UserTags: {
+				Computed:    true,
 				Description: "The user tags attached to this resource.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Optional:    true,
@@ -106,6 +113,7 @@ func ResourceIBMPISnapshot() *schema.Resource {
 				Type:        schema.TypeMap,
 			},
 		},
+		DeprecationMessage: "Resource ibm_pi_snapshot is deprecated. Use `ibm_pi_instance_snapshot` resource instead.",
 	}
 }
 
@@ -226,7 +234,7 @@ func resourceIBMPISnapshotUpdate(ctx context.Context, d *schema.ResourceData, me
 			return diag.FromErr(err)
 		}
 
-		_, err = isWaitForPIInstanceSnapshotAvailable(ctx, client, snapshotID, d.Timeout(schema.TimeoutCreate))
+		_, err = isWaitForPIInstanceSnapshotAvailable(ctx, client, snapshotID, d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -278,60 +286,4 @@ func resourceIBMPISnapshotDelete(ctx context.Context, d *schema.ResourceData, me
 
 	d.SetId("")
 	return nil
-}
-
-func isWaitForPIInstanceSnapshotAvailable(ctx context.Context, client *instance.IBMPISnapshotClient, id string, timeout time.Duration) (interface{}, error) {
-	log.Printf("Waiting for PIInstance Snapshot (%s) to be available and active ", id)
-	stateConf := &retry.StateChangeConf{
-		Pending:    []string{State_InProgress, State_Build},
-		Target:     []string{State_Available, State_Active},
-		Refresh:    isPIInstanceSnapshotRefreshFunc(client, id),
-		Delay:      30 * time.Second,
-		MinTimeout: 2 * time.Minute,
-		Timeout:    timeout,
-	}
-
-	return stateConf.WaitForStateContext(ctx)
-}
-
-func isPIInstanceSnapshotRefreshFunc(client *instance.IBMPISnapshotClient, id string) retry.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		snapshotInfo, err := client.Get(id)
-		if err != nil {
-			return nil, "", err
-		}
-
-		if snapshotInfo.Status == State_Available && snapshotInfo.PercentComplete == 100 {
-			log.Printf("The snapshot is now available")
-			return snapshotInfo, State_Available, nil
-
-		}
-		return snapshotInfo, State_InProgress, nil
-	}
-}
-
-func isWaitForPIInstanceSnapshotDeleted(ctx context.Context, client *instance.IBMPISnapshotClient, id string, timeout time.Duration) (interface{}, error) {
-	log.Printf("Waiting for (%s) to be deleted.", id)
-
-	stateConf := &retry.StateChangeConf{
-		Pending:    []string{State_Retry, State_Deleting},
-		Target:     []string{State_NotFound},
-		Refresh:    isPIInstanceSnapshotDeleteRefreshFunc(client, id),
-		Delay:      10 * time.Second,
-		MinTimeout: 10 * time.Second,
-		Timeout:    timeout,
-	}
-
-	return stateConf.WaitForStateContext(ctx)
-}
-
-func isPIInstanceSnapshotDeleteRefreshFunc(client *instance.IBMPISnapshotClient, id string) retry.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		snapshot, err := client.Get(id)
-		if err != nil {
-			log.Printf("The snapshot is not found.")
-			return snapshot, State_NotFound, nil
-		}
-		return snapshot, State_NotFound, nil
-	}
 }

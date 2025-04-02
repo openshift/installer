@@ -2,9 +2,10 @@ package appconfiguration
 
 import (
 	"fmt"
+
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/appconfiguration-go-admin-sdk/appconfigurationv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"log"
 )
 
 func DataSourceIBMAppConfigSegment() *schema.Resource {
@@ -132,13 +133,13 @@ func dataSourceIbmAppConfigSegmentRead(d *schema.ResourceData, meta interface{})
 
 	appconfigClient, err := getAppConfigClient(meta, guid)
 	if err != nil {
-		return err
+		return flex.FmtErrorf(fmt.Sprintf("%s", err))
 	}
 
 	options := &appconfigurationv1.GetSegmentOptions{}
 	options.SetSegmentID(d.Get("segment_id").(string))
 
-	if _, ok := d.GetOk("includes"); ok {
+	if _, ok := GetFieldExists(d, "includes"); ok {
 		includes := []string{}
 		for _, segmentsItem := range d.Get("includes").([]interface{}) {
 			includes = append(includes, segmentsItem.(string))
@@ -148,45 +149,44 @@ func dataSourceIbmAppConfigSegmentRead(d *schema.ResourceData, meta interface{})
 
 	result, response, err := appconfigClient.GetSegment(options)
 	if err != nil {
-		log.Printf("[DEBUG] GetSegment failed %s\n%s", err, response)
-		return err
+		return flex.FmtErrorf("[ERROR] GetSegment failed %s\n%s", err, response)
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", guid, *result.SegmentID))
 
 	if result.Name != nil {
 		if err = d.Set("name", result.Name); err != nil {
-			return fmt.Errorf("[ERROR] Error setting name: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting name: %s", err)
 		}
 	}
 	if result.SegmentID != nil {
 		if err = d.Set("segment_id", result.SegmentID); err != nil {
-			return fmt.Errorf("[ERROR] Error setting segment_id: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting segment_id: %s", err)
 		}
 	}
 	if result.Description != nil {
 		if err = d.Set("description", result.Description); err != nil {
-			return fmt.Errorf("[ERROR] Error setting description: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting description: %s", err)
 		}
 	}
 	if result.Tags != nil {
 		if err = d.Set("tags", result.Tags); err != nil {
-			return fmt.Errorf("[ERROR] Error setting tags: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting tags: %s", err)
 		}
 	}
 	if result.CreatedTime != nil {
 		if err = d.Set("created_time", result.CreatedTime.String()); err != nil {
-			return fmt.Errorf("[ERROR] Error setting created_time: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting created_time: %s", err)
 		}
 	}
 	if result.UpdatedTime != nil {
 		if err = d.Set("updated_time", result.UpdatedTime.String()); err != nil {
-			return fmt.Errorf("[ERROR] Error setting updated_time: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting updated_time: %s", err)
 		}
 	}
 	if result.Href != nil {
 		if err = d.Set("href", result.Href); err != nil {
-			return fmt.Errorf("[ERROR] Error setting href: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting href: %s", err)
 		}
 	}
 	if result.Rules != nil {
@@ -194,20 +194,20 @@ func dataSourceIbmAppConfigSegmentRead(d *schema.ResourceData, meta interface{})
 		for _, ruleItem := range result.Rules {
 			rulesList = append(rulesList, dataSourceSegmentListSegmentRulesToMap(ruleItem))
 			if err = d.Set("rules", rulesList); err != nil {
-				return fmt.Errorf("[ERROR] Error setting rules %s", err)
+				return flex.FmtErrorf("[ERROR] Error setting rules %s", err)
 			}
 		}
 	}
 	if result.Features != nil {
 		err = d.Set("features", dataSourceSegmentFlattenFeatures(result.Features))
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error setting features %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting features %s", err)
 		}
 	}
 	if result.Properties != nil {
 		err = d.Set("properties", dataSourceSegmentFlattenProperties(result.Properties))
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error setting properties %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting properties %s", err)
 		}
 	}
 	return nil

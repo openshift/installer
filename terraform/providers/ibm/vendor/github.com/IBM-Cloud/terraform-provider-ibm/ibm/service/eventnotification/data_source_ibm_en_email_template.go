@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -69,7 +70,9 @@ func DataSourceIBMEnEmailTemplate() *schema.Resource {
 func dataSourceIBMEnEmailTemplateRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_en_email_template", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.GetTemplateOptions{}
@@ -77,40 +80,48 @@ func dataSourceIBMEnEmailTemplateRead(context context.Context, d *schema.Resourc
 	options.SetInstanceID(d.Get("instance_guid").(string))
 	options.SetID(d.Get("template_id").(string))
 
-	result, response, err := enClient.GetTemplateWithContext(context, options)
+	result, _, err := enClient.GetTemplateWithContext(context, options)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("GetTemplate failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetTemplateWithContext failed: %s", err.Error()), "(Data) ibm_en_email_template", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *options.InstanceID, *options.ID))
 
 	if err = d.Set("name", result.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "(Data) ibm_en_email_template", "read")
+		return tfErr.GetDiag()
 	}
 
 	if result.Description != nil {
 		if err = d.Set("description", result.Description); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting description: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting description: %s", err), "(Data) ibm_en_email_template", "read")
+			return tfErr.GetDiag()
 		}
 	}
 
 	if err = d.Set("type", result.Type); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting type: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting type: %s", err), "(Data) ibm_en_email_template", "read")
+		return tfErr.GetDiag()
 	}
 
 	if result.SubscriptionNames != nil {
 		err = d.Set("subscription_names", result.SubscriptionNames)
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting subscription_names %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting subscription_names: %s", err), "(Data) ibm_en_email_template", "read")
+			return tfErr.GetDiag()
 		}
 	}
 
 	if err = d.Set("updated_at", flex.DateTimeToString(result.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting updated_at %s", err), "(Data) ibm_en_email_template", "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("subscription_count", flex.IntValue(result.SubscriptionCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting subscription_count: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting subscription_count %s", err), "(Data) ibm_en_email_template", "read")
+		return tfErr.GetDiag()
 	}
 
 	return nil

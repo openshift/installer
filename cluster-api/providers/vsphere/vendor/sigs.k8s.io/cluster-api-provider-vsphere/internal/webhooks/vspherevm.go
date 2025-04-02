@@ -46,7 +46,7 @@ func (webhook *VSphereVMWebhook) SetupWebhookWithManager(mgr ctrl.Manager) error
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(&infrav1.VSphereVM{}).
 		WithValidator(webhook).
-		WithDefaulter(webhook).
+		WithDefaulter(webhook, admission.DefaulterRemoveUnknownOrOmitableFields).
 		Complete()
 }
 

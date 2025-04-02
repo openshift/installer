@@ -1,8 +1,8 @@
-// Copyright IBM Corp. 2024 All Rights Reserved.
+// Copyright IBM Corp. 2025 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 /*
- * IBM OpenAPI Terraform Generator Version: 3.94.1-71478489-20240820-161623
+ * IBM OpenAPI Terraform Generator Version: 3.99.1-daeb6e46-20250131-173156
  */
 
 package partnercentersell
@@ -38,19 +38,21 @@ func ResourceIbmOnboardingResourceBroker() *schema.Resource {
 				Description:  "The environment to fetch this object from.",
 			},
 			"auth_username": &schema.Schema{
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "The authentication username to reach the broker.",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validate.InvokeValidator("ibm_onboarding_resource_broker", "auth_username"),
+				Description:  "The authentication username to reach the broker.",
 			},
 			"auth_password": &schema.Schema{
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "The authentication password to reach the broker.",
 			},
 			"auth_scheme": &schema.Schema{
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "The supported authentication scheme for the broker.",
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validate.InvokeValidator("ibm_onboarding_resource_broker", "auth_scheme"),
+				Description:  "The supported authentication scheme for the broker.",
 			},
 			"resource_group_crn": &schema.Schema{
 				Type:        schema.TypeString,
@@ -204,6 +206,20 @@ func ResourceIbmOnboardingResourceBrokerValidator() *validate.ResourceValidator 
 			MaxValueLength:             64,
 		},
 		validate.ValidateSchema{
+			Identifier:                 "auth_username",
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			AllowedValues:              "apikey",
+		},
+		validate.ValidateSchema{
+			Identifier:                 "auth_scheme",
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "bearer, bearer-crn",
+		},
+		validate.ValidateSchema{
 			Identifier:                 "state",
 			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
 			Type:                       validate.TypeString,
@@ -242,12 +258,16 @@ func resourceIbmOnboardingResourceBrokerCreate(context context.Context, d *schem
 
 	createResourceBrokerOptions := &partnercentersellv1.CreateResourceBrokerOptions{}
 
-	createResourceBrokerOptions.SetAuthUsername(d.Get("auth_username").(string))
-	createResourceBrokerOptions.SetAuthPassword(d.Get("auth_password").(string))
 	createResourceBrokerOptions.SetAuthScheme(d.Get("auth_scheme").(string))
 	createResourceBrokerOptions.SetName(d.Get("name").(string))
 	createResourceBrokerOptions.SetBrokerURL(d.Get("broker_url").(string))
 	createResourceBrokerOptions.SetType(d.Get("type").(string))
+	if _, ok := d.GetOk("auth_username"); ok {
+		createResourceBrokerOptions.SetAuthUsername(d.Get("auth_username").(string))
+	}
+	if _, ok := d.GetOk("auth_password"); ok {
+		createResourceBrokerOptions.SetAuthPassword(d.Get("auth_password").(string))
+	}
 	if _, ok := d.GetOk("resource_group_crn"); ok {
 		createResourceBrokerOptions.SetResourceGroupCrn(d.Get("resource_group_crn").(string))
 	}
@@ -305,13 +325,17 @@ func resourceIbmOnboardingResourceBrokerRead(context context.Context, d *schema.
 		return tfErr.GetDiag()
 	}
 
-	if err = d.Set("auth_username", broker.AuthUsername); err != nil {
-		err = fmt.Errorf("Error setting auth_username: %s", err)
-		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_onboarding_resource_broker", "read", "set-auth_username").GetDiag()
+	if !core.IsNil(broker.AuthUsername) {
+		if err = d.Set("auth_username", broker.AuthUsername); err != nil {
+			err = fmt.Errorf("Error setting auth_username: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_onboarding_resource_broker", "read", "set-auth_username").GetDiag()
+		}
 	}
-	if err = d.Set("auth_password", broker.AuthPassword); err != nil {
-		err = fmt.Errorf("Error setting auth_password: %s", err)
-		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_onboarding_resource_broker", "read", "set-auth_password").GetDiag()
+	if !core.IsNil(broker.AuthPassword) {
+		if err = d.Set("auth_password", broker.AuthPassword); err != nil {
+			err = fmt.Errorf("Error setting auth_password: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_onboarding_resource_broker", "read", "set-auth_password").GetDiag()
+		}
 	}
 	if err = d.Set("auth_scheme", broker.AuthScheme); err != nil {
 		err = fmt.Errorf("Error setting auth_scheme: %s", err)
@@ -588,42 +612,62 @@ func ResourceIbmOnboardingResourceBrokerBrokerPatchAsPatch(patchVals *partnercen
 	path = "auth_username"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["auth_username"] = nil
+	} else if !exists {
+		delete(patch, "auth_username")
 	}
 	path = "auth_password"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["auth_password"] = nil
+	} else if !exists {
+		delete(patch, "auth_password")
 	}
 	path = "auth_scheme"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["auth_scheme"] = nil
+	} else if !exists {
+		delete(patch, "auth_scheme")
 	}
 	path = "resource_group_crn"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["resource_group_crn"] = nil
+	} else if !exists {
+		delete(patch, "resource_group_crn")
 	}
 	path = "state"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["state"] = nil
+	} else if !exists {
+		delete(patch, "state")
 	}
 	path = "broker_url"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["broker_url"] = nil
+	} else if !exists {
+		delete(patch, "broker_url")
 	}
 	path = "allow_context_updates"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["allow_context_updates"] = nil
+	} else if !exists {
+		delete(patch, "allow_context_updates")
 	}
 	path = "catalog_type"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["catalog_type"] = nil
+	} else if !exists {
+		delete(patch, "catalog_type")
 	}
 	path = "type"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["type"] = nil
+	} else if !exists {
+		delete(patch, "type")
 	}
 	path = "region"
 	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
 		patch["region"] = nil
+	} else if !exists {
+		delete(patch, "region")
 	}
 
 	return patch

@@ -36,16 +36,16 @@ import (
 )
 
 // AttachDisk attaches a disk to vm
-func (ss *ScaleSet) AttachDisk(ctx context.Context, nodeName types.NodeName, diskMap map[string]*AttachDiskOptions) (*azure.Future, error) {
+func (ss *ScaleSet) AttachDisk(ctx context.Context, nodeName types.NodeName, diskMap map[string]*AttachDiskOptions) error {
 	vmName := mapNodeNameToVMName(nodeName)
 	vm, err := ss.getVmssVM(vmName, azcache.CacheReadTypeDefault)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	nodeResourceGroup, err := ss.GetNodeResourceGroup(vmName)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	var disks []compute.DataDisk
@@ -67,7 +67,7 @@ func (ss *ScaleSet) AttachDisk(ctx context.Context, nodeName types.NodeName, dis
 					attached = true
 					break
 				}
-				return nil, fmt.Errorf("disk(%s) already attached to node(%s) on LUN(%d), but target LUN is %d", diskURI, nodeName, *disk.Lun, opt.Lun)
+				return fmt.Errorf("disk(%s) already attached to node(%s) on LUN(%d), but target LUN is %d", diskURI, nodeName, *disk.Lun, opt.Lun)
 
 			}
 		}
@@ -122,9 +122,9 @@ func (ss *ScaleSet) AttachDisk(ctx context.Context, nodeName types.NodeName, dis
 
 	klog.V(2).Infof("azureDisk - update: rg(%s) vm(%s) - attach disk list(%+v) returned with %v", nodeResourceGroup, nodeName, diskMap, rerr)
 	if rerr != nil {
-		return future, rerr.Error()
+		return rerr.Error()
 	}
-	return future, nil
+	return ss.WaitForUpdateResult(ctx, future, nodeName, "attach_disk")
 }
 
 // WaitForUpdateResult waits for the response of the update request

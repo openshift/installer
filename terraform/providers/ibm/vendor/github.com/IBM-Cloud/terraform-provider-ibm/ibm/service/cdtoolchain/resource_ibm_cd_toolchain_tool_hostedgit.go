@@ -1,5 +1,9 @@
-// Copyright IBM Corp. 2023 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
+
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.96.0-d6dec9d7-20241008-212902
+ */
 
 package cdtoolchain
 
@@ -16,7 +20,7 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
-	"github.com/IBM/continuous-delivery-go-sdk/cdtoolchainv2"
+	"github.com/IBM/continuous-delivery-go-sdk/v2/cdtoolchainv2"
 	"github.com/IBM/go-sdk-core/v5/core"
 )
 
@@ -52,51 +56,61 @@ func ResourceIBMCdToolchainToolHostedgit() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"git_id": &schema.Schema{
 							Type:        schema.TypeString,
+							Optional:    true,
 							Computed:    true,
 							Description: "Set this value to 'hostedgit' to target Git Repos and Issue Tracking.",
 						},
 						"api_root_url": &schema.Schema{
 							Type:        schema.TypeString,
+							Optional:    true,
 							Computed:    true,
 							Description: "The API root URL for the GitLab server.",
 						},
 						"default_branch": &schema.Schema{
 							Type:        schema.TypeString,
+							Optional:    true,
 							Computed:    true,
 							Description: "The default branch of the git repository.",
 						},
 						"owner_id": &schema.Schema{
 							Type:        schema.TypeString,
+							Optional:    true,
 							Computed:    true,
 							Description: "The GitLab user or group that owns the repository.  This parameter is required when creating a new repository, cloning, or forking a repository.  The value will be computed when linking to an existing repository.",
 						},
 						"repo_name": &schema.Schema{
 							Type:        schema.TypeString,
+							Optional:    true,
 							Computed:    true,
 							Description: "The name of the new GitLab repository to create.  This parameter is required when creating a new repository, cloning, or forking a repository.  The value will be computed when linking to an existing repository.",
 						},
 						"repo_url": &schema.Schema{
 							Type:        schema.TypeString,
+							Optional:    true,
 							Computed:    true,
 							Description: "The URL of the GitLab repository for this tool integration.  This parameter is required when linking to an existing repository.  The value will be computed when creating a new repository, cloning, or forking a repository.",
 						},
 						"source_repo_url": &schema.Schema{
 							Type:        schema.TypeString,
+							Optional:    true,
 							Computed:    true,
 							Description: "The URL of the repository that you are forking or cloning.  This parameter is required when forking or cloning a repository.  It is not used when creating a new repository or linking to an existing repository.",
 						},
 						"token_url": &schema.Schema{
 							Type:        schema.TypeString,
+							Optional:    true,
 							Computed:    true,
 							Description: "The token URL used for authorizing with the Bitbucket server.",
 						},
 						"type": &schema.Schema{
 							Type:        schema.TypeString,
+							Optional:    true,
 							Computed:    true,
 							Description: "The operation that should be performed to initialize the new tool integration. Use 'new' or 'new_if_not_exists' to create a new git repository, 'clone' or 'clone_if_not_exists' to clone an existing repository into a new git repository, 'fork' or 'fork_if_not_exists' to fork an existing git repository, or 'link' to link to an existing git repository. If you attempt to apply a resource with type 'new', 'clone', or 'fork' when the target repo already exists, the attempt will fail. If you apply a resource with type 'new_if_not_exists`, 'clone_if_not_exists', or 'fork_if_not_exists' when the target repo already exists, the existing repo will be used as-is.",
 						},
 						"private_repo": &schema.Schema{
 							Type:        schema.TypeBool,
+							Optional:    true,
 							Computed:    true,
 							Description: "Set this value to 'true' to make the repository private when creating a new repository or when cloning or forking a repository.  This parameter is not used when linking to an existing repository.",
 						},
@@ -114,6 +128,7 @@ func ResourceIBMCdToolchainToolHostedgit() *schema.Resource {
 						},
 						"repo_id": &schema.Schema{
 							Type:        schema.TypeString,
+							Optional:    true,
 							Computed:    true,
 							Description: "The ID of the Git Repos and Issue Tracking project.",
 						},
@@ -220,11 +235,13 @@ func ResourceIBMCdToolchainToolHostedgit() *schema.Resource {
 						"ui_href": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
+							Computed:    true,
 							Description: "URI representing this resource through the UI.",
 						},
 						"api_href": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
+							Computed:    true,
 							Description: "URI representing this resource through an API.",
 						},
 					},
@@ -279,7 +296,9 @@ func ResourceIBMCdToolchainToolHostedgitValidator() *validate.ResourceValidator 
 func resourceIBMCdToolchainToolHostedgitCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_hostedgit", "create", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	createToolOptions := &cdtoolchainv2.CreateToolOptions{}
@@ -295,10 +314,11 @@ func resourceIBMCdToolchainToolHostedgitCreate(context context.Context, d *schem
 		createToolOptions.SetName(d.Get("name").(string))
 	}
 
-	toolchainToolPost, response, err := cdToolchainClient.CreateToolWithContext(context, createToolOptions)
+	toolchainToolPost, _, err := cdToolchainClient.CreateToolWithContext(context, createToolOptions)
 	if err != nil {
-		log.Printf("[DEBUG] CreateToolWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateToolWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateToolWithContext failed: %s", err.Error()), "ibm_cd_toolchain_tool_hostedgit", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *createToolOptions.ToolchainID, *toolchainToolPost.ID))
@@ -309,14 +329,16 @@ func resourceIBMCdToolchainToolHostedgitCreate(context context.Context, d *schem
 func resourceIBMCdToolchainToolHostedgitRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_hostedgit", "read", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getToolByIDOptions := &cdtoolchainv2.GetToolByIDOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_hostedgit", "read", "sep-id-parts").GetDiag()
 	}
 
 	getToolByIDOptions.SetToolchainID(parts[0])
@@ -342,16 +364,19 @@ func resourceIBMCdToolchainToolHostedgitRead(context context.Context, d *schema.
 			d.SetId("")
 			return nil
 		}
-		log.Printf("[DEBUG] GetToolByIDWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetToolByIDWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetToolByIDWithContext failed: %s", err.Error()), "ibm_cd_toolchain_tool_hostedgit", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("toolchain_id", toolchainTool.ToolchainID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting toolchain_id: %s", err))
+		err = fmt.Errorf("Error setting toolchain_id: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_hostedgit", "read", "set-toolchain_id").GetDiag()
 	}
 	if !core.IsNil(toolchainTool.Name) {
 		if err = d.Set("name", toolchainTool.Name); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+			err = fmt.Errorf("Error setting name: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_hostedgit", "read", "set-name").GetDiag()
 		}
 	}
 	remapFields := map[string]string{
@@ -359,35 +384,44 @@ func resourceIBMCdToolchainToolHostedgitRead(context context.Context, d *schema.
 	}
 	parametersMap := GetParametersFromRead(toolchainTool.Parameters, ResourceIBMCdToolchainToolHostedgit(), remapFields)
 	if err = d.Set("parameters", []map[string]interface{}{parametersMap}); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting parameters: %s", err))
+		err = fmt.Errorf("Error setting parameters: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_hostedgit", "read", "set-parameters").GetDiag()
 	}
 	if err = d.Set("resource_group_id", toolchainTool.ResourceGroupID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting resource_group_id: %s", err))
+		err = fmt.Errorf("Error setting resource_group_id: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_hostedgit", "read", "set-resource_group_id").GetDiag()
 	}
 	if err = d.Set("crn", toolchainTool.CRN); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
+		err = fmt.Errorf("Error setting crn: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_hostedgit", "read", "set-crn").GetDiag()
 	}
 	if err = d.Set("toolchain_crn", toolchainTool.ToolchainCRN); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting toolchain_crn: %s", err))
+		err = fmt.Errorf("Error setting toolchain_crn: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_hostedgit", "read", "set-toolchain_crn").GetDiag()
 	}
 	if err = d.Set("href", toolchainTool.Href); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
+		err = fmt.Errorf("Error setting href: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_hostedgit", "read", "set-href").GetDiag()
 	}
-	referentMap, err := resourceIBMCdToolchainToolHostedgitToolModelReferentToMap(toolchainTool.Referent)
+	referentMap, err := ResourceIBMCdToolchainToolHostedgitToolModelReferentToMap(toolchainTool.Referent)
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_hostedgit", "read", "referent-to-map").GetDiag()
 	}
 	if err = d.Set("referent", []map[string]interface{}{referentMap}); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting referent: %s", err))
+		err = fmt.Errorf("Error setting referent: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_hostedgit", "read", "set-referent").GetDiag()
 	}
 	if err = d.Set("updated_at", flex.DateTimeToString(toolchainTool.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
+		err = fmt.Errorf("Error setting updated_at: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_hostedgit", "read", "set-updated_at").GetDiag()
 	}
 	if err = d.Set("state", toolchainTool.State); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting state: %s", err))
+		err = fmt.Errorf("Error setting state: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_hostedgit", "read", "set-state").GetDiag()
 	}
 	if err = d.Set("tool_id", toolchainTool.ID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting tool_id: %s", err))
+		err = fmt.Errorf("Error setting tool_id: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_hostedgit", "read", "set-tool_id").GetDiag()
 	}
 
 	return nil
@@ -396,14 +430,16 @@ func resourceIBMCdToolchainToolHostedgitRead(context context.Context, d *schema.
 func resourceIBMCdToolchainToolHostedgitUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_hostedgit", "update", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	updateToolOptions := &cdtoolchainv2.UpdateToolOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_hostedgit", "update", "sep-id-parts").GetDiag()
 	}
 
 	updateToolOptions.SetToolchainID(parts[0])
@@ -413,8 +449,9 @@ func resourceIBMCdToolchainToolHostedgitUpdate(context context.Context, d *schem
 
 	patchVals := &cdtoolchainv2.ToolchainToolPrototypePatch{}
 	if d.HasChange("toolchain_id") {
-		return diag.FromErr(fmt.Errorf("Cannot update resource property \"%s\" with the ForceNew annotation."+
-			" The resource must be re-created to update this property.", "toolchain_id"))
+		errMsg := fmt.Sprintf("Cannot update resource property \"%s\" with the ForceNew annotation."+
+			" The resource must be re-created to update this property.", "toolchain_id")
+		return flex.DiscriminatedTerraformErrorf(nil, errMsg, "ibm_cd_toolchain_tool_hostedgit", "update", "toolchain_id-forces-new").GetDiag()
 	}
 	if d.HasChange("name") {
 		newName := d.Get("name").(string)
@@ -431,11 +468,16 @@ func resourceIBMCdToolchainToolHostedgitUpdate(context context.Context, d *schem
 	}
 
 	if hasChange {
-		updateToolOptions.ToolchainToolPrototypePatch, _ = patchVals.AsPatch()
-		_, response, err := cdToolchainClient.UpdateToolWithContext(context, updateToolOptions)
+		// Fields with `nil` values are omitted from the generic map,
+		// so we need to re-add them to support removing arguments
+		// in merge-patch operations sent to the service.
+		updateToolOptions.ToolchainToolPrototypePatch = ResourceIBMCdToolchainToolHostedgitToolchainToolPrototypePatchAsPatch(patchVals, d)
+
+		_, _, err = cdToolchainClient.UpdateToolWithContext(context, updateToolOptions)
 		if err != nil {
-			log.Printf("[DEBUG] UpdateToolWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("UpdateToolWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateToolWithContext failed: %s", err.Error()), "ibm_cd_toolchain_tool_hostedgit", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -445,23 +487,26 @@ func resourceIBMCdToolchainToolHostedgitUpdate(context context.Context, d *schem
 func resourceIBMCdToolchainToolHostedgitDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_hostedgit", "delete", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	deleteToolOptions := &cdtoolchainv2.DeleteToolOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_toolchain_tool_hostedgit", "delete", "sep-id-parts").GetDiag()
 	}
 
 	deleteToolOptions.SetToolchainID(parts[0])
 	deleteToolOptions.SetToolID(parts[1])
 
-	response, err := cdToolchainClient.DeleteToolWithContext(context, deleteToolOptions)
+	_, err = cdToolchainClient.DeleteToolWithContext(context, deleteToolOptions)
 	if err != nil {
-		log.Printf("[DEBUG] DeleteToolWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteToolWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteToolWithContext failed: %s", err.Error()), "ibm_cd_toolchain_tool_hostedgit", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")
@@ -469,13 +514,104 @@ func resourceIBMCdToolchainToolHostedgitDelete(context context.Context, d *schem
 	return nil
 }
 
-func resourceIBMCdToolchainToolHostedgitToolModelReferentToMap(model *cdtoolchainv2.ToolModelReferent) (map[string]interface{}, error) {
+func ResourceIBMCdToolchainToolHostedgitToolModelReferentToMap(model *cdtoolchainv2.ToolModelReferent) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.UIHref != nil {
-		modelMap["ui_href"] = model.UIHref
+		modelMap["ui_href"] = *model.UIHref
 	}
 	if model.APIHref != nil {
-		modelMap["api_href"] = model.APIHref
+		modelMap["api_href"] = *model.APIHref
 	}
 	return modelMap, nil
+}
+
+func ResourceIBMCdToolchainToolHostedgitToolchainToolPrototypePatchAsPatch(patchVals *cdtoolchainv2.ToolchainToolPrototypePatch, d *schema.ResourceData) map[string]interface{} {
+	patch, _ := patchVals.AsPatch()
+	var path string
+
+	path = "name"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["name"] = nil
+	}
+	path = "tool_type_id"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["tool_type_id"] = nil
+	}
+	path = "parameters"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["parameters"] = nil
+	} else if exists && patch["parameters"] != nil {
+		ResourceIBMCdToolchainToolHostedgitToolModelParametersAsPatch(patch["parameters"].(map[string]interface{}), d)
+	}
+
+	return patch
+}
+
+func ResourceIBMCdToolchainToolHostedgitToolModelParametersAsPatch(patch map[string]interface{}, d *schema.ResourceData) {
+	var path string
+
+	path = "parameters.0.git_id"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["git_id"] = nil
+	}
+	path = "parameters.0.api_root_url"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["api_root_url"] = nil
+	}
+	path = "parameters.0.default_branch"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["default_branch"] = nil
+	}
+	path = "parameters.0.owner_id"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["owner_id"] = nil
+	}
+	path = "parameters.0.repo_name"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["repo_name"] = nil
+	}
+	path = "parameters.0.repo_url"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["repo_url"] = nil
+	}
+	path = "parameters.0.source_repo_url"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["source_repo_url"] = nil
+	}
+	path = "parameters.0.token_url"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["token_url"] = nil
+	}
+	path = "parameters.0.type"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["type"] = nil
+	}
+	path = "parameters.0.private_repo"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["private_repo"] = nil
+	}
+	path = "parameters.0.enable_traceability"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["enable_traceability"] = nil
+	}
+	path = "parameters.0.integration_owner"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["integration_owner"] = nil
+	}
+	path = "parameters.0.repo_id"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["repo_id"] = nil
+	}
+	path = "parameters.0.auth_type"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["auth_type"] = nil
+	}
+	path = "parameters.0.api_token"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["api_token"] = nil
+	}
+	path = "parameters.0.toolchain_issues_enabled"
+	if _, exists := d.GetOk(path); d.HasChange(path) && !exists {
+		patch["toolchain_issues_enabled"] = nil
+	}
 }

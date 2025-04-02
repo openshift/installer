@@ -2,7 +2,7 @@
 // Licensed under the Mozilla Public License v2.0
 
 /*
- * IBM OpenAPI Terraform Generator Version: 3.90.0-5aad763d-20240506-203857
+ * IBM OpenAPI Terraform Generator Version: 3.95.2-120e65bc-20240924-152329
  */
 
 package mqcloud
@@ -29,7 +29,7 @@ func DataSourceIbmMqcloudApplication() *schema.Resource {
 			"service_instance_guid": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The GUID that uniquely identifies the MQ on Cloud service instance.",
+				Description: "The GUID that uniquely identifies the MQaaS service instance.",
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -134,7 +134,7 @@ func dataSourceIbmMqcloudApplicationRead(context context.Context, d *schema.Reso
 	mapSlice := []map[string]interface{}{}
 	for _, modelItem := range allItems {
 		modelItem := modelItem
-		modelMap, err := DataSourceIbmMqcloudApplicationApplicationDetailsToMap(&modelItem)
+		modelMap, err := DataSourceIbmMqcloudApplicationApplicationDetailsToMap(&modelItem) // #nosec G601
 		if err != nil {
 			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_mqcloud_application", "read")
 			return tfErr.GetDiag()

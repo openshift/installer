@@ -5,6 +5,7 @@ package scc
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"math/big"
 	"strconv"
@@ -50,13 +51,12 @@ func ResourceIbmSccControlLibrary() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_scc_control_library", "control_library_type"),
-				Description:  "The control library type.",
+				Description:  "The control library type. This should be set to custom",
 			},
 			"version_group_label": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validate.InvokeValidator("ibm_scc_control_library", "version_group_label"),
-				Description:  "The version group label.",
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The ID of the version update of the control library.",
 			},
 			"control_library_version": {
 				Type:         schema.TypeString,
@@ -153,11 +153,11 @@ func ResourceIbmSccControlLibrary() *schema.Resource {
 										Computed:    true,
 										Description: "The number of assessments.",
 									},
-
 									"assessments": {
 										Type:        schema.TypeSet,
 										Optional:    true,
 										Description: "The assessments.",
+										Set:         assessmentsSchemaSetFunc("assessment_id"),
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"assessment_id": {
@@ -374,7 +374,7 @@ func resourceIbmSccControlLibraryCreate(context context.Context, d *schema.Resou
 	}
 	bodyModelMap["controls"] = d.Get("controls")
 
-	convertedModel, err := resourceIbmSccControlLibraryMapToControlLibraryPrototype(bodyModelMap)
+	convertedModel, err := resourceIbmSccControlLibraryMapToControlLibraryOptions(bodyModelMap)
 	if err != nil {
 		log.Printf("[DEBUG] CreateCustomControlLibraryWithContext failed %s\n", err)
 		return diag.FromErr(flex.FmtErrorf("CreateCustomControlLibraryWithContext failed %s\n", err))
@@ -403,7 +403,7 @@ func resourceIbmSccControlLibraryRead(context context.Context, d *schema.Resourc
 		return diag.FromErr(err)
 	}
 	getControlLibraryOptions.SetInstanceID(parts[0])
-	getControlLibraryOptions.SetControlLibrariesID(parts[1])
+	getControlLibraryOptions.SetControlLibraryID(parts[1])
 
 	controlLibrary, response, err := securityandcompliancecenterapiClient.GetControlLibraryWithContext(context, getControlLibraryOptions)
 	if err != nil {
@@ -449,16 +449,18 @@ func resourceIbmSccControlLibraryRead(context context.Context, d *schema.Resourc
 			return diag.FromErr(flex.FmtErrorf("Error setting controls_count: %s", err))
 		}
 	}
-	controls := []map[string]interface{}{}
-	for _, controlsItem := range controlLibrary.Controls {
-		controlsItemMap, err := resourceIbmSccControlLibraryControlsInControlLibToMap(&controlsItem)
-		if err != nil {
-			return diag.FromErr(err)
+	if !core.IsNil(controlLibrary.Controls) {
+		controls := []map[string]interface{}{}
+		for _, controlsItem := range controlLibrary.Controls {
+			controlsItemMap, err := resourceIbmSccControlLibraryControlsInControlLibToMap(&controlsItem)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			controls = append(controls, controlsItemMap)
 		}
-		controls = append(controls, controlsItemMap)
-	}
-	if err = d.Set("controls", controls); err != nil {
-		return diag.FromErr(flex.FmtErrorf("Error setting controls: %s", err))
+		if err = d.Set("controls", controls); err != nil {
+			return diag.FromErr(flex.FmtErrorf("Error setting controls: %s", err))
+		}
 	}
 	if !core.IsNil(controlLibrary.AccountID) {
 		if err = d.Set("account_id", controlLibrary.AccountID); err != nil {
@@ -511,7 +513,7 @@ func resourceIbmSccControlLibraryUpdate(context context.Context, d *schema.Resou
 		return diag.FromErr(err)
 	}
 	replaceCustomControlLibraryOptions.SetInstanceID(parts[0])
-	replaceCustomControlLibraryOptions.SetControlLibrariesID(parts[1])
+	replaceCustomControlLibraryOptions.SetControlLibraryID(parts[1])
 
 	hasChange := false
 
@@ -520,13 +522,13 @@ func resourceIbmSccControlLibraryUpdate(context context.Context, d *schema.Resou
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		replaceCustomControlLibraryOptions.SetControlLibrariesID(*controlLibrary.ID)
+		replaceCustomControlLibraryOptions.SetControlLibraryID(*controlLibrary.ID)
 		hasChange = true
 	}
 
 	if d.HasChange("controls") {
 		for _, controlsItem := range d.Get("controls").([]interface{}) {
-			controlsItemModel, err := resourceIbmSccControlLibraryMapToControlsInControlLib(controlsItem.(map[string]interface{}))
+			controlsItemModel, err := resourceIbmSccControlLibraryMapToControl(controlsItem.(map[string]interface{}))
 			if err != nil {
 				return diag.FromErr(flex.FmtErrorf("ReplaceCustomControlLibraryWithContext failed %s\n", err))
 			}
@@ -538,20 +540,31 @@ func resourceIbmSccControlLibraryUpdate(context context.Context, d *schema.Resou
 		replaceCustomControlLibraryOptions.SetControlLibraryVersion(d.Get("control_library_version").(string))
 		hasChange = true
 	}
+	if d.HasChange("version_group_label") {
+		replaceCustomControlLibraryOptions.SetVersionGroupLabel(d.Get("version_group_label").(string))
+		hasChange = true
+	}
 
 	if hasChange {
+
 		if replaceCustomControlLibraryOptions.ControlLibraryName == nil {
 			replaceCustomControlLibraryOptions.SetControlLibraryName(d.Get("control_library_name").(string))
+		}
+		if replaceCustomControlLibraryOptions.VersionGroupLabel == nil {
+			replaceCustomControlLibraryOptions.SetVersionGroupLabel(d.Get("version_group_label").(string))
 		}
 		if replaceCustomControlLibraryOptions.ControlLibraryDescription == nil {
 			replaceCustomControlLibraryOptions.SetControlLibraryDescription(d.Get("control_library_description").(string))
 		}
 		if replaceCustomControlLibraryOptions.ControlLibraryVersion == nil {
-			replaceCustomControlLibraryOptions.SetControlLibraryDescription(d.Get("control_library_version").(string))
+			replaceCustomControlLibraryOptions.SetControlLibraryVersion(d.Get("control_library_version").(string))
+		}
+		if replaceCustomControlLibraryOptions.ControlLibraryType == nil {
+			replaceCustomControlLibraryOptions.SetControlLibraryType("custom")
 		}
 		if len(replaceCustomControlLibraryOptions.Controls) == 0 {
 			for _, controlsItem := range d.Get("controls").([]interface{}) {
-				controlsItemModel, err := resourceIbmSccControlLibraryMapToControlsInControlLib(controlsItem.(map[string]interface{}))
+				controlsItemModel, err := resourceIbmSccControlLibraryMapToControl(controlsItem.(map[string]interface{}))
 				if err != nil {
 					return diag.FromErr(flex.FmtErrorf("ReplaceCustomControlLibraryWithContext failed %s\n", err))
 				}
@@ -581,7 +594,7 @@ func resourceIbmSccControlLibraryDelete(context context.Context, d *schema.Resou
 		return diag.FromErr(err)
 	}
 	deleteCustomControlLibraryOptions.SetInstanceID(parts[0])
-	deleteCustomControlLibraryOptions.SetControlLibrariesID(parts[1])
+	deleteCustomControlLibraryOptions.SetControlLibraryID(parts[1])
 
 	_, response, err := securityandcompliancecenterapiClient.DeleteCustomControlLibraryWithContext(context, deleteCustomControlLibraryOptions)
 	if err != nil {
@@ -594,16 +607,16 @@ func resourceIbmSccControlLibraryDelete(context context.Context, d *schema.Resou
 	return nil
 }
 
-func resourceIbmSccControlLibraryMapToControlsInControlLib(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.ControlsInControlLib, error) {
-	model := &securityandcompliancecenterapiv3.ControlsInControlLib{}
+func resourceIbmSccControlLibraryMapToControl(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.Control, error) {
+	model := &securityandcompliancecenterapiv3.Control{}
 	if modelMap["control_name"] != nil && modelMap["control_name"].(string) != "" {
 		model.ControlName = core.StringPtr(modelMap["control_name"].(string))
 	}
-	if modelMap["control_id"] != nil && modelMap["control_id"].(string) != "" {
-		model.ControlID = core.StringPtr(modelMap["control_id"].(string))
-	}
 	if modelMap["control_description"] != nil && modelMap["control_description"].(string) != "" {
 		model.ControlDescription = core.StringPtr(modelMap["control_description"].(string))
+	}
+	if modelMap["control_id"] != nil && modelMap["control_id"].(string) != "" {
+		model.ControlID = core.StringPtr(modelMap["control_id"].(string))
 	}
 	if modelMap["control_category"] != nil && modelMap["control_category"].(string) != "" {
 		model.ControlCategory = core.StringPtr(modelMap["control_category"].(string))
@@ -619,9 +632,9 @@ func resourceIbmSccControlLibraryMapToControlsInControlLib(modelMap map[string]i
 		model.ControlTags = controlTags
 	}
 	if modelMap["control_specifications"] != nil {
-		controlSpecifications := []securityandcompliancecenterapiv3.ControlSpecifications{}
+		controlSpecifications := []securityandcompliancecenterapiv3.ControlSpecification{}
 		for _, controlSpecificationsItem := range modelMap["control_specifications"].([]interface{}) {
-			controlSpecificationsItemModel, err := resourceIbmSccControlLibraryMapToControlSpecifications(controlSpecificationsItem.(map[string]interface{}))
+			controlSpecificationsItemModel, err := resourceIbmSccControlLibraryMapToControlSpecification(controlSpecificationsItem.(map[string]interface{}))
 			if err != nil {
 				return model, err
 			}
@@ -645,10 +658,89 @@ func resourceIbmSccControlLibraryMapToControlsInControlLib(modelMap map[string]i
 	return model, nil
 }
 
-func resourceIbmSccControlLibraryMapToControlSpecifications(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.ControlSpecifications, error) {
-	model := &securityandcompliancecenterapiv3.ControlSpecifications{}
+func resourceIbmSccControlLibraryMapToControlPrototype(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.Control, error) {
+	model := &securityandcompliancecenterapiv3.Control{}
+	if modelMap["control_name"] != nil && modelMap["control_name"].(string) != "" {
+		model.ControlName = core.StringPtr(modelMap["control_name"].(string))
+	}
+	if modelMap["control_id"] != nil && modelMap["control_id"].(string) != "" {
+		model.ControlID = core.StringPtr(modelMap["control_id"].(string))
+	}
+	if modelMap["control_description"] != nil && modelMap["control_description"].(string) != "" {
+		model.ControlDescription = core.StringPtr(modelMap["control_description"].(string))
+	}
+	if modelMap["control_category"] != nil && modelMap["control_category"].(string) != "" {
+		model.ControlCategory = core.StringPtr(modelMap["control_category"].(string))
+	}
+	if modelMap["control_parent"] != nil && modelMap["control_parent"].(string) != "" {
+		model.ControlParent = core.StringPtr(modelMap["control_parent"].(string))
+	}
+	if modelMap["control_tags"] != nil {
+		controlTags := []string{}
+		for _, controlTagsItem := range modelMap["control_tags"].([]interface{}) {
+			controlTags = append(controlTags, controlTagsItem.(string))
+		}
+		model.ControlTags = controlTags
+	}
+	if modelMap["control_specifications"] != nil {
+		controlSpecifications := []securityandcompliancecenterapiv3.ControlSpecification{}
+		for _, controlSpecificationsItem := range modelMap["control_specifications"].([]interface{}) {
+			controlSpecificationsItemModel, err := resourceIbmSccControlLibraryMapToControlSpecificationPrototype(controlSpecificationsItem.(map[string]interface{}))
+			if err != nil {
+				return model, err
+			}
+			controlSpecifications = append(controlSpecifications, *controlSpecificationsItemModel)
+		}
+		model.ControlSpecifications = controlSpecifications
+	}
+	if modelMap["control_docs"].([]interface{})[0] != nil && len(modelMap["control_docs"].([]interface{})[0].(map[string]interface{})) > 0 {
+		ControlDocsModel, err := resourceIbmSccControlLibraryMapToControlDocs(modelMap["control_docs"].([]interface{})[0].(map[string]interface{}))
+		if err != nil {
+			return model, err
+		}
+		model.ControlDocs = ControlDocsModel
+	}
+	if modelMap["control_requirement"] != nil {
+		model.ControlRequirement = core.BoolPtr(modelMap["control_requirement"].(bool))
+	}
+	if modelMap["status"] != nil && modelMap["status"].(string) != "" {
+		model.Status = core.StringPtr(modelMap["status"].(string))
+	}
+	return model, nil
+}
+
+func resourceIbmSccControlLibraryMapToControlSpecificationPrototype(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.ControlSpecification, error) {
+	model := &securityandcompliancecenterapiv3.ControlSpecification{}
 	if modelMap["control_specification_id"] != nil && modelMap["control_specification_id"].(string) != "" {
-		model.ControlSpecificationID = core.StringPtr(modelMap["control_specification_id"].(string))
+		model.ID = core.StringPtr(modelMap["control_specification_id"].(string))
+	}
+	if modelMap["control_specification_description"] != nil && modelMap["control_specification_description"].(string) != "" {
+		model.Description = core.StringPtr(modelMap["control_specification_description"].(string))
+	}
+	if modelMap["component_id"] != nil && modelMap["component_id"].(string) != "" {
+		model.ComponentID = core.StringPtr(modelMap["component_id"].(string))
+	}
+	if modelMap["environment"] != nil && modelMap["environment"].(string) != "" {
+		model.Environment = core.StringPtr(modelMap["environment"].(string))
+	}
+	if modelMap["assessments"] != nil {
+		assessments := []securityandcompliancecenterapiv3.Assessment{}
+		for _, assessmentsItem := range modelMap["assessments"].(*schema.Set).List() {
+			assessmentsItemModel, err := resourceIbmSccControlLibraryMapToAssessmentPrototype(assessmentsItem.(map[string]interface{}))
+			if err != nil {
+				return model, err
+			}
+			assessments = append(assessments, *assessmentsItemModel)
+		}
+		model.Assessments = assessments
+	}
+	return model, nil
+}
+
+func resourceIbmSccControlLibraryMapToControlSpecification(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.ControlSpecification, error) {
+	model := &securityandcompliancecenterapiv3.ControlSpecification{}
+	if modelMap["control_specification_id"] != nil && modelMap["control_specification_id"].(string) != "" {
+		model.ID = core.StringPtr(modelMap["control_specification_id"].(string))
 	}
 	if modelMap["responsibility"] != nil && modelMap["responsibility"].(string) != "" {
 		model.Responsibility = core.StringPtr(modelMap["responsibility"].(string))
@@ -663,15 +755,15 @@ func resourceIbmSccControlLibraryMapToControlSpecifications(modelMap map[string]
 		model.Environment = core.StringPtr(modelMap["environment"].(string))
 	}
 	if modelMap["control_specification_description"] != nil && modelMap["control_specification_description"].(string) != "" {
-		model.ControlSpecificationDescription = core.StringPtr(modelMap["control_specification_description"].(string))
+		model.Description = core.StringPtr(modelMap["control_specification_description"].(string))
 	}
 	if modelMap["assessments_count"] != nil {
 		model.AssessmentsCount = core.Int64Ptr(int64(modelMap["assessments_count"].(int)))
 	}
 	if modelMap["assessments"] != nil {
-		assessments := []securityandcompliancecenterapiv3.Implementation{}
+		assessments := []securityandcompliancecenterapiv3.Assessment{}
 		for _, assessmentsItem := range modelMap["assessments"].(*schema.Set).List() {
-			assessmentsItemModel, err := resourceIbmSccControlLibraryMapToImplementation(assessmentsItem.(map[string]interface{}))
+			assessmentsItemModel, err := resourceIbmSccControlLibraryMapToAssessment(assessmentsItem.(map[string]interface{}))
 			if err != nil {
 				return model, err
 			}
@@ -682,8 +774,8 @@ func resourceIbmSccControlLibraryMapToControlSpecifications(modelMap map[string]
 	return model, nil
 }
 
-func resourceIbmSccControlLibraryMapToImplementation(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.Implementation, error) {
-	model := &securityandcompliancecenterapiv3.Implementation{}
+func resourceIbmSccControlLibraryMapToAssessment(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.Assessment, error) {
+	model := &securityandcompliancecenterapiv3.Assessment{}
 	if modelMap["assessment_id"] != nil && modelMap["assessment_id"].(string) != "" {
 		model.AssessmentID = core.StringPtr(modelMap["assessment_id"].(string))
 	}
@@ -700,7 +792,7 @@ func resourceIbmSccControlLibraryMapToImplementation(modelMap map[string]interfa
 		model.ParameterCount = core.Int64Ptr(int64(modelMap["parameter_count"].(int)))
 	}
 	if modelMap["parameters"] != nil {
-		parameters := []securityandcompliancecenterapiv3.ParameterInfo{}
+		parameters := []securityandcompliancecenterapiv3.Parameter{}
 		for _, parametersItem := range modelMap["parameters"].([]interface{}) {
 			if parametersItem != nil {
 				parametersItemModel, err := resourceIbmSccControlLibraryMapToParameterInfo(parametersItem.(map[string]interface{}))
@@ -715,8 +807,19 @@ func resourceIbmSccControlLibraryMapToImplementation(modelMap map[string]interfa
 	return model, nil
 }
 
-func resourceIbmSccControlLibraryMapToParameterInfo(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.ParameterInfo, error) {
-	model := &securityandcompliancecenterapiv3.ParameterInfo{}
+func resourceIbmSccControlLibraryMapToAssessmentPrototype(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.Assessment, error) {
+	model := &securityandcompliancecenterapiv3.Assessment{}
+	if modelMap["assessment_id"] != nil && modelMap["assessment_id"].(string) != "" {
+		model.AssessmentID = core.StringPtr(modelMap["assessment_id"].(string))
+	}
+	if modelMap["assessment_description"] != nil && modelMap["assessment_description"].(string) != "" {
+		model.AssessmentDescription = core.StringPtr(modelMap["assessment_description"].(string))
+	}
+	return model, nil
+}
+
+func resourceIbmSccControlLibraryMapToParameterInfo(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.Parameter, error) {
+	model := &securityandcompliancecenterapiv3.Parameter{}
 	if modelMap["parameter_name"] != nil && modelMap["parameter_name"].(string) != "" {
 		model.ParameterName = core.StringPtr(modelMap["parameter_name"].(string))
 	}
@@ -729,8 +832,8 @@ func resourceIbmSccControlLibraryMapToParameterInfo(modelMap map[string]interfac
 	return model, nil
 }
 
-func resourceIbmSccControlLibraryMapToControlDocs(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.ControlDocs, error) {
-	model := &securityandcompliancecenterapiv3.ControlDocs{}
+func resourceIbmSccControlLibraryMapToControlDocs(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.ControlDoc, error) {
+	model := &securityandcompliancecenterapiv3.ControlDoc{}
 	if modelMap["control_docs_id"] != nil && modelMap["control_docs_id"].(string) != "" {
 		model.ControlDocsID = core.StringPtr(modelMap["control_docs_id"].(string))
 	}
@@ -796,9 +899,9 @@ func resourceIbmSccControlLibraryMapToControlLibrary(modelMap map[string]interfa
 		model.ControlParentsCount = core.Int64Ptr(int64(modelMap["control_parents_count"].(int)))
 	}
 	if modelMap["controls"] != nil {
-		controls := []securityandcompliancecenterapiv3.ControlsInControlLib{}
+		controls := []securityandcompliancecenterapiv3.Control{}
 		for _, controlsItem := range modelMap["controls"].([]interface{}) {
-			controlsItemModel, err := resourceIbmSccControlLibraryMapToControlsInControlLib(controlsItem.(map[string]interface{}))
+			controlsItemModel, err := resourceIbmSccControlLibraryMapToControl(controlsItem.(map[string]interface{}))
 			if err != nil {
 				return model, err
 			}
@@ -809,7 +912,76 @@ func resourceIbmSccControlLibraryMapToControlLibrary(modelMap map[string]interfa
 	return model, nil
 }
 
-func resourceIbmSccControlLibraryMapToControlLibraryPrototype(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.CreateCustomControlLibraryOptions, error) {
+func resourceIbmSccControlLibraryMapToControlLibraryPrototype(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.ControlLibrary, error) {
+	model := &securityandcompliancecenterapiv3.ControlLibrary{}
+	if modelMap["id"] != nil && modelMap["id"].(string) != "" {
+		model.ID = core.StringPtr(modelMap["id"].(string))
+	}
+	if modelMap["account_id"] != nil && modelMap["account_id"].(string) != "" {
+		model.AccountID = core.StringPtr(modelMap["account_id"].(string))
+	}
+	if modelMap["control_library_name"] != nil && modelMap["control_library_name"].(string) != "" {
+		model.ControlLibraryName = core.StringPtr(modelMap["control_library_name"].(string))
+	}
+	if modelMap["control_library_description"] != nil && modelMap["control_library_description"].(string) != "" {
+		model.ControlLibraryDescription = core.StringPtr(modelMap["control_library_description"].(string))
+	}
+	if modelMap["control_library_type"] != nil && modelMap["control_library_type"].(string) != "" {
+		model.ControlLibraryType = core.StringPtr(modelMap["control_library_type"].(string))
+	}
+	if modelMap["version_group_label"] != nil && modelMap["version_group_label"].(string) != "" {
+		model.VersionGroupLabel = core.StringPtr(modelMap["version_group_label"].(string))
+	}
+	if modelMap["control_library_version"] != nil && modelMap["control_library_version"].(string) != "" {
+		model.ControlLibraryVersion = core.StringPtr(modelMap["control_library_version"].(string))
+	}
+	if modelMap["created_on"] != nil {
+		dateTime, err := core.ParseDateTime(modelMap["created_on"].(string))
+		if err != nil {
+			return model, err
+		}
+		model.CreatedOn = &dateTime
+	}
+	if modelMap["created_by"] != nil && modelMap["created_by"].(string) != "" {
+		model.CreatedBy = core.StringPtr(modelMap["created_by"].(string))
+	}
+	if modelMap["updated_on"] != nil {
+		dateTime, err := core.ParseDateTime(modelMap["updated_on"].(string))
+		if err != nil {
+			return model, err
+		}
+		model.UpdatedOn = &dateTime
+	}
+	if modelMap["updated_by"] != nil && modelMap["updated_by"].(string) != "" {
+		model.UpdatedBy = core.StringPtr(modelMap["updated_by"].(string))
+	}
+	if modelMap["latest"] != nil {
+		model.Latest = core.BoolPtr(modelMap["latest"].(bool))
+	}
+	if modelMap["hierarchy_enabled"] != nil {
+		model.HierarchyEnabled = core.BoolPtr(modelMap["hierarchy_enabled"].(bool))
+	}
+	if modelMap["controls_count"] != nil {
+		model.ControlsCount = core.Int64Ptr(int64(modelMap["controls_count"].(int)))
+	}
+	if modelMap["control_parents_count"] != nil {
+		model.ControlParentsCount = core.Int64Ptr(int64(modelMap["control_parents_count"].(int)))
+	}
+	if modelMap["controls"] != nil {
+		controls := []securityandcompliancecenterapiv3.Control{}
+		for _, controlsItem := range modelMap["controls"].([]interface{}) {
+			controlsItemModel, err := resourceIbmSccControlLibraryMapToControl(controlsItem.(map[string]interface{}))
+			if err != nil {
+				return model, err
+			}
+			controls = append(controls, *controlsItemModel)
+		}
+		model.Controls = controls
+	}
+	return model, nil
+}
+
+func resourceIbmSccControlLibraryMapToControlLibraryOptions(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.CreateCustomControlLibraryOptions, error) {
 	model := &securityandcompliancecenterapiv3.CreateCustomControlLibraryOptions{}
 	model.InstanceID = core.StringPtr(modelMap["instance_id"].(string))
 	model.ControlLibraryName = core.StringPtr(modelMap["control_library_name"].(string))
@@ -824,12 +996,10 @@ func resourceIbmSccControlLibraryMapToControlLibraryPrototype(modelMap map[strin
 	if modelMap["latest"] != nil {
 		model.Latest = core.BoolPtr(modelMap["latest"].(bool))
 	}
-	if modelMap["controls_count"] != nil {
-		model.ControlsCount = core.Int64Ptr(int64(modelMap["controls_count"].(int)))
-	}
-	controls := []securityandcompliancecenterapiv3.ControlsInControlLib{}
+	controls := []securityandcompliancecenterapiv3.Control{}
+	// iterate through controls
 	for _, controlsItem := range modelMap["controls"].([]interface{}) {
-		controlsItemModel, err := resourceIbmSccControlLibraryMapToControlsInControlLib(controlsItem.(map[string]interface{}))
+		controlsItemModel, err := resourceIbmSccControlLibraryMapToControlPrototype(controlsItem.(map[string]interface{}))
 		if err != nil {
 			return model, err
 		}
@@ -839,7 +1009,8 @@ func resourceIbmSccControlLibraryMapToControlLibraryPrototype(modelMap map[strin
 	return model, nil
 }
 
-func resourceIbmSccControlLibraryControlsInControlLibToMap(model *securityandcompliancecenterapiv3.ControlsInControlLib) (map[string]interface{}, error) {
+// From the GET function, popularize the controls of a Control Library
+func resourceIbmSccControlLibraryControlsInControlLibToMap(model *securityandcompliancecenterapiv3.Control) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ControlName != nil {
 		modelMap["control_name"] = model.ControlName
@@ -903,10 +1074,11 @@ func compareAssessmentSetFunc(v interface{}) int {
 	return val
 }
 
-func resourceIbmSccControlLibraryControlSpecificationsToMap(model *securityandcompliancecenterapiv3.ControlSpecifications) (map[string]interface{}, error) {
+// From the GET of a control library, popularize the control specifications in a control
+func resourceIbmSccControlLibraryControlSpecificationsToMap(model *securityandcompliancecenterapiv3.ControlSpecification) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	if model.ControlSpecificationID != nil {
-		modelMap["control_specification_id"] = model.ControlSpecificationID
+	if model.ID != nil {
+		modelMap["control_specification_id"] = model.ID
 	}
 	if model.Responsibility != nil {
 		modelMap["responsibility"] = model.Responsibility
@@ -920,28 +1092,62 @@ func resourceIbmSccControlLibraryControlSpecificationsToMap(model *securityandco
 	if model.Environment != nil {
 		modelMap["environment"] = model.Environment
 	}
-	if model.ControlSpecificationDescription != nil {
-		modelMap["control_specification_description"] = model.ControlSpecificationDescription
+	if model.Description != nil {
+		modelMap["control_specification_description"] = model.Description
 	}
 	if model.AssessmentsCount != nil {
 		modelMap["assessments_count"] = flex.IntValue(model.AssessmentsCount)
 	}
 	if model.Assessments != nil {
-		assessments := []interface{}{}
+		assessmentSet := &schema.Set{
+			F: assessmentsSchemaSetFunc("assessment_id"),
+		}
 		for _, assessmentsItem := range model.Assessments {
 			assessmentsItemMap, err := resourceIbmSccControlLibraryImplementationToMap(&assessmentsItem)
 			if err != nil {
 				return modelMap, err
 			}
-			assessments = append(assessments, assessmentsItemMap)
+			assessmentSet.Add(assessmentsItemMap)
 		}
-		assessmentsList := schema.NewSet(compareAssessmentSetFunc, assessments)
-		modelMap["assessments"] = assessmentsList
+		modelMap["assessments"] = assessmentSet
 	}
 	return modelMap, nil
 }
 
-func resourceIbmSccControlLibraryImplementationToMap(model *securityandcompliancecenterapiv3.Implementation) (map[string]interface{}, error) {
+// assessmentsSchemaSetFunc determines how to hash the Assessments schema.Resource
+// It uses the assessment_id in order to determine if the assessment was present
+func assessmentsSchemaSetFunc(keys ...string) schema.SchemaSetFunc {
+	return func(v interface{}) int {
+		var str strings.Builder
+
+		if m, ok := v.(map[string]interface{}); ok {
+			for _, key := range keys {
+				if v, ok := m[key]; ok {
+					switch v := v.(type) {
+					case string:
+						str.WriteRune('-')
+						str.WriteString(v)
+					case *string:
+						str.WriteRune('-')
+						str.WriteString(*v)
+					case []interface{}:
+						str.WriteRune('-')
+						s := make([]string, len(v))
+						for i, v := range v {
+							s[i] = fmt.Sprint(v)
+						}
+						str.WriteString(fmt.Sprintf("[%s]", strings.Join(s, ",")))
+					}
+				}
+			}
+		}
+		log.Printf("[DEBUG] assessmentsSchemaSet hashcode string: %s\n", str.String())
+
+		return stringHashcode(str.String())
+	}
+}
+
+func resourceIbmSccControlLibraryImplementationToMap(model *securityandcompliancecenterapiv3.Assessment) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.AssessmentID != nil {
 		modelMap["assessment_id"] = model.AssessmentID
@@ -972,7 +1178,7 @@ func resourceIbmSccControlLibraryImplementationToMap(model *securityandcomplianc
 	return modelMap, nil
 }
 
-func resourceIbmSccControlLibraryParameterInfoToMap(model *securityandcompliancecenterapiv3.ParameterInfo) (map[string]interface{}, error) {
+func resourceIbmSccControlLibraryParameterInfoToMap(model *securityandcompliancecenterapiv3.Parameter) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ParameterName != nil {
 		modelMap["parameter_name"] = model.ParameterName
@@ -986,7 +1192,7 @@ func resourceIbmSccControlLibraryParameterInfoToMap(model *securityandcompliance
 	return modelMap, nil
 }
 
-func resourceIbmSccControlLibraryControlDocsToMap(model *securityandcompliancecenterapiv3.ControlDocs) (map[string]interface{}, error) {
+func resourceIbmSccControlLibraryControlDocsToMap(model *securityandcompliancecenterapiv3.ControlDoc) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ControlDocsID != nil {
 		modelMap["control_docs_id"] = model.ControlDocsID

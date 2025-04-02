@@ -1,6 +1,10 @@
 // Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.94.1-71478489-20240820-161623
+ */
+
 package codeengine
 
 import (
@@ -8,12 +12,12 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/code-engine-go-sdk/codeenginev2"
+	"github.com/IBM/go-sdk-core/v5/core"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func DataSourceIbmCodeEngineConfigMap() *schema.Resource {
@@ -76,7 +80,7 @@ func DataSourceIbmCodeEngineConfigMap() *schema.Resource {
 func dataSourceIbmCodeEngineConfigMapRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_config_map", "read")
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_config_map", "read", "initialize-client")
 		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
 		return tfErr.GetDiag()
 	}
@@ -95,45 +99,44 @@ func dataSourceIbmCodeEngineConfigMapRead(context context.Context, d *schema.Res
 
 	d.SetId(fmt.Sprintf("%s/%s", *getConfigMapOptions.ProjectID, *getConfigMapOptions.Name))
 
-	if err = d.Set("created_at", configMap.CreatedAt); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("error setting created_at: %s", err), "(Data) ibm_code_engine_config_map", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(configMap.CreatedAt) {
+		if err = d.Set("created_at", configMap.CreatedAt); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting created_at: %s", err), "(Data) ibm_code_engine_config_map", "read", "set-created_at").GetDiag()
+		}
 	}
 
-	if configMap.Data != nil {
+	if !core.IsNil(configMap.Data) {
 		if err = d.Set("data", configMap.Data); err != nil {
-			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("error setting data: %s", err), "(Data) ibm_code_engine_config_map", "read")
-			return tfErr.GetDiag()
-		}
-		if err != nil {
-			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("error setting data: %s", err), "(Data) ibm_code_engine_config_map", "read")
-			return tfErr.GetDiag()
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting data: %s", err), "(Data) ibm_code_engine_config_map", "read", "set-data").GetDiag()
 		}
 	}
 
 	if err = d.Set("entity_tag", configMap.EntityTag); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("error setting entity_tag: %s", err), "(Data) ibm_code_engine_config_map", "read")
-		return tfErr.GetDiag()
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting entity_tag: %s", err), "(Data) ibm_code_engine_config_map", "read", "set-entity_tag").GetDiag()
 	}
 
-	if err = d.Set("href", configMap.Href); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("error setting href: %s", err), "(Data) ibm_code_engine_config_map", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(configMap.Href) {
+		if err = d.Set("href", configMap.Href); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting href: %s", err), "(Data) ibm_code_engine_config_map", "read", "set-href").GetDiag()
+		}
 	}
 
-	if err = d.Set("region", configMap.Region); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("error setting region: %s", err), "(Data) ibm_code_engine_config_map", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(configMap.Region) {
+		if err = d.Set("region", configMap.Region); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting region: %s", err), "(Data) ibm_code_engine_config_map", "read", "set-region").GetDiag()
+		}
 	}
 
-	if err = d.Set("config_map_id", configMap.ID); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("error setting config_map_id: %s", err), "(Data) ibm_code_engine_config_map", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(configMap.ID) {
+		if err = d.Set("config_map_id", configMap.ID); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting config_map_id: %s", err), "(Data) ibm_code_engine_config_map", "read", "set-config_map_id").GetDiag()
+		}
 	}
 
-	if err = d.Set("resource_type", configMap.ResourceType); err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("error setting resource_type: %s", err), "(Data) ibm_code_engine_config_map", "read")
-		return tfErr.GetDiag()
+	if !core.IsNil(configMap.ResourceType) {
+		if err = d.Set("resource_type", configMap.ResourceType); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting resource_type: %s", err), "(Data) ibm_code_engine_config_map", "read", "set-resource_type").GetDiag()
+		}
 	}
 
 	return nil

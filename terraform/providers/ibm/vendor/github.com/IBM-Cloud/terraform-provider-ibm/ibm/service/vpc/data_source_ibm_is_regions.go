@@ -4,9 +4,14 @@
 package vpc
 
 import (
+	"context"
+	"fmt"
+	"log"
 	"time"
 
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -17,7 +22,7 @@ const (
 
 func DataSourceIBMISRegions() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceIBMISRegionsRead,
+		ReadContext: dataSourceIBMISRegionsRead,
 		Schema: map[string]*schema.Schema{
 
 			isRegions: {
@@ -52,15 +57,19 @@ func DataSourceIBMISRegions() *schema.Resource {
 	}
 }
 
-func dataSourceIBMISRegionsRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceIBMISRegionsRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	sess, err := vpcClient(meta)
 	if err != nil {
-		return err
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_is_regions", "read", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	listRegionOptions := &vpcv1.ListRegionsOptions{}
-	regioncollection, _, err := sess.ListRegions(listRegionOptions)
+	regioncollection, _, err := sess.ListRegionsWithContext(context, listRegionOptions)
 	if err != nil {
-		return err
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ListRegionsWithContext failed: %s", err.Error()), "(Data) ibm_is_regions", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	regions := regioncollection.Regions
 	regionInfo := make([]map[string]interface{}, 0)
@@ -74,7 +83,9 @@ func dataSourceIBMISRegionsRead(d *schema.ResourceData, meta interface{}) error 
 		regionInfo = append(regionInfo, l)
 	}
 	d.SetId(dataSourceIBMISRegionsID(d))
-	d.Set(isRegions, regionInfo)
+	if err = d.Set("regions", regionInfo); err != nil {
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting regions: %s", err), "(Data) ibm_is_regions", "read", "set-regions").GetDiag()
+	}
 	return nil
 }
 

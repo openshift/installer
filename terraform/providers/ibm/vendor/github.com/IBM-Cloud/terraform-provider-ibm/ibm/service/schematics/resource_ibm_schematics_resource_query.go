@@ -40,11 +40,10 @@ func ResourceIBMSchematicsResourceQuery() *schema.Resource {
 				Description: "Resource query name.",
 			},
 			"location": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validate.InvokeValidator("ibm_schematics_resource_query", "location"),
-				Description:  "List of locations supported by IBM Cloud Schematics service.  While creating your workspace or action, choose the right region, since it cannot be changed.  Note, this does not limit the location of the IBM Cloud resources, provisioned using Schematics.",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "List of locations supported by IBM Cloud Schematics service.  While creating your workspace or action, choose the right region, since it cannot be changed.  Note, this does not limit the location of the IBM Cloud resources, provisioned using Schematics.",
 			},
 			"queries": {
 				Type:     schema.TypeList,
@@ -121,13 +120,6 @@ func ResourceIBMSchematicsResourceQueryValidator() *validate.ResourceValidator {
 			Type:                       validate.TypeString,
 			Optional:                   true,
 			AllowedValues:              "vsi",
-		},
-		validate.ValidateSchema{
-			Identifier:                 "location",
-			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
-			Type:                       validate.TypeString,
-			Optional:                   true,
-			AllowedValues:              "eu-de, eu-gb, us-east, us-south",
 		})
 
 	resourceValidator := validate.ResourceValidator{ResourceName: "ibm_schematics_resource_query", Schema: validateSchema}
@@ -137,7 +129,9 @@ func ResourceIBMSchematicsResourceQueryValidator() *validate.ResourceValidator {
 func resourceIBMSchematicsResourceQueryCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsResourceQueryCreate schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_resource_query", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if r, ok := d.GetOk("location"); ok {
 		region := r.(string)
@@ -166,8 +160,10 @@ func resourceIBMSchematicsResourceQueryCreate(context context.Context, d *schema
 
 	resourceQueryRecord, response, err := schematicsClient.CreateResourceQueryWithContext(context, createResourceQueryOptions)
 	if err != nil {
-		log.Printf("[DEBUG] CreateResourceQueryWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateResourceQueryWithContext failed %s\n%s", err, response))
+
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsResourceQueryCreate CreateResourceQueryWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_resource_query", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(*resourceQueryRecord.ID)
@@ -219,7 +215,9 @@ func resourceIBMSchematicsResourceQueryMapToResourceQueryParam(resourceQueryPara
 func resourceIBMSchematicsResourceQueryRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsResourceQueryRead schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_resource_query", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	actionIDSplit := strings.Split(d.Id(), ".")
 	region := actionIDSplit[0]
@@ -237,14 +235,20 @@ func resourceIBMSchematicsResourceQueryRead(context context.Context, d *schema.R
 			d.SetId("")
 			return nil
 		}
-		log.Printf("[DEBUG] GetResourcesQueryWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetResourcesQueryWithContext failed %s\n%s", err, response))
+
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsResourceQueryRead GetResourcesQueryWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_resource_query", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("type", resourceQueryRecord.Type); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting type: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsResourceQueryRead failed with error: %s", err), "ibm_schematics_resource_query", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("name", resourceQueryRecord.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsResourceQueryRead failed with error: %s", err), "ibm_schematics_resource_query", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if resourceQueryRecord.Queries != nil {
 		queries := []map[string]interface{}{}
@@ -253,20 +257,30 @@ func resourceIBMSchematicsResourceQueryRead(context context.Context, d *schema.R
 			queries = append(queries, queriesItemMap)
 		}
 		if err = d.Set("queries", queries); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting queries: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsResourceQueryRead failed with error: %s", err), "ibm_schematics_resource_query", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("created_at", flex.DateTimeToString(resourceQueryRecord.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting created_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsResourceQueryRead failed with error: %s", err), "ibm_schematics_resource_query", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("created_by", resourceQueryRecord.CreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting created_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsResourceQueryRead failed with error: %s", err), "ibm_schematics_resource_query", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("updated_at", flex.DateTimeToString(resourceQueryRecord.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsResourceQueryRead failed with error: %s", err), "ibm_schematics_resource_query", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("updated_by", resourceQueryRecord.UpdatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting updated_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsResourceQueryRead failed with error: %s", err), "ibm_schematics_resource_query", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	return nil
@@ -313,7 +327,9 @@ func resourceIBMSchematicsResourceQueryResourceQueryParamToMap(resourceQueryPara
 func resourceIBMSchematicsResourceQueryUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsResourceQueryUpdate schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_resource_query", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	actionIDSplit := strings.Split(d.Id(), ".")
 	region := actionIDSplit[0]
@@ -342,8 +358,10 @@ func resourceIBMSchematicsResourceQueryUpdate(context context.Context, d *schema
 
 	_, response, err := schematicsClient.ReplaceResourcesQueryWithContext(context, replaceResourcesQueryOptions)
 	if err != nil {
-		log.Printf("[DEBUG] ReplaceResourcesQueryWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("ReplaceResourcesQueryWithContext failed %s\n%s", err, response))
+
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsResourceQueryUpdate ReplaceResourcesQueryWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_resource_query", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	return resourceIBMSchematicsResourceQueryRead(context, d, meta)
@@ -352,7 +370,9 @@ func resourceIBMSchematicsResourceQueryUpdate(context context.Context, d *schema
 func resourceIBMSchematicsResourceQueryDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsResourceQueryDelete schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_resource_query", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	actionIDSplit := strings.Split(d.Id(), ".")
 	region := actionIDSplit[0]
@@ -366,8 +386,10 @@ func resourceIBMSchematicsResourceQueryDelete(context context.Context, d *schema
 
 	response, err := schematicsClient.DeleteResourcesQueryWithContext(context, deleteResourcesQueryOptions)
 	if err != nil {
-		log.Printf("[DEBUG] DeleteResourcesQueryWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteResourcesQueryWithContext failed %s\n%s", err, response))
+
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMSchematicsResourceQueryDelete DeleteResourcesQueryWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_resource_query", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")

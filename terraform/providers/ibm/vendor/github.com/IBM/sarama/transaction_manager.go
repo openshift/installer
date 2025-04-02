@@ -466,7 +466,7 @@ func (t *transactionManager) publishOffsetsToTxn(offsets topicPartitionOffsets, 
 		resultOffsets = failedTxn
 
 		if len(resultOffsets) == 0 {
-			DebugLogger.Printf("txnmgr/txn-offset-commit [%s] successful txn-offset-commit with group %s %+v\n",
+			DebugLogger.Printf("txnmgr/txn-offset-commit [%s] successful txn-offset-commit with group %s\n",
 				t.transactionalID, groupId)
 			return resultOffsets, false, nil
 		}
@@ -569,9 +569,8 @@ func (t *transactionManager) initProducerId() (int64, int16, error) {
 			return response.ProducerID, response.ProducerEpoch, false, nil
 		}
 		switch response.Err {
-		case ErrConsumerCoordinatorNotAvailable:
-			fallthrough
-		case ErrNotCoordinatorForConsumer:
+		// Retriable errors
+		case ErrConsumerCoordinatorNotAvailable, ErrNotCoordinatorForConsumer, ErrOffsetsLoadInProgress:
 			if t.isTransactional() {
 				_ = coordinator.Close()
 				_ = t.client.RefreshTransactionCoordinator(t.transactionalID)

@@ -27,6 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -44,7 +45,7 @@ type Helper struct {
 	beforeObject client.Object
 	before       *unstructured.Unstructured
 	after        *unstructured.Unstructured
-	changes      map[string]bool
+	changes      sets.Set[string]
 
 	isConditionsSetter bool
 }
@@ -64,19 +65,12 @@ func NewHelper(obj client.Object, crClient client.Client) (*Helper, error) {
 		return nil, errors.Wrapf(err, "failed to create patch helper for object %s", klog.KObj(obj))
 	}
 
-	// Convert the object to unstructured to compare against our before copy.
-	unstructuredObj, err := toUnstructured(obj, gvk)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create patch helper for %s %s: failed to convert object to Unstructured", gvk.Kind, klog.KObj(obj))
-	}
-
 	// Check if the object satisfies the Cluster API conditions contract.
 	_, canInterfaceConditions := obj.(conditions.Setter)
 
 	return &Helper{
 		client:             crClient,
 		gvk:                gvk,
-		before:             unstructuredObj,
 		beforeObject:       obj.DeepCopyObject().(client.Object),
 		isConditionsSetter: canInterfaceConditions,
 	}, nil
@@ -104,10 +98,16 @@ func (h *Helper) Patch(ctx context.Context, obj client.Object, opts ...Option) e
 		opt.ApplyToHelper(options)
 	}
 
-	// Convert the object to unstructured to compare against our before copy.
+	// Convert the before object to unstructured.
+	h.before, err = toUnstructured(h.beforeObject, gvk)
+	if err != nil {
+		return errors.Wrapf(err, "failed to patch %s %s: failed to convert before object to Unstructured", h.gvk.Kind, klog.KObj(h.beforeObject))
+	}
+
+	// Convert the after object to unstructured.
 	h.after, err = toUnstructured(obj, gvk)
 	if err != nil {
-		return errors.Wrapf(err, "failed to patch %s %s: failed to convert object to Unstructured", h.gvk.Kind, klog.KObj(h.beforeObject))
+		return errors.Wrapf(err, "failed to patch %s %s: failed to convert after object to Unstructured", h.gvk.Kind, klog.KObj(h.beforeObject))
 	}
 
 	// Determine if the object has status.
@@ -145,8 +145,11 @@ func (h *Helper) Patch(ctx context.Context, obj client.Object, opts ...Option) e
 	if err := h.patch(ctx, obj); err != nil {
 		errs = append(errs, err)
 	}
+
 	if err := h.patchStatus(ctx, obj); err != nil {
-		errs = append(errs, err)
+		if !(apierrors.IsNotFound(err) && !obj.GetDeletionTimestamp().IsZero() && len(obj.GetFinalizers()) == 0) {
+			errs = append(errs, err)
+		}
 	}
 
 	if len(errs) > 0 {
@@ -157,7 +160,7 @@ func (h *Helper) Patch(ctx context.Context, obj client.Object, opts ...Option) e
 
 // patch issues a patch for metadata and spec.
 func (h *Helper) patch(ctx context.Context, obj client.Object) error {
-	if !h.shouldPatch("metadata") && !h.shouldPatch("spec") {
+	if !h.shouldPatch(specPatch) {
 		return nil
 	}
 	beforeObject, afterObject, err := h.calculatePatch(obj, specPatch)
@@ -169,7 +172,7 @@ func (h *Helper) patch(ctx context.Context, obj client.Object) error {
 
 // patchStatus issues a patch if the status has changed.
 func (h *Helper) patchStatus(ctx context.Context, obj client.Object) error {
-	if !h.shouldPatch("status") {
+	if !h.shouldPatch(statusPatch) {
 		return nil
 	}
 	beforeObject, afterObject, err := h.calculatePatch(obj, statusPatch)
@@ -285,13 +288,18 @@ func (h *Helper) calculatePatch(afterObj client.Object, focus patchType) (client
 	return beforeObj, afterObj, nil
 }
 
-func (h *Helper) shouldPatch(in string) bool {
-	return h.changes[in]
+func (h *Helper) shouldPatch(focus patchType) bool {
+	if focus == specPatch {
+		// If we're looking to patch anything other than status,
+		// return true if the changes map has any fields after removing `status`.
+		return h.changes.Clone().Delete("status").Len() > 0
+	}
+	return h.changes.Has(string(focus))
 }
 
 // calculate changes tries to build a patch from the before/after objects we have
 // and store in a map which top-level fields (e.g. `metadata`, `spec`, `status`, etc.) have changed.
-func (h *Helper) calculateChanges(after client.Object) (map[string]bool, error) {
+func (h *Helper) calculateChanges(after client.Object) (sets.Set[string], error) {
 	// Calculate patch data.
 	patch := client.MergeFrom(h.beforeObject)
 	diff, err := patch.Data(after)
@@ -306,9 +314,9 @@ func (h *Helper) calculateChanges(after client.Object) (map[string]bool, error) 
 	}
 
 	// Return the map.
-	res := make(map[string]bool, len(patchDiff))
+	res := sets.New[string]()
 	for key := range patchDiff {
-		res[key] = true
+		res.Insert(key)
 	}
 	return res, nil
 }

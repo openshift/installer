@@ -201,7 +201,9 @@ func ResourceIBMEnSafariDestination() *schema.Resource {
 func resourceIBMEnSafariDestinationCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_safari", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.CreateDestinationOptions{}
@@ -212,7 +214,6 @@ func resourceIBMEnSafariDestinationCreate(context context.Context, d *schema.Res
 	options.SetType(d.Get("type").(string))
 	options.SetCollectFailedEvents(d.Get("collect_failed_events").(bool))
 
-	// options.SetCertificateContentType(d.Get("certificate_content_type").(string))
 	if _, ok := d.GetOk("icon_16x16_content_type"); ok {
 		options.SetIcon16x16ContentType(d.Get("icon_16x16_content_type").(string))
 	}
@@ -231,8 +232,6 @@ func resourceIBMEnSafariDestinationCreate(context context.Context, d *schema.Res
 	if _, ok := d.GetOk("icon_128x128_2x_content_type"); ok {
 		options.SetIcon128x1282xContentType(d.Get("icon_128x128_2x_content_type").(string))
 	}
-
-	// certificatetype := d.Get("certificate_content_type").(string)
 
 	if c, ok := d.GetOk("certificate"); ok {
 		path := c.(string)
@@ -361,9 +360,11 @@ func resourceIBMEnSafariDestinationCreate(context context.Context, d *schema.Res
 		options.SetConfig(&config)
 	}
 
-	result, response, err := enClient.CreateDestinationWithContext(context, options)
+	result, _, err := enClient.CreateDestinationWithContext(context, options)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("CreateDestinationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateDestinationWithContext failed: %s", err.Error()), "ibm_en_destination_safari", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *options.InstanceID, *result.ID))
@@ -374,14 +375,17 @@ func resourceIBMEnSafariDestinationCreate(context context.Context, d *schema.Res
 func resourceIBMEnSafariDestinationRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_safari", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.GetDestinationOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_safari", "read")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
@@ -393,7 +397,9 @@ func resourceIBMEnSafariDestinationRead(context context.Context, d *schema.Resou
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("GetDestinationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetDestinationWithContext failed: %s", err.Error()), "ibm_en_destination_safari", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("instance_guid", options.InstanceID); err != nil {
@@ -445,14 +451,17 @@ func resourceIBMEnSafariDestinationRead(context context.Context, d *schema.Resou
 func resourceIBMEnSafariDestinationUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_safari", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.UpdateDestinationOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_safari", "update")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
@@ -591,9 +600,11 @@ func resourceIBMEnSafariDestinationUpdate(context context.Context, d *schema.Res
 			config := SafaridestinationConfigMapToDestinationConfig(d.Get("config.0.params.0").(map[string]interface{}))
 			options.SetConfig(&config)
 		}
-		_, response, err := enClient.UpdateDestinationWithContext(context, options)
+		_, _, err := enClient.UpdateDestinationWithContext(context, options)
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("UpdateDestinationWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateDestinationWithContext failed: %s", err.Error()), "ibm_en_destination_safari", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 
 		return resourceIBMEnSafariDestinationRead(context, d, meta)
@@ -605,14 +616,17 @@ func resourceIBMEnSafariDestinationUpdate(context context.Context, d *schema.Res
 func resourceIBMEnSafariDestinationDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_safari", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.DeleteDestinationOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_en_destination_safari", "delete")
+		return tfErr.GetDiag()
 	}
 
 	options.SetInstanceID(parts[0])
@@ -624,7 +638,9 @@ func resourceIBMEnSafariDestinationDelete(context context.Context, d *schema.Res
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("DeleteDestinationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteDestinationWithContext failed: %s", err.Error()), "ibm_en_destination_safari", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")

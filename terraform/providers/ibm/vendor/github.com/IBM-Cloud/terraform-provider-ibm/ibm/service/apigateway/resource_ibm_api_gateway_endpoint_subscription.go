@@ -16,12 +16,13 @@ import (
 func ResourceIBMApiGatewayEndpointSubscription() *schema.Resource {
 
 	return &schema.Resource{
-		Create:   resourceIBMApiGatewayEndpointSubscriptionCreate,
-		Read:     resourceIBMApiGatewayEndpointSubscriptionGet,
-		Update:   resourceIBMApiGatewayEndpointSubscriptionUpdate,
-		Delete:   resourceIBMApiGatewayEndpointSubscriptionDelete,
-		Importer: &schema.ResourceImporter{},
-		Exists:   resourceIBMApiGatewayEndpointSubscriptionExists,
+		Create:             resourceIBMApiGatewayEndpointSubscriptionCreate,
+		Read:               resourceIBMApiGatewayEndpointSubscriptionGet,
+		Update:             resourceIBMApiGatewayEndpointSubscriptionUpdate,
+		Delete:             resourceIBMApiGatewayEndpointSubscriptionDelete,
+		Importer:           &schema.ResourceImporter{},
+		Exists:             resourceIBMApiGatewayEndpointSubscriptionExists,
+		DeprecationMessage: "This service is deprecated.",
 		Schema: map[string]*schema.Schema{
 			"artifact_id": {
 				Type:        schema.TypeString,

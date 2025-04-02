@@ -77,7 +77,7 @@ If you have an active interest and you want to get involved, you have real power
 
 ### Office hours
 
-- Join the [SIG Cluster Lifecycle](https://groups.google.com/forum/#!forum/kubernetes-sig-cluster-lifecycle) Google Group for access to documents and calendars.
+- Join the [SIG Cluster Lifecycle](https://groups.google.com/a/kubernetes.io/g/sig-cluster-lifecycle) Google Group for access to documents and calendars.
 - Participate in the conversations on [Kubernetes Discuss][kubernetes discuss]
 - Provider implementers office hours (CAPI)
     - Weekly on Wednesdays @ 10:00 am PT (Pacific Time) on [Zoom](https://zoom.us/j/861487554)
@@ -129,4 +129,4 @@ Participation in the Kubernetes community is governed by the [Kubernetes Code of
 [#cluster-api-gcp]: https://sigs.k8s.io/cluster-api-provider-gcp
 [bug report]: https://github.com/kubernetes-sigs/cluster-api-provider-gcp/issues/new?assignees=&labels=&template=bug_report.md
 [feature request]: https://github.com/kubernetes-sigs/cluster-api-provider-gcp/issues/new?assignees=&labels=&template=feature_request.md
-[kubernetes discuss]: https://groups.google.com/forum/#!forum/kubernetes-sig-cluster-lifecycle
+[kubernetes discuss]: https://groups.google.com/a/kubernetes.io/g/sig-cluster-lifecycle

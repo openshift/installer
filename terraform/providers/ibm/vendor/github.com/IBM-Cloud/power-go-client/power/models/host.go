@@ -30,6 +30,9 @@ type Host struct {
 	// Information about the owning host group
 	HostGroup *HostGroupSummary `json:"hostGroup,omitempty"`
 
+	// current physical ID of the host. Keep internal
+	HostReference int64 `json:"hostReference,omitempty"`
+
 	// ID of the host
 	ID string `json:"id,omitempty"`
 

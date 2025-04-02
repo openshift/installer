@@ -112,14 +112,12 @@ func resourceIBMPrivateDNSPermittedNetworkCreate(d *schema.ResourceData, meta in
 	conns.IbmMutexKV.Lock(mk)
 	defer conns.IbmMutexKV.Unlock(mk)
 
-	createPermittedNetworkOptions := sess.NewCreatePermittedNetworkOptions(instanceID, zoneID)
 	permittedNetworkCrn, err := sess.NewPermittedNetworkVpc(vpcCRN)
 	if err != nil {
 		return err
 	}
+	createPermittedNetworkOptions := sess.NewCreatePermittedNetworkOptions(instanceID, zoneID, nwType, permittedNetworkCrn)
 
-	createPermittedNetworkOptions.SetPermittedNetwork(permittedNetworkCrn)
-	createPermittedNetworkOptions.SetType(nwType)
 	response, detail, err := sess.CreatePermittedNetwork(createPermittedNetworkOptions)
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error creating pdns permitted network:%s\n%s", err, detail)

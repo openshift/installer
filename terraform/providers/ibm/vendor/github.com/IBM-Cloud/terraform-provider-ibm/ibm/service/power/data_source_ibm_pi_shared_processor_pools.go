@@ -49,6 +49,11 @@ func DataSourceIBMPISharedProcessorPools() *schema.Resource {
 							Description: "The CRN of this resource.",
 							Type:        schema.TypeString,
 						},
+						Attr_DedicatedHostID: {
+							Computed:    true,
+							Description: "The dedicated host ID where the shared processor pool resides.",
+							Type:        schema.TypeString,
+						},
 						Attr_HostID: {
 							Computed:    true,
 							Description: "The host ID where the shared processor pool resides.",
@@ -113,6 +118,7 @@ func dataSourceIBMPISharedProcessorPoolsRead(ctx context.Context, d *schema.Reso
 		key := map[string]interface{}{
 			Attr_AllocatedCores:        *pool.AllocatedCores,
 			Attr_AvailableCores:        *pool.AvailableCores,
+			Attr_DedicatedHostID:       pool.DedicatedHostID,
 			Attr_HostID:                pool.HostID,
 			Attr_Name:                  *pool.Name,
 			Attr_ReservedCores:         *pool.ReservedCores,

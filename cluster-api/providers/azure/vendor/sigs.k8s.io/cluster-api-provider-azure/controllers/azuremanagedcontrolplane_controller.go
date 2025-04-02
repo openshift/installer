@@ -37,11 +37,11 @@ import (
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 // AzureManagedControlPlaneReconciler reconciles an AzureManagedControlPlane object.
@@ -77,7 +77,7 @@ func (amcpr *AzureManagedControlPlaneReconciler) SetupWithManager(ctx context.Co
 	// map requests for machine pools corresponding to AzureManagedControlPlane's defaultPool back to the corresponding AzureManagedControlPlane.
 	azureManagedMachinePoolMapper := MachinePoolToAzureManagedControlPlaneMapFunc(ctx, amcpr.Client, infrav1.GroupVersion.WithKind(infrav1.AzureManagedControlPlaneKind), log)
 
-	c, err := ctrl.NewControllerManagedBy(mgr).
+	return ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options.Options).
 		For(azManagedControlPlane).
 		WithEventFilter(predicates.ResourceHasFilterLabel(log, amcpr.WatchFilterValue)).
@@ -91,22 +91,16 @@ func (amcpr *AzureManagedControlPlaneReconciler) SetupWithManager(ctx context.Co
 			&expv1.MachinePool{},
 			handler.EnqueueRequestsFromMapFunc(azureManagedMachinePoolMapper),
 		).
-		Build(r)
-	if err != nil {
-		return errors.Wrap(err, "error creating controller")
-	}
-
-	// Add a watch on clusterv1.Cluster object for pause/unpause & ready notifications.
-	if err = c.Watch(
-		source.Kind(mgr.GetCache(), &clusterv1.Cluster{}),
-		handler.EnqueueRequestsFromMapFunc(amcpr.ClusterToAzureManagedControlPlane),
-		ClusterPauseChangeAndInfrastructureReady(log),
-		predicates.ResourceHasFilterLabel(log, amcpr.WatchFilterValue),
-	); err != nil {
-		return errors.Wrap(err, "failed adding a watch for ready clusters")
-	}
-
-	return nil
+		// Add a watch on clusterv1.Cluster object for pause/unpause & ready notifications.
+		Watches(
+			&clusterv1.Cluster{},
+			handler.EnqueueRequestsFromMapFunc(amcpr.ClusterToAzureManagedControlPlane),
+			builder.WithPredicates(
+				ClusterPauseChangeAndInfrastructureReady(log),
+				predicates.ResourceHasFilterLabel(log, amcpr.WatchFilterValue),
+			),
+		).
+		Complete(r)
 }
 
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=azuremanagedcontrolplanes,verbs=get;list;watch;create;update;patch;delete

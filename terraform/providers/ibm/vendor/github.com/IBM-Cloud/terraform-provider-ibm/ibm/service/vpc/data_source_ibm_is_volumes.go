@@ -392,6 +392,25 @@ func DataSourceIBMIsVolumes() *schema.Resource {
 								},
 							},
 						},
+
+						// defined_performance changes
+
+						"adjustable_capacity_states": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The attachment states that support adjustable capacity for this volume.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"adjustable_iops_states": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The attachment states that support adjustable IOPS for this volume.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
 						isVolumesStatus: &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -806,6 +825,8 @@ func dataSourceVolumeCollectionVolumesToMap(volumesItem vpcv1.Volume, meta inter
 		}
 		volumesMap[isVolumeHealthReasons] = healthReasonsList
 	}
+	volumesMap["adjustable_capacity_states"] = volumesItem.AdjustableCapacityStates
+	volumesMap["adjustable_iops_states"] = volumesItem.AdjustableIopsStates
 	if volumesItem.CatalogOffering != nil {
 		versionCrn := ""
 		if volumesItem.CatalogOffering.Version != nil && volumesItem.CatalogOffering.Version.CRN != nil {

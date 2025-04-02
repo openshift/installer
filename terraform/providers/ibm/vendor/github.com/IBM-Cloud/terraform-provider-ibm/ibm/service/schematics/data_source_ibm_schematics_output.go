@@ -76,7 +76,8 @@ func dataSourceIBMSchematicsOutputRead(d *schema.ResourceData, meta interface{})
 
 	outputValuesList, response, err := schematicsClient.GetWorkspaceOutputs(getWorkspaceOutputsOptions)
 	if err != nil {
-		log.Printf("[DEBUG] GetWorkspaceOutputs failed %s\n%s", err, response)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsOutputRead GetWorkspaceOutputs failed with error: %s and response:\n%s", err, response), "ibm_schematics_output", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
 		return err
 	}
 

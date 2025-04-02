@@ -799,6 +799,144 @@ func DataSourceIBMIsBareMetalServers() *schema.Resource {
 							Set:         flex.ResourceIBMVPCHash,
 							Description: "List of access tags",
 						},
+						"health_reasons": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The reasons for the current health_state (if any).",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"code": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "A snake case string succinctly identifying the reason for this health state.",
+									},
+									"message": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "An explanation of the reason for this health state.",
+									},
+									"more_info": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about the reason for this health state.",
+									},
+								},
+							},
+						},
+						"health_state": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The health of this resource",
+						},
+						isReservation: {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The reservation used by this bare metal server",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									isReservationId: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The unique identifier for this reservation.",
+									},
+									isReservationCrn: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The CRN for this reservation.",
+									},
+									isReservationName: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The name for this reservation. The name is unique across all reservations in the region.",
+									},
+									isReservationHref: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The URL for this reservation.",
+									},
+									isReservationResourceType: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The resource type.",
+									},
+									isReservationDeleted: &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "If present, this property indicates the referenced resource has been deleted and providessome supplementary information.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												isReservationDeletedMoreInfo: &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Link to documentation about deleted resources.",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						isReservationAffinity: {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									isReservationAffinityPolicyResp: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The reservation affinity policy to use for this bare metal server.",
+									},
+									isReservationAffinityPool: &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "The pool of reservations available for use by this bare metal server.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												isReservationId: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The unique identifier for this reservation.",
+												},
+												isReservationCrn: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The CRN for this reservation.",
+												},
+												isReservationName: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The name for this reservation. The name is unique across all reservations in the region.",
+												},
+												isReservationHref: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The URL for this reservation.",
+												},
+												isReservationResourceType: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The resource type.",
+												},
+												isReservationDeleted: &schema.Schema{
+													Type:        schema.TypeList,
+													Computed:    true,
+													Description: "If present, this property indicates the referenced resource has been deleted and providessome supplementary information.",
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															isReservationDeletedMoreInfo: &schema.Schema{
+																Type:        schema.TypeString,
+																Computed:    true,
+																Description: "Link to documentation about deleted resources.",
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -1180,11 +1318,83 @@ func dataSourceIBMISBareMetalServersRead(context context.Context, d *schema.Reso
 		if bms.ResourceGroup != nil {
 			l[isBareMetalServerResourceGroup] = *bms.ResourceGroup.ID
 		}
+		if bms.HealthReasons != nil {
+			healthReasonsList := []map[string]interface{}{}
+			for _, healthReasonsItem := range bms.HealthReasons {
+				healthReasonsList = append(healthReasonsList, dataSourceBaremetalServersCollectionHealthReasonsToMap(healthReasonsItem))
+			}
+			l["health_reasons"] = healthReasonsList
+		}
+		if bms.HealthState != nil {
+			l["health_state"] = bms.HealthState
+		}
+		if bms.ReservationAffinity != nil {
+			reservationAffinity := []map[string]interface{}{}
+			reservationAffinityMap := map[string]interface{}{}
+
+			reservationAffinityMap[isReservationAffinityPolicyResp] = bms.ReservationAffinity.Policy
+			if bms.ReservationAffinity.Pool != nil {
+				poolList := make([]map[string]interface{}, 0)
+				for _, pool := range bms.ReservationAffinity.Pool {
+					res := map[string]interface{}{}
+
+					res[isReservationId] = *pool.ID
+					res[isReservationHref] = *pool.Href
+					res[isReservationName] = *pool.Name
+					res[isReservationCrn] = *pool.CRN
+					res[isReservationResourceType] = *pool.ResourceType
+					if pool.Deleted != nil {
+						deletedList := []map[string]interface{}{}
+						deletedMap := dataSourceReservationDeletedToMap(*pool.Deleted)
+						deletedList = append(deletedList, deletedMap)
+						res[isReservationDeleted] = deletedList
+					}
+					poolList = append(poolList, res)
+				}
+				reservationAffinityMap[isReservationAffinityPool] = poolList
+			}
+			reservationAffinity = append(reservationAffinity, reservationAffinityMap)
+			l[isReservationAffinity] = reservationAffinity
+		}
+		if bms.Reservation != nil {
+			resList := make([]map[string]interface{}, 0)
+			res := map[string]interface{}{}
+
+			res[isReservationId] = *bms.Reservation.ID
+			res[isReservationHref] = *bms.Reservation.Href
+			res[isReservationName] = *bms.Reservation.Name
+			res[isReservationCrn] = *bms.Reservation.CRN
+			res[isReservationResourceType] = *bms.Reservation.ResourceType
+			if bms.Reservation.Deleted != nil {
+				deletedList := []map[string]interface{}{}
+				deletedMap := dataSourceReservationDeletedToMap(*bms.Reservation.Deleted)
+				deletedList = append(deletedList, deletedMap)
+				res[isReservationDeleted] = deletedList
+			}
+			resList = append(resList, res)
+			l[isReservation] = resList
+		}
 		serversInfo = append(serversInfo, l)
 	}
 	d.SetId(dataSourceIBMISBareMetalServersID(d))
 	d.Set(isBareMetalServers, serversInfo)
 	return nil
+}
+
+func dataSourceBaremetalServersCollectionHealthReasonsToMap(statusReasonsItem vpcv1.BareMetalServerHealthReason) (healthReasonsMap map[string]interface{}) {
+	healthReasonsMap = map[string]interface{}{}
+
+	if statusReasonsItem.Code != nil {
+		healthReasonsMap["code"] = statusReasonsItem.Code
+	}
+	if statusReasonsItem.Message != nil {
+		healthReasonsMap["message"] = statusReasonsItem.Message
+	}
+	if statusReasonsItem.MoreInfo != nil {
+		healthReasonsMap["more_info"] = statusReasonsItem.MoreInfo
+	}
+
+	return healthReasonsMap
 }
 
 // dataSourceIBMISBareMetalServersID returns a reasonable ID for a Bare Metal Servers list.

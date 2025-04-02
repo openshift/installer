@@ -156,7 +156,7 @@ func dataSourceIbmSccProviderTypeCollectionID(d *schema.ResourceData) string {
 	return time.Now().UTC().String()
 }
 
-func dataSourceIbmSccProviderTypeCollectionProviderTypeItemToMap(model *securityandcompliancecenterapiv3.ProviderTypeItem) (map[string]interface{}, error) {
+func dataSourceIbmSccProviderTypeCollectionProviderTypeItemToMap(model *securityandcompliancecenterapiv3.ProviderType) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	modelMap["id"] = model.ID
 	modelMap["type"] = model.Type

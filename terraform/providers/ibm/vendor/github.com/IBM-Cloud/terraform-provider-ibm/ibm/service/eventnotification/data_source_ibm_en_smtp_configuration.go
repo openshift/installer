@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -128,7 +129,9 @@ func DataSourceIBMEnSMTPConfiguration() *schema.Resource {
 func dataSourceIBMEnSMTPConfigurationRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	eventNotificationsClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_en_smtp_configuration", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getSMTPConfigurationOptions := &en.GetSMTPConfigurationOptions{}
@@ -138,37 +141,45 @@ func dataSourceIBMEnSMTPConfigurationRead(context context.Context, d *schema.Res
 
 	smtpConfiguration, _, err := eventNotificationsClient.GetSMTPConfigurationWithContext(context, getSMTPConfigurationOptions)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetTemplateWithContext failed: %s", err.Error()), "(Data) ibm_en_smtp_configuration", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *getSMTPConfigurationOptions.InstanceID, *getSMTPConfigurationOptions.ID))
 
 	if err = d.Set("name", smtpConfiguration.Name); err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "(Data) ibm_en_slack_template", "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("description", smtpConfiguration.Description); err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "(Data) ibm_en_slack_template", "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("domain", smtpConfiguration.Domain); err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "(Data) ibm_en_slack_template", "read")
+		return tfErr.GetDiag()
 	}
 
 	config := []map[string]interface{}{}
 	if smtpConfiguration.Config != nil {
 		modelMap, err := dataSourceIBMEnSMTPConfigurationSMTPConfigToMap(smtpConfiguration.Config)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "(Data) ibm_en_slack_template", "read")
+			return tfErr.GetDiag()
 		}
 		config = append(config, modelMap)
 	}
 	if err = d.Set("config", config); err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "(Data) ibm_en_slack_template", "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("updated_at", flex.DateTimeToString(smtpConfiguration.UpdatedAt)); err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "(Data) ibm_en_slack_template", "read")
+		return tfErr.GetDiag()
 	}
 
 	return nil

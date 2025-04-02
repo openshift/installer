@@ -91,7 +91,7 @@ type VolumeRequest struct {
 type Workers interface {
 	ListByWorkerPool(clusterIDOrName, workerPoolIDOrName string, showDeleted bool, target ClusterTargetHeader) ([]Worker, error)
 	ListWorkers(clusterIDOrName string, showDeleted bool, target ClusterTargetHeader) ([]Worker, error)
-	ListClassicWorkers(clusterIDOrName string, showDeleted bool, target ClusterTargetHeader) ([]Worker, error)
+	ListAllWorkers(clusterIDOrName string, showDeleted bool, target ClusterTargetHeader) ([]Worker, error)
 	Get(clusterIDOrName, workerID string, target ClusterTargetHeader) (Worker, error)
 	ReplaceWokerNode(clusterIDOrName, workerID string, target ClusterTargetHeader) (string, error)
 	ListStorageAttachemnts(clusterIDOrName, workerID string, target ClusterTargetHeader) (VoulemeAttachments, error)
@@ -124,7 +124,7 @@ func (r *worker) ListByWorkerPool(clusterIDOrName, workerPoolIDOrName string, sh
 	return workers, err
 }
 
-// ListWorkers ...
+// ListWorkers lists VPC workers
 func (r *worker) ListWorkers(clusterIDOrName string, showDeleted bool, target ClusterTargetHeader) ([]Worker, error) {
 	rawURL := fmt.Sprintf("/v2/vpc/getWorkers?cluster=%s&showDeleted=%t", clusterIDOrName, showDeleted)
 	workers := []Worker{}
@@ -135,9 +135,9 @@ func (r *worker) ListWorkers(clusterIDOrName string, showDeleted bool, target Cl
 	return workers, err
 }
 
-// ListClassicWorkers ...
-func (r *worker) ListClassicWorkers(clusterIDOrName string, showDeleted bool, target ClusterTargetHeader) ([]Worker, error) {
-	rawURL := fmt.Sprintf("/v2/classic/getWorkers?cluster=%s&showDeleted=%t", clusterIDOrName, showDeleted)
+// ListAllWorkers lists workers of every type
+func (r *worker) ListAllWorkers(clusterIDOrName string, showDeleted bool, target ClusterTargetHeader) ([]Worker, error) {
+	rawURL := fmt.Sprintf("/v2/getWorkers?cluster=%s&showDeleted=%t", clusterIDOrName, showDeleted)
 	workers := []Worker{}
 	_, err := r.client.Get(rawURL, &workers, target.ToMap())
 	if err != nil {

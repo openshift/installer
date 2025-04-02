@@ -30,6 +30,7 @@ import (
 	"github.com/openshift/installer/pkg/types/defaults"
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/none"
+	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -95,6 +96,9 @@ type agentClusterInstallPlatform struct {
 	// External is the configuration used when installing on external cloud provider.
 	// +optional
 	External *agentClusterInstallOnPremExternalPlatform `json:"external,omitempty"`
+	// Nutanix is the configuration used when installing on nutanix platform.
+	// +optional
+	Nutanix *nutanix.Platform `json:"nutanix,omitempty"`
 }
 
 // Used to generate InstallConfig overrides for Assisted Service to apply
@@ -308,6 +312,31 @@ func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Par
 			}
 			agentClusterInstall.Spec.APIVIPs = installConfig.Config.Platform.VSphere.APIVIPs
 			agentClusterInstall.Spec.IngressVIPs = installConfig.Config.Platform.VSphere.IngressVIPs
+		} else if installConfig.Config.Platform.Nutanix != nil {
+			icNutanixPlatformBytes, err := json.Marshal(*installConfig.Config.Platform.Nutanix)
+			if err != nil {
+				logrus.Errorf("failed to marshal installConfig.platform.nutanix: %v", err)
+			}
+			nutanixPlatform := nutanix.Platform{}
+			err = json.Unmarshal(icNutanixPlatformBytes, &nutanixPlatform)
+			if err != nil {
+				logrus.Errorf("failed to unmarshal installConfig.platform.nutanix: %v", err)
+			}
+
+			// Skip the below agent installer not supported fields
+			nutanixPlatform.ClusterOSImage = ""
+			nutanixPlatform.PreloadedOSImageName = ""
+			nutanixPlatform.DefaultMachinePlatform = nil
+			nutanixPlatform.LoadBalancer = nil
+			nutanixPlatform.FailureDomains = nil
+			nutanixPlatform.PrismAPICallTimeout = nil
+
+			icOverridden = true
+			icOverrides.Platform = &agentClusterInstallPlatform{
+				Nutanix: &nutanixPlatform,
+			}
+			agentClusterInstall.Spec.APIVIPs = installConfig.Config.Platform.Nutanix.APIVIPs
+			agentClusterInstall.Spec.IngressVIPs = installConfig.Config.Platform.Nutanix.IngressVIPs
 		} else if installConfig.Config.Platform.External != nil {
 			icOverridden = true
 			icOverrides.Platform = &agentClusterInstallPlatform{
@@ -394,6 +423,8 @@ func (a *AgentClusterInstall) Load(f asset.FileFetcher) (bool, error) {
 		agentClusterInstall.Spec.PlatformType = hiveext.NonePlatformType
 	case vsphere.Name:
 		agentClusterInstall.Spec.PlatformType = hiveext.VSpherePlatformType
+	case nutanix.Name:
+		agentClusterInstall.Spec.PlatformType = hiveext.NutanixPlatformType
 	}
 
 	// Set the default value for userManagedNetworking, as would be done by the

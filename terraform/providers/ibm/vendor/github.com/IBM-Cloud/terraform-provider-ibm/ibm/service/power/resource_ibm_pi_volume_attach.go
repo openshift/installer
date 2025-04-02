@@ -10,14 +10,14 @@ import (
 	"log"
 	"time"
 
-	st "github.com/IBM-Cloud/power-go-client/clients/instance"
-	"github.com/IBM-Cloud/power-go-client/helpers"
+	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_volumes"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func ResourceIBMPIVolumeAttach() *schema.Resource {
@@ -33,32 +33,32 @@ func ResourceIBMPIVolumeAttach() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-
-			helpers.PICloudInstanceId: {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: " Cloud Instance ID - This is the service_instance_id.",
+			// Arguments
+			Arg_CloudInstanceID: {
+				Description:  "The GUID of the service instance associated with an account.",
+				ForceNew:     true,
+				Required:     true,
+				Type:         schema.TypeString,
+				ValidateFunc: validation.NoZeroValues,
 			},
-
-			helpers.PIVolumeId: {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "Id of the volume to attach. Note these volumes should have been created",
-			},
-
-			helpers.PIInstanceId: {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
+			Arg_InstanceID: {
 				Description: "PI Instance Id",
+				ForceNew:    true,
+				Required:    true,
+				Type:        schema.TypeString,
+			},
+			Arg_VolumeID: {
+				Description: "Id of the volume to attach. Note these volumes should have been created",
+				ForceNew:    true,
+				Required:    true,
+				Type:        schema.TypeString,
 			},
 
-			// Computed Attribute
-			helpers.PIVolumeAttachStatus: {
-				Type:     schema.TypeString,
-				Computed: true,
+			// Attribute
+			Attr_Status: {
+				Computed:    true,
+				Description: "The status of the volume.",
+				Type:        schema.TypeString,
 			},
 		},
 	}
@@ -70,26 +70,26 @@ func resourceIBMPIVolumeAttachCreate(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	volumeID := d.Get(helpers.PIVolumeId).(string)
-	pvmInstanceID := d.Get(helpers.PIInstanceId).(string)
-	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
+	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
+	pvmInstanceID := d.Get(Arg_InstanceID).(string)
+	volumeID := d.Get(Arg_VolumeID).(string)
 
-	volClient := st.NewIBMPIVolumeClient(ctx, sess, cloudInstanceID)
+	volClient := instance.NewIBMPIVolumeClient(ctx, sess, cloudInstanceID)
 	volinfo, err := volClient.Get(volumeID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	if volinfo.State == "available" || *volinfo.Shareable {
+	if volinfo.State == State_Available || *volinfo.Shareable {
 		log.Printf(" In the current state the volume can be attached to the instance ")
 	}
 
-	if volinfo.State == "in-use" && *volinfo.Shareable {
+	if volinfo.State == State_InUse && *volinfo.Shareable {
 
 		log.Printf("Volume State /Status is  permitted and hence attaching the volume to the instance")
 	}
 
-	if volinfo.State == helpers.PIVolumeAllowableAttachStatus && !*volinfo.Shareable {
+	if volinfo.State == State_InUse && !*volinfo.Shareable {
 		return diag.Errorf("the volume cannot be attached in the current state. The volume must be in the *available* state. No other states are permissible")
 	}
 
@@ -101,7 +101,7 @@ func resourceIBMPIVolumeAttachCreate(ctx context.Context, d *schema.ResourceData
 
 	d.SetId(fmt.Sprintf("%s/%s/%s", cloudInstanceID, pvmInstanceID, *volinfo.VolumeID))
 
-	_, err = isWaitForIBMPIVolumeAttachAvailable(ctx, volClient, *volinfo.VolumeID, cloudInstanceID, pvmInstanceID, d.Timeout(schema.TimeoutCreate))
+	_, err = isWaitForIBMPIVolumeAttachAvailable(ctx, volClient, *volinfo.VolumeID, pvmInstanceID, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -121,14 +121,14 @@ func resourceIBMPIVolumeAttachRead(ctx context.Context, d *schema.ResourceData, 
 	}
 	cloudInstanceID, pvmInstanceID, volumeID := ids[0], ids[1], ids[2]
 
-	client := st.NewIBMPIVolumeClient(ctx, sess, cloudInstanceID)
+	client := instance.NewIBMPIVolumeClient(ctx, sess, cloudInstanceID)
 
 	vol, err := client.CheckVolumeAttach(pvmInstanceID, volumeID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.Set(helpers.PIVolumeAttachStatus, vol.State)
+	d.Set(Attr_Status, vol.State)
 	return nil
 }
 
@@ -143,7 +143,7 @@ func resourceIBMPIVolumeAttachDelete(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 	cloudInstanceID, pvmInstanceID, volumeID := ids[0], ids[1], ids[2]
-	client := st.NewIBMPIVolumeClient(ctx, sess, cloudInstanceID)
+	client := instance.NewIBMPIVolumeClient(ctx, sess, cloudInstanceID)
 
 	log.Printf("the id of the volume to detach is %s ", volumeID)
 
@@ -160,7 +160,7 @@ func resourceIBMPIVolumeAttachDelete(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	_, err = isWaitForIBMPIVolumeDetach(ctx, client, volumeID, cloudInstanceID, pvmInstanceID, d.Timeout(schema.TimeoutDelete))
+	_, err = isWaitForIBMPIVolumeDetach(ctx, client, volumeID, pvmInstanceID, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -170,13 +170,13 @@ func resourceIBMPIVolumeAttachDelete(ctx context.Context, d *schema.ResourceData
 	return nil
 }
 
-func isWaitForIBMPIVolumeAttachAvailable(ctx context.Context, client *st.IBMPIVolumeClient, id, cloudInstanceID, pvmInstanceID string, timeout time.Duration) (interface{}, error) {
+func isWaitForIBMPIVolumeAttachAvailable(ctx context.Context, client *instance.IBMPIVolumeClient, id, pvmInstanceID string, timeout time.Duration) (interface{}, error) {
 	log.Printf("Waiting for Volume (%s) to be available for attachment", id)
 
-	stateConf := &resource.StateChangeConf{
-		Pending:    []string{"retry", helpers.PIVolumeProvisioning},
-		Target:     []string{helpers.PIVolumeAllowableAttachStatus},
-		Refresh:    isIBMPIVolumeAttachRefreshFunc(client, id, cloudInstanceID, pvmInstanceID),
+	stateConf := &retry.StateChangeConf{
+		Pending:    []string{State_Retry, State_Creating},
+		Target:     []string{State_InUse},
+		Refresh:    isIBMPIVolumeAttachRefreshFunc(client, id, pvmInstanceID),
 		Delay:      10 * time.Second,
 		MinTimeout: 30 * time.Second,
 		Timeout:    timeout,
@@ -185,28 +185,28 @@ func isWaitForIBMPIVolumeAttachAvailable(ctx context.Context, client *st.IBMPIVo
 	return stateConf.WaitForStateContext(ctx)
 }
 
-func isIBMPIVolumeAttachRefreshFunc(client *st.IBMPIVolumeClient, id, cloudInstanceID, pvmInstanceID string) resource.StateRefreshFunc {
+func isIBMPIVolumeAttachRefreshFunc(client *instance.IBMPIVolumeClient, id, pvmInstanceID string) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		vol, err := client.Get(id)
 		if err != nil {
 			return nil, "", err
 		}
 
-		if vol.State == "in-use" && flex.StringContains(vol.PvmInstanceIDs, pvmInstanceID) {
-			return vol, helpers.PIVolumeAllowableAttachStatus, nil
+		if vol.State == State_InUse && flex.StringContains(vol.PvmInstanceIDs, pvmInstanceID) {
+			return vol, State_InUse, nil
 		}
 
-		return vol, helpers.PIVolumeProvisioning, nil
+		return vol, State_Creating, nil
 	}
 }
 
-func isWaitForIBMPIVolumeDetach(ctx context.Context, client *st.IBMPIVolumeClient, id, cloudInstanceID, pvmInstanceID string, timeout time.Duration) (interface{}, error) {
+func isWaitForIBMPIVolumeDetach(ctx context.Context, client *instance.IBMPIVolumeClient, id, pvmInstanceID string, timeout time.Duration) (interface{}, error) {
 	log.Printf("Waiting for Volume (%s) to be available after detachment", id)
 
-	stateConf := &resource.StateChangeConf{
-		Pending:    []string{"detaching", helpers.PowerVolumeAttachDeleting},
-		Target:     []string{helpers.PIVolumeProvisioningDone},
-		Refresh:    isIBMPIVolumeDetachRefreshFunc(client, id, cloudInstanceID, pvmInstanceID),
+	stateConf := &retry.StateChangeConf{
+		Pending:    []string{State_Detaching, State_Deleting},
+		Target:     []string{State_Available},
+		Refresh:    isIBMPIVolumeDetachRefreshFunc(client, id, pvmInstanceID),
 		Delay:      10 * time.Second,
 		MinTimeout: 30 * time.Second,
 		Timeout:    timeout,
@@ -215,7 +215,7 @@ func isWaitForIBMPIVolumeDetach(ctx context.Context, client *st.IBMPIVolumeClien
 	return stateConf.WaitForStateContext(ctx)
 }
 
-func isIBMPIVolumeDetachRefreshFunc(client *st.IBMPIVolumeClient, id, cloudInstanceID, pvmInstanceID string) resource.StateRefreshFunc {
+func isIBMPIVolumeDetachRefreshFunc(client *instance.IBMPIVolumeClient, id, pvmInstanceID string) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		vol, err := client.Get(id)
 		if err != nil {
@@ -223,7 +223,7 @@ func isIBMPIVolumeDetachRefreshFunc(client *st.IBMPIVolumeClient, id, cloudInsta
 			switch uErr.(type) {
 			case *p_cloud_volumes.PcloudCloudinstancesVolumesGetNotFound:
 				log.Printf("[DEBUG] volume does not exist while detaching %v", err)
-				return vol, helpers.PIVolumeProvisioningDone, nil
+				return vol, State_Available, nil
 			}
 			return nil, "", err
 		}
@@ -232,10 +232,10 @@ func isIBMPIVolumeDetachRefreshFunc(client *st.IBMPIVolumeClient, id, cloudInsta
 		// Also validate the Volume state is 'available' when it is not Sharable
 		// In case of Sharable Volume it can be `in-use` state
 		if !flex.StringContains(vol.PvmInstanceIDs, pvmInstanceID) &&
-			(*vol.Shareable || (!*vol.Shareable && vol.State == "available")) {
-			return vol, helpers.PIVolumeProvisioningDone, nil
+			(*vol.Shareable || (!*vol.Shareable && vol.State == State_Available)) {
+			return vol, State_Available, nil
 		}
 
-		return vol, "detaching", nil
+		return vol, State_Detaching, nil
 	}
 }

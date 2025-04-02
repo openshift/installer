@@ -86,6 +86,14 @@ func ResourceIBMISVPNGatewayConnection() *schema.Resource {
 				Deprecated:  "peer_address is deprecated, use peer instead",
 			},
 
+			// distribute traffic
+			"distribute_traffic": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Indicates whether the traffic is distributed between the `up` tunnels of the VPN gateway connection when the VPC route's next hop is a VPN connection. If `false`, the traffic is only routed through the `up` tunnel with the lower `public_ip` address.",
+			},
+
 			// new breaking changes
 			"establish_mode": &schema.Schema{
 				Type:         schema.TypeString,
@@ -616,7 +624,9 @@ func vpngwconCreate(d *schema.ResourceData, meta interface{}, name, gatewayID, p
 		} else {
 			vpnGatewayConnectionPrototypeModel.IpsecPolicy = nil
 		}
-
+		if distributeTrafficOk, ok := d.GetOkExists("distribute_traffic"); ok {
+			vpnGatewayConnectionPrototypeModel.DistributeTraffic = core.BoolPtr(distributeTrafficOk.(bool))
+		}
 		options := &vpcv1.CreateVPNGatewayConnectionOptions{
 			VPNGatewayID:                  &gatewayID,
 			VPNGatewayConnectionPrototype: vpnGatewayConnectionPrototypeModel,
@@ -726,6 +736,12 @@ func vpngwconUpdate(d *schema.ResourceData, meta interface{}, gID, gConnID strin
 		ID:           &gConnID,
 	}
 	vpnGatewayConnectionPatchModel := &vpcv1.VPNGatewayConnectionPatch{}
+
+	if d.HasChange("distribute_traffic") {
+		vpnGatewayConnectionPatchModel.DistributeTraffic = core.BoolPtr(d.Get("distribute_traffic").(bool))
+		hasChanged = true
+	}
+
 	if d.HasChange(isVPNGatewayConnectionName) {
 		name := d.Get(isVPNGatewayConnectionName).(string)
 		vpnGatewayConnectionPatchModel.Name = &name
@@ -736,10 +752,111 @@ func vpngwconUpdate(d *schema.ResourceData, meta interface{}, gID, gConnID strin
 		vpnGatewayConnectionPatchModel.EstablishMode = &newEstablishMode
 		hasChanged = true
 	}
+
+	if d.HasChange("local.0.cidrs") {
+		o, n := d.GetChange("local.0.cidrs")
+		oldSet := o.(*schema.Set)
+		newSet := n.(*schema.Set)
+
+		// Find items to remove (present in old but not in new)
+		toRemove := oldSet.Difference(newSet)
+		if toRemove.Len() > 0 {
+			for _, cidr := range toRemove.List() {
+				cidrStr := cidr.(string)
+				removeVPNGatewayConnectionsLocalCIDROptions := &vpcv1.RemoveVPNGatewayConnectionsLocalCIDROptions{
+					VPNGatewayID: &gID,
+					ID:           &gConnID,
+					CIDR:         &cidrStr,
+				}
+
+				res, err := sess.RemoveVPNGatewayConnectionsLocalCIDR(removeVPNGatewayConnectionsLocalCIDROptions)
+				if err != nil {
+					return fmt.Errorf("error removing VPN Gateway Connection Local CIDR %s: %w", cidrStr, err)
+				}
+
+				if res.StatusCode != 201 && res.StatusCode != 204 {
+					return fmt.Errorf("unexpected status code %d while removing Local CIDR %s", res.StatusCode, cidrStr)
+				}
+			}
+		}
+
+		// Find items to add (present in new but not in old)
+		toAdd := newSet.Difference(oldSet)
+		if toAdd.Len() > 0 {
+			for _, cidr := range toAdd.List() {
+				cidrStr := cidr.(string)
+				addVPNGatewayConnectionsLocalCIDROptions := &vpcv1.AddVPNGatewayConnectionsLocalCIDROptions{
+					VPNGatewayID: &gID,
+					ID:           &gConnID,
+					CIDR:         &cidrStr,
+				}
+
+				res, err := sess.AddVPNGatewayConnectionsLocalCIDR(addVPNGatewayConnectionsLocalCIDROptions)
+				if err != nil {
+					return fmt.Errorf("error adding VPN Gateway Connection Local CIDR %s: %w", cidrStr, err)
+				}
+
+				if res.StatusCode != 201 && res.StatusCode != 204 {
+					return fmt.Errorf("unexpected status code %d while adding Local CIDR %s", res.StatusCode, cidrStr)
+				}
+			}
+		}
+	}
+
 	if d.HasChange("peer") {
 		peer, err := resourceIBMIsVPNGatewayConnectionMapToVPNGatewayConnectionPeerPatch(d.Get("peer.0").(map[string]interface{}))
 		if err != nil {
 			return err
+		}
+		if d.HasChange("peer.0.cidrs") {
+			o, n := d.GetChange("peer.0.cidrs")
+			oldSet := o.(*schema.Set)
+			newSet := n.(*schema.Set)
+
+			// Find items to remove (present in old but not in new)
+			toRemove := oldSet.Difference(newSet)
+			if toRemove.Len() > 0 {
+				for _, cidr := range toRemove.List() {
+					cidrStr := cidr.(string)
+					removeVPNGatewayConnectionsPeerCIDROptions := &vpcv1.RemoveVPNGatewayConnectionsPeerCIDROptions{
+						VPNGatewayID: &gID,
+						ID:           &gConnID,
+						CIDR:         &cidrStr,
+					}
+
+					res, err := sess.RemoveVPNGatewayConnectionsPeerCIDR(removeVPNGatewayConnectionsPeerCIDROptions)
+					if err != nil {
+						return fmt.Errorf("error removing VPN Gateway Connection Peer CIDR %s: %w", cidrStr, err)
+					}
+
+					if res.StatusCode != 201 && res.StatusCode != 204 {
+						return fmt.Errorf("unexpected status code %d while removing CIDR %s", res.StatusCode, cidrStr)
+					}
+				}
+			}
+
+			// Find items to add (present in new but not in old)
+			toAdd := newSet.Difference(oldSet)
+			if toAdd.Len() > 0 {
+				for _, cidr := range toAdd.List() {
+					cidrStr := cidr.(string)
+					addVPNGatewayConnectionsPeerCIDROptions := &vpcv1.AddVPNGatewayConnectionsPeerCIDROptions{
+						VPNGatewayID: &gID,
+						ID:           &gConnID,
+						CIDR:         &cidrStr,
+					}
+
+					res, err := sess.AddVPNGatewayConnectionsPeerCIDR(addVPNGatewayConnectionsPeerCIDROptions)
+					if err != nil {
+						return fmt.Errorf("error adding VPN Gateway Connection Peer CIDR %s: %w", cidrStr, err)
+					}
+
+					if res.StatusCode != 201 && res.StatusCode != 204 {
+						return fmt.Errorf("unexpected status code %d while adding CIDR %s", res.StatusCode, cidrStr)
+					}
+				}
+			}
+
 		}
 		vpnGatewayConnectionPatchModel.Peer = peer
 		hasChanged = true
@@ -1206,6 +1323,11 @@ func setvpnGatewayConnectionIntfResource(d *schema.ResourceData, vpn_gateway_id 
 			if err = d.Set("mode", vpnGatewayConnection.Mode); err != nil {
 				return fmt.Errorf("[ERROR] Error setting mode: %s", err)
 			}
+			if !core.IsNil(vpnGatewayConnection.DistributeTraffic) {
+				if err = d.Set("distribute_traffic", vpnGatewayConnection.DistributeTraffic); err != nil {
+					return fmt.Errorf("Error setting distribute_traffic: %s", err)
+				}
+			}
 			if err = d.Set("name", vpnGatewayConnection.Name); err != nil {
 				return fmt.Errorf("[ERROR] Error setting name: %s", err)
 			}
@@ -1282,7 +1404,11 @@ func setvpnGatewayConnectionIntfResource(d *schema.ResourceData, vpn_gateway_id 
 			if err = d.Set("created_at", flex.DateTimeToString(vpnGatewayConnection.CreatedAt)); err != nil {
 				return fmt.Errorf("[ERROR] Error setting created_at: %s", err)
 			}
-
+			if !core.IsNil(vpnGatewayConnection.DistributeTraffic) {
+				if err = d.Set("distribute_traffic", vpnGatewayConnection.DistributeTraffic); err != nil {
+					return fmt.Errorf("Error setting distribute_traffic: %s", err)
+				}
+			}
 			if vpnGatewayConnection.DeadPeerDetection != nil {
 				d.Set(isVPNGatewayConnectionDeadPeerDetectionAction, vpnGatewayConnection.DeadPeerDetection.Action)
 				d.Set(isVPNGatewayConnectionDeadPeerDetectionInterval, vpnGatewayConnection.DeadPeerDetection.Interval)
@@ -1378,7 +1504,11 @@ func setvpnGatewayConnectionIntfResource(d *schema.ResourceData, vpn_gateway_id 
 			if err = d.Set("created_at", flex.DateTimeToString(vpnGatewayConnection.CreatedAt)); err != nil {
 				return fmt.Errorf("[ERROR] Error setting created_at: %s", err)
 			}
-
+			if !core.IsNil(vpnGatewayConnection.DistributeTraffic) {
+				if err = d.Set("distribute_traffic", vpnGatewayConnection.DistributeTraffic); err != nil {
+					return fmt.Errorf("Error setting distribute_traffic: %s", err)
+				}
+			}
 			if vpnGatewayConnection.DeadPeerDetection != nil {
 				d.Set(isVPNGatewayConnectionDeadPeerDetectionAction, vpnGatewayConnection.DeadPeerDetection.Action)
 				d.Set(isVPNGatewayConnectionDeadPeerDetectionInterval, vpnGatewayConnection.DeadPeerDetection.Interval)

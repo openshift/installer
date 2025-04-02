@@ -1,5 +1,5 @@
 //
-// Copyright 2021 IBM Inc. All rights reserved
+// Copyright contributors to the ibm-hpcs-tke-sdk project
 // SPDX-License-Identifier: Apache2.0
 //
 
@@ -7,6 +7,7 @@
 //
 // Date          Initials        Description
 // 04/30/2021    CLH             Modify for TKE SDK
+// 01/09/2025    CLH             Set last four bytes of VP to zero
 
 package common
 
@@ -272,8 +273,8 @@ func ByteSlicesAreEqual(a, b []byte) bool {
 /* the EP11 wire formats document as:                                         */
 /* SHA_256( 01 || <raw_key> ), with the last four bytes set to zero.          */
 /*                                                                            */
-/* In practice, it does not appear the last four bytes are set to zero, so    */
-/* that is commented out below.                                               */
+/* Old EP11 crypto modules did not zeroize the last four bytes of the         */
+/* verification pattern.                                                      */
 /*----------------------------------------------------------------------------*/
 func Calc_vp(rawkey []byte) []byte {
 	var temp []byte
@@ -282,9 +283,9 @@ func Calc_vp(rawkey []byte) []byte {
 	hasher := sha256.New()
 	hasher.Write(temp)
 	out := hasher.Sum(nil)
-	//	for i := 28; i <= 31; i++ {
-	//		out[i] = 0
-	//	}
+	for i := 28; i <= 31; i++ {
+		out[i] = 0
+	}
 	return out
 }
 

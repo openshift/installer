@@ -1,0 +1,96 @@
+# Verify a default configuration for the compact topology on nutanix
+
+exec openshift-install agent create image --dir $WORK
+
+stderr 'The rendezvous host IP \(node0 IP\) is 192.168.111.20'
+
+exists $WORK/agent.x86_64.iso
+exists $WORK/auth/kubeconfig
+exists $WORK/auth/kubeadmin-password
+isocmp agent.x86_64.iso /etc/assisted/manifests/agent-cluster-install.yaml expected/agent-cluster-install.yaml
+
+-- install-config.yaml --
+apiVersion: v1
+baseDomain: test.metalkube.org
+controlPlane:
+  name: master
+  replicas: 3
+compute:
+- name: worker
+  replicas: 0
+metadata:
+  name: ostest
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.111.0/24
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  nutanix:
+    apiVips:
+    - 192.168.111.5
+    ingressVips:
+    - 192.168.111.4
+    prismCentral:
+      endpoint:
+        address: pc1.test.metalkube.org
+        port: 9440
+      password: testPassword
+      username: testUser
+    prismElements:
+    - endpoint:
+        address: pe1.test.metalkube.org
+        port: 9440
+      uuid: 00061f7f-44f7-19dc-72gc-7cc25586ee53
+    subnetUUIDs:
+    - a2e46975-2cde-4a49-9dda-815eb4fcd681
+sshKey: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDK6UTEydcEKzuNdPaofn8Z2DwgHqdcionLZBiPf/zIRNco++etLsat7Avv7yt04DINQd5zjxIFgG8jblaUB5E5C9ClUcMwb52GO0ay2Y9v1uBv1a4WhI3peKktAzYNk0EBMQlJtXPjRMrC9ylBPh+DsBHMu+KmDnfk7PIwyN4efC8k5kSRuPWoNdme1rz2+umU8FSmaWTHIajrbspf4GQbsntA5kuKEtDbfoNCU97o2KrRnUbeg3a8hwSjfh3u6MhlnGcg5K2Ij+zivEsWGCLKYUtE1ErqwfIzwWmJ6jnV66XCQGHf4Q1iIxqF7s2a1q24cgG2Z/iDXfqXrCIfy4P7b/Ztak3bdT9jfAdVZtdO5/r7I+O5hYhF86ayFlDWzZWP/ByiSb+q4CQbfVgK3BMmiAv2MqLHdhesmD/SmIcoOWUF6rFmRKZVFFpKpt5ATNTgUJ3JRowoXrrDruVXClUGRiCS6Zabd1rZ3VmTchaPJwtzQMdfIWISXj+Ig+C4UK0=
+pullSecret: '{"auths": {"quay.io": {"auth": "c3VwZXItc2VjcmV0Cg=="}}}'
+
+-- agent-config.yaml --
+apiVersion: v1beta1
+metadata:
+  name: ostest
+rendezvousIP: 192.168.111.20
+
+-- expected/agent-cluster-install.yaml --
+apiVersion: extensions.hive.openshift.io/v1beta1
+kind: AgentClusterInstall
+metadata:
+  annotations:
+    agent-install.openshift.io/install-config-overrides: '{"platform":{"nutanix":{"prismCentral":{"endpoint":{"address":"pc1.test.metalkube.org","port":9440},"username":"testUser","password":"testPassword"},"prismElements":[{"uuid":"00061f7f-44f7-19dc-72gc-7cc25586ee53","endpoint":{"address":"pe1.test.metalkube.org","port":9440}}],"apiVIPs":["192.168.111.5"],"ingressVIPs":["192.168.111.4"],"subnetUUIDs":["a2e46975-2cde-4a49-9dda-815eb4fcd681"]}}}'
+  creationTimestamp: null
+  name: ostest
+spec:
+  apiVIPs:
+  - 192.168.111.5
+  clusterDeploymentRef:
+    name: ostest
+  imageSetRef:
+    name: openshift-was not built correctly
+  ingressVIPs:
+  - 192.168.111.4
+  networking:
+    clusterNetwork:
+    - cidr: 10.128.0.0/14
+      hostPrefix: 23
+    machineNetwork:
+    - cidr: 192.168.111.0/24
+    networkType: OVNKubernetes
+    serviceNetwork:
+    - 172.30.0.0/16
+    userManagedNetworking: false
+  platformType: Nutanix
+  provisionRequirements:
+    controlPlaneAgents: 3
+  sshPublicKey: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDK6UTEydcEKzuNdPaofn8Z2DwgHqdcionLZBiPf/zIRNco++etLsat7Avv7yt04DINQd5zjxIFgG8jblaUB5E5C9ClUcMwb52GO0ay2Y9v1uBv1a4WhI3peKktAzYNk0EBMQlJtXPjRMrC9ylBPh+DsBHMu+KmDnfk7PIwyN4efC8k5kSRuPWoNdme1rz2+umU8FSmaWTHIajrbspf4GQbsntA5kuKEtDbfoNCU97o2KrRnUbeg3a8hwSjfh3u6MhlnGcg5K2Ij+zivEsWGCLKYUtE1ErqwfIzwWmJ6jnV66XCQGHf4Q1iIxqF7s2a1q24cgG2Z/iDXfqXrCIfy4P7b/Ztak3bdT9jfAdVZtdO5/r7I+O5hYhF86ayFlDWzZWP/ByiSb+q4CQbfVgK3BMmiAv2MqLHdhesmD/SmIcoOWUF6rFmRKZVFFpKpt5ATNTgUJ3JRowoXrrDruVXClUGRiCS6Zabd1rZ3VmTchaPJwtzQMdfIWISXj+Ig+C4UK0=
+status:
+  debugInfo:
+    eventsURL: ""
+    logsURL: ""
+  progress:
+    totalPercentage: 0

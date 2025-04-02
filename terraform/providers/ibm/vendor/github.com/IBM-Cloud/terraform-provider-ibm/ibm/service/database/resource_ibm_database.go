@@ -140,7 +140,8 @@ func ResourceIBMDatabaseInstance() *schema.Resource {
 		CustomizeDiff: customdiff.All(
 			resourceIBMDatabaseInstanceDiff,
 			validateGroupsDiff,
-			validateUsersDiff),
+			validateUsersDiff,
+			validateRemoteLeaderIDDiff),
 
 		Importer: &schema.ResourceImporter{},
 
@@ -214,7 +215,7 @@ func ResourceIBMDatabaseInstance() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ValidateFunc: validation.All(
-					validation.StringLenBetween(15, 32),
+					validation.StringLenBetween(15, 72),
 					DatabaseUserPasswordValidator("database"),
 				),
 				Sensitive: true,
@@ -258,10 +259,14 @@ func ResourceIBMDatabaseInstance() *schema.Resource {
 				Optional:    true,
 			},
 			"remote_leader_id": {
-				Description:      "The CRN of leader database",
-				Type:             schema.TypeString,
-				Optional:         true,
-				DiffSuppressFunc: flex.ApplyOnce,
+				Description: "The CRN of leader database",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+			"skip_initial_backup": {
+				Description: "Option to skip the initial backup when promoting a read-only replica. Skipping the initial backup means that your replica becomes available more quickly, but there is no immediate backup available.",
+				Type:        schema.TypeBool,
+				Optional:    true,
 			},
 			"key_protect_instance": {
 				Description: "The CRN of Key protect instance",
@@ -840,6 +845,7 @@ func ResourceIBMDatabaseInstance() *schema.Resource {
 		},
 	}
 }
+
 func ResourceIBMICDValidator() *validate.ResourceValidator {
 
 	validateSchema := make([]validate.ValidateSchema, 0)
@@ -1171,40 +1177,8 @@ func resourceIBMDatabaseInstanceCreate(context context.Context, d *schema.Resour
 		rsInst.ResourceGroup = &defaultRg
 	}
 
-	initialNodeCount, err := getInitialNodeCount(serviceName, plan, meta)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
 	params := Params{}
-	if group, ok := d.GetOk("group"); ok {
-		groups := expandGroups(group.(*schema.Set).List())
-		var memberGroup *Group
-		for _, g := range groups {
-			if g.ID == "member" {
-				memberGroup = g
-				break
-			}
-		}
 
-		if memberGroup != nil {
-			if memberGroup.Memory != nil {
-				params.Memory = memberGroup.Memory.Allocation * initialNodeCount
-			}
-
-			if memberGroup.Disk != nil {
-				params.Disk = memberGroup.Disk.Allocation * initialNodeCount
-			}
-
-			if memberGroup.CPU != nil {
-				params.CPU = memberGroup.CPU.Allocation * initialNodeCount
-			}
-
-			if memberGroup.HostFlavor != nil {
-				params.HostFlavor = memberGroup.HostFlavor.ID
-			}
-		}
-	}
 	if version, ok := d.GetOk("version"); ok {
 		params.Version = version.(string)
 	}
@@ -1240,6 +1214,64 @@ func resourceIBMDatabaseInstanceCreate(context context.Context, d *schema.Resour
 
 	if offlineRestore, ok := d.GetOk("offline_restore"); ok {
 		params.OfflineRestore = offlineRestore.(bool)
+	}
+
+	var initialNodeCount int
+	var sourceCRN string
+
+	if params.PITRDeploymentID != "" {
+		sourceCRN = params.PITRDeploymentID
+	}
+
+	if params.RemoteLeaderID != "" {
+		sourceCRN = params.RemoteLeaderID
+	}
+
+	if sourceCRN != "" {
+		group, err := getMemberGroup(sourceCRN, meta)
+
+		if err != nil {
+			return diag.FromErr(
+				fmt.Errorf("[ERROR] Error fetching source formation group: %s", err)) // raise error
+		}
+
+		if group != nil {
+			initialNodeCount = group.Members.Allocation
+		}
+	} else {
+		initialNodeCount, err = getInitialNodeCount(serviceName, plan, meta)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	var memberGroup *Group
+
+	if group, ok := d.GetOk("group"); ok {
+		groups := expandGroups(group.(*schema.Set).List())
+
+		for _, g := range groups {
+			if g.ID == "member" {
+				memberGroup = g
+				break
+			}
+		}
+	}
+
+	if memberGroup != nil && memberGroup.Memory != nil {
+		params.Memory = memberGroup.Memory.Allocation * initialNodeCount
+	}
+
+	if memberGroup != nil && memberGroup.Disk != nil {
+		params.Disk = memberGroup.Disk.Allocation * initialNodeCount
+	}
+
+	if memberGroup != nil && memberGroup.CPU != nil {
+		params.CPU = memberGroup.CPU.Allocation * initialNodeCount
+	}
+
+	if memberGroup != nil && memberGroup.HostFlavor != nil {
+		params.HostFlavor = memberGroup.HostFlavor.ID
 	}
 
 	serviceEndpoint := d.Get("service_endpoints").(string)
@@ -1307,7 +1339,7 @@ func resourceIBMDatabaseInstanceCreate(context context.Context, d *schema.Resour
 			if g.CPU != nil && g.CPU.Allocation*nodeCount != currentGroup.CPU.Allocation {
 				groupScaling.CPU = &clouddatabasesv5.GroupScalingCPU{AllocationCount: core.Int64Ptr(int64(g.CPU.Allocation * nodeCount))}
 			}
-			if g.HostFlavor != nil && g.HostFlavor.ID != currentGroup.HostFlavor.ID {
+			if g.HostFlavor != nil {
 				groupScaling.HostFlavor = &clouddatabasesv5.GroupScalingHostFlavor{ID: core.StringPtr(g.HostFlavor.ID)}
 			}
 
@@ -1597,7 +1629,6 @@ func resourceIBMDatabaseInstanceRead(context context.Context, d *schema.Resource
 		if endpoint, ok := instance.Parameters["service-endpoints"]; ok {
 			d.Set("service_endpoints", endpoint)
 		}
-
 	}
 
 	d.Set(flex.ResourceName, *instance.Name)
@@ -1877,7 +1908,7 @@ func resourceIBMDatabaseInstanceUpdate(context context.Context, d *schema.Resour
 			if group.CPU != nil && group.CPU.Allocation*nodeCount != currentGroup.CPU.Allocation {
 				groupScaling.CPU = &clouddatabasesv5.GroupScalingCPU{AllocationCount: core.Int64Ptr(int64(group.CPU.Allocation * nodeCount))}
 			}
-			if group.HostFlavor != nil && group.HostFlavor.ID != currentGroup.HostFlavor.ID {
+			if group.HostFlavor != nil {
 				groupScaling.HostFlavor = &clouddatabasesv5.GroupScalingHostFlavor{ID: core.StringPtr(group.HostFlavor.ID)}
 			}
 
@@ -2132,6 +2163,37 @@ func resourceIBMDatabaseInstanceUpdate(context context.Context, d *schema.Resour
 					return diag.FromErr(fmt.Errorf(
 						"[ERROR] Error waiting for database (%s) logical replication slot (%s) delete task to complete: %s", icdId, *deleteLogicalReplicationSlotOptions.Name, err))
 				}
+			}
+		}
+	}
+
+	if d.HasChange("remote_leader_id") {
+		remoteLeaderId := d.Get("remote_leader_id").(string)
+
+		if remoteLeaderId == "" {
+			skipInitialBackup := false
+			if skip, ok := d.GetOk("skip_initial_backup"); ok {
+				skipInitialBackup = skip.(bool)
+			}
+
+			promoteReadOnlyReplicaOptions := &clouddatabasesv5.PromoteReadOnlyReplicaOptions{
+				ID: &instanceID,
+				Promotion: map[string]interface{}{
+					"skip_initial_backup": skipInitialBackup,
+				},
+			}
+
+			promoteReadReplicaResponse, response, err := cloudDatabasesClient.PromoteReadOnlyReplica(promoteReadOnlyReplicaOptions)
+
+			if err != nil {
+				return diag.FromErr(fmt.Errorf("[ERROR] Error promoting read replica: %s\n%s", err, response))
+			}
+
+			taskID := *promoteReadReplicaResponse.Task.ID
+			_, err = waitForDatabaseTaskComplete(taskID, d, meta, d.Timeout(schema.TimeoutUpdate))
+
+			if err != nil {
+				return diag.FromErr(fmt.Errorf("[ERROR] Error promoting read replica: %s", err))
 			}
 		}
 	}
@@ -2920,6 +2982,24 @@ func getCpuEnforcementRatios(service string, plan string, hostFlavor string, met
 	return nil, 0, 0
 }
 
+func getMemberGroup(instanceCRN string, meta interface{}) (*Group, error) {
+	groupsResponse, err := getGroups(instanceCRN, meta)
+
+	if err != nil {
+		return nil, err
+	}
+
+	currentGroups := normalizeGroups(groupsResponse)
+
+	for _, cg := range currentGroups {
+		if cg.ID == "member" {
+			return &cg, nil
+		}
+	}
+
+	return nil, nil
+}
+
 func validateUsersDiff(_ context.Context, diff *schema.ResourceDiff, meta interface{}) (err error) {
 	service := diff.Get("service").(string)
 
@@ -3037,6 +3117,24 @@ func expandUserChanges(_oldUsers []interface{}, _newUsers []interface{}) (userCh
 	}
 
 	return userChanges
+}
+
+func validateRemoteLeaderIDDiff(_ context.Context, diff *schema.ResourceDiff, meta interface{}) (err error) {
+	_, remoteLeaderIdOk := diff.GetOk("remote_leader_id")
+	service := diff.Get("service").(string)
+	crn := diff.Get("resource_crn").(string)
+
+	if remoteLeaderIdOk && (service != "databases-for-postgresql" && service != "databases-for-mysql" && service != "databases-for-enterprisedb") {
+		return fmt.Errorf("[ERROR] remote_leader_id is only supported for databases-for-postgresql, databases-for-enterprisedb and databases-for-mysql")
+	}
+
+	oldValue, newValue := diff.GetChange("remote_leader_id")
+
+	if crn != "" && oldValue == "" && newValue != "" {
+		return fmt.Errorf("[ERROR] You cannot convert an existing instance to a read replica")
+	}
+
+	return nil
 }
 
 func (c *userChange) isDelete() bool {
@@ -3197,7 +3295,8 @@ func (u *DatabaseUser) ValidatePassword() (err error) {
 
 	var allowedCharacters = regexp.MustCompile(fmt.Sprintf("^(?:[a-zA-Z0-9]|%s)+$", specialCharPattern))
 	var beginWithSpecialChar = regexp.MustCompile(fmt.Sprintf("^(?:%s)", specialCharPattern))
-	var containsLetter = regexp.MustCompile("[a-zA-Z]")
+	var containsLower = regexp.MustCompile("[a-z]")
+	var containsUpper = regexp.MustCompile("[A-Z]")
 	var containsNumber = regexp.MustCompile("[0-9]")
 	var containsSpecialChar = regexp.MustCompile(fmt.Sprintf("(?:%s)", specialCharPattern))
 
@@ -3211,8 +3310,12 @@ func (u *DatabaseUser) ValidatePassword() (err error) {
 			"password must not begin with a special character (%s)", specialChars))
 	}
 
-	if !containsLetter.MatchString(u.Password) {
-		errs = append(errs, errors.New("password must contain at least one letter"))
+	if !containsLower.MatchString(u.Password) {
+		errs = append(errs, errors.New("password must contain at least one lower case letter"))
+	}
+
+	if !containsUpper.MatchString(u.Password) {
+		errs = append(errs, errors.New("password must contain at least one upper case letter"))
 	}
 
 	if !containsNumber.MatchString(u.Password) {

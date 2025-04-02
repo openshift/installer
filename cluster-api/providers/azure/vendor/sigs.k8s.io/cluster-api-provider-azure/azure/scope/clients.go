@@ -27,6 +27,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	azureautorest "github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 )
 
 // AzureClients contains all the Azure clients used by the scopes.
@@ -36,6 +37,8 @@ type AzureClients struct {
 	TokenCredential            azcore.TokenCredential
 	ResourceManagerEndpoint    string
 	ResourceManagerVMDNSSuffix string
+
+	authType infrav1.IdentityType
 }
 
 // CloudEnvironment returns the Azure environment the controller runs in.
@@ -73,7 +76,7 @@ func (c *AzureClients) Token() azcore.TokenCredential {
 // ClientID).
 func (c *AzureClients) HashKey() string {
 	hasher := sha256.New()
-	_, _ = hasher.Write([]byte(c.TenantID() + c.CloudEnvironment() + c.SubscriptionID() + c.ClientID()))
+	_, _ = hasher.Write([]byte(c.TenantID() + c.CloudEnvironment() + c.SubscriptionID() + c.ClientID() + string(c.authType)))
 	return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 }
 
@@ -106,6 +109,8 @@ func (c *AzureClients) setCredentialsWithProvider(ctx context.Context, subscript
 		return err
 	}
 	c.Values["AZURE_CLIENT_SECRET"] = strings.TrimSuffix(clientSecret, "\n")
+
+	c.authType = credentialsProvider.Type()
 
 	tokenCredential, err := credentialsProvider.GetTokenCredential(ctx, c.ResourceManagerEndpoint, c.Environment.ActiveDirectoryEndpoint, c.Environment.TokenAudience)
 	if err != nil {

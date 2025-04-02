@@ -970,21 +970,21 @@ func ResourceIbmLogsRuleGroupMapToRulesV1RuleParametersRuleParametersJSONParsePa
 func ResourceIbmLogsRuleGroupMapToRulesV1RuleMatcher(modelMap map[string]interface{}) (logsv0.RulesV1RuleMatcherIntf, error) {
 	model := &logsv0.RulesV1RuleMatcher{}
 	if modelMap["application_name"] != nil && len(modelMap["application_name"].([]interface{})) > 0 {
-		ApplicationNameModel, err := ResourceIbmLogsRuleGroupMapToRulesV1ApplicationNameConstraint(modelMap["application_name"].([]interface{})[0].(map[string]interface{}))
+		ApplicationNameModel, err := ResourceIbmLogsRuleGroupMapToRulesV1ApplicationNameConstraint(modelMap["application_name"].([]interface{}))
 		if err != nil {
 			return model, err
 		}
 		model.ApplicationName = ApplicationNameModel
 	}
 	if modelMap["subsystem_name"] != nil && len(modelMap["subsystem_name"].([]interface{})) > 0 {
-		SubsystemNameModel, err := ResourceIbmLogsRuleGroupMapToRulesV1SubsystemNameConstraint(modelMap["subsystem_name"].([]interface{})[0].(map[string]interface{}))
+		SubsystemNameModel, err := ResourceIbmLogsRuleGroupMapToRulesV1SubsystemNameConstraint(modelMap["subsystem_name"].([]interface{}))
 		if err != nil {
 			return model, err
 		}
 		model.SubsystemName = SubsystemNameModel
 	}
 	if modelMap["severity"] != nil && len(modelMap["severity"].([]interface{})) > 0 {
-		SeverityModel, err := ResourceIbmLogsRuleGroupMapToRulesV1SeverityConstraint(modelMap["severity"].([]interface{})[0].(map[string]interface{}))
+		SeverityModel, err := ResourceIbmLogsRuleGroupMapToRulesV1SeverityConstraint(modelMap["severity"].([]interface{}))
 		if err != nil {
 			return model, err
 		}
@@ -993,28 +993,38 @@ func ResourceIbmLogsRuleGroupMapToRulesV1RuleMatcher(modelMap map[string]interfa
 	return model, nil
 }
 
-func ResourceIbmLogsRuleGroupMapToRulesV1ApplicationNameConstraint(modelMap map[string]interface{}) (*logsv0.RulesV1ApplicationNameConstraint, error) {
+func ResourceIbmLogsRuleGroupMapToRulesV1ApplicationNameConstraint(modelMap []interface{}) (*logsv0.RulesV1ApplicationNameConstraint, error) {
 	model := &logsv0.RulesV1ApplicationNameConstraint{}
-	model.Value = core.StringPtr(modelMap["value"].(string))
+	if modelMap != nil && len(modelMap) > 0 && modelMap[0] != nil {
+		modelMapElement := modelMap[0].(map[string]interface{})
+		model.Value = core.StringPtr(modelMapElement["value"].(string))
+	}
+
 	return model, nil
 }
 
-func ResourceIbmLogsRuleGroupMapToRulesV1SubsystemNameConstraint(modelMap map[string]interface{}) (*logsv0.RulesV1SubsystemNameConstraint, error) {
+func ResourceIbmLogsRuleGroupMapToRulesV1SubsystemNameConstraint(modelMap []interface{}) (*logsv0.RulesV1SubsystemNameConstraint, error) {
 	model := &logsv0.RulesV1SubsystemNameConstraint{}
-	model.Value = core.StringPtr(modelMap["value"].(string))
+	if modelMap != nil && len(modelMap) > 0 && modelMap[0] != nil {
+		modelMapElement := modelMap[0].(map[string]interface{})
+		model.Value = core.StringPtr(modelMapElement["value"].(string))
+	}
 	return model, nil
 }
 
-func ResourceIbmLogsRuleGroupMapToRulesV1SeverityConstraint(modelMap map[string]interface{}) (*logsv0.RulesV1SeverityConstraint, error) {
+func ResourceIbmLogsRuleGroupMapToRulesV1SeverityConstraint(modelMap []interface{}) (*logsv0.RulesV1SeverityConstraint, error) {
 	model := &logsv0.RulesV1SeverityConstraint{}
-	model.Value = core.StringPtr(modelMap["value"].(string))
+	if modelMap != nil && len(modelMap) > 0 && modelMap[0] != nil {
+		modelMapElement := modelMap[0].(map[string]interface{})
+		model.Value = core.StringPtr(modelMapElement["value"].(string))
+	}
 	return model, nil
 }
 
 func ResourceIbmLogsRuleGroupMapToRulesV1RuleMatcherConstraintApplicationName(modelMap map[string]interface{}) (*logsv0.RulesV1RuleMatcherConstraintApplicationName, error) {
 	model := &logsv0.RulesV1RuleMatcherConstraintApplicationName{}
 	if modelMap["application_name"] != nil && len(modelMap["application_name"].([]interface{})) > 0 {
-		ApplicationNameModel, err := ResourceIbmLogsRuleGroupMapToRulesV1ApplicationNameConstraint(modelMap["application_name"].([]interface{})[0].(map[string]interface{}))
+		ApplicationNameModel, err := ResourceIbmLogsRuleGroupMapToRulesV1ApplicationNameConstraint(modelMap["application_name"].([]interface{}))
 		if err != nil {
 			return model, err
 		}
@@ -1026,7 +1036,7 @@ func ResourceIbmLogsRuleGroupMapToRulesV1RuleMatcherConstraintApplicationName(mo
 func ResourceIbmLogsRuleGroupMapToRulesV1RuleMatcherConstraintSubsystemName(modelMap map[string]interface{}) (*logsv0.RulesV1RuleMatcherConstraintSubsystemName, error) {
 	model := &logsv0.RulesV1RuleMatcherConstraintSubsystemName{}
 	if modelMap["subsystem_name"] != nil && len(modelMap["subsystem_name"].([]interface{})) > 0 {
-		SubsystemNameModel, err := ResourceIbmLogsRuleGroupMapToRulesV1SubsystemNameConstraint(modelMap["subsystem_name"].([]interface{})[0].(map[string]interface{}))
+		SubsystemNameModel, err := ResourceIbmLogsRuleGroupMapToRulesV1SubsystemNameConstraint(modelMap["subsystem_name"].([]interface{}))
 		if err != nil {
 			return model, err
 		}
@@ -1038,7 +1048,7 @@ func ResourceIbmLogsRuleGroupMapToRulesV1RuleMatcherConstraintSubsystemName(mode
 func ResourceIbmLogsRuleGroupMapToRulesV1RuleMatcherConstraintSeverity(modelMap map[string]interface{}) (*logsv0.RulesV1RuleMatcherConstraintSeverity, error) {
 	model := &logsv0.RulesV1RuleMatcherConstraintSeverity{}
 	if modelMap["severity"] != nil && len(modelMap["severity"].([]interface{})) > 0 {
-		SeverityModel, err := ResourceIbmLogsRuleGroupMapToRulesV1SeverityConstraint(modelMap["severity"].([]interface{})[0].(map[string]interface{}))
+		SeverityModel, err := ResourceIbmLogsRuleGroupMapToRulesV1SeverityConstraint(modelMap["severity"].([]interface{}))
 		if err != nil {
 			return model, err
 		}

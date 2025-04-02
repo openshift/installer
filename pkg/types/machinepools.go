@@ -78,6 +78,11 @@ type MachinePool struct {
 	// +kubebuilder:default=amd64
 	// +optional
 	Architecture Architecture `json:"architecture,omitempty"`
+
+	// Fencing stores the information about a baremetal host's management controller.
+	// Fencing may only be set for control plane nodes.
+	// +optional
+	Fencing *Fencing `json:"fencing,omitempty"`
 }
 
 // MachinePoolPlatform is the platform-specific configuration for a machine
@@ -144,4 +149,19 @@ func (p *MachinePoolPlatform) Name() string {
 	default:
 		return ""
 	}
+}
+
+// Fencing stores the information about a baremetal host's management controller.
+type Fencing struct {
+	// Credentials stores the information about a baremetal host's management controller.
+	// +optional
+	Credentials []*Credential `json:"credentials,omitempty"`
+}
+
+// Credential stores the information about a baremetal host's management controller.
+type Credential struct {
+	HostName string `json:"hostName,omitempty" validate:"required,uniqueField"`
+	Username string `json:"username" validate:"required"`
+	Password string `json:"password" validate:"required"`
+	Address  string `json:"address" validate:"required,uniqueField"`
 }

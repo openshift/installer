@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -86,7 +87,9 @@ func DataSourceIBMEnSources() *schema.Resource {
 func dataSourceIBMEnSourcesRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_en_smtp_users", "list")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.ListSourcesOptions{}
@@ -108,12 +111,14 @@ func dataSourceIBMEnSourcesRead(context context.Context, d *schema.ResourceData,
 	for {
 		options.SetOffset(offset)
 
-		result, response, err := enClient.ListSourcesWithContext(context, options)
+		result, _, err := enClient.ListSourcesWithContext(context, options)
 
 		sourceList = result
 
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("ListSourcesWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ListSourcesWithContext failed: %s", err.Error()), "(Data) ibm_en_smtp_users", "list")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 
 		offset = offset + limit
@@ -130,12 +135,14 @@ func dataSourceIBMEnSourcesRead(context context.Context, d *schema.ResourceData,
 	d.SetId(fmt.Sprintf("Sources/%s", *options.InstanceID))
 
 	if err = d.Set("total_count", flex.IntValue(sourceList.TotalCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting total_count: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting total_count: %s", err), "(Data) ibm_en_sources", "list")
+		return tfErr.GetDiag()
 	}
 
 	if sourceList.Sources != nil {
 		if err = d.Set("sources", enFlattenSourcesList(sourceList.Sources)); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting sources %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("SMTPUsers: %s", err), "(Data) ibm_en_sources", "list")
+			return tfErr.GetDiag()
 		}
 	}
 

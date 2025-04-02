@@ -256,7 +256,7 @@ func dataSourceIbmSccRuleImportToMap(model *securityandcompliancecenterapiv3.Imp
 	return modelMap, nil
 }
 
-func dataSourceIbmSccRuleParameterToMap(model *securityandcompliancecenterapiv3.Parameter) (map[string]interface{}, error) {
+func dataSourceIbmSccRuleParameterToMap(model *securityandcompliancecenterapiv3.RuleParameter) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Name != nil {
 		modelMap["name"] = model.Name

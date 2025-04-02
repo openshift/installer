@@ -57,6 +57,33 @@ spec:
                 - ""
                 - amd64
                 type: string
+              fencing:
+                description: |-
+                  Fencing stores the information about a baremetal host's management controller.
+                  Fencing may only be set for control plane nodes.
+                properties:
+                  credentials:
+                    description: Credentials stores the information about a baremetal
+                      host's management controller.
+                    items:
+                      description: Credential stores the information about a baremetal
+                        host's management controller.
+                      properties:
+                        address:
+                          type: string
+                        hostName:
+                          type: string
+                        password:
+                          type: string
+                        username:
+                          type: string
+                      required:
+                      - address
+                      - password
+                      - username
+                      type: object
+                    type: array
+                type: object
               hyperthreading:
                 default: Enabled
                 description: |-
@@ -489,12 +516,32 @@ spec:
                       confidentialCompute:
                         default: Disabled
                         description: |-
-                          ConfidentialCompute Defines whether the instance should have confidential compute enabled.
-                          If enabled OnHostMaintenance is required to be set to "Terminate".
-                          If omitted, the platform chooses a default, which is subject to change over time, currently that default is false.
+                          confidentialCompute is an optional field defining whether the instance should have
+                          Confidential Computing enabled or not, and the Confidential Computing technology of choice.
+                              With Disabled, Confidential Computing is disabled.
+                              With Enabled, Confidential Computing is enabled with no preference on the
+                          Confidential Computing technology. The platform chooses a default i.e. AMD SEV,
+                          which is subject to change over time.
+                              With AMDEncryptedVirtualization, Confidential Computing is enabled with
+                          AMD Secure Encrypted Virtualization (AMD SEV).
+                              With AMDEncryptedVirtualizationNestedPaging, Confidential Computing is
+                          enabled with AMD Secure Encrypted Virtualization Secure Nested Paging
+                          (AMD SEV-SNP).
+                              With IntelTrustedDomainExtensions, Confidential Computing is enabled with
+                          Intel Trusted Domain Extensions (Intel TDX).
+                              If any value other than Disabled is set, a machine type and region that supports
+                          Confidential Computing must be specified. Machine series and regions supporting
+                          Confidential Computing technologies can be checked at
+                          https://cloud.google.com/confidential-computing/confidential-vm/docs/supported-configurations#machine-type-cpu-zone
+                              If any value other than Disabled is set, onHostMaintenance is required to be set
+                          to "Terminate".
                         enum:
+                        - ""
                         - Enabled
                         - Disabled
+                        - AMDEncryptedVirtualization
+                        - AMDEncryptedVirtualizationNestedPaging
+                        - IntelTrustedDomainExtensions
                         type: string
                       onHostMaintenance:
                         default: Migrate
@@ -1166,6 +1213,19 @@ spec:
                               maxLength: 80
                               pattern: ^[a-zA-Z0-9]([-_a-zA-Z0-9]*[a-zA-Z0-9])?$
                               type: string
+                            provisioningMode:
+                              description: |-
+                                provisioningMode is an optional field that specifies the provisioning type to be used by this vSphere data disk.
+                                Allowed values are "Thin", "Thick", "EagerlyZeroed", and omitted.
+                                When set to Thin, the disk will be made using thin provisioning allocating the bare minimum space.
+                                When set to Thick, the full disk size will be allocated when disk is created.
+                                When set to EagerlyZeroed, the disk will be created using eager zero provisioning. An eager zeroed thick disk has all space allocated and wiped clean of any previous contents on the physical media at creation time. Such disks may take longer time during creation compared to other disk formats.
+                                When omitted, no setting will be applied to the data disk and the provisioning mode for the disk will be determined by the default storage policy configured for the datastore in vSphere.
+                              enum:
+                              - Thin
+                              - Thick
+                              - EagerlyZeroed
+                              type: string
                             sizeGiB:
                               description: |-
                                 sizeGiB is the size of the disk in GiB.
@@ -1293,6 +1353,33 @@ spec:
                   - ""
                   - amd64
                   type: string
+                fencing:
+                  description: |-
+                    Fencing stores the information about a baremetal host's management controller.
+                    Fencing may only be set for control plane nodes.
+                  properties:
+                    credentials:
+                      description: Credentials stores the information about a baremetal
+                        host's management controller.
+                      items:
+                        description: Credential stores the information about a baremetal
+                          host's management controller.
+                        properties:
+                          address:
+                            type: string
+                          hostName:
+                            type: string
+                          password:
+                            type: string
+                          username:
+                            type: string
+                        required:
+                        - address
+                        - password
+                        - username
+                        type: object
+                      type: array
+                  type: object
                 hyperthreading:
                   default: Enabled
                   description: |-
@@ -1726,12 +1813,32 @@ spec:
                         confidentialCompute:
                           default: Disabled
                           description: |-
-                            ConfidentialCompute Defines whether the instance should have confidential compute enabled.
-                            If enabled OnHostMaintenance is required to be set to "Terminate".
-                            If omitted, the platform chooses a default, which is subject to change over time, currently that default is false.
+                            confidentialCompute is an optional field defining whether the instance should have
+                            Confidential Computing enabled or not, and the Confidential Computing technology of choice.
+                                With Disabled, Confidential Computing is disabled.
+                                With Enabled, Confidential Computing is enabled with no preference on the
+                            Confidential Computing technology. The platform chooses a default i.e. AMD SEV,
+                            which is subject to change over time.
+                                With AMDEncryptedVirtualization, Confidential Computing is enabled with
+                            AMD Secure Encrypted Virtualization (AMD SEV).
+                                With AMDEncryptedVirtualizationNestedPaging, Confidential Computing is
+                            enabled with AMD Secure Encrypted Virtualization Secure Nested Paging
+                            (AMD SEV-SNP).
+                                With IntelTrustedDomainExtensions, Confidential Computing is enabled with
+                            Intel Trusted Domain Extensions (Intel TDX).
+                                If any value other than Disabled is set, a machine type and region that supports
+                            Confidential Computing must be specified. Machine series and regions supporting
+                            Confidential Computing technologies can be checked at
+                            https://cloud.google.com/confidential-computing/confidential-vm/docs/supported-configurations#machine-type-cpu-zone
+                                If any value other than Disabled is set, onHostMaintenance is required to be set
+                            to "Terminate".
                           enum:
+                          - ""
                           - Enabled
                           - Disabled
+                          - AMDEncryptedVirtualization
+                          - AMDEncryptedVirtualizationNestedPaging
+                          - IntelTrustedDomainExtensions
                           type: string
                         onHostMaintenance:
                           default: Migrate
@@ -2406,6 +2513,19 @@ spec:
                                 maxLength: 80
                                 pattern: ^[a-zA-Z0-9]([-_a-zA-Z0-9]*[a-zA-Z0-9])?$
                                 type: string
+                              provisioningMode:
+                                description: |-
+                                  provisioningMode is an optional field that specifies the provisioning type to be used by this vSphere data disk.
+                                  Allowed values are "Thin", "Thick", "EagerlyZeroed", and omitted.
+                                  When set to Thin, the disk will be made using thin provisioning allocating the bare minimum space.
+                                  When set to Thick, the full disk size will be allocated when disk is created.
+                                  When set to EagerlyZeroed, the disk will be created using eager zero provisioning. An eager zeroed thick disk has all space allocated and wiped clean of any previous contents on the physical media at creation time. Such disks may take longer time during creation compared to other disk formats.
+                                  When omitted, no setting will be applied to the data disk and the provisioning mode for the disk will be determined by the default storage policy configured for the datastore in vSphere.
+                                enum:
+                                - Thin
+                                - Thick
+                                - EagerlyZeroed
+                                type: string
                               sizeGiB:
                                 description: |-
                                   sizeGiB is the size of the disk in GiB.
@@ -2468,6 +2588,33 @@ spec:
                 - ""
                 - amd64
                 type: string
+              fencing:
+                description: |-
+                  Fencing stores the information about a baremetal host's management controller.
+                  Fencing may only be set for control plane nodes.
+                properties:
+                  credentials:
+                    description: Credentials stores the information about a baremetal
+                      host's management controller.
+                    items:
+                      description: Credential stores the information about a baremetal
+                        host's management controller.
+                      properties:
+                        address:
+                          type: string
+                        hostName:
+                          type: string
+                        password:
+                          type: string
+                        username:
+                          type: string
+                      required:
+                      - address
+                      - password
+                      - username
+                      type: object
+                    type: array
+                type: object
               hyperthreading:
                 default: Enabled
                 description: |-
@@ -2900,12 +3047,32 @@ spec:
                       confidentialCompute:
                         default: Disabled
                         description: |-
-                          ConfidentialCompute Defines whether the instance should have confidential compute enabled.
-                          If enabled OnHostMaintenance is required to be set to "Terminate".
-                          If omitted, the platform chooses a default, which is subject to change over time, currently that default is false.
+                          confidentialCompute is an optional field defining whether the instance should have
+                          Confidential Computing enabled or not, and the Confidential Computing technology of choice.
+                              With Disabled, Confidential Computing is disabled.
+                              With Enabled, Confidential Computing is enabled with no preference on the
+                          Confidential Computing technology. The platform chooses a default i.e. AMD SEV,
+                          which is subject to change over time.
+                              With AMDEncryptedVirtualization, Confidential Computing is enabled with
+                          AMD Secure Encrypted Virtualization (AMD SEV).
+                              With AMDEncryptedVirtualizationNestedPaging, Confidential Computing is
+                          enabled with AMD Secure Encrypted Virtualization Secure Nested Paging
+                          (AMD SEV-SNP).
+                              With IntelTrustedDomainExtensions, Confidential Computing is enabled with
+                          Intel Trusted Domain Extensions (Intel TDX).
+                              If any value other than Disabled is set, a machine type and region that supports
+                          Confidential Computing must be specified. Machine series and regions supporting
+                          Confidential Computing technologies can be checked at
+                          https://cloud.google.com/confidential-computing/confidential-vm/docs/supported-configurations#machine-type-cpu-zone
+                              If any value other than Disabled is set, onHostMaintenance is required to be set
+                          to "Terminate".
                         enum:
+                        - ""
                         - Enabled
                         - Disabled
+                        - AMDEncryptedVirtualization
+                        - AMDEncryptedVirtualizationNestedPaging
+                        - IntelTrustedDomainExtensions
                         type: string
                       onHostMaintenance:
                         default: Migrate
@@ -3576,6 +3743,19 @@ spec:
                               example: images_1
                               maxLength: 80
                               pattern: ^[a-zA-Z0-9]([-_a-zA-Z0-9]*[a-zA-Z0-9])?$
+                              type: string
+                            provisioningMode:
+                              description: |-
+                                provisioningMode is an optional field that specifies the provisioning type to be used by this vSphere data disk.
+                                Allowed values are "Thin", "Thick", "EagerlyZeroed", and omitted.
+                                When set to Thin, the disk will be made using thin provisioning allocating the bare minimum space.
+                                When set to Thick, the full disk size will be allocated when disk is created.
+                                When set to EagerlyZeroed, the disk will be created using eager zero provisioning. An eager zeroed thick disk has all space allocated and wiped clean of any previous contents on the physical media at creation time. Such disks may take longer time during creation compared to other disk formats.
+                                When omitted, no setting will be applied to the data disk and the provisioning mode for the disk will be determined by the default storage policy configured for the datastore in vSphere.
+                              enum:
+                              - Thin
+                              - Thick
+                              - EagerlyZeroed
                               type: string
                             sizeGiB:
                               description: |-
@@ -4956,12 +5136,32 @@ spec:
                       confidentialCompute:
                         default: Disabled
                         description: |-
-                          ConfidentialCompute Defines whether the instance should have confidential compute enabled.
-                          If enabled OnHostMaintenance is required to be set to "Terminate".
-                          If omitted, the platform chooses a default, which is subject to change over time, currently that default is false.
+                          confidentialCompute is an optional field defining whether the instance should have
+                          Confidential Computing enabled or not, and the Confidential Computing technology of choice.
+                              With Disabled, Confidential Computing is disabled.
+                              With Enabled, Confidential Computing is enabled with no preference on the
+                          Confidential Computing technology. The platform chooses a default i.e. AMD SEV,
+                          which is subject to change over time.
+                              With AMDEncryptedVirtualization, Confidential Computing is enabled with
+                          AMD Secure Encrypted Virtualization (AMD SEV).
+                              With AMDEncryptedVirtualizationNestedPaging, Confidential Computing is
+                          enabled with AMD Secure Encrypted Virtualization Secure Nested Paging
+                          (AMD SEV-SNP).
+                              With IntelTrustedDomainExtensions, Confidential Computing is enabled with
+                          Intel Trusted Domain Extensions (Intel TDX).
+                              If any value other than Disabled is set, a machine type and region that supports
+                          Confidential Computing must be specified. Machine series and regions supporting
+                          Confidential Computing technologies can be checked at
+                          https://cloud.google.com/confidential-computing/confidential-vm/docs/supported-configurations#machine-type-cpu-zone
+                              If any value other than Disabled is set, onHostMaintenance is required to be set
+                          to "Terminate".
                         enum:
+                        - ""
                         - Enabled
                         - Disabled
+                        - AMDEncryptedVirtualization
+                        - AMDEncryptedVirtualizationNestedPaging
+                        - IntelTrustedDomainExtensions
                         type: string
                       onHostMaintenance:
                         default: Migrate
@@ -6599,6 +6799,19 @@ spec:
                               example: images_1
                               maxLength: 80
                               pattern: ^[a-zA-Z0-9]([-_a-zA-Z0-9]*[a-zA-Z0-9])?$
+                              type: string
+                            provisioningMode:
+                              description: |-
+                                provisioningMode is an optional field that specifies the provisioning type to be used by this vSphere data disk.
+                                Allowed values are "Thin", "Thick", "EagerlyZeroed", and omitted.
+                                When set to Thin, the disk will be made using thin provisioning allocating the bare minimum space.
+                                When set to Thick, the full disk size will be allocated when disk is created.
+                                When set to EagerlyZeroed, the disk will be created using eager zero provisioning. An eager zeroed thick disk has all space allocated and wiped clean of any previous contents on the physical media at creation time. Such disks may take longer time during creation compared to other disk formats.
+                                When omitted, no setting will be applied to the data disk and the provisioning mode for the disk will be determined by the default storage policy configured for the datastore in vSphere.
+                              enum:
+                              - Thin
+                              - Thick
+                              - EagerlyZeroed
                               type: string
                             sizeGiB:
                               description: |-

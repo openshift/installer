@@ -140,6 +140,12 @@ const (
 	PublicIPAddressSku_Name_Standard = PublicIPAddressSku_Name("Standard")
 )
 
+// Mapping from string to PublicIPAddressSku_Name
+var publicIPAddressSku_Name_Values = map[string]PublicIPAddressSku_Name{
+	"basic":    PublicIPAddressSku_Name_Basic,
+	"standard": PublicIPAddressSku_Name_Standard,
+}
+
 // +kubebuilder:validation:Enum={"Global","Regional"}
 type PublicIPAddressSku_Tier string
 
@@ -147,6 +153,12 @@ const (
 	PublicIPAddressSku_Tier_Global   = PublicIPAddressSku_Tier("Global")
 	PublicIPAddressSku_Tier_Regional = PublicIPAddressSku_Tier("Regional")
 )
+
+// Mapping from string to PublicIPAddressSku_Tier
+var publicIPAddressSku_Tier_Values = map[string]PublicIPAddressSku_Tier{
+	"global":   PublicIPAddressSku_Tier_Global,
+	"regional": PublicIPAddressSku_Tier_Regional,
+}
 
 // Public IP address resource.
 type PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded_ARM struct {

@@ -180,7 +180,7 @@ func dataSourceIBMIsVPNServerRoutesID(d *schema.ResourceData) string {
 	return time.Now().UTC().String()
 }
 
-func dataSourceVPNServerRouteCollectionFlattenFirst(result vpcv1.VPNServerRouteCollectionFirst) (finalList []map[string]interface{}) {
+func dataSourceVPNServerRouteCollectionFlattenFirst(result vpcv1.PageLink) (finalList []map[string]interface{}) {
 	finalList = []map[string]interface{}{}
 	finalMap := dataSourceVPNServerRouteCollectionFirstToMap(result)
 	finalList = append(finalList, finalMap)
@@ -188,7 +188,7 @@ func dataSourceVPNServerRouteCollectionFlattenFirst(result vpcv1.VPNServerRouteC
 	return finalList
 }
 
-func dataSourceVPNServerRouteCollectionFirstToMap(firstItem vpcv1.VPNServerRouteCollectionFirst) (firstMap map[string]interface{}) {
+func dataSourceVPNServerRouteCollectionFirstToMap(firstItem vpcv1.PageLink) (firstMap map[string]interface{}) {
 	firstMap = map[string]interface{}{}
 
 	if firstItem.Href != nil {
@@ -198,7 +198,7 @@ func dataSourceVPNServerRouteCollectionFirstToMap(firstItem vpcv1.VPNServerRoute
 	return firstMap
 }
 
-func dataSourceVPNServerRouteCollectionFlattenNext(result vpcv1.VPNServerRouteCollectionNext) (finalList []map[string]interface{}) {
+func dataSourceVPNServerRouteCollectionFlattenNext(result vpcv1.PageLink) (finalList []map[string]interface{}) {
 	finalList = []map[string]interface{}{}
 	finalMap := dataSourceVPNServerRouteCollectionNextToMap(result)
 	finalList = append(finalList, finalMap)
@@ -206,7 +206,7 @@ func dataSourceVPNServerRouteCollectionFlattenNext(result vpcv1.VPNServerRouteCo
 	return finalList
 }
 
-func dataSourceVPNServerRouteCollectionNextToMap(nextItem vpcv1.VPNServerRouteCollectionNext) (nextMap map[string]interface{}) {
+func dataSourceVPNServerRouteCollectionNextToMap(nextItem vpcv1.PageLink) (nextMap map[string]interface{}) {
 	nextMap = map[string]interface{}{}
 
 	if nextItem.Href != nil {

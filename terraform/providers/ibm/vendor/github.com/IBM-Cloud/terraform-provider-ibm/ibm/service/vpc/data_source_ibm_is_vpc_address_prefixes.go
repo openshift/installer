@@ -225,7 +225,7 @@ func dataSourceAddressPrefixCollectionAddressPrefixesZoneToMap(zoneItem vpcv1.Zo
 	return zoneMap
 }
 
-func dataSourceAddressPrefixCollectionFlattenFirst(result vpcv1.AddressPrefixCollectionFirst) (finalList []map[string]interface{}) {
+func dataSourceAddressPrefixCollectionFlattenFirst(result vpcv1.PageLink) (finalList []map[string]interface{}) {
 	finalList = []map[string]interface{}{}
 	finalMap := dataSourceAddressPrefixCollectionFirstToMap(result)
 	finalList = append(finalList, finalMap)
@@ -233,7 +233,7 @@ func dataSourceAddressPrefixCollectionFlattenFirst(result vpcv1.AddressPrefixCol
 	return finalList
 }
 
-func dataSourceAddressPrefixCollectionFirstToMap(firstItem vpcv1.AddressPrefixCollectionFirst) (firstMap map[string]interface{}) {
+func dataSourceAddressPrefixCollectionFirstToMap(firstItem vpcv1.PageLink) (firstMap map[string]interface{}) {
 	firstMap = map[string]interface{}{}
 
 	if firstItem.Href != nil {
@@ -243,7 +243,7 @@ func dataSourceAddressPrefixCollectionFirstToMap(firstItem vpcv1.AddressPrefixCo
 	return firstMap
 }
 
-func dataSourceAddressPrefixCollectionFlattenNext(result vpcv1.AddressPrefixCollectionNext) (finalList []map[string]interface{}) {
+func dataSourceAddressPrefixCollectionFlattenNext(result vpcv1.PageLink) (finalList []map[string]interface{}) {
 	finalList = []map[string]interface{}{}
 	finalMap := dataSourceAddressPrefixCollectionNextToMap(result)
 	finalList = append(finalList, finalMap)
@@ -251,7 +251,7 @@ func dataSourceAddressPrefixCollectionFlattenNext(result vpcv1.AddressPrefixColl
 	return finalList
 }
 
-func dataSourceAddressPrefixCollectionNextToMap(nextItem vpcv1.AddressPrefixCollectionNext) (nextMap map[string]interface{}) {
+func dataSourceAddressPrefixCollectionNextToMap(nextItem vpcv1.PageLink) (nextMap map[string]interface{}) {
 	nextMap = map[string]interface{}{}
 
 	if nextItem.Href != nil {

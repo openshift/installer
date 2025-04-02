@@ -62,6 +62,23 @@ func DataSourceIBMISInstances() *schema.Resource {
 				Description: "Instance resource group",
 			},
 
+			// cluster changes
+			"cluster_network_id": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Filters the collection to instances with a `cluster_network.id` property matching the specified identifier.",
+			},
+			"cluster_network_crn": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Filters the collection to instances with a `cluster_network.crn` property matching the specified CRN.",
+			},
+			"cluster_network_name": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Filters the collection to resources with a `cluster_network.name` property matching the exact specified name.",
+			},
+
 			"dedicated_host_name": {
 				Type:          schema.TypeString,
 				Optional:      true,
@@ -110,6 +127,84 @@ func DataSourceIBMISInstances() *schema.Resource {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The crn for this Instance",
+						},
+						// cluster changes
+						"cluster_network": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "If present, the cluster network that this virtual server instance resides in.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"crn": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The CRN for this cluster network.",
+									},
+									"deleted": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "If present, this property indicates the referenced resource has been deleted, and providessome supplementary information.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"more_info": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Link to documentation about deleted resources.",
+												},
+											},
+										},
+									},
+									"href": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The URL for this cluster network.",
+									},
+									"id": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The unique identifier for this cluster network.",
+									},
+									"name": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The name for this cluster network. The name must not be used by another cluster network in the region.",
+									},
+									"resource_type": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The resource type.",
+									},
+								},
+							},
+						},
+						"cluster_network_attachments": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The cluster network attachments for this virtual server instance.The cluster network attachments are ordered for consistent instance configuration.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"href": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The URL for this instance cluster network attachment.",
+									},
+									"id": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The unique identifier for this instance cluster network attachment.",
+									},
+									"name": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The name for this instance cluster network attachment. The name is unique across all network attachments for the instance.",
+									},
+									"resource_type": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The resource type.",
+									},
+								},
+							},
 						},
 						"confidential_compute_mode": &schema.Schema{
 							Type:        schema.TypeString,
@@ -1033,6 +1128,35 @@ func DataSourceIBMISInstances() *schema.Resource {
 								},
 							},
 						},
+						"health_reasons": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The reasons for the current health_state (if any).",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"code": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "A snake case string succinctly identifying the reason for this health state.",
+									},
+									"message": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "An explanation of the reason for this health state.",
+									},
+									"more_info": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about the reason for this health state.",
+									},
+								},
+							},
+						},
+						"health_state": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The health of this resource",
+						},
 						isInstanceReservation: {
 							Type:        schema.TypeList,
 							Computed:    true,
@@ -1232,6 +1356,17 @@ func instancesList(d *schema.ResourceData, meta interface{}) error {
 
 	listInstancesOptions := &vpcv1.ListInstancesOptions{}
 
+	// cluster changes
+	if _, ok := d.GetOk("cluster_network_id"); ok {
+		listInstancesOptions.SetClusterNetworkID(d.Get("cluster_network_id").(string))
+	}
+	if _, ok := d.GetOk("cluster_network_crn"); ok {
+		listInstancesOptions.SetClusterNetworkCRN(d.Get("cluster_network_crn").(string))
+	}
+	if _, ok := d.GetOk("cluster_network_name"); ok {
+		listInstancesOptions.SetClusterNetworkName(d.Get("cluster_network_name").(string))
+	}
+
 	if vpcName != "" {
 		listInstancesOptions.VPCName = &vpcName
 	}
@@ -1388,6 +1523,24 @@ func instancesList(d *schema.ResourceData, meta interface{}) error {
 			catalogList = append(catalogList, catalogMap)
 			l[isInstanceCatalogOffering] = catalogList
 		}
+		clusterNetwork := []map[string]interface{}{}
+		if instance.ClusterNetwork != nil {
+			clusterNetworkMap, err := DataSourceIBMIsInstancesClusterNetworkReferenceToMap(instance.ClusterNetwork)
+			if err != nil {
+				return err
+			}
+			clusterNetwork = append(clusterNetwork, clusterNetworkMap)
+		}
+		l["cluster_network"] = clusterNetwork
+		clusterNetworkAttachments := []map[string]interface{}{}
+		for _, clusterNetworkAttachmentsItem := range instance.ClusterNetworkAttachments {
+			clusterNetworkAttachmentsItemMap, err := DataSourceIBMIsInstancesInstanceClusterNetworkAttachmentReferenceToMap(&clusterNetworkAttachmentsItem) // #nosec G601
+			if err != nil {
+				return err
+			}
+			clusterNetworkAttachments = append(clusterNetworkAttachments, clusterNetworkAttachmentsItemMap)
+		}
+		l["cluster_network_attachments"] = clusterNetworkAttachments
 
 		if instance.BootVolumeAttachment != nil {
 			bootVolList := make([]map[string]interface{}, 0)
@@ -1613,6 +1766,16 @@ func instancesList(d *schema.ResourceData, meta interface{}) error {
 		if instance.Disks != nil {
 			l[isInstanceDisks] = dataSourceInstanceFlattenDisks(instance.Disks)
 		}
+		if instance.HealthReasons != nil {
+			healthReasonsList := []map[string]interface{}{}
+			for _, healthReasonsItem := range instance.HealthReasons {
+				healthReasonsList = append(healthReasonsList, dataSourceInstancesCollectionHealthReasonsToMap(healthReasonsItem))
+			}
+			l["health_reasons"] = healthReasonsList
+		}
+		if instance.HealthState != nil {
+			l["health_state"] = instance.HealthState
+		}
 		if instance.ReservationAffinity != nil {
 			reservationAffinity := []map[string]interface{}{}
 			reservationAffinityMap := map[string]interface{}{}
@@ -1630,7 +1793,7 @@ func instancesList(d *schema.ResourceData, meta interface{}) error {
 					res[isReservationResourceType] = *pool.ResourceType
 					if pool.Deleted != nil {
 						deletedList := []map[string]interface{}{}
-						deletedMap := dataSourceInstanceReservationDeletedToMap(*pool.Deleted)
+						deletedMap := dataSourceReservationDeletedToMap(*pool.Deleted)
 						deletedList = append(deletedList, deletedMap)
 						res[isReservationDeleted] = deletedList
 					}
@@ -1652,7 +1815,7 @@ func instancesList(d *schema.ResourceData, meta interface{}) error {
 			res[isReservationResourceType] = *instance.Reservation.ResourceType
 			if instance.Reservation.Deleted != nil {
 				deletedList := []map[string]interface{}{}
-				deletedMap := dataSourceInstanceReservationDeletedToMap(*instance.Reservation.Deleted)
+				deletedMap := dataSourceReservationDeletedToMap(*instance.Reservation.Deleted)
 				deletedList = append(deletedList, deletedMap)
 				res[isReservationDeleted] = deletedList
 			}
@@ -1670,4 +1833,52 @@ func instancesList(d *schema.ResourceData, meta interface{}) error {
 // dataSourceIBMISInstancesID returns a reasonable ID for a Instance list.
 func dataSourceIBMISInstancesID(d *schema.ResourceData) string {
 	return time.Now().UTC().String()
+}
+
+func DataSourceIBMIsInstancesClusterNetworkReferenceToMap(model *vpcv1.ClusterNetworkReference) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["crn"] = *model.CRN
+	if model.Deleted != nil {
+		deletedMap, err := DataSourceIBMIsInstancesDeletedToMap(model.Deleted)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["deleted"] = []map[string]interface{}{deletedMap}
+	}
+	modelMap["href"] = *model.Href
+	modelMap["id"] = *model.ID
+	modelMap["name"] = *model.Name
+	modelMap["resource_type"] = *model.ResourceType
+	return modelMap, nil
+}
+
+func DataSourceIBMIsInstancesInstanceClusterNetworkAttachmentReferenceToMap(model *vpcv1.InstanceClusterNetworkAttachmentReference) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["href"] = *model.Href
+	modelMap["id"] = *model.ID
+	modelMap["name"] = *model.Name
+	modelMap["resource_type"] = *model.ResourceType
+	return modelMap, nil
+}
+
+func DataSourceIBMIsInstancesDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["more_info"] = *model.MoreInfo
+	return modelMap, nil
+}
+
+func dataSourceInstancesCollectionHealthReasonsToMap(statusReasonsItem vpcv1.InstanceHealthReason) (healthReasonsMap map[string]interface{}) {
+	healthReasonsMap = map[string]interface{}{}
+
+	if statusReasonsItem.Code != nil {
+		healthReasonsMap["code"] = statusReasonsItem.Code
+	}
+	if statusReasonsItem.Message != nil {
+		healthReasonsMap["message"] = statusReasonsItem.Message
+	}
+	if statusReasonsItem.MoreInfo != nil {
+		healthReasonsMap["more_info"] = statusReasonsItem.MoreInfo
+	}
+
+	return healthReasonsMap
 }

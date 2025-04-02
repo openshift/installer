@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -84,7 +85,9 @@ func DataSourceIBMEnTopics() *schema.Resource {
 func dataSourceIBMEnTopicsRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_en_topics", "list")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.ListTopicsOptions{}
@@ -106,12 +109,14 @@ func dataSourceIBMEnTopicsRead(context context.Context, d *schema.ResourceData, 
 	for {
 		options.SetOffset(offset)
 
-		result, response, err := enClient.ListTopicsWithContext(context, options)
+		result, _, err := enClient.ListTopicsWithContext(context, options)
 
 		topicList = result
 
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("ListTopicsWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ListTopicsWithContext failed: %s", err.Error()), "(Data) ibm_en_topics", "list")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		offset = offset + limit
 
@@ -127,13 +132,15 @@ func dataSourceIBMEnTopicsRead(context context.Context, d *schema.ResourceData, 
 	d.SetId(fmt.Sprintf("topics_%s", d.Get("instance_guid").(string)))
 
 	if err = d.Set("total_count", flex.IntValue(topicList.TotalCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting total_count: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting total_count: %s", err), "(Data) ibm_en_topics", "list")
+		return tfErr.GetDiag()
 	}
 
 	if topicList.Topics != nil {
 		err = d.Set("topics", enTopicListFlatten(topicList.Topics))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting topics %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting topics: %s", err), "(Data) ibm_en_topics", "list")
+			return tfErr.GetDiag()
 		}
 	}
 

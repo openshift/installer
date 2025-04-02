@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -76,7 +77,9 @@ func DataSourceIBMEnSMTPCOnfigurations() *schema.Resource {
 func dataSourceIBMEnSMTPConfigurationsRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_en_smtp_configurations", "list")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.ListSMTPConfigurationsOptions{}
@@ -98,12 +101,14 @@ func dataSourceIBMEnSMTPConfigurationsRead(context context.Context, d *schema.Re
 	for {
 		options.SetOffset(offset)
 
-		result, response, err := enClient.ListSMTPConfigurationsWithContext(context, options)
+		result, _, err := enClient.ListSMTPConfigurationsWithContext(context, options)
 
 		smtpConfigurationList = result
 
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("ListSMTPConfigurationsWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ListSMTPConfigurationsWithContext failed: %s", err.Error()), "(Data) ibm_en_smtp_configurations", "list")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 
 		offset = offset + limit
@@ -120,12 +125,14 @@ func dataSourceIBMEnSMTPConfigurationsRead(context context.Context, d *schema.Re
 	d.SetId(fmt.Sprintf("SMTPConfigurations/%s", *options.InstanceID))
 
 	if err = d.Set("total_count", flex.IntValue(smtpConfigurationList.TotalCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting total_count: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting total_count: %s", err), "(Data) ibm_en_smtp_configurations", "list")
+		return tfErr.GetDiag()
 	}
 
 	if smtpConfigurationList.SMTPConfigurations != nil {
 		if err = d.Set("smtp_configurations", enFlattenSMTPConfigurationList(smtpConfigurationList.SMTPConfigurations)); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting SMTPConfigurations %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting SMTPConfigurations: %s", err), "(Data) ibm_en_smtp_configurations", "list")
+			return tfErr.GetDiag()
 		}
 	}
 

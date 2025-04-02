@@ -495,7 +495,17 @@ func (ss *ScaleSet) getVMManagementTypeByIPConfigurationID(ipConfigurationID str
 	vmName := strings.Replace(nicName, "-nic", "", 1)
 
 	cachedAvSetVMs := cached.(NonVmssUniformNodesEntry).AvSetVMNodeNames
+	if cachedAvSetVMs.Has(vmName) {
+		return ManagedByAvSet, nil
+	}
 
+	// If the node is not in the cache, assume the node has joined after the last cache refresh and attempt to refresh the cache
+	cached, err = ss.nonVmssUniformNodesCache.Get(consts.NonVmssUniformNodesKey, azcache.CacheReadTypeForceRefresh)
+	if err != nil {
+		return ManagedByUnknownVMSet, err
+	}
+
+	cachedAvSetVMs = cached.(NonVmssUniformNodesEntry).AvSetVMNodeNames
 	if cachedAvSetVMs.Has(vmName) {
 		return ManagedByAvSet, nil
 	}

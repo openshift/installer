@@ -553,7 +553,6 @@ func mergeConfigSrcs(cfg, userCfg *aws.Config,
 	// Configure credentials if not already set by the user when creating the
 	// Session.
 	if cfg.Credentials == credentials.AnonymousCredentials && userCfg.Credentials == nil {
-		// IBM COS SDK Code -- START
 		if iBmIamCreds := getIBMIAMCredentials(userCfg); iBmIamCreds != nil {
 			cfg.Credentials = iBmIamCreds
 		} else {
@@ -598,6 +597,10 @@ func mergeS3UsEast1RegionalEndpointConfig(cfg *aws.Config, values []endpoints.S3
 func getIBMIAMCredentials(config *aws.Config) *credentials.Credentials {
 
 	if provider := ibmiam.NewEnvProvider(config); provider.IsValid() {
+		return credentials.NewCredentials(provider)
+	}
+
+	if provider := ibmiam.NewEnvProviderTrustedProfile(config); provider.IsValid() {
 		return credentials.NewCredentials(provider)
 	}
 

@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2023.
+ * (C) Copyright IBM Corp. 2025.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.78.0-67aec9b7-20230818-174940
+ * IBM OpenAPI SDK Code Generator Version: 3.99.1-daeb6e46-20250131-173156
  */
 
 // Package iamaccessgroupsv2 : Operations and models for the IamAccessGroupsV2 service
@@ -65,22 +65,26 @@ func NewIamAccessGroupsV2UsingExternalConfig(options *IamAccessGroupsV2Options) 
 	if options.Authenticator == nil {
 		options.Authenticator, err = core.GetAuthenticatorFromEnvironment(options.ServiceName)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "env-auth-error", common.GetComponentInfo())
 			return
 		}
 	}
 
 	iamAccessGroups, err = NewIamAccessGroupsV2(options)
+	err = core.RepurposeSDKProblem(err, "new-client-error")
 	if err != nil {
 		return
 	}
 
 	err = iamAccessGroups.Service.ConfigureService(options.ServiceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client-config-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = iamAccessGroups.Service.SetServiceURL(options.URL)
+		err = core.RepurposeSDKProblem(err, "url-set-error")
 	}
 	return
 }
@@ -94,12 +98,14 @@ func NewIamAccessGroupsV2(options *IamAccessGroupsV2Options) (service *IamAccess
 
 	baseService, err := core.NewBaseService(serviceOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "new-base-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = baseService.SetServiceURL(options.URL)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "set-url-error", common.GetComponentInfo())
 			return
 		}
 	}
@@ -113,7 +119,7 @@ func NewIamAccessGroupsV2(options *IamAccessGroupsV2Options) (service *IamAccess
 
 // GetServiceURLForRegion returns the service URL to be used for the specified region
 func GetServiceURLForRegion(region string) (string, error) {
-	return "", fmt.Errorf("service does not support regional URLs")
+	return "", core.SDKErrorf(nil, "service does not support regional URLs", "no-regional-support", common.GetComponentInfo())
 }
 
 // Clone makes a copy of "iamAccessGroups" suitable for processing requests.
@@ -128,7 +134,11 @@ func (iamAccessGroups *IamAccessGroupsV2) Clone() *IamAccessGroupsV2 {
 
 // SetServiceURL sets the service URL
 func (iamAccessGroups *IamAccessGroupsV2) SetServiceURL(url string) error {
-	return iamAccessGroups.Service.SetServiceURL(url)
+	err := iamAccessGroups.Service.SetServiceURL(url)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-set-error", common.GetComponentInfo())
+	}
+	return err
 }
 
 // GetServiceURL returns the service URL
@@ -168,17 +178,21 @@ func (iamAccessGroups *IamAccessGroupsV2) DisableRetries() {
 // optional. Because the group's name does not have to be unique, it is possible to create multiple groups with the same
 // name.
 func (iamAccessGroups *IamAccessGroupsV2) CreateAccessGroup(createAccessGroupOptions *CreateAccessGroupOptions) (result *Group, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.CreateAccessGroupWithContext(context.Background(), createAccessGroupOptions)
+	result, response, err = iamAccessGroups.CreateAccessGroupWithContext(context.Background(), createAccessGroupOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateAccessGroupWithContext is an alternate form of the CreateAccessGroup method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) CreateAccessGroupWithContext(ctx context.Context, createAccessGroupOptions *CreateAccessGroupOptions) (result *Group, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createAccessGroupOptions, "createAccessGroupOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createAccessGroupOptions, "createAccessGroupOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -187,6 +201,7 @@ func (iamAccessGroups *IamAccessGroupsV2) CreateAccessGroupWithContext(ctx conte
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v2/groups`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -215,22 +230,27 @@ func (iamAccessGroups *IamAccessGroupsV2) CreateAccessGroupWithContext(ctx conte
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_access_group", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGroup)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -245,17 +265,21 @@ func (iamAccessGroups *IamAccessGroupsV2) CreateAccessGroupWithContext(ctx conte
 // access to are returned (either because of a policy on a specific group or account level access (admin, editor, or
 // viewer)). There may be more groups in the account that aren't shown if you lack the aforementioned permissions.
 func (iamAccessGroups *IamAccessGroupsV2) ListAccessGroups(listAccessGroupsOptions *ListAccessGroupsOptions) (result *GroupsList, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.ListAccessGroupsWithContext(context.Background(), listAccessGroupsOptions)
+	result, response, err = iamAccessGroups.ListAccessGroupsWithContext(context.Background(), listAccessGroupsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListAccessGroupsWithContext is an alternate form of the ListAccessGroups method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) ListAccessGroupsWithContext(ctx context.Context, listAccessGroupsOptions *ListAccessGroupsOptions) (result *GroupsList, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listAccessGroupsOptions, "listAccessGroupsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listAccessGroupsOptions, "listAccessGroupsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -264,6 +288,7 @@ func (iamAccessGroups *IamAccessGroupsV2) ListAccessGroupsWithContext(ctx contex
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v2/groups`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -305,20 +330,27 @@ func (iamAccessGroups *IamAccessGroupsV2) ListAccessGroupsWithContext(ctx contex
 	if listAccessGroupsOptions.HidePublicAccess != nil {
 		builder.AddQuery("hide_public_access", fmt.Sprint(*listAccessGroupsOptions.HidePublicAccess))
 	}
+	if listAccessGroupsOptions.ShowCRN != nil {
+		builder.AddQuery("show_crn", fmt.Sprint(*listAccessGroupsOptions.ShowCRN))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_access_groups", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGroupsList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -332,17 +364,21 @@ func (iamAccessGroups *IamAccessGroupsV2) ListAccessGroupsWithContext(ctx contex
 // account_id, ...), not membership or rule information. A revision number is returned in the `ETag` header, which is
 // needed when updating the access group.
 func (iamAccessGroups *IamAccessGroupsV2) GetAccessGroup(getAccessGroupOptions *GetAccessGroupOptions) (result *Group, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.GetAccessGroupWithContext(context.Background(), getAccessGroupOptions)
+	result, response, err = iamAccessGroups.GetAccessGroupWithContext(context.Background(), getAccessGroupOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAccessGroupWithContext is an alternate form of the GetAccessGroup method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) GetAccessGroupWithContext(ctx context.Context, getAccessGroupOptions *GetAccessGroupOptions) (result *Group, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getAccessGroupOptions, "getAccessGroupOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getAccessGroupOptions, "getAccessGroupOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -355,6 +391,7 @@ func (iamAccessGroups *IamAccessGroupsV2) GetAccessGroupWithContext(ctx context.
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v2/groups/{access_group_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -374,20 +411,27 @@ func (iamAccessGroups *IamAccessGroupsV2) GetAccessGroupWithContext(ctx context.
 	if getAccessGroupOptions.ShowFederated != nil {
 		builder.AddQuery("show_federated", fmt.Sprint(*getAccessGroupOptions.ShowFederated))
 	}
+	if getAccessGroupOptions.ShowCRN != nil {
+		builder.AddQuery("show_crn", fmt.Sprint(*getAccessGroupOptions.ShowCRN))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_access_group", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGroup)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -400,17 +444,21 @@ func (iamAccessGroups *IamAccessGroupsV2) GetAccessGroupWithContext(ctx context.
 // Update the group name or description of an existing access group using this API. An `If-Match` header must be
 // populated with the group's most recent revision number (which can be acquired in the `Get an access group` API).
 func (iamAccessGroups *IamAccessGroupsV2) UpdateAccessGroup(updateAccessGroupOptions *UpdateAccessGroupOptions) (result *Group, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.UpdateAccessGroupWithContext(context.Background(), updateAccessGroupOptions)
+	result, response, err = iamAccessGroups.UpdateAccessGroupWithContext(context.Background(), updateAccessGroupOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateAccessGroupWithContext is an alternate form of the UpdateAccessGroup method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) UpdateAccessGroupWithContext(ctx context.Context, updateAccessGroupOptions *UpdateAccessGroupOptions) (result *Group, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateAccessGroupOptions, "updateAccessGroupOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateAccessGroupOptions, "updateAccessGroupOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -423,6 +471,7 @@ func (iamAccessGroups *IamAccessGroupsV2) UpdateAccessGroupWithContext(ctx conte
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v2/groups/{access_group_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -452,22 +501,27 @@ func (iamAccessGroups *IamAccessGroupsV2) UpdateAccessGroupWithContext(ctx conte
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_access_group", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGroup)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -481,17 +535,21 @@ func (iamAccessGroups *IamAccessGroupsV2) UpdateAccessGroupWithContext(ctx conte
 // group and its policies will be deleted. However, if rules or members do exist, set the `force` parameter to true to
 // delete the group as well as its associated members, rules, and policies.
 func (iamAccessGroups *IamAccessGroupsV2) DeleteAccessGroup(deleteAccessGroupOptions *DeleteAccessGroupOptions) (response *core.DetailedResponse, err error) {
-	return iamAccessGroups.DeleteAccessGroupWithContext(context.Background(), deleteAccessGroupOptions)
+	response, err = iamAccessGroups.DeleteAccessGroupWithContext(context.Background(), deleteAccessGroupOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteAccessGroupWithContext is an alternate form of the DeleteAccessGroup method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) DeleteAccessGroupWithContext(ctx context.Context, deleteAccessGroupOptions *DeleteAccessGroupOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteAccessGroupOptions, "deleteAccessGroupOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteAccessGroupOptions, "deleteAccessGroupOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -504,6 +562,7 @@ func (iamAccessGroups *IamAccessGroupsV2) DeleteAccessGroupWithContext(ctx conte
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v2/groups/{access_group_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -525,10 +584,16 @@ func (iamAccessGroups *IamAccessGroupsV2) DeleteAccessGroupWithContext(ctx conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = iamAccessGroups.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_access_group", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -538,17 +603,21 @@ func (iamAccessGroups *IamAccessGroupsV2) DeleteAccessGroupWithContext(ctx conte
 // response body is returned with this request. If the membership exists, a `204 - No Content` status code is returned.
 // If the membership or the group does not exist, a `404 - Not Found` status code is returned.
 func (iamAccessGroups *IamAccessGroupsV2) IsMemberOfAccessGroup(isMemberOfAccessGroupOptions *IsMemberOfAccessGroupOptions) (response *core.DetailedResponse, err error) {
-	return iamAccessGroups.IsMemberOfAccessGroupWithContext(context.Background(), isMemberOfAccessGroupOptions)
+	response, err = iamAccessGroups.IsMemberOfAccessGroupWithContext(context.Background(), isMemberOfAccessGroupOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // IsMemberOfAccessGroupWithContext is an alternate form of the IsMemberOfAccessGroup method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) IsMemberOfAccessGroupWithContext(ctx context.Context, isMemberOfAccessGroupOptions *IsMemberOfAccessGroupOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(isMemberOfAccessGroupOptions, "isMemberOfAccessGroupOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(isMemberOfAccessGroupOptions, "isMemberOfAccessGroupOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -562,6 +631,7 @@ func (iamAccessGroups *IamAccessGroupsV2) IsMemberOfAccessGroupWithContext(ctx c
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v2/groups/{access_group_id}/members/{iam_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -579,10 +649,16 @@ func (iamAccessGroups *IamAccessGroupsV2) IsMemberOfAccessGroupWithContext(ctx c
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = iamAccessGroups.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "is_member_of_access_group", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -594,17 +670,21 @@ func (iamAccessGroups *IamAccessGroupsV2) IsMemberOfAccessGroupWithContext(ctx c
 // but each `iam_id` can only be added to 50 groups. Additionally, this API request payload can add up to 50 members per
 // call.
 func (iamAccessGroups *IamAccessGroupsV2) AddMembersToAccessGroup(addMembersToAccessGroupOptions *AddMembersToAccessGroupOptions) (result *AddGroupMembersResponse, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.AddMembersToAccessGroupWithContext(context.Background(), addMembersToAccessGroupOptions)
+	result, response, err = iamAccessGroups.AddMembersToAccessGroupWithContext(context.Background(), addMembersToAccessGroupOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // AddMembersToAccessGroupWithContext is an alternate form of the AddMembersToAccessGroup method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) AddMembersToAccessGroupWithContext(ctx context.Context, addMembersToAccessGroupOptions *AddMembersToAccessGroupOptions) (result *AddGroupMembersResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(addMembersToAccessGroupOptions, "addMembersToAccessGroupOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(addMembersToAccessGroupOptions, "addMembersToAccessGroupOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -617,6 +697,7 @@ func (iamAccessGroups *IamAccessGroupsV2) AddMembersToAccessGroupWithContext(ctx
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v2/groups/{access_group_id}/members`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -640,22 +721,27 @@ func (iamAccessGroups *IamAccessGroupsV2) AddMembersToAccessGroupWithContext(ctx
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "add_members_to_access_group", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAddGroupMembersResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -670,17 +756,21 @@ func (iamAccessGroups *IamAccessGroupsV2) AddMembersToAccessGroupWithContext(ctx
 // profile names will be retrieved for each `iam_id`. If performance is a concern, leave the `verbose` parameter off so
 // that name information does not get retrieved.
 func (iamAccessGroups *IamAccessGroupsV2) ListAccessGroupMembers(listAccessGroupMembersOptions *ListAccessGroupMembersOptions) (result *GroupMembersList, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.ListAccessGroupMembersWithContext(context.Background(), listAccessGroupMembersOptions)
+	result, response, err = iamAccessGroups.ListAccessGroupMembersWithContext(context.Background(), listAccessGroupMembersOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListAccessGroupMembersWithContext is an alternate form of the ListAccessGroupMembers method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) ListAccessGroupMembersWithContext(ctx context.Context, listAccessGroupMembersOptions *ListAccessGroupMembersOptions) (result *GroupMembersList, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listAccessGroupMembersOptions, "listAccessGroupMembersOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listAccessGroupMembersOptions, "listAccessGroupMembersOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -693,6 +783,7 @@ func (iamAccessGroups *IamAccessGroupsV2) ListAccessGroupMembersWithContext(ctx 
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v2/groups/{access_group_id}/members`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -730,17 +821,21 @@ func (iamAccessGroups *IamAccessGroupsV2) ListAccessGroupMembersWithContext(ctx 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_access_group_members", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGroupMembersList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -754,17 +849,21 @@ func (iamAccessGroups *IamAccessGroupsV2) ListAccessGroupMembersWithContext(ctx 
 // with no body is returned. However, if any error occurs, the standard error format will be returned. Dynamic member
 // cannot be deleted using this API. Dynamic rules needs to be adjusted to delete dynamic members.
 func (iamAccessGroups *IamAccessGroupsV2) RemoveMemberFromAccessGroup(removeMemberFromAccessGroupOptions *RemoveMemberFromAccessGroupOptions) (response *core.DetailedResponse, err error) {
-	return iamAccessGroups.RemoveMemberFromAccessGroupWithContext(context.Background(), removeMemberFromAccessGroupOptions)
+	response, err = iamAccessGroups.RemoveMemberFromAccessGroupWithContext(context.Background(), removeMemberFromAccessGroupOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // RemoveMemberFromAccessGroupWithContext is an alternate form of the RemoveMemberFromAccessGroup method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) RemoveMemberFromAccessGroupWithContext(ctx context.Context, removeMemberFromAccessGroupOptions *RemoveMemberFromAccessGroupOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(removeMemberFromAccessGroupOptions, "removeMemberFromAccessGroupOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(removeMemberFromAccessGroupOptions, "removeMemberFromAccessGroupOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -778,6 +877,7 @@ func (iamAccessGroups *IamAccessGroupsV2) RemoveMemberFromAccessGroupWithContext
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v2/groups/{access_group_id}/members/{iam_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -795,10 +895,16 @@ func (iamAccessGroups *IamAccessGroupsV2) RemoveMemberFromAccessGroupWithContext
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = iamAccessGroups.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "remove_member_from_access_group", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -809,17 +915,21 @@ func (iamAccessGroups *IamAccessGroupsV2) RemoveMemberFromAccessGroupWithContext
 // payload can delete up to 50 members per call. This API doesnt delete dynamic members accessing the access group via
 // dynamic rules.
 func (iamAccessGroups *IamAccessGroupsV2) RemoveMembersFromAccessGroup(removeMembersFromAccessGroupOptions *RemoveMembersFromAccessGroupOptions) (result *DeleteGroupBulkMembersResponse, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.RemoveMembersFromAccessGroupWithContext(context.Background(), removeMembersFromAccessGroupOptions)
+	result, response, err = iamAccessGroups.RemoveMembersFromAccessGroupWithContext(context.Background(), removeMembersFromAccessGroupOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // RemoveMembersFromAccessGroupWithContext is an alternate form of the RemoveMembersFromAccessGroup method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) RemoveMembersFromAccessGroupWithContext(ctx context.Context, removeMembersFromAccessGroupOptions *RemoveMembersFromAccessGroupOptions) (result *DeleteGroupBulkMembersResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(removeMembersFromAccessGroupOptions, "removeMembersFromAccessGroupOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(removeMembersFromAccessGroupOptions, "removeMembersFromAccessGroupOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -832,6 +942,7 @@ func (iamAccessGroups *IamAccessGroupsV2) RemoveMembersFromAccessGroupWithContex
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v2/groups/{access_group_id}/members/delete`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -855,22 +966,27 @@ func (iamAccessGroups *IamAccessGroupsV2) RemoveMembersFromAccessGroupWithContex
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "remove_members_from_access_group", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDeleteGroupBulkMembersResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -884,17 +1000,21 @@ func (iamAccessGroups *IamAccessGroupsV2) RemoveMembersFromAccessGroupWithContex
 // operation, you can revoke one member's access to all access groups in the account. If a partial failure occurs on
 // deletion, the response will be shown in the body.
 func (iamAccessGroups *IamAccessGroupsV2) RemoveMemberFromAllAccessGroups(removeMemberFromAllAccessGroupsOptions *RemoveMemberFromAllAccessGroupsOptions) (result *DeleteFromAllGroupsResponse, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.RemoveMemberFromAllAccessGroupsWithContext(context.Background(), removeMemberFromAllAccessGroupsOptions)
+	result, response, err = iamAccessGroups.RemoveMemberFromAllAccessGroupsWithContext(context.Background(), removeMemberFromAllAccessGroupsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // RemoveMemberFromAllAccessGroupsWithContext is an alternate form of the RemoveMemberFromAllAccessGroups method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) RemoveMemberFromAllAccessGroupsWithContext(ctx context.Context, removeMemberFromAllAccessGroupsOptions *RemoveMemberFromAllAccessGroupsOptions) (result *DeleteFromAllGroupsResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(removeMemberFromAllAccessGroupsOptions, "removeMemberFromAllAccessGroupsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(removeMemberFromAllAccessGroupsOptions, "removeMemberFromAllAccessGroupsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -907,6 +1027,7 @@ func (iamAccessGroups *IamAccessGroupsV2) RemoveMemberFromAllAccessGroupsWithCon
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v2/groups/_allgroups/members/{iam_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -927,17 +1048,21 @@ func (iamAccessGroups *IamAccessGroupsV2) RemoveMemberFromAllAccessGroupsWithCon
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "remove_member_from_all_access_groups", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDeleteFromAllGroupsResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -950,17 +1075,21 @@ func (iamAccessGroups *IamAccessGroupsV2) RemoveMemberFromAllAccessGroupsWithCon
 // This API will add a member to multiple access groups in an account. The limit of how many groups that can be in the
 // request is 50. The response is a list of results that show if adding the member to each group was successful or not.
 func (iamAccessGroups *IamAccessGroupsV2) AddMemberToMultipleAccessGroups(addMemberToMultipleAccessGroupsOptions *AddMemberToMultipleAccessGroupsOptions) (result *AddMembershipMultipleGroupsResponse, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.AddMemberToMultipleAccessGroupsWithContext(context.Background(), addMemberToMultipleAccessGroupsOptions)
+	result, response, err = iamAccessGroups.AddMemberToMultipleAccessGroupsWithContext(context.Background(), addMemberToMultipleAccessGroupsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // AddMemberToMultipleAccessGroupsWithContext is an alternate form of the AddMemberToMultipleAccessGroups method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) AddMemberToMultipleAccessGroupsWithContext(ctx context.Context, addMemberToMultipleAccessGroupsOptions *AddMemberToMultipleAccessGroupsOptions) (result *AddMembershipMultipleGroupsResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(addMemberToMultipleAccessGroupsOptions, "addMemberToMultipleAccessGroupsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(addMemberToMultipleAccessGroupsOptions, "addMemberToMultipleAccessGroupsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -973,6 +1102,7 @@ func (iamAccessGroups *IamAccessGroupsV2) AddMemberToMultipleAccessGroupsWithCon
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v2/groups/_allgroups/members/{iam_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1001,22 +1131,27 @@ func (iamAccessGroups *IamAccessGroupsV2) AddMemberToMultipleAccessGroupsWithCon
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "add_member_to_multiple_access_groups", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAddMembershipMultipleGroupsResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1032,17 +1167,21 @@ func (iamAccessGroups *IamAccessGroupsV2) AddMemberToMultipleAccessGroupsWithCon
 // access. Note that the condition's value field must be a stringified JSON value. [Consult this documentation for
 // further explanation of dynamic rules.](/docs/account?topic=account-rules).
 func (iamAccessGroups *IamAccessGroupsV2) AddAccessGroupRule(addAccessGroupRuleOptions *AddAccessGroupRuleOptions) (result *Rule, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.AddAccessGroupRuleWithContext(context.Background(), addAccessGroupRuleOptions)
+	result, response, err = iamAccessGroups.AddAccessGroupRuleWithContext(context.Background(), addAccessGroupRuleOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // AddAccessGroupRuleWithContext is an alternate form of the AddAccessGroupRule method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) AddAccessGroupRuleWithContext(ctx context.Context, addAccessGroupRuleOptions *AddAccessGroupRuleOptions) (result *Rule, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(addAccessGroupRuleOptions, "addAccessGroupRuleOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(addAccessGroupRuleOptions, "addAccessGroupRuleOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1055,6 +1194,7 @@ func (iamAccessGroups *IamAccessGroupsV2) AddAccessGroupRuleWithContext(ctx cont
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v2/groups/{access_group_id}/rules`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1087,22 +1227,27 @@ func (iamAccessGroups *IamAccessGroupsV2) AddAccessGroupRuleWithContext(ctx cont
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "add_access_group_rule", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalRule)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1115,17 +1260,21 @@ func (iamAccessGroups *IamAccessGroupsV2) AddAccessGroupRuleWithContext(ctx cont
 // This API lists all rules in a given access group. Because only a few rules are created on each group, there is no
 // pagination or sorting support on this API.
 func (iamAccessGroups *IamAccessGroupsV2) ListAccessGroupRules(listAccessGroupRulesOptions *ListAccessGroupRulesOptions) (result *RulesList, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.ListAccessGroupRulesWithContext(context.Background(), listAccessGroupRulesOptions)
+	result, response, err = iamAccessGroups.ListAccessGroupRulesWithContext(context.Background(), listAccessGroupRulesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListAccessGroupRulesWithContext is an alternate form of the ListAccessGroupRules method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) ListAccessGroupRulesWithContext(ctx context.Context, listAccessGroupRulesOptions *ListAccessGroupRulesOptions) (result *RulesList, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listAccessGroupRulesOptions, "listAccessGroupRulesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listAccessGroupRulesOptions, "listAccessGroupRulesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1138,6 +1287,7 @@ func (iamAccessGroups *IamAccessGroupsV2) ListAccessGroupRulesWithContext(ctx co
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v2/groups/{access_group_id}/rules`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1156,17 +1306,21 @@ func (iamAccessGroups *IamAccessGroupsV2) ListAccessGroupRulesWithContext(ctx co
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_access_group_rules", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalRulesList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1179,17 +1333,21 @@ func (iamAccessGroups *IamAccessGroupsV2) ListAccessGroupRulesWithContext(ctx co
 // Retrieve a rule from an access group. A revision number is returned in the `ETag` header, which is needed when
 // updating the rule.
 func (iamAccessGroups *IamAccessGroupsV2) GetAccessGroupRule(getAccessGroupRuleOptions *GetAccessGroupRuleOptions) (result *Rule, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.GetAccessGroupRuleWithContext(context.Background(), getAccessGroupRuleOptions)
+	result, response, err = iamAccessGroups.GetAccessGroupRuleWithContext(context.Background(), getAccessGroupRuleOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAccessGroupRuleWithContext is an alternate form of the GetAccessGroupRule method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) GetAccessGroupRuleWithContext(ctx context.Context, getAccessGroupRuleOptions *GetAccessGroupRuleOptions) (result *Rule, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getAccessGroupRuleOptions, "getAccessGroupRuleOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getAccessGroupRuleOptions, "getAccessGroupRuleOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1203,6 +1361,7 @@ func (iamAccessGroups *IamAccessGroupsV2) GetAccessGroupRuleWithContext(ctx cont
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v2/groups/{access_group_id}/rules/{rule_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1221,17 +1380,21 @@ func (iamAccessGroups *IamAccessGroupsV2) GetAccessGroupRuleWithContext(ctx cont
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_access_group_rule", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalRule)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1244,17 +1407,21 @@ func (iamAccessGroups *IamAccessGroupsV2) GetAccessGroupRuleWithContext(ctx cont
 // Update the body of an existing rule using this API. An `If-Match` header must be populated with the rule's most
 // recent revision number (which can be acquired in the `Get an access group rule` API).
 func (iamAccessGroups *IamAccessGroupsV2) ReplaceAccessGroupRule(replaceAccessGroupRuleOptions *ReplaceAccessGroupRuleOptions) (result *Rule, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.ReplaceAccessGroupRuleWithContext(context.Background(), replaceAccessGroupRuleOptions)
+	result, response, err = iamAccessGroups.ReplaceAccessGroupRuleWithContext(context.Background(), replaceAccessGroupRuleOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ReplaceAccessGroupRuleWithContext is an alternate form of the ReplaceAccessGroupRule method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) ReplaceAccessGroupRuleWithContext(ctx context.Context, replaceAccessGroupRuleOptions *ReplaceAccessGroupRuleOptions) (result *Rule, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(replaceAccessGroupRuleOptions, "replaceAccessGroupRuleOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(replaceAccessGroupRuleOptions, "replaceAccessGroupRuleOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1268,6 +1435,7 @@ func (iamAccessGroups *IamAccessGroupsV2) ReplaceAccessGroupRuleWithContext(ctx 
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v2/groups/{access_group_id}/rules/{rule_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1303,22 +1471,27 @@ func (iamAccessGroups *IamAccessGroupsV2) ReplaceAccessGroupRuleWithContext(ctx 
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "replace_access_group_rule", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalRule)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1331,17 +1504,21 @@ func (iamAccessGroups *IamAccessGroupsV2) ReplaceAccessGroupRuleWithContext(ctx 
 // Remove one rule from a group using this API. If the operation is successful, only a `204 - No Content` response with
 // no body is returned. However, if any error occurs, the standard error format will be returned.
 func (iamAccessGroups *IamAccessGroupsV2) RemoveAccessGroupRule(removeAccessGroupRuleOptions *RemoveAccessGroupRuleOptions) (response *core.DetailedResponse, err error) {
-	return iamAccessGroups.RemoveAccessGroupRuleWithContext(context.Background(), removeAccessGroupRuleOptions)
+	response, err = iamAccessGroups.RemoveAccessGroupRuleWithContext(context.Background(), removeAccessGroupRuleOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // RemoveAccessGroupRuleWithContext is an alternate form of the RemoveAccessGroupRule method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) RemoveAccessGroupRuleWithContext(ctx context.Context, removeAccessGroupRuleOptions *RemoveAccessGroupRuleOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(removeAccessGroupRuleOptions, "removeAccessGroupRuleOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(removeAccessGroupRuleOptions, "removeAccessGroupRuleOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1355,6 +1532,7 @@ func (iamAccessGroups *IamAccessGroupsV2) RemoveAccessGroupRuleWithContext(ctx c
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v2/groups/{access_group_id}/rules/{rule_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1372,10 +1550,16 @@ func (iamAccessGroups *IamAccessGroupsV2) RemoveAccessGroupRuleWithContext(ctx c
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = iamAccessGroups.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "remove_access_group_rule", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -1383,17 +1567,21 @@ func (iamAccessGroups *IamAccessGroupsV2) RemoveAccessGroupRuleWithContext(ctx c
 // GetAccountSettings : Get account settings
 // Retrieve the access groups settings for a specific account.
 func (iamAccessGroups *IamAccessGroupsV2) GetAccountSettings(getAccountSettingsOptions *GetAccountSettingsOptions) (result *AccountSettings, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.GetAccountSettingsWithContext(context.Background(), getAccountSettingsOptions)
+	result, response, err = iamAccessGroups.GetAccountSettingsWithContext(context.Background(), getAccountSettingsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAccountSettingsWithContext is an alternate form of the GetAccountSettings method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) GetAccountSettingsWithContext(ctx context.Context, getAccountSettingsOptions *GetAccountSettingsOptions) (result *AccountSettings, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getAccountSettingsOptions, "getAccountSettingsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getAccountSettingsOptions, "getAccountSettingsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1402,6 +1590,7 @@ func (iamAccessGroups *IamAccessGroupsV2) GetAccountSettingsWithContext(ctx cont
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v2/groups/settings`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1422,17 +1611,21 @@ func (iamAccessGroups *IamAccessGroupsV2) GetAccountSettingsWithContext(ctx cont
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_account_settings", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettings)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1446,17 +1639,21 @@ func (iamAccessGroups *IamAccessGroupsV2) GetAccountSettingsWithContext(ctx cont
 // false, all policies within the account attached to the Public Access group will be deleted. Only set
 // `public_access_enabled` to false if you are sure that you want those policies to be removed.
 func (iamAccessGroups *IamAccessGroupsV2) UpdateAccountSettings(updateAccountSettingsOptions *UpdateAccountSettingsOptions) (result *AccountSettings, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.UpdateAccountSettingsWithContext(context.Background(), updateAccountSettingsOptions)
+	result, response, err = iamAccessGroups.UpdateAccountSettingsWithContext(context.Background(), updateAccountSettingsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateAccountSettingsWithContext is an alternate form of the UpdateAccountSettings method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) UpdateAccountSettingsWithContext(ctx context.Context, updateAccountSettingsOptions *UpdateAccountSettingsOptions) (result *AccountSettings, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateAccountSettingsOptions, "updateAccountSettingsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateAccountSettingsOptions, "updateAccountSettingsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1465,6 +1662,7 @@ func (iamAccessGroups *IamAccessGroupsV2) UpdateAccountSettingsWithContext(ctx c
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v2/groups/settings`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1490,22 +1688,27 @@ func (iamAccessGroups *IamAccessGroupsV2) UpdateAccountSettingsWithContext(ctx c
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_account_settings", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettings)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1519,17 +1722,21 @@ func (iamAccessGroups *IamAccessGroupsV2) UpdateAccountSettingsWithContext(ctx c
 // accounts. Before you can assign an access group template to child accounts, you must commit it so that no further
 // changes can be made to the version.
 func (iamAccessGroups *IamAccessGroupsV2) CreateTemplate(createTemplateOptions *CreateTemplateOptions) (result *TemplateResponse, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.CreateTemplateWithContext(context.Background(), createTemplateOptions)
+	result, response, err = iamAccessGroups.CreateTemplateWithContext(context.Background(), createTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateTemplateWithContext is an alternate form of the CreateTemplate method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) CreateTemplateWithContext(ctx context.Context, createTemplateOptions *CreateTemplateOptions) (result *TemplateResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createTemplateOptions, "createTemplateOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createTemplateOptions, "createTemplateOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1538,6 +1745,7 @@ func (iamAccessGroups *IamAccessGroupsV2) CreateTemplateWithContext(ctx context.
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v1/group_templates`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1573,22 +1781,27 @@ func (iamAccessGroups *IamAccessGroupsV2) CreateTemplateWithContext(ctx context.
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1600,17 +1813,21 @@ func (iamAccessGroups *IamAccessGroupsV2) CreateTemplateWithContext(ctx context.
 // ListTemplates : List templates
 // List the access group templates in an enterprise account.
 func (iamAccessGroups *IamAccessGroupsV2) ListTemplates(listTemplatesOptions *ListTemplatesOptions) (result *ListTemplatesResponse, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.ListTemplatesWithContext(context.Background(), listTemplatesOptions)
+	result, response, err = iamAccessGroups.ListTemplatesWithContext(context.Background(), listTemplatesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListTemplatesWithContext is an alternate form of the ListTemplates method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) ListTemplatesWithContext(ctx context.Context, listTemplatesOptions *ListTemplatesOptions) (result *ListTemplatesResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listTemplatesOptions, "listTemplatesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listTemplatesOptions, "listTemplatesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1619,6 +1836,7 @@ func (iamAccessGroups *IamAccessGroupsV2) ListTemplatesWithContext(ctx context.C
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v1/group_templates`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1648,17 +1866,21 @@ func (iamAccessGroups *IamAccessGroupsV2) ListTemplatesWithContext(ctx context.C
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_templates", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListTemplatesResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1670,17 +1892,21 @@ func (iamAccessGroups *IamAccessGroupsV2) ListTemplatesWithContext(ctx context.C
 // CreateTemplateVersion : Create template version
 // Create a new version of an access group template.
 func (iamAccessGroups *IamAccessGroupsV2) CreateTemplateVersion(createTemplateVersionOptions *CreateTemplateVersionOptions) (result *TemplateVersionResponse, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.CreateTemplateVersionWithContext(context.Background(), createTemplateVersionOptions)
+	result, response, err = iamAccessGroups.CreateTemplateVersionWithContext(context.Background(), createTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateTemplateVersionWithContext is an alternate form of the CreateTemplateVersion method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) CreateTemplateVersionWithContext(ctx context.Context, createTemplateVersionOptions *CreateTemplateVersionOptions) (result *TemplateVersionResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createTemplateVersionOptions, "createTemplateVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createTemplateVersionOptions, "createTemplateVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1693,6 +1919,7 @@ func (iamAccessGroups *IamAccessGroupsV2) CreateTemplateVersionWithContext(ctx c
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v1/group_templates/{template_id}/versions`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1725,22 +1952,27 @@ func (iamAccessGroups *IamAccessGroupsV2) CreateTemplateVersionWithContext(ctx c
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateVersionResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1752,17 +1984,21 @@ func (iamAccessGroups *IamAccessGroupsV2) CreateTemplateVersionWithContext(ctx c
 // ListTemplateVersions : List template versions
 // List all the versions of an access group template.
 func (iamAccessGroups *IamAccessGroupsV2) ListTemplateVersions(listTemplateVersionsOptions *ListTemplateVersionsOptions) (result *ListTemplateVersionsResponse, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.ListTemplateVersionsWithContext(context.Background(), listTemplateVersionsOptions)
+	result, response, err = iamAccessGroups.ListTemplateVersionsWithContext(context.Background(), listTemplateVersionsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListTemplateVersionsWithContext is an alternate form of the ListTemplateVersions method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) ListTemplateVersionsWithContext(ctx context.Context, listTemplateVersionsOptions *ListTemplateVersionsOptions) (result *ListTemplateVersionsResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listTemplateVersionsOptions, "listTemplateVersionsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listTemplateVersionsOptions, "listTemplateVersionsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1775,6 +2011,7 @@ func (iamAccessGroups *IamAccessGroupsV2) ListTemplateVersionsWithContext(ctx co
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v1/group_templates/{template_id}/versions`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1797,17 +2034,21 @@ func (iamAccessGroups *IamAccessGroupsV2) ListTemplateVersionsWithContext(ctx co
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_template_versions", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListTemplateVersionsResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1819,17 +2060,21 @@ func (iamAccessGroups *IamAccessGroupsV2) ListTemplateVersionsWithContext(ctx co
 // GetTemplateVersion : Get template version
 // Get a specific version of a template.
 func (iamAccessGroups *IamAccessGroupsV2) GetTemplateVersion(getTemplateVersionOptions *GetTemplateVersionOptions) (result *TemplateVersionResponse, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.GetTemplateVersionWithContext(context.Background(), getTemplateVersionOptions)
+	result, response, err = iamAccessGroups.GetTemplateVersionWithContext(context.Background(), getTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetTemplateVersionWithContext is an alternate form of the GetTemplateVersion method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) GetTemplateVersionWithContext(ctx context.Context, getTemplateVersionOptions *GetTemplateVersionOptions) (result *TemplateVersionResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getTemplateVersionOptions, "getTemplateVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getTemplateVersionOptions, "getTemplateVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1843,6 +2088,7 @@ func (iamAccessGroups *IamAccessGroupsV2) GetTemplateVersionWithContext(ctx cont
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v1/group_templates/{template_id}/versions/{version_num}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1865,17 +2111,21 @@ func (iamAccessGroups *IamAccessGroupsV2) GetTemplateVersionWithContext(ctx cont
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateVersionResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1888,17 +2138,21 @@ func (iamAccessGroups *IamAccessGroupsV2) GetTemplateVersionWithContext(ctx cont
 // Update a template version. You can only update a version that isn't committed. Create a new version if you need to
 // update a committed version.
 func (iamAccessGroups *IamAccessGroupsV2) UpdateTemplateVersion(updateTemplateVersionOptions *UpdateTemplateVersionOptions) (result *TemplateVersionResponse, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.UpdateTemplateVersionWithContext(context.Background(), updateTemplateVersionOptions)
+	result, response, err = iamAccessGroups.UpdateTemplateVersionWithContext(context.Background(), updateTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateTemplateVersionWithContext is an alternate form of the UpdateTemplateVersion method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) UpdateTemplateVersionWithContext(ctx context.Context, updateTemplateVersionOptions *UpdateTemplateVersionOptions) (result *TemplateVersionResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateTemplateVersionOptions, "updateTemplateVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateTemplateVersionOptions, "updateTemplateVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1912,6 +2166,7 @@ func (iamAccessGroups *IamAccessGroupsV2) UpdateTemplateVersionWithContext(ctx c
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v1/group_templates/{template_id}/versions/{version_num}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1947,22 +2202,27 @@ func (iamAccessGroups *IamAccessGroupsV2) UpdateTemplateVersionWithContext(ctx c
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateVersionResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1974,17 +2234,21 @@ func (iamAccessGroups *IamAccessGroupsV2) UpdateTemplateVersionWithContext(ctx c
 // DeleteTemplateVersion : Delete template version
 // Delete a template version. You must remove all assignments for a template version before you can delete it.
 func (iamAccessGroups *IamAccessGroupsV2) DeleteTemplateVersion(deleteTemplateVersionOptions *DeleteTemplateVersionOptions) (response *core.DetailedResponse, err error) {
-	return iamAccessGroups.DeleteTemplateVersionWithContext(context.Background(), deleteTemplateVersionOptions)
+	response, err = iamAccessGroups.DeleteTemplateVersionWithContext(context.Background(), deleteTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteTemplateVersionWithContext is an alternate form of the DeleteTemplateVersion method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) DeleteTemplateVersionWithContext(ctx context.Context, deleteTemplateVersionOptions *DeleteTemplateVersionOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteTemplateVersionOptions, "deleteTemplateVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteTemplateVersionOptions, "deleteTemplateVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1998,6 +2262,7 @@ func (iamAccessGroups *IamAccessGroupsV2) DeleteTemplateVersionWithContext(ctx c
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v1/group_templates/{template_id}/versions/{version_num}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2015,10 +2280,16 @@ func (iamAccessGroups *IamAccessGroupsV2) DeleteTemplateVersionWithContext(ctx c
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = iamAccessGroups.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -2027,17 +2298,21 @@ func (iamAccessGroups *IamAccessGroupsV2) DeleteTemplateVersionWithContext(ctx c
 // Commit a template version. You must do this before you can assign a template version to child accounts. After you
 // commit the template version, you can't make any further changes.
 func (iamAccessGroups *IamAccessGroupsV2) CommitTemplate(commitTemplateOptions *CommitTemplateOptions) (response *core.DetailedResponse, err error) {
-	return iamAccessGroups.CommitTemplateWithContext(context.Background(), commitTemplateOptions)
+	response, err = iamAccessGroups.CommitTemplateWithContext(context.Background(), commitTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CommitTemplateWithContext is an alternate form of the CommitTemplate method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) CommitTemplateWithContext(ctx context.Context, commitTemplateOptions *CommitTemplateOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(commitTemplateOptions, "commitTemplateOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(commitTemplateOptions, "commitTemplateOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2051,6 +2326,7 @@ func (iamAccessGroups *IamAccessGroupsV2) CommitTemplateWithContext(ctx context.
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v1/group_templates/{template_id}/versions/{version_num}/commit`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2071,10 +2347,16 @@ func (iamAccessGroups *IamAccessGroupsV2) CommitTemplateWithContext(ctx context.
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = iamAccessGroups.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "commit_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -2082,17 +2364,21 @@ func (iamAccessGroups *IamAccessGroupsV2) CommitTemplateWithContext(ctx context.
 // GetLatestTemplateVersion : Get latest template version
 // Get the latest version of a template.
 func (iamAccessGroups *IamAccessGroupsV2) GetLatestTemplateVersion(getLatestTemplateVersionOptions *GetLatestTemplateVersionOptions) (result *TemplateVersionResponse, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.GetLatestTemplateVersionWithContext(context.Background(), getLatestTemplateVersionOptions)
+	result, response, err = iamAccessGroups.GetLatestTemplateVersionWithContext(context.Background(), getLatestTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetLatestTemplateVersionWithContext is an alternate form of the GetLatestTemplateVersion method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) GetLatestTemplateVersionWithContext(ctx context.Context, getLatestTemplateVersionOptions *GetLatestTemplateVersionOptions) (result *TemplateVersionResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getLatestTemplateVersionOptions, "getLatestTemplateVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getLatestTemplateVersionOptions, "getLatestTemplateVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2105,6 +2391,7 @@ func (iamAccessGroups *IamAccessGroupsV2) GetLatestTemplateVersionWithContext(ct
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v1/group_templates/{template_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2127,17 +2414,21 @@ func (iamAccessGroups *IamAccessGroupsV2) GetLatestTemplateVersionWithContext(ct
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_latest_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateVersionResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2150,17 +2441,21 @@ func (iamAccessGroups *IamAccessGroupsV2) GetLatestTemplateVersionWithContext(ct
 // Endpoint to delete a template. All access assigned by that template is deleted from all of the accounts where the
 // template was assigned.
 func (iamAccessGroups *IamAccessGroupsV2) DeleteTemplate(deleteTemplateOptions *DeleteTemplateOptions) (response *core.DetailedResponse, err error) {
-	return iamAccessGroups.DeleteTemplateWithContext(context.Background(), deleteTemplateOptions)
+	response, err = iamAccessGroups.DeleteTemplateWithContext(context.Background(), deleteTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteTemplateWithContext is an alternate form of the DeleteTemplate method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) DeleteTemplateWithContext(ctx context.Context, deleteTemplateOptions *DeleteTemplateOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteTemplateOptions, "deleteTemplateOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteTemplateOptions, "deleteTemplateOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2173,6 +2468,7 @@ func (iamAccessGroups *IamAccessGroupsV2) DeleteTemplateWithContext(ctx context.
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v1/group_templates/{template_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2190,10 +2486,16 @@ func (iamAccessGroups *IamAccessGroupsV2) DeleteTemplateWithContext(ctx context.
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = iamAccessGroups.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -2202,17 +2504,21 @@ func (iamAccessGroups *IamAccessGroupsV2) DeleteTemplateWithContext(ctx context.
 // Assign a template version to accounts that have enabled enterprise-managed IAM. You can specify individual accounts,
 // or an entire account group to assign the template to all current and future child accounts of that account group.
 func (iamAccessGroups *IamAccessGroupsV2) CreateAssignment(createAssignmentOptions *CreateAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.CreateAssignmentWithContext(context.Background(), createAssignmentOptions)
+	result, response, err = iamAccessGroups.CreateAssignmentWithContext(context.Background(), createAssignmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateAssignmentWithContext is an alternate form of the CreateAssignment method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) CreateAssignmentWithContext(ctx context.Context, createAssignmentOptions *CreateAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createAssignmentOptions, "createAssignmentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createAssignmentOptions, "createAssignmentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2221,6 +2527,7 @@ func (iamAccessGroups *IamAccessGroupsV2) CreateAssignmentWithContext(ctx contex
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v1/group_assignments`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2253,22 +2560,27 @@ func (iamAccessGroups *IamAccessGroupsV2) CreateAssignmentWithContext(ctx contex
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_assignment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateAssignmentResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2280,17 +2592,21 @@ func (iamAccessGroups *IamAccessGroupsV2) CreateAssignmentWithContext(ctx contex
 // ListAssignments : List assignments
 // List template assignments from an enterprise account.
 func (iamAccessGroups *IamAccessGroupsV2) ListAssignments(listAssignmentsOptions *ListAssignmentsOptions) (result *ListTemplateAssignmentResponse, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.ListAssignmentsWithContext(context.Background(), listAssignmentsOptions)
+	result, response, err = iamAccessGroups.ListAssignmentsWithContext(context.Background(), listAssignmentsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListAssignmentsWithContext is an alternate form of the ListAssignments method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) ListAssignmentsWithContext(ctx context.Context, listAssignmentsOptions *ListAssignmentsOptions) (result *ListTemplateAssignmentResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listAssignmentsOptions, "listAssignmentsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listAssignmentsOptions, "listAssignmentsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2299,6 +2615,7 @@ func (iamAccessGroups *IamAccessGroupsV2) ListAssignmentsWithContext(ctx context
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v1/group_assignments`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2337,17 +2654,21 @@ func (iamAccessGroups *IamAccessGroupsV2) ListAssignmentsWithContext(ctx context
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_assignments", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListTemplateAssignmentResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2359,17 +2680,21 @@ func (iamAccessGroups *IamAccessGroupsV2) ListAssignmentsWithContext(ctx context
 // GetAssignment : Get assignment
 // Get a specific template assignment.
 func (iamAccessGroups *IamAccessGroupsV2) GetAssignment(getAssignmentOptions *GetAssignmentOptions) (result *TemplateAssignmentVerboseResponse, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.GetAssignmentWithContext(context.Background(), getAssignmentOptions)
+	result, response, err = iamAccessGroups.GetAssignmentWithContext(context.Background(), getAssignmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAssignmentWithContext is an alternate form of the GetAssignment method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) GetAssignmentWithContext(ctx context.Context, getAssignmentOptions *GetAssignmentOptions) (result *TemplateAssignmentVerboseResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getAssignmentOptions, "getAssignmentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getAssignmentOptions, "getAssignmentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2382,6 +2707,7 @@ func (iamAccessGroups *IamAccessGroupsV2) GetAssignmentWithContext(ctx context.C
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v1/group_assignments/{assignment_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2404,17 +2730,21 @@ func (iamAccessGroups *IamAccessGroupsV2) GetAssignmentWithContext(ctx context.C
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_assignment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateAssignmentVerboseResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2426,17 +2756,21 @@ func (iamAccessGroups *IamAccessGroupsV2) GetAssignmentWithContext(ctx context.C
 // UpdateAssignment : Update Assignment
 // Endpoint to update template assignment.
 func (iamAccessGroups *IamAccessGroupsV2) UpdateAssignment(updateAssignmentOptions *UpdateAssignmentOptions) (result *TemplateAssignmentVerboseResponse, response *core.DetailedResponse, err error) {
-	return iamAccessGroups.UpdateAssignmentWithContext(context.Background(), updateAssignmentOptions)
+	result, response, err = iamAccessGroups.UpdateAssignmentWithContext(context.Background(), updateAssignmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateAssignmentWithContext is an alternate form of the UpdateAssignment method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) UpdateAssignmentWithContext(ctx context.Context, updateAssignmentOptions *UpdateAssignmentOptions) (result *TemplateAssignmentVerboseResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateAssignmentOptions, "updateAssignmentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateAssignmentOptions, "updateAssignmentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2449,6 +2783,7 @@ func (iamAccessGroups *IamAccessGroupsV2) UpdateAssignmentWithContext(ctx contex
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v1/group_assignments/{assignment_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2472,22 +2807,27 @@ func (iamAccessGroups *IamAccessGroupsV2) UpdateAssignmentWithContext(ctx contex
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamAccessGroups.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_assignment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateAssignmentVerboseResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2499,17 +2839,21 @@ func (iamAccessGroups *IamAccessGroupsV2) UpdateAssignmentWithContext(ctx contex
 // DeleteAssignment : Delete assignment
 // Delete an access group template assignment.
 func (iamAccessGroups *IamAccessGroupsV2) DeleteAssignment(deleteAssignmentOptions *DeleteAssignmentOptions) (response *core.DetailedResponse, err error) {
-	return iamAccessGroups.DeleteAssignmentWithContext(context.Background(), deleteAssignmentOptions)
+	response, err = iamAccessGroups.DeleteAssignmentWithContext(context.Background(), deleteAssignmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteAssignmentWithContext is an alternate form of the DeleteAssignment method which supports a Context parameter
 func (iamAccessGroups *IamAccessGroupsV2) DeleteAssignmentWithContext(ctx context.Context, deleteAssignmentOptions *DeleteAssignmentOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteAssignmentOptions, "deleteAssignmentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteAssignmentOptions, "deleteAssignmentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2522,6 +2866,7 @@ func (iamAccessGroups *IamAccessGroupsV2) DeleteAssignmentWithContext(ctx contex
 	builder.EnableGzipCompression = iamAccessGroups.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamAccessGroups.Service.Options.URL, `/v1/group_assignments/{assignment_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2539,12 +2884,21 @@ func (iamAccessGroups *IamAccessGroupsV2) DeleteAssignmentWithContext(ctx contex
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = iamAccessGroups.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_assignment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
+}
+func getServiceComponentInfo() *core.ProblemComponent {
+	return core.NewProblemComponent(DefaultServiceName, "2.0")
 }
 
 // AccessActionControls : Control whether or not access group administrators in child accounts can add access policies to the
@@ -2555,7 +2909,7 @@ type AccessActionControls struct {
 	// arise between an update to this control in a new version and polices added to the access group by an administrator
 	// in a child account, you must resolve those conflicts in the child account. This prevents breaking access in the
 	// child account. For more information, see [Working with
-	// versions](https://test.cloud.ibm.com/docs/secure-enterprise?topic=secure-enterprise-working-with-versions#new-version-scenarios).
+	// versions](https://cloud.ibm.com/docs/secure-enterprise?topic=secure-enterprise-working-with-versions#new-version-scenarios).
 	Add *bool `json:"add,omitempty"`
 }
 
@@ -2564,6 +2918,7 @@ func UnmarshalAccessActionControls(m map[string]json.RawMessage, result interfac
 	obj := new(AccessActionControls)
 	err = core.UnmarshalPrimitive(m, "add", &obj.Add)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "add-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2596,6 +2951,9 @@ func (*IamAccessGroupsV2) NewAccessGroupRequest(name string) (_model *AccessGrou
 		Name: core.StringPtr(name),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -2604,22 +2962,27 @@ func UnmarshalAccessGroupRequest(m map[string]json.RawMessage, result interface{
 	obj := new(AccessGroupRequest)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "members", &obj.Members, UnmarshalMembers)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "members-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "assertions", &obj.Assertions, UnmarshalAssertions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "assertions-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "action_controls", &obj.ActionControls, UnmarshalGroupActionControls)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "action_controls-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2651,22 +3014,27 @@ func UnmarshalAccessGroupResponse(m map[string]json.RawMessage, result interface
 	obj := new(AccessGroupResponse)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "members", &obj.Members, UnmarshalMembers)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "members-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "assertions", &obj.Assertions, UnmarshalAssertions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "assertions-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "action_controls", &obj.ActionControls, UnmarshalGroupActionControls)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "action_controls-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2694,18 +3062,22 @@ func UnmarshalAccountSettings(m map[string]json.RawMessage, result interface{}) 
 	obj := new(AccountSettings)
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_modified_at", &obj.LastModifiedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_modified_by_id", &obj.LastModifiedByID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_by_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "public_access_enabled", &obj.PublicAccessEnabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "public_access_enabled-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2735,7 +3107,7 @@ type AddAccessGroupRuleOptions struct {
 	// choose. If no transaction ID is passed in, then a random ID is generated.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -2807,6 +3179,9 @@ func (*IamAccessGroupsV2) NewAddGroupMembersRequestMembersItem(iamID string, typ
 		Type: core.StringPtr(typeVar),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -2815,10 +3190,12 @@ func UnmarshalAddGroupMembersRequestMembersItem(m map[string]json.RawMessage, re
 	obj := new(AddGroupMembersRequestMembersItem)
 	err = core.UnmarshalPrimitive(m, "iam_id", &obj.IamID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2836,6 +3213,7 @@ func UnmarshalAddGroupMembersResponse(m map[string]json.RawMessage, result inter
 	obj := new(AddGroupMembersResponse)
 	err = core.UnmarshalModel(m, "members", &obj.Members, UnmarshalAddGroupMembersResponseMembersItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "members-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2871,30 +3249,37 @@ func UnmarshalAddGroupMembersResponseMembersItem(m map[string]json.RawMessage, r
 	obj := new(AddGroupMembersResponseMembersItem)
 	err = core.UnmarshalPrimitive(m, "iam_id", &obj.IamID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_by_id", &obj.CreatedByID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status_code", &obj.StatusCode)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status_code-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "trace", &obj.Trace)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "trace-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "errors", &obj.Errors, UnmarshalError)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2922,7 +3307,7 @@ type AddMemberToMultipleAccessGroupsOptions struct {
 	// choose. If no transaction ID is passed in, then a random ID is generated.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -2983,7 +3368,7 @@ type AddMembersToAccessGroupOptions struct {
 	// choose. If no transaction ID is passed in, then a random ID is generated.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3032,10 +3417,12 @@ func UnmarshalAddMembershipMultipleGroupsResponse(m map[string]json.RawMessage, 
 	obj := new(AddMembershipMultipleGroupsResponse)
 	err = core.UnmarshalPrimitive(m, "iam_id", &obj.IamID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "groups", &obj.Groups, UnmarshalAddMembershipMultipleGroupsResponseGroupsItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "groups-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3062,18 +3449,22 @@ func UnmarshalAddMembershipMultipleGroupsResponseGroupsItem(m map[string]json.Ra
 	obj := new(AddMembershipMultipleGroupsResponseGroupsItem)
 	err = core.UnmarshalPrimitive(m, "access_group_id", &obj.AccessGroupID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "access_group_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status_code", &obj.StatusCode)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status_code-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "trace", &obj.Trace)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "trace-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "errors", &obj.Errors, UnmarshalError)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3096,10 +3487,12 @@ func UnmarshalAssertions(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(Assertions)
 	err = core.UnmarshalModel(m, "rules", &obj.Rules, UnmarshalAssertionsRule)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rules-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "action_controls", &obj.ActionControls, UnmarshalAssertionsActionControls)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "action_controls-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3128,10 +3521,12 @@ func UnmarshalAssertionsActionControls(m map[string]json.RawMessage, result inte
 	obj := new(AssertionsActionControls)
 	err = core.UnmarshalPrimitive(m, "add", &obj.Add)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "add-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "remove", &obj.Remove)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "remove-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3163,22 +3558,27 @@ func UnmarshalAssertionsRule(m map[string]json.RawMessage, result interface{}) (
 	obj := new(AssertionsRule)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "expiration", &obj.Expiration)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "expiration-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "realm_name", &obj.RealmName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "realm_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "conditions", &obj.Conditions, UnmarshalConditions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "conditions-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "action_controls", &obj.ActionControls, UnmarshalRuleActionControls)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "action_controls-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3202,14 +3602,17 @@ func UnmarshalAssignmentResourceAccessGroup(m map[string]json.RawMessage, result
 	obj := new(AssignmentResourceAccessGroup)
 	err = core.UnmarshalModel(m, "group", &obj.Group, UnmarshalAssignmentResourceEntry)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "group-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "members", &obj.Members, UnmarshalAssignmentResourceEntry)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "members-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "rules", &obj.Rules, UnmarshalAssignmentResourceEntry)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rules-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3245,30 +3648,37 @@ func UnmarshalAssignmentResourceEntry(m map[string]json.RawMessage, result inter
 	obj := new(AssignmentResourceEntry)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource", &obj.Resource)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "error", &obj.Error)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "error-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "operation", &obj.Operation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "operation-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3289,7 +3699,7 @@ type CommitTemplateOptions struct {
 	// An optional transaction id for the request.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3349,14 +3759,17 @@ func UnmarshalConditions(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(Conditions)
 	err = core.UnmarshalPrimitive(m, "claim", &obj.Claim)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "claim-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "operator", &obj.Operator)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "operator-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3382,7 +3795,7 @@ type CreateAccessGroupOptions struct {
 	// choose. If no transaction ID is passed in, then a random ID is generated.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3441,7 +3854,7 @@ type CreateAssignmentOptions struct {
 	// An optional transaction id for the request.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3519,7 +3932,7 @@ type CreateTemplateOptions struct {
 	// An optional transaction id for the request.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3594,7 +4007,7 @@ type CreateTemplateVersionOptions struct {
 	// An optional transaction id for the request.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3660,7 +4073,7 @@ type DeleteAccessGroupOptions struct {
 	// If force is true, delete the group as well as its associated members and rules.
 	Force *bool `json:"force,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3703,7 +4116,7 @@ type DeleteAssignmentOptions struct {
 	// An optional transaction id for the request.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3746,10 +4159,12 @@ func UnmarshalDeleteFromAllGroupsResponse(m map[string]json.RawMessage, result i
 	obj := new(DeleteFromAllGroupsResponse)
 	err = core.UnmarshalPrimitive(m, "iam_id", &obj.IamID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "groups", &obj.Groups, UnmarshalDeleteFromAllGroupsResponseGroupsItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "groups-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3776,18 +4191,22 @@ func UnmarshalDeleteFromAllGroupsResponseGroupsItem(m map[string]json.RawMessage
 	obj := new(DeleteFromAllGroupsResponseGroupsItem)
 	err = core.UnmarshalPrimitive(m, "access_group_id", &obj.AccessGroupID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "access_group_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status_code", &obj.StatusCode)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status_code-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "trace", &obj.Trace)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "trace-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "errors", &obj.Errors, UnmarshalError)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3808,10 +4227,12 @@ func UnmarshalDeleteGroupBulkMembersResponse(m map[string]json.RawMessage, resul
 	obj := new(DeleteGroupBulkMembersResponse)
 	err = core.UnmarshalPrimitive(m, "access_group_id", &obj.AccessGroupID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "access_group_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "members", &obj.Members, UnmarshalDeleteGroupBulkMembersResponseMembersItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "members-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3838,18 +4259,22 @@ func UnmarshalDeleteGroupBulkMembersResponseMembersItem(m map[string]json.RawMes
 	obj := new(DeleteGroupBulkMembersResponseMembersItem)
 	err = core.UnmarshalPrimitive(m, "iam_id", &obj.IamID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "trace", &obj.Trace)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "trace-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status_code", &obj.StatusCode)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status_code-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "errors", &obj.Errors, UnmarshalError)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3864,7 +4289,7 @@ type DeleteTemplateOptions struct {
 	// An optional transaction id for the request.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3904,7 +4329,7 @@ type DeleteTemplateVersionOptions struct {
 	// An optional transaction id for the request.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3956,10 +4381,12 @@ func UnmarshalError(m map[string]json.RawMessage, result interface{}) (err error
 	obj := new(Error)
 	err = core.UnmarshalPrimitive(m, "code", &obj.Code)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "code-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3980,7 +4407,10 @@ type GetAccessGroupOptions struct {
 	// group.
 	ShowFederated *bool `json:"show_federated,omitempty"`
 
-	// Allows users to set headers on API requests
+	// If show_crn is true, group CRN will be included in the response.
+	ShowCRN *bool `json:"show_crn,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4009,6 +4439,12 @@ func (_options *GetAccessGroupOptions) SetShowFederated(showFederated bool) *Get
 	return _options
 }
 
+// SetShowCRN : Allow user to set ShowCRN
+func (_options *GetAccessGroupOptions) SetShowCRN(showCRN bool) *GetAccessGroupOptions {
+	_options.ShowCRN = core.BoolPtr(showCRN)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *GetAccessGroupOptions) SetHeaders(param map[string]string) *GetAccessGroupOptions {
 	options.Headers = param
@@ -4028,7 +4464,7 @@ type GetAccessGroupRuleOptions struct {
 	// choose. If no transaction ID is passed in, then a random ID is generated.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4076,7 +4512,7 @@ type GetAccountSettingsOptions struct {
 	// choose. If no transaction ID is passed in, then a random ID is generated.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4116,7 +4552,7 @@ type GetAssignmentOptions struct {
 	// Returns resources access group template assigned, possible values `true` or `false`.
 	Verbose *bool `json:"verbose,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4163,7 +4599,7 @@ type GetLatestTemplateVersionOptions struct {
 	// An optional transaction id for the request.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4213,7 +4649,7 @@ type GetTemplateVersionOptions struct {
 	// An optional transaction id for the request.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4286,6 +4722,9 @@ type Group struct {
 
 	// This is set to true if rules exist for the group.
 	IsFederated *bool `json:"is_federated,omitempty"`
+
+	// CRN of the access group.
+	CRN *string `json:"crn,omitempty"`
 }
 
 // UnmarshalGroup unmarshals an instance of Group from the specified map of raw messages.
@@ -4293,42 +4732,57 @@ func UnmarshalGroup(m map[string]json.RawMessage, result interface{}) (err error
 	obj := new(Group)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_by_id", &obj.CreatedByID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_modified_at", &obj.LastModifiedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_modified_by_id", &obj.LastModifiedByID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_by_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "is_federated", &obj.IsFederated)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "is_federated-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4347,6 +4801,7 @@ func UnmarshalGroupActionControls(m map[string]json.RawMessage, result interface
 	obj := new(GroupActionControls)
 	err = core.UnmarshalModel(m, "access", &obj.Access, UnmarshalAccessActionControls)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "access-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4385,34 +4840,42 @@ func UnmarshalGroupMembersList(m map[string]json.RawMessage, result interface{})
 	obj := new(GroupMembersList)
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalHrefStruct)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalHrefStruct)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalHrefStruct)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalHrefStruct)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "members", &obj.Members, UnmarshalListGroupMembersResponseMember)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "members-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4425,12 +4888,16 @@ func (resp *GroupMembersList) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
@@ -4481,50 +4948,62 @@ func UnmarshalGroupTemplate(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(GroupTemplate)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "committed", &obj.Committed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "committed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "group", &obj.Group, UnmarshalAccessGroupResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "group-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "policy_template_references", &obj.PolicyTemplateReferences, UnmarshalPolicyTemplates)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "policy_template_references-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_by_id", &obj.CreatedByID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_modified_at", &obj.LastModifiedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_modified_by_id", &obj.LastModifiedByID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_by_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4563,34 +5042,42 @@ func UnmarshalGroupsList(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(GroupsList)
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalHrefStruct)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalHrefStruct)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalHrefStruct)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalHrefStruct)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "groups", &obj.Groups, UnmarshalGroup)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "groups-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4603,12 +5090,16 @@ func (resp *GroupsList) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
@@ -4625,6 +5116,7 @@ func UnmarshalHrefStruct(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(HrefStruct)
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4644,7 +5136,7 @@ type IsMemberOfAccessGroupOptions struct {
 	// choose. If no transaction ID is passed in, then a random ID is generated.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4710,7 +5202,7 @@ type ListAccessGroupMembersOptions struct {
 	// If verbose is true, sort the results by id, name, or email.
 	Sort *string `json:"sort,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4785,7 +5277,7 @@ type ListAccessGroupRulesOptions struct {
 	// choose. If no transaction ID is passed in, then a random ID is generated.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4857,7 +5349,10 @@ type ListAccessGroupsOptions struct {
 	// If hide_public_access is true, do not include the Public Access Group in the results.
 	HidePublicAccess *bool `json:"hide_public_access,omitempty"`
 
-	// Allows users to set headers on API requests
+	// If show_crn is true, group CRN will be included in the response.
+	ShowCRN *bool `json:"show_crn,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4928,6 +5423,12 @@ func (_options *ListAccessGroupsOptions) SetHidePublicAccess(hidePublicAccess bo
 	return _options
 }
 
+// SetShowCRN : Allow user to set ShowCRN
+func (_options *ListAccessGroupsOptions) SetShowCRN(showCRN bool) *ListAccessGroupsOptions {
+	_options.ShowCRN = core.BoolPtr(showCRN)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *ListAccessGroupsOptions) SetHeaders(param map[string]string) *ListAccessGroupsOptions {
 	options.Headers = param
@@ -4960,7 +5461,7 @@ type ListAssignmentsOptions struct {
 	// The offset of the first result item to be returned.
 	Offset *int64 `json:"offset,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5069,38 +5570,47 @@ func UnmarshalListGroupMembersResponseMember(m map[string]json.RawMessage, resul
 	obj := new(ListGroupMembersResponseMember)
 	err = core.UnmarshalPrimitive(m, "iam_id", &obj.IamID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "membership_type", &obj.MembershipType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "membership_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "email", &obj.Email)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "email-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_by_id", &obj.CreatedByID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5133,26 +5643,32 @@ func UnmarshalListTemplateAssignmentResponse(m map[string]json.RawMessage, resul
 	obj := new(ListTemplateAssignmentResponse)
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalHrefStruct)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalHrefStruct)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "assignments", &obj.Assignments, UnmarshalTemplateAssignmentResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "assignments-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5203,50 +5719,62 @@ func UnmarshalListTemplateVersionResponse(m map[string]json.RawMessage, result i
 	obj := new(ListTemplateVersionResponse)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "committed", &obj.Committed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "committed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "group", &obj.Group, UnmarshalAccessGroupResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "group-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "policy_template_references", &obj.PolicyTemplateReferences, UnmarshalPolicyTemplates)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "policy_template_references-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_by_id", &obj.CreatedByID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_modified_at", &obj.LastModifiedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_modified_by_id", &obj.LastModifiedByID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_by_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5264,7 +5792,7 @@ type ListTemplateVersionsOptions struct {
 	// The offset of the first result item to be returned.
 	Offset *int64 `json:"offset,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5331,34 +5859,42 @@ func UnmarshalListTemplateVersionsResponse(m map[string]json.RawMessage, result 
 	obj := new(ListTemplateVersionsResponse)
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalHrefStruct)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalHrefStruct)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalHrefStruct)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalHrefStruct)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "group_template_versions", &obj.GroupTemplateVersions, UnmarshalListTemplateVersionResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "group_template_versions-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5371,12 +5907,16 @@ func (resp *ListTemplateVersionsResponse) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
@@ -5400,7 +5940,7 @@ type ListTemplatesOptions struct {
 	// so that details are not retrieved.
 	Verbose *bool `json:"verbose,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5479,34 +6019,42 @@ func UnmarshalListTemplatesResponse(m map[string]json.RawMessage, result interfa
 	obj := new(ListTemplatesResponse)
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalHrefStruct)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalHrefStruct)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalHrefStruct)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalHrefStruct)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "group_templates", &obj.GroupTemplates, UnmarshalGroupTemplate)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "group_templates-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5519,12 +6067,16 @@ func (resp *ListTemplatesResponse) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
@@ -5550,14 +6102,17 @@ func UnmarshalMembers(m map[string]json.RawMessage, result interface{}) (err err
 	obj := new(Members)
 	err = core.UnmarshalPrimitive(m, "users", &obj.Users)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "users-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "services", &obj.Services)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "services-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "action_controls", &obj.ActionControls, UnmarshalMembersActionControls)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "action_controls-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5572,7 +6127,7 @@ type MembersActionControls struct {
 	// update to this control in a new version and members added by an administrator in the child account, you must resolve
 	// those conflicts in the child account. This prevents breaking access in the child account. For more information, see
 	// [Working with versions]
-	// (https://test.cloud.ibm.com/docs/secure-enterprise?topic=secure-enterprise-working-with-versions#new-version-scenarios).
+	// (https://cloud.ibm.com/docs/secure-enterprise?topic=secure-enterprise-working-with-versions#new-version-scenarios).
 	Add *bool `json:"add,omitempty"`
 
 	// Action control for removing enterprise-managed members from an enterprise-managed access group. Note that if an
@@ -5586,10 +6141,12 @@ func UnmarshalMembersActionControls(m map[string]json.RawMessage, result interfa
 	obj := new(MembersActionControls)
 	err = core.UnmarshalPrimitive(m, "add", &obj.Add)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "add-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "remove", &obj.Remove)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "remove-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5610,10 +6167,12 @@ func UnmarshalPolicyTemplates(m map[string]json.RawMessage, result interface{}) 
 	obj := new(PolicyTemplates)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5633,7 +6192,7 @@ type RemoveAccessGroupRuleOptions struct {
 	// choose. If no transaction ID is passed in, then a random ID is generated.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5682,7 +6241,7 @@ type RemoveMemberFromAccessGroupOptions struct {
 	// choose. If no transaction ID is passed in, then a random ID is generated.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5733,7 +6292,7 @@ type RemoveMemberFromAllAccessGroupsOptions struct {
 	// choose. If no transaction ID is passed in, then a random ID is generated.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5782,7 +6341,7 @@ type RemoveMembersFromAccessGroupOptions struct {
 	// choose. If no transaction ID is passed in, then a random ID is generated.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5846,7 +6405,7 @@ type ReplaceAccessGroupRuleOptions struct {
 	// choose. If no transaction ID is passed in, then a random ID is generated.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5933,14 +6492,17 @@ func UnmarshalResourceListWithTargetAccountID(m map[string]json.RawMessage, resu
 	obj := new(ResourceListWithTargetAccountID)
 	err = core.UnmarshalPrimitive(m, "target", &obj.Target)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "group", &obj.Group, UnmarshalAssignmentResourceAccessGroup)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "group-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "policy_template_references", &obj.PolicyTemplateReferences, UnmarshalAssignmentResourceEntry)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "policy_template_references-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5989,46 +6551,57 @@ func UnmarshalRule(m map[string]json.RawMessage, result interface{}) (err error)
 	obj := new(Rule)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "expiration", &obj.Expiration)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "expiration-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "realm_name", &obj.RealmName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "realm_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "access_group_id", &obj.AccessGroupID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "access_group_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "conditions", &obj.Conditions, UnmarshalRuleConditions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "conditions-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_by_id", &obj.CreatedByID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_modified_at", &obj.LastModifiedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_modified_by_id", &obj.LastModifiedByID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_by_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6047,6 +6620,7 @@ func UnmarshalRuleActionControls(m map[string]json.RawMessage, result interface{
 	obj := new(RuleActionControls)
 	err = core.UnmarshalPrimitive(m, "remove", &obj.Remove)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "remove-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6084,6 +6658,9 @@ func (*IamAccessGroupsV2) NewRuleConditions(claim string, operator string, value
 		Value: core.StringPtr(value),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -6092,14 +6669,17 @@ func UnmarshalRuleConditions(m map[string]json.RawMessage, result interface{}) (
 	obj := new(RuleConditions)
 	err = core.UnmarshalPrimitive(m, "claim", &obj.Claim)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "claim-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "operator", &obj.Operator)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "operator-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6117,6 +6697,7 @@ func UnmarshalRulesList(m map[string]json.RawMessage, result interface{}) (err e
 	obj := new(RulesList)
 	err = core.UnmarshalModel(m, "rules", &obj.Rules, UnmarshalRule)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rules-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6195,54 +6776,67 @@ func UnmarshalTemplateAssignmentResponse(m map[string]json.RawMessage, result in
 	obj := new(TemplateAssignmentResponse)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "template_id", &obj.TemplateID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "template_version", &obj.TemplateVersion)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "template_version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target_type", &obj.TargetType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target", &obj.Target)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "operation", &obj.Operation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "operation-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_by_id", &obj.CreatedByID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_modified_at", &obj.LastModifiedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_modified_by_id", &obj.LastModifiedByID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_by_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6299,58 +6893,72 @@ func UnmarshalTemplateAssignmentVerboseResponse(m map[string]json.RawMessage, re
 	obj := new(TemplateAssignmentVerboseResponse)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "template_id", &obj.TemplateID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "template_version", &obj.TemplateVersion)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "template_version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target_type", &obj.TargetType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target", &obj.Target)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "operation", &obj.Operation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "operation-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalResourceListWithTargetAccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_by_id", &obj.CreatedByID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_modified_at", &obj.LastModifiedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_modified_by_id", &obj.LastModifiedByID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_by_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6405,54 +7013,67 @@ func UnmarshalTemplateResponse(m map[string]json.RawMessage, result interface{})
 	obj := new(TemplateResponse)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "committed", &obj.Committed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "committed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "group", &obj.Group, UnmarshalAccessGroupResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "group-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "policy_template_references", &obj.PolicyTemplateReferences, UnmarshalPolicyTemplates)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "policy_template_references-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_by_id", &obj.CreatedByID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_modified_at", &obj.LastModifiedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_modified_by_id", &obj.LastModifiedByID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_by_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6507,54 +7128,67 @@ func UnmarshalTemplateVersionResponse(m map[string]json.RawMessage, result inter
 	obj := new(TemplateVersionResponse)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "committed", &obj.Committed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "committed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "group", &obj.Group, UnmarshalAccessGroupResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "group-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "policy_template_references", &obj.PolicyTemplateReferences, UnmarshalPolicyTemplates)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "policy_template_references-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_by_id", &obj.CreatedByID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_modified_at", &obj.LastModifiedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_modified_by_id", &obj.LastModifiedByID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_by_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6582,7 +7216,7 @@ type UpdateAccessGroupOptions struct {
 	// choose. If no transaction ID is passed in, then a random ID is generated.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6646,7 +7280,7 @@ type UpdateAccountSettingsOptions struct {
 	// choose. If no transaction ID is passed in, then a random ID is generated.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6694,7 +7328,7 @@ type UpdateAssignmentOptions struct {
 	// Template version which shall be applied to the assignment.
 	TemplateVersion *string `json:"template_version" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6758,7 +7392,7 @@ type UpdateTemplateVersionOptions struct {
 	// transaction id in header.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6840,7 +7474,7 @@ type AccessGroupsPager struct {
 // NewAccessGroupsPager returns a new AccessGroupsPager instance.
 func (iamAccessGroups *IamAccessGroupsV2) NewAccessGroupsPager(options *ListAccessGroupsOptions) (pager *AccessGroupsPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -6868,6 +7502,7 @@ func (pager *AccessGroupsPager) GetNextWithContext(ctx context.Context) (page []
 
 	result, _, err := pager.client.ListAccessGroupsWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -6876,7 +7511,8 @@ func (pager *AccessGroupsPager) GetNextWithContext(ctx context.Context) (page []
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -6895,6 +7531,7 @@ func (pager *AccessGroupsPager) GetAllWithContext(ctx context.Context) (allItems
 		var nextPage []Group
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -6904,12 +7541,16 @@ func (pager *AccessGroupsPager) GetAllWithContext(ctx context.Context) (allItems
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *AccessGroupsPager) GetNext() (page []Group, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *AccessGroupsPager) GetAll() (allItems []Group, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 //
@@ -6927,7 +7568,7 @@ type AccessGroupMembersPager struct {
 // NewAccessGroupMembersPager returns a new AccessGroupMembersPager instance.
 func (iamAccessGroups *IamAccessGroupsV2) NewAccessGroupMembersPager(options *ListAccessGroupMembersOptions) (pager *AccessGroupMembersPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -6955,6 +7596,7 @@ func (pager *AccessGroupMembersPager) GetNextWithContext(ctx context.Context) (p
 
 	result, _, err := pager.client.ListAccessGroupMembersWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -6963,7 +7605,8 @@ func (pager *AccessGroupMembersPager) GetNextWithContext(ctx context.Context) (p
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -6982,6 +7625,7 @@ func (pager *AccessGroupMembersPager) GetAllWithContext(ctx context.Context) (al
 		var nextPage []ListGroupMembersResponseMember
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -6991,12 +7635,16 @@ func (pager *AccessGroupMembersPager) GetAllWithContext(ctx context.Context) (al
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *AccessGroupMembersPager) GetNext() (page []ListGroupMembersResponseMember, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *AccessGroupMembersPager) GetAll() (allItems []ListGroupMembersResponseMember, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 //
@@ -7014,7 +7662,7 @@ type TemplatesPager struct {
 // NewTemplatesPager returns a new TemplatesPager instance.
 func (iamAccessGroups *IamAccessGroupsV2) NewTemplatesPager(options *ListTemplatesOptions) (pager *TemplatesPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -7042,6 +7690,7 @@ func (pager *TemplatesPager) GetNextWithContext(ctx context.Context) (page []Gro
 
 	result, _, err := pager.client.ListTemplatesWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -7050,7 +7699,8 @@ func (pager *TemplatesPager) GetNextWithContext(ctx context.Context) (page []Gro
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -7069,6 +7719,7 @@ func (pager *TemplatesPager) GetAllWithContext(ctx context.Context) (allItems []
 		var nextPage []GroupTemplate
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -7078,12 +7729,16 @@ func (pager *TemplatesPager) GetAllWithContext(ctx context.Context) (allItems []
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *TemplatesPager) GetNext() (page []GroupTemplate, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *TemplatesPager) GetAll() (allItems []GroupTemplate, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 //
@@ -7101,7 +7756,7 @@ type TemplateVersionsPager struct {
 // NewTemplateVersionsPager returns a new TemplateVersionsPager instance.
 func (iamAccessGroups *IamAccessGroupsV2) NewTemplateVersionsPager(options *ListTemplateVersionsOptions) (pager *TemplateVersionsPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -7129,6 +7784,7 @@ func (pager *TemplateVersionsPager) GetNextWithContext(ctx context.Context) (pag
 
 	result, _, err := pager.client.ListTemplateVersionsWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -7137,7 +7793,8 @@ func (pager *TemplateVersionsPager) GetNextWithContext(ctx context.Context) (pag
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -7156,6 +7813,7 @@ func (pager *TemplateVersionsPager) GetAllWithContext(ctx context.Context) (allI
 		var nextPage []ListTemplateVersionResponse
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -7165,10 +7823,14 @@ func (pager *TemplateVersionsPager) GetAllWithContext(ctx context.Context) (allI
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *TemplateVersionsPager) GetNext() (page []ListTemplateVersionResponse, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *TemplateVersionsPager) GetAll() (allItems []ListTemplateVersionResponse, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }

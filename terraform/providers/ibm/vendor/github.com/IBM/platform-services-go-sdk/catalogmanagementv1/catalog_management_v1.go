@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2024.
+ * (C) Copyright IBM Corp. 2025.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.94.1-71478489-20240820-161623
+ * IBM OpenAPI SDK Code Generator Version: 3.99.1-daeb6e46-20250131-173156
  */
 
 // Package catalogmanagementv1 : Operations and models for the CatalogManagementV1 service
@@ -283,14 +283,8 @@ func (catalogManagement *CatalogManagementV1) UpdateCatalogAccountWithContext(ct
 	if updateCatalogAccountOptions.AccountFilters != nil {
 		body["account_filters"] = updateCatalogAccountOptions.AccountFilters
 	}
-	if updateCatalogAccountOptions.RegionFilters != nil {
-		body["region_filters"] = updateCatalogAccountOptions.RegionFilters
-	}
-	if updateCatalogAccountOptions.FilteredRegions != nil {
-		body["filtered_regions"] = updateCatalogAccountOptions.FilteredRegions
-	}
-	if updateCatalogAccountOptions.FilterRegions != nil {
-		body["filter_regions"] = updateCatalogAccountOptions.FilterRegions
+	if updateCatalogAccountOptions.RegionFilter != nil {
+		body["region_filter"] = updateCatalogAccountOptions.RegionFilter
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -9311,11 +9305,8 @@ type Account struct {
 	// Filters for account and catalog filters.
 	AccountFilters *Filters `json:"account_filters,omitempty"`
 
-	RegionFilters []string `json:"region_filters,omitempty"`
-
-	FilteredRegions []string `json:"filtered_regions,omitempty"`
-
-	FilterRegions *bool `json:"filter_regions,omitempty"`
+	// Region filter string.
+	RegionFilter *string `json:"region_filter,omitempty"`
 }
 
 // UnmarshalAccount unmarshals an instance of Account from the specified map of raw messages.
@@ -9341,19 +9332,9 @@ func UnmarshalAccount(m map[string]json.RawMessage, result interface{}) (err err
 		err = core.SDKErrorf(err, "", "account_filters-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "region_filters", &obj.RegionFilters)
+	err = core.UnmarshalPrimitive(m, "region_filter", &obj.RegionFilter)
 	if err != nil {
-		err = core.SDKErrorf(err, "", "region_filters-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "filtered_regions", &obj.FilteredRegions)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "filtered_regions-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "filter_regions", &obj.FilterRegions)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "filter_regions-error", common.GetComponentInfo())
+		err = core.SDKErrorf(err, "", "region_filter-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -23845,11 +23826,8 @@ type UpdateCatalogAccountOptions struct {
 	// Filters for account and catalog filters.
 	AccountFilters *Filters `json:"account_filters,omitempty"`
 
-	RegionFilters []string `json:"region_filters,omitempty"`
-
-	FilteredRegions []string `json:"filtered_regions,omitempty"`
-
-	FilterRegions *bool `json:"filter_regions,omitempty"`
+	// Region filter string.
+	RegionFilter *string `json:"region_filter,omitempty"`
 
 	// Allows users to set headers on API requests.
 	Headers map[string]string
@@ -23884,21 +23862,9 @@ func (_options *UpdateCatalogAccountOptions) SetAccountFilters(accountFilters *F
 	return _options
 }
 
-// SetRegionFilters : Allow user to set RegionFilters
-func (_options *UpdateCatalogAccountOptions) SetRegionFilters(regionFilters []string) *UpdateCatalogAccountOptions {
-	_options.RegionFilters = regionFilters
-	return _options
-}
-
-// SetFilteredRegions : Allow user to set FilteredRegions
-func (_options *UpdateCatalogAccountOptions) SetFilteredRegions(filteredRegions []string) *UpdateCatalogAccountOptions {
-	_options.FilteredRegions = filteredRegions
-	return _options
-}
-
-// SetFilterRegions : Allow user to set FilterRegions
-func (_options *UpdateCatalogAccountOptions) SetFilterRegions(filterRegions bool) *UpdateCatalogAccountOptions {
-	_options.FilterRegions = core.BoolPtr(filterRegions)
+// SetRegionFilter : Allow user to set RegionFilter
+func (_options *UpdateCatalogAccountOptions) SetRegionFilter(regionFilter string) *UpdateCatalogAccountOptions {
+	_options.RegionFilter = core.StringPtr(regionFilter)
 	return _options
 }
 
@@ -24959,6 +24925,9 @@ type Version struct {
 
 	// Optional. Stack definition that was used to create this version.
 	Stack map[string]interface{} `json:"stack,omitempty"`
+
+	// The lowest version (semver) that can upgrade to this version.
+	MinimumCompatibleVersion *string `json:"minimum_compatible_version,omitempty"`
 }
 
 // UnmarshalVersion unmarshals an instance of Version from the specified map of raw messages.
@@ -25182,6 +25151,11 @@ func UnmarshalVersion(m map[string]json.RawMessage, result interface{}) (err err
 	err = core.UnmarshalPrimitive(m, "stack", &obj.Stack)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "stack-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "minimum_compatible_version", &obj.MinimumCompatibleVersion)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "minimum_compatible_version-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
