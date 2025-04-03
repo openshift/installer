@@ -1,6 +1,6 @@
 machineconfignodes.machineconfiguration.openshift.io:
   Annotations: {}
-  ApprovedPRNumber: https://github.com/openshift/api/pull/2201
+  ApprovedPRNumber: https://github.com/openshift/api/pull/2256
   CRDName: machineconfignodes.machineconfiguration.openshift.io
   Capability: ""
   Category: ""

@@ -99,7 +99,9 @@ type InfrastructureStatus struct {
 	// its components are not visible within the cluster.
 	// +kubebuilder:default=HighlyAvailable
 	// +openshift:validation:FeatureGateAwareEnum:featureGate="",enum=HighlyAvailable;SingleReplica;External
-	// +openshift:validation:FeatureGateAwareEnum:featureGate=HighlyAvailableArbiter;DualReplica,enum=HighlyAvailable;HighlyAvailableArbiter;SingleReplica;DualReplica;External
+	// +openshift:validation:FeatureGateAwareEnum:featureGate=HighlyAvailableArbiter,enum=HighlyAvailable;HighlyAvailableArbiter;SingleReplica;External
+	// +openshift:validation:FeatureGateAwareEnum:featureGate=DualReplica,enum=HighlyAvailable;SingleReplica;DualReplica;External
+	// +openshift:validation:FeatureGateAwareEnum:requiredFeatureGate=HighlyAvailableArbiter;DualReplica,enum=HighlyAvailable;HighlyAvailableArbiter;SingleReplica;DualReplica;External
 	ControlPlaneTopology TopologyMode `json:"controlPlaneTopology"`
 
 	// infrastructureTopology expresses the expectations for infrastructure services that do not run on control
@@ -1006,7 +1008,6 @@ type BareMetalPlatformStatus struct {
 	// loadBalancer defines how the load balancer used by the cluster is configured.
 	// +default={"type": "OpenShiftManagedDefault"}
 	// +kubebuilder:default={"type": "OpenShiftManagedDefault"}
-	// +openshift:enable:FeatureGate=BareMetalLoadBalancer
 	// +optional
 	LoadBalancer *BareMetalPlatformLoadBalancer `json:"loadBalancer,omitempty"`
 
@@ -1220,7 +1221,6 @@ type OvirtPlatformStatus struct {
 	// loadBalancer defines how the load balancer used by the cluster is configured.
 	// +default={"type": "OpenShiftManagedDefault"}
 	// +kubebuilder:default={"type": "OpenShiftManagedDefault"}
-	// +openshift:enable:FeatureGate=BareMetalLoadBalancer
 	// +optional
 	LoadBalancer *OvirtPlatformLoadBalancer `json:"loadBalancer,omitempty"`
 }
@@ -1390,7 +1390,6 @@ type VSpherePlatformTopology struct {
 	// VSpherePlatformFailureDomainSpec.
 	// For example, for zone=zonea, region=region1, and infrastructure name=test,
 	// the template path would be calculated as /<datacenter>/vm/test-rhcos-region1-zonea.
-	// +openshift:enable:FeatureGate=VSphereControlPlaneMachineSet
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=2048
 	// +kubebuilder:validation:Pattern=`^/.*?/vm/.*?`
@@ -1558,8 +1557,7 @@ type VSpherePlatformSpec struct {
 	// + If VCenters is not defined use the existing cloud-config configmap defined
 	// + in openshift-config.
 	// +kubebuilder:validation:MinItems=0
-	// +openshift:validation:FeatureGateAwareMaxItems:featureGate="",maxItems=1
-	// +openshift:validation:FeatureGateAwareMaxItems:featureGate=VSphereMultiVCenters,maxItems=3
+	// +kubebuilder:validation:MaxItems=3
 	// +kubebuilder:validation:XValidation:rule="size(self) != size(oldSelf) ? size(oldSelf) == 0 && size(self) < 2 : true",message="vcenters cannot be added or removed once set"
 	// +listType=atomic
 	// +optional
@@ -1671,7 +1669,6 @@ type VSpherePlatformStatus struct {
 	// loadBalancer defines how the load balancer used by the cluster is configured.
 	// +default={"type": "OpenShiftManagedDefault"}
 	// +kubebuilder:default={"type": "OpenShiftManagedDefault"}
-	// +openshift:enable:FeatureGate=BareMetalLoadBalancer
 	// +optional
 	LoadBalancer *VSpherePlatformLoadBalancer `json:"loadBalancer,omitempty"`
 
@@ -2089,7 +2086,6 @@ type NutanixPlatformStatus struct {
 	// loadBalancer defines how the load balancer used by the cluster is configured.
 	// +default={"type": "OpenShiftManagedDefault"}
 	// +kubebuilder:default={"type": "OpenShiftManagedDefault"}
-	// +openshift:enable:FeatureGate=BareMetalLoadBalancer
 	// +optional
 	LoadBalancer *NutanixPlatformLoadBalancer `json:"loadBalancer,omitempty"`
 }

@@ -352,3 +352,5 @@ replace github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.c
 
 // This is to force capi back for the older provider version
 replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.19.3
+
+replace github.com/openshift/api => github.com/rvanderp3/api v0.0.0-20250519141013-be5e7b069439
