@@ -103,7 +103,7 @@ func TestClusterInfo_Generate(t *testing.T) {
 				}
 				return objs, ocObjs, ocMachineConfigObjs
 			},
-			expectedError: "Platform: Unsupported value: \"aws\": supported values: \"baremetal\", \"vsphere\", \"nutanix\", \"none\", \"external\"",
+			expectedError: "platform: Unsupported value: \"aws\": supported values: \"baremetal\", \"vsphere\", \"nutanix\", \"none\", \"external\"",
 		},
 		{
 			name:     "sshKey from nodes-config.yaml",

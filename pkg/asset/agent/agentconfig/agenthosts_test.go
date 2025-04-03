@@ -197,7 +197,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 				getInstallConfigSingleHost(),
 				getAgentConfigUnsupportedDeviceName(),
 			},
-			expectedError:  "invalid Hosts configuration: Hosts[0].rootDeviceHints.deviceName: Invalid value: \"/dev/disk/by-id/wwn-0x600508e000000000ce506dc50ab0ad05\": Device Name of root device hint must be path in /dev/ or /dev/disk/by-path/",
+			expectedError:  "invalid Hosts configuration: hosts[0].rootDeviceHints.deviceName: Invalid value: \"/dev/disk/by-id/wwn-0x600508e000000000ce506dc50ab0ad05\": Device Name of root device hint must be path in /dev/ or /dev/disk/by-path/",
 			expectedConfig: nil,
 		},
 		{
@@ -208,7 +208,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 				getInstallConfigUnsupportedWWNExtension(),
 				getNoHostsAgentConfig(),
 			},
-			expectedError:  "invalid Hosts configuration: Hosts[0].rootDeviceHints.wwnWithExtension: Forbidden: WWN extensions are not supported in root device hints",
+			expectedError:  "invalid Hosts configuration: hosts[0].rootDeviceHints.wwnWithExtension: Forbidden: WWN extensions are not supported in root device hints",
 			expectedConfig: nil,
 		},
 		{
@@ -219,7 +219,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 				getInstallConfigSingleHost(),
 				getAgentConfigUnsupportedWWNVendorExtension(),
 			},
-			expectedError:  "invalid Hosts configuration: Hosts[0].rootDeviceHints.wwnVendorExtension: Forbidden: WWN vendor extensions are not supported in root device hints",
+			expectedError:  "invalid Hosts configuration: hosts[0].rootDeviceHints.wwnVendorExtension: Forbidden: WWN vendor extensions are not supported in root device hints",
 			expectedConfig: nil,
 		},
 		{
@@ -240,7 +240,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 				getInstallConfigSingleHost(),
 				getAgentConfigInvalidHostRole(),
 			},
-			expectedError:  "invalid Hosts configuration: Hosts[0].Host: Forbidden: host role has incorrect value. Role must either be 'master' or 'worker'",
+			expectedError:  "invalid Hosts configuration: hosts[0].role: Unsupported value: \"invalid-role\": supported values: \"master\", \"worker\"",
 			expectedConfig: nil,
 		},
 		{
@@ -251,7 +251,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 				getInstallConfigSameMac(),
 				getNoHostsAgentConfig(),
 			},
-			expectedError:  "invalid Hosts configuration: Hosts[1].Interfaces[0].macAddress: Invalid value: \"28:d2:44:b0:bf:01\": duplicate MAC address found",
+			expectedError:  "invalid Hosts configuration: hosts[1].interfaces[0].macAddress: Invalid value: \"28:d2:44:b0:bf:01\": duplicate MAC address found",
 			expectedConfig: nil,
 		},
 		{
@@ -262,7 +262,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 				getInstallConfigSingleHost(),
 				getAgentConfigInvalidMac(),
 			},
-			expectedError:  "invalid Hosts configuration: Hosts[0].Interfaces[0].macAddress: Invalid value: \"000000\": address 000000: invalid MAC address",
+			expectedError:  "invalid Hosts configuration: hosts[0].interfaces[0].macAddress: Invalid value: \"000000\": address 000000: invalid MAC address",
 			expectedConfig: nil,
 		},
 		{
@@ -273,7 +273,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 				getInstallConfigSingleHost(),
 				getAgentConfigInvalidInterfaces(),
 			},
-			expectedError:  "invalid Hosts configuration: Hosts[0].Interfaces[1].macAddress: Invalid value: \"28:d2:44:d2:b2:1a\": duplicate MAC address found",
+			expectedError:  "invalid Hosts configuration: hosts[0].interfaces[1].macAddress: Invalid value: \"28:d2:44:d2:b2:1a\": duplicate MAC address found",
 			expectedConfig: nil,
 		},
 		{
@@ -284,7 +284,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 				getInstallConfigInvalidInterfaces(),
 				getNoHostsAgentConfig(),
 			},
-			expectedError:  "invalid Hosts configuration: Hosts[0].Interfaces[1].macAddress: Invalid value: \"28:d2:44:b0:bf:01\": duplicate MAC address found",
+			expectedError:  "invalid Hosts configuration: hosts[0].interfaces[1].macAddress: Invalid value: \"28:d2:44:b0:bf:01\": duplicate MAC address found",
 			expectedConfig: nil,
 		},
 		{
@@ -295,7 +295,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 				getInstallConfigSingleHost(),
 				getAgentConfigInvalidRendezvousIP(),
 			},
-			expectedError:  "invalid Hosts configuration: Hosts[1].Host: Forbidden: Host test-2 has role 'worker' and has the rendezvousIP assigned to it. The rendezvousIP must be assigned to a control plane host.",
+			expectedError:  "invalid Hosts configuration: hosts[1].role: Forbidden: Host test-2 has role 'worker' and has the rendezvousIP assigned to it. The rendezvousIP must be assigned to a control plane host.",
 			expectedConfig: nil,
 		},
 		{
@@ -306,7 +306,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 				getInstallConfigInvalidRendezvousIP(),
 				getNoHostsAgentConfig(),
 			},
-			expectedError:  "invalid Hosts configuration: Hosts[0].Host: Forbidden: Host test has role 'worker' and has the rendezvousIP assigned to it. The rendezvousIP must be assigned to a control plane host.",
+			expectedError:  "invalid Hosts configuration: hosts[0].role: Forbidden: Host test has role 'worker' and has the rendezvousIP assigned to it. The rendezvousIP must be assigned to a control plane host.",
 			expectedConfig: nil,
 		},
 		{
@@ -317,7 +317,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 				getInstallConfigSingleHost(),
 				getAgentConfigMissingInterfaces(),
 			},
-			expectedError:  "invalid Hosts configuration: [Hosts[0].Interfaces: Required value: at least one interface must be defined for each node, Hosts[1].Interfaces: Required value: at least one interface must be defined for each node, Hosts[2].Interfaces: Required value: at least one interface must be defined for each node]",
+			expectedError:  "invalid Hosts configuration: [hosts[0].interfaces: Required value: at least one interface must be defined for each node, hosts[1].interfaces: Required value: at least one interface must be defined for each node, hosts[2].interfaces: Required value: at least one interface must be defined for each node]",
 			expectedConfig: nil,
 		},
 		{

@@ -122,7 +122,7 @@ func (a *AgentHosts) validateAgentHosts() field.ErrorList {
 
 	macs := make(map[string]bool)
 	for i, host := range a.Hosts {
-		hostPath := field.NewPath("Hosts").Index(i)
+		hostPath := field.NewPath("hosts").Index(i)
 
 		if err := a.validateHostInterfaces(hostPath, host, macs); err != nil {
 			allErrs = append(allErrs, err...)
@@ -147,7 +147,7 @@ func (a *AgentHosts) validateAgentHosts() field.ErrorList {
 func (a *AgentHosts) validateHostInterfaces(hostPath *field.Path, host agent.Host, macs map[string]bool) field.ErrorList {
 	var allErrs field.ErrorList
 
-	interfacePath := hostPath.Child("Interfaces")
+	interfacePath := hostPath.Child("interfaces")
 	if len(host.Interfaces) == 0 {
 		allErrs = append(allErrs, field.Required(interfacePath, "at least one interface must be defined for each node"))
 	}
@@ -194,7 +194,8 @@ func (a *AgentHosts) validateRoles(hostPath *field.Path, host agent.Host) field.
 	var allErrs field.ErrorList
 
 	if len(host.Role) > 0 && host.Role != masterRole && host.Role != workerRole {
-		allErrs = append(allErrs, field.Forbidden(hostPath.Child("Host"), "host role has incorrect value. Role must either be 'master' or 'worker'"))
+		allErrs = append(allErrs, field.NotSupported(hostPath.Child("role"), host.Role,
+			[]string{masterRole, workerRole}))
 	}
 
 	return allErrs
@@ -208,7 +209,7 @@ func (a *AgentHosts) validateRendezvousIPNotWorker(rendezvousIP string, hosts []
 			if host.Role != workerRole {
 				continue
 			}
-			hostPath := field.NewPath("Hosts").Index(i)
+			hostPath := field.NewPath("hosts").Index(i)
 			hostIPs, err := agentAsset.GetAllHostIPs(host.NetworkConfig)
 			if err != nil {
 				allErrs = append(allErrs, field.Invalid(hostPath, host.NetworkConfig, err.Error()))
@@ -217,7 +218,7 @@ func (a *AgentHosts) validateRendezvousIPNotWorker(rendezvousIP string, hosts []
 			_, found := hostIPs[rendezvousIP]
 			if found {
 				errMsg := "Host " + host.Hostname + " has role 'worker' and has the rendezvousIP assigned to it. The rendezvousIP must be assigned to a control plane host."
-				allErrs = append(allErrs, field.Forbidden(hostPath.Child("Host"), errMsg))
+				allErrs = append(allErrs, field.Forbidden(hostPath.Child("role"), errMsg))
 			}
 		}
 	}

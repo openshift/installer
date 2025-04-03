@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
+	"unicode"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
@@ -11,7 +13,7 @@ import (
 )
 
 // ValidateUniqueAndRequiredFields validated unique fields are indeed unique and that required fields exist on a generic element.
-func ValidateUniqueAndRequiredFields[T any](elements []T, fldPath *field.Path, filter validator.FilterFunc, fieldName string) field.ErrorList {
+func ValidateUniqueAndRequiredFields[T any](elements []T, fldPath *field.Path, filter validator.FilterFunc) field.ErrorList {
 	errs := field.ErrorList{}
 
 	values := make(map[string]map[interface{}]struct{})
@@ -42,9 +44,6 @@ func ValidateUniqueAndRequiredFields[T any](elements []T, fldPath *field.Path, f
 	}
 
 	// Apply validations and translate errors.
-
-	fldPath = fldPath.Child(fieldName)
-
 	for idx, element := range elements {
 		err := validate.StructFiltered(element, filter)
 		if err != nil {
@@ -52,7 +51,7 @@ func ValidateUniqueAndRequiredFields[T any](elements []T, fldPath *field.Path, f
 			var validationErrs validator.ValidationErrors
 			if errors.As(err, &validationErrs) {
 				for _, fieldErr := range validationErrs {
-					childName := fldPath.Index(idx).Child(fieldErr.Namespace()[len(elementType)+1:])
+					childName := fldPath.Index(idx).Child(errorPath(fieldErr, elementType))
 					switch fieldErr.Tag() {
 					case "required":
 						errs = append(errs, field.Required(childName, "missing "+fieldErr.Field()))
@@ -64,4 +63,19 @@ func ValidateUniqueAndRequiredFields[T any](elements []T, fldPath *field.Path, f
 		}
 	}
 	return errs
+}
+
+func errorPath(verr validator.FieldError, base string) string {
+	ns := verr.Namespace()
+	parts := strings.Split(strings.TrimPrefix(ns, base+"."), ".")
+	for i, p := range parts {
+		index := strings.IndexFunc(p, unicode.IsLower)
+		if index < 0 {
+			index = len(p)
+		} else if index > 1 {
+			index--
+		}
+		parts[i] = strings.ToLower(p[:index]) + p[index:]
+	}
+	return strings.Join(parts, ".")
 }

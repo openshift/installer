@@ -238,7 +238,7 @@ func (n *NMStateConfig) validateNMStateLabels() field.ErrorList {
 
 	var allErrs field.ErrorList
 
-	fieldPath := field.NewPath("ObjectMeta", "Labels")
+	fieldPath := field.NewPath("labels")
 
 	for _, nmStateConfig := range n.Config {
 		if len(nmStateConfig.ObjectMeta.Labels) == 0 {
