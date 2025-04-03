@@ -42,11 +42,10 @@ func (MachineConfigNodeList) SwaggerDoc() map[string]string {
 }
 
 var map_MachineConfigNodeSpec = map[string]string{
-	"":                "MachineConfigNodeSpec describes the MachineConfigNode we are managing.",
-	"node":            "node contains a reference to the node for this machine config node.",
-	"pool":            "pool contains a reference to the machine config pool that this machine config node's referenced node belongs to.",
-	"configVersion":   "configVersion holds the desired config version for the node targeted by this machine config node resource. The desired version represents the machine config the node will attempt to update to and gets set before the machine config operator validates the new machine config against the current machine config.",
-	"pinnedImageSets": "pinnedImageSets is a user defined value that holds the names of the desired image sets that the node should pull and pin.",
+	"":              "MachineConfigNodeSpec describes the MachineConfigNode we are managing.",
+	"node":          "node contains a reference to the node for this machine config node.",
+	"pool":          "pool contains a reference to the machine config pool that this machine config node's referenced node belongs to.",
+	"configVersion": "configVersion holds the desired config version for the node targeted by this machine config node resource. The desired version represents the machine config the node will attempt to update to and gets set before the machine config operator validates the new machine config against the current machine config.",
 }
 
 func (MachineConfigNodeSpec) SwaggerDoc() map[string]string {
@@ -60,15 +59,6 @@ var map_MachineConfigNodeSpecMachineConfigVersion = map[string]string{
 
 func (MachineConfigNodeSpecMachineConfigVersion) SwaggerDoc() map[string]string {
 	return map_MachineConfigNodeSpecMachineConfigVersion
-}
-
-var map_MachineConfigNodeSpecPinnedImageSet = map[string]string{
-	"":     "MachineConfigNodeSpecPinnedImageSet holds information on the desired pinned image sets that the current observed machine config node should pin and pull.",
-	"name": "name is the name of the pinned image set. Must be a lowercase RFC-1123 subdomain name (https://tools.ietf.org/html/rfc1123) consisting of only lowercase alphanumeric characters, hyphens (-), and periods (.), and must start and end with an alphanumeric character, and be at most 253 characters in length.",
-}
-
-func (MachineConfigNodeSpecPinnedImageSet) SwaggerDoc() map[string]string {
-	return map_MachineConfigNodeSpecPinnedImageSet
 }
 
 var map_MachineConfigNodeStatus = map[string]string{

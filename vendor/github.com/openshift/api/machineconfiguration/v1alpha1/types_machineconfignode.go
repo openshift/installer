@@ -10,7 +10,7 @@ import (
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=machineconfignodes,scope=Cluster
 // +kubebuilder:subresource:status
-// +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/2201
+// +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/2256
 // +openshift:file-pattern=cvoRunLevel=0000_80,operatorName=machine-config,operatorOrdering=01
 // +openshift:enable:FeatureGate=MachineConfigNodes
 // +kubebuilder:printcolumn:name="PoolName",type="string",JSONPath=.spec.pool.name,priority=0
@@ -104,7 +104,10 @@ type MachineConfigNodeSpec struct {
 	// +listMapKey=name
 	// +kubebuilder:validation:MaxItems=100
 	// +optional
-	PinnedImageSets []MachineConfigNodeSpecPinnedImageSet `json:"pinnedImageSets,omitempty"`
+	// Tombstone: Functionality to correctly and consistely populate this field was not implemented in the MCO, so
+	// when applying a PIS, this field is not being updated. Since this field is not being used, it is being removed
+	// before this API is GAed.
+	// PinnedImageSets []MachineConfigNodeSpecPinnedImageSet `json:"pinnedImageSets,omitempty"`
 }
 
 // MachineConfigNodeStatus holds the reported information on a particular machine config node.
@@ -218,18 +221,20 @@ type MachineConfigNodeSpecMachineConfigVersion struct {
 	Desired string `json:"desired"`
 }
 
+// Tombstone: This struct defines the type of `Spec.PinnedImageSets`, which is being removed. Therefore, this field
+// is also being tombstoned.
 // MachineConfigNodeSpecPinnedImageSet holds information on the desired pinned image sets that the current observed machine config node
 // should pin and pull.
-type MachineConfigNodeSpecPinnedImageSet struct {
-	// name is the name of the pinned image set.
-	// Must be a lowercase RFC-1123 subdomain name (https://tools.ietf.org/html/rfc1123) consisting
-	// of only lowercase alphanumeric characters, hyphens (-), and periods (.), and must start and end
-	// with an alphanumeric character, and be at most 253 characters in length.
-	// +kubebuilder:validation:MaxLength:=253
-	// +kubebuilder:validation:XValidation:rule="!format.dns1123Subdomain().validate(self).hasValue()",message="a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character."
-	// +required
-	Name string `json:"name"`
-}
+// type MachineConfigNodeSpecPinnedImageSet struct {
+// 	// name is the name of the pinned image set.
+// 	// Must be a lowercase RFC-1123 subdomain name (https://tools.ietf.org/html/rfc1123) consisting
+// 	// of only lowercase alphanumeric characters, hyphens (-), and periods (.), and must start and end
+// 	// with an alphanumeric character, and be at most 253 characters in length.
+// 	// +kubebuilder:validation:MaxLength:=253
+// 	// +kubebuilder:validation:XValidation:rule="!format.dns1123Subdomain().validate(self).hasValue()",message="a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character."
+// 	// +required
+// 	Name string `json:"name"`
+// }
 
 // StateProgress is each possible state for each possible MachineConfigNodeType
 // Please note: These conditions are subject to change. Both additions and deletions may be made.
