@@ -1,7 +1,6 @@
 package image
 
 import (
-	"compress/gzip"
 	"context"
 	"encoding/json"
 	"errors"
@@ -123,22 +122,9 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 		return err
 	}
 	defer kernelReader.Close()
-
-	if a.cpuArch == arch.RpmArch(types.ArchitectureARM64) {
-		gzipReader, err := gzip.NewReader(kernelReader)
-		if err != nil {
-			panic(err)
-		}
-		defer gzipReader.Close()
-		err = copyfile(agentVmlinuzFile, gzipReader)
-		if err != nil {
-			return err
-		}
-	} else {
-		err = copyfile(agentVmlinuzFile, kernelReader)
-		if err != nil {
-			return err
-		}
+	err = copyfile(agentVmlinuzFile, kernelReader)
+	if err != nil {
+		return err
 	}
 
 	if a.bootArtifactsBaseURL != "" {
