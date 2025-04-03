@@ -615,6 +615,15 @@ func (a *Common) addParentFiles(dependencies asset.Parents) {
 
 		// Replace files that already exist in the slice with ones added later, otherwise append them
 		for _, file := range ignition.FilesFromAsset(rootDir, "root", 0644, asset) {
+			// We limit read access to the fencing secrets
+			match, err := machines.IsFencingCredentialsFile(file.Path)
+			if err != nil {
+				logrus.Warnf("failed regex scan for fencing secrets during ignition files creation: %s", err.Error())
+			} else if match {
+				logrus.Debugf("Setting file mode to 0600 for file: %s", file.Path)
+				file.Mode = ptr.To(0600)
+			}
+
 			a.Config.Storage.Files = replaceOrAppend(a.Config.Storage.Files, file)
 		}
 	}

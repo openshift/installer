@@ -1591,6 +1591,12 @@ func validateFencingCredentials(installConfig *types.InstallConfig) (errors fiel
 	if fencingCredentials != nil {
 		allErrs = append(allErrs, common.ValidateUniqueAndRequiredFields(fencingCredentials.Credentials, fldPath.Child("credentials"), func([]byte) bool { return false })...)
 		allErrs = append(allErrs, validateFencingForPlatform(installConfig, fldPath)...)
+
+		for i, credential := range fencingCredentials.Credentials {
+			if len(credential.CertificateVerification) > 0 && credential.CertificateVerification != types.CertificateVerificationDisabled && credential.CertificateVerification != types.CertificateVerificationEnabled {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("credentials").Index(i).Key("CertificateVerification"), installConfig.ControlPlane.Fencing.Credentials[i].CertificateVerification, fmt.Sprintf("invalid certificate verification; %q should set to one of the following: ['Enabled' (default), 'Disabled']", credential.CertificateVerification)))
+			}
+		}
 	}
 	allErrs = append(allErrs, validateCredentialsNumber(installConfig, fencingCredentials, fldPath.Child("credentials"))...)
 

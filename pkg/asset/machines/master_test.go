@@ -11,6 +11,7 @@ import (
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -20,6 +21,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/none"
 )
 
 func TestMasterGenerateMachineConfigs(t *testing.T) {
@@ -345,4 +347,109 @@ func networkConfig(config string) *v1.JSON {
 	var nc v1.JSON
 	yaml.Unmarshal([]byte(config), &nc)
 	return &nc
+}
+
+type SecretFile struct {
+	Filename string
+	Name     string
+	Data     string
+}
+
+func TestFencingCredentialsSecretsFile(t *testing.T) {
+	cases := []struct {
+		name                          string
+		credentials                   []*types.Credential
+		fencingCredentialsSecretFiles []*SecretFile
+		err                           error
+	}{
+		{
+			name: "valid credentials",
+			credentials: []*types.Credential{
+				{
+					HostName:                "control-plane-0",
+					Address:                 "https://redfish/v1/1",
+					Username:                "user1",
+					Password:                "pass1",
+					CertificateVerification: "Enabled",
+				},
+				{
+					HostName:                "control-plane-1",
+					Address:                 "http://redfish/v1/2",
+					Username:                "user2",
+					Password:                "pass2",
+					CertificateVerification: "Disabled",
+				},
+			},
+			fencingCredentialsSecretFiles: []*SecretFile{
+				{
+					Filename: "openshift/99_openshift-etcd_fencing-credentials-secrets-0.yaml",
+					Name:     "fencing-credentials-control-plane-0",
+					Data:     "map[address:[104 116 116 112 115 58 47 47 114 101 100 102 105 115 104 47 118 49 47 49] certificateVerification:[69 110 97 98 108 101 100] password:[112 97 115 115 49] username:[117 115 101 114 49]]",
+				},
+				{
+					Filename: "openshift/99_openshift-etcd_fencing-credentials-secrets-1.yaml",
+					Name:     "fencing-credentials-control-plane-1",
+					Data:     "map[address:[104 116 116 112 58 47 47 114 101 100 102 105 115 104 47 118 49 47 50] certificateVerification:[68 105 115 97 98 108 101 100] password:[112 97 115 115 50] username:[117 115 101 114 50]]",
+				},
+			},
+			err: nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			parents := asset.Parents{}
+			installConfig := installconfig.MakeAsset(
+				&types.InstallConfig{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-cluster",
+					},
+					Platform: types.Platform{
+						None: &none.Platform{},
+					},
+					ControlPlane: &types.MachinePool{
+						Replicas: ptr.To(int64(2)),
+						Fencing: &types.Fencing{
+							Credentials: tc.credentials,
+						},
+					},
+					Compute: []types.MachinePool{
+						{
+							Replicas: ptr.To(int64(0)),
+							Platform: types.MachinePoolPlatform{},
+						},
+					},
+				})
+
+			parents.Add(
+				&installconfig.ClusterID{
+					UUID:    "test-uuid",
+					InfraID: "test-infra-id",
+				},
+				installConfig,
+				rhcos.MakeAsset("test-image"),
+				(*rhcos.Release)(ptr.To("412.86.202208101040-0")),
+				&machine.Master{
+					File: &asset.File{
+						Filename: "master-ignition",
+						Data:     []byte("test-ignition"),
+					},
+				},
+			)
+
+			master := &Master{}
+			if tc.err != nil {
+				assert.Error(t, tc.err, master.Generate(context.Background(), parents))
+				assert.Len(t, master.FencingCredentialsSecretFiles, len(tc.fencingCredentialsSecretFiles))
+				return
+			}
+
+			assert.NoError(t, master.Generate(context.Background(), parents))
+			assert.Len(t, master.FencingCredentialsSecretFiles, len(tc.fencingCredentialsSecretFiles))
+			for i, secret := range master.FencingCredentialsSecretFiles {
+				verifySecret(t, secret, tc.fencingCredentialsSecretFiles[i].Filename, tc.fencingCredentialsSecretFiles[i].Name, tc.fencingCredentialsSecretFiles[i].Data)
+			}
+			verifyManifestOwnership(t, master)
+		})
+	}
 }
