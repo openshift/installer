@@ -2831,6 +2831,24 @@ func TestValidateTNF(t *testing.T) {
 		},
 		{
 			config: installConfig().
+				MachinePoolArbiter(machinePool()).
+				MachinePoolCP(machinePool().Credential(c1(), c2())).
+				ArbiterReplicas(1).
+				CpReplicas(2).build(),
+			name:     "skip_number_of_credentials_validation_for_arbiter_deployment",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				MachinePoolArbiter(machinePool()).
+				MachinePoolCP(machinePool().Credential(c1(), c2(), c3())).
+				ArbiterReplicas(1).
+				CpReplicas(2).build(),
+			name:     "skip_number_of_credentials_validation_for_arbiter_deployment_invalid_credentials_count",
+			expected: "",
+		},
+		{
+			config: installConfig().
 				MachinePoolCP(machinePool().
 					Credential(c1(), c2())).
 				CpReplicas(3).build(),
@@ -3037,6 +3055,19 @@ func (icb *installConfigBuilder) CpReplicas(numOfCpReplicas int64) *installConfi
 
 func (icb *installConfigBuilder) MachinePoolCP(builder *machinePoolBuilder) *installConfigBuilder {
 	icb.InstallConfig.ControlPlane = builder.build()
+	return icb
+}
+
+func (icb *installConfigBuilder) ArbiterReplicas(numOfCpReplicas int64) *installConfigBuilder {
+	if icb.InstallConfig.Arbiter == nil {
+		icb.InstallConfig.Arbiter = &types.MachinePool{}
+	}
+	icb.InstallConfig.Arbiter.Replicas = &numOfCpReplicas
+	return icb
+}
+
+func (icb *installConfigBuilder) MachinePoolArbiter(builder *machinePoolBuilder) *installConfigBuilder {
+	icb.InstallConfig.Arbiter = builder.build()
 	return icb
 }
 
