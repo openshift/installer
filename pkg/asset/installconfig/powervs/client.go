@@ -587,13 +587,12 @@ func (c *Client) GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, 
 	if err != nil {
 		return nil, fmt.Errorf("failed to list vpc regions: %w", err)
 	}
-
+	var vpcNamesList []string
 	for _, region := range listRegionsResponse.Regions {
 		err := c.vpcAPI.SetServiceURL(fmt.Sprintf("%s/v1", *region.Endpoint))
 		if err != nil {
 			return nil, fmt.Errorf("failed to set vpc api service url: %w", err)
 		}
-
 		vpcs, detailedResponse, err := c.vpcAPI.ListVpcsWithContext(ctx, c.vpcAPI.NewListVpcsOptions())
 		if err != nil {
 			if detailedResponse.GetStatusCode() != http.StatusNotFound {
@@ -601,6 +600,7 @@ func (c *Client) GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, 
 			}
 		} else {
 			for _, vpc := range vpcs.Vpcs {
+				vpcNamesList = append(vpcNamesList, *vpc.Name)
 				if *vpc.Name == vpcName {
 					return &vpc, nil
 				}
@@ -608,7 +608,7 @@ func (c *Client) GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, 
 		}
 	}
 
-	return nil, errors.New("failed to find VPC")
+	return nil, fmt.Errorf("failed to find VPC %q. Available VPCs: %v", vpcName, vpcNamesList)
 }
 
 // GetPublicGatewayByVPC gets all PublicGateways in a region
