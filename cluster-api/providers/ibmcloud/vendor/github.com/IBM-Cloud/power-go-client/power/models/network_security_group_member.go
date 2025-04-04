@@ -27,6 +27,9 @@ type NetworkSecurityGroupMember struct {
 	// The mac address of a Network Interface included if the type is network-interface
 	MacAddress string `json:"macAddress,omitempty"`
 
+	// The network ID of a Network Interface included if the type is network-interface
+	NetworkInterfaceNetworkID string `json:"networkInterfaceNetworkID,omitempty"`
+
 	// If ipv4-address type, then IPv4 address or if network-interface type, then network interface ID
 	// Required: true
 	Target *string `json:"target"`

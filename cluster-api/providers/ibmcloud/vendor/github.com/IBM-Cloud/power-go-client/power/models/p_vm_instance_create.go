@@ -77,7 +77,8 @@ type PVMInstanceCreate struct {
 	ReplicantNamingScheme *string `json:"replicantNamingScheme,omitempty"`
 
 	// Number of duplicate instances to create in this request
-	Replicants float64 `json:"replicants,omitempty"`
+	// Minimum: 1
+	Replicants *float64 `json:"replicants,omitempty"`
 
 	// Indicates the replication site of the boot volume
 	ReplicationSites []string `json:"replicationSites"`
@@ -168,6 +169,10 @@ func (m *PVMInstanceCreate) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateReplicantNamingScheme(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateReplicants(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -425,6 +430,18 @@ func (m *PVMInstanceCreate) validateReplicantNamingScheme(formats strfmt.Registr
 
 	// value enum
 	if err := m.validateReplicantNamingSchemeEnum("replicantNamingScheme", "body", *m.ReplicantNamingScheme); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *PVMInstanceCreate) validateReplicants(formats strfmt.Registry) error {
+	if swag.IsZero(m.Replicants) { // not required
+		return nil
+	}
+
+	if err := validate.Minimum("replicants", "body", *m.Replicants, 1, false); err != nil {
 		return err
 	}
 

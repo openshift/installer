@@ -56,7 +56,7 @@ func (f *IBMPIInstanceClient) GetAll() (*models.PVMInstances, error) {
 func (f *IBMPIInstanceClient) Create(body *models.PVMInstanceCreate) (*models.PVMInstanceList, error) {
 	// Check for satellite differences in this endpoint
 	if f.session.IsOnPrem() && (body.DeploymentTarget != nil || body.DeploymentType != "") {
-		return nil, fmt.Errorf("deployment target and deployment type parameters are not supported in satellite location, check documentation")
+		return nil, fmt.Errorf("deployment target and deployment type parameters are not supported in satellite location")
 	}
 	params := p_cloud_p_vm_instances.NewPcloudPvminstancesPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
@@ -105,7 +105,7 @@ func (f *IBMPIInstanceClient) DeleteWithBody(id string, body *models.PVMInstance
 func (f *IBMPIInstanceClient) Update(id string, body *models.PVMInstanceUpdate) (*models.PVMInstanceUpdateResponse, error) {
 	// Check for satellite differences in this endpoint
 	if f.session.IsOnPrem() && body.SapProfileID != "" {
-		return nil, fmt.Errorf("sap profile id parameter is not supported in satellite location, check documentation")
+		return nil, fmt.Errorf("sap profile id parameter is not supported in satellite location")
 	}
 	params := p_cloud_p_vm_instances.NewPcloudPvminstancesPutParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
@@ -152,7 +152,7 @@ func (f *IBMPIInstanceClient) PostConsoleURL(id string) (*models.PVMInstanceCons
 // List the available Console Languages for an Instance
 func (f *IBMPIInstanceClient) GetConsoleLanguages(id string) (*models.ConsoleLanguages, error) {
 	if f.session.IsOnPrem() {
-		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
+		return nil, fmt.Errorf(helpers.NotOnPremSupported)
 	}
 	params := p_cloud_p_vm_instances.NewPcloudPvminstancesConsoleGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -170,7 +170,7 @@ func (f *IBMPIInstanceClient) GetConsoleLanguages(id string) (*models.ConsoleLan
 // Update the available Console Languages for an Instance
 func (f *IBMPIInstanceClient) UpdateConsoleLanguage(id string, body *models.ConsoleLanguage) (*models.ConsoleLanguage, error) {
 	if f.session.IsOnPrem() {
-		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
+		return nil, fmt.Errorf(helpers.NotOnPremSupported)
 	}
 	params := p_cloud_p_vm_instances.NewPcloudPvminstancesConsolePutParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIUpdateTimeOut).
@@ -190,7 +190,7 @@ func (f *IBMPIInstanceClient) UpdateConsoleLanguage(id string, body *models.Cons
 func (f *IBMPIInstanceClient) CaptureInstanceToImageCatalog(id string, body *models.PVMInstanceCapture) error {
 	// Check for satellite differences in this endpoint
 	if !f.session.IsOnPrem() && body.Checksum {
-		return fmt.Errorf("checksum parameter is not supported off-premise")
+		return fmt.Errorf("checksum parameter is not supported in off-prem location")
 	}
 	params := p_cloud_p_vm_instances.NewPcloudPvminstancesCapturePostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).

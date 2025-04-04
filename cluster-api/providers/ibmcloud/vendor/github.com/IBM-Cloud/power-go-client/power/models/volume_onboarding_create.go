@@ -26,6 +26,9 @@ type VolumeOnboardingCreate struct {
 
 	// Description of the volume onboarding operation
 	Description string `json:"description,omitempty"`
+
+	// user tags
+	UserTags Tags `json:"userTags,omitempty"`
 }
 
 // Validate validates this volume onboarding create
@@ -33,6 +36,10 @@ func (m *VolumeOnboardingCreate) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateVolumes(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateUserTags(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -69,11 +76,32 @@ func (m *VolumeOnboardingCreate) validateVolumes(formats strfmt.Registry) error 
 	return nil
 }
 
+func (m *VolumeOnboardingCreate) validateUserTags(formats strfmt.Registry) error {
+	if swag.IsZero(m.UserTags) { // not required
+		return nil
+	}
+
+	if err := m.UserTags.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("userTags")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("userTags")
+		}
+		return err
+	}
+
+	return nil
+}
+
 // ContextValidate validate this volume onboarding create based on the context it is used
 func (m *VolumeOnboardingCreate) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.contextValidateVolumes(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateUserTags(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -103,6 +131,20 @@ func (m *VolumeOnboardingCreate) contextValidateVolumes(ctx context.Context, for
 			}
 		}
 
+	}
+
+	return nil
+}
+
+func (m *VolumeOnboardingCreate) contextValidateUserTags(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.UserTags.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("userTags")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("userTags")
+		}
+		return err
 	}
 
 	return nil

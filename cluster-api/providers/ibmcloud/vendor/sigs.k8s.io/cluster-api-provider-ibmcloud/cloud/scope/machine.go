@@ -39,6 +39,7 @@ import (
 	"sigs.k8s.io/cluster-api/util/patch"
 
 	infrav1beta2 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
+	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/authenticator"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/globaltagging"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/utils"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/vpc"
@@ -104,8 +105,17 @@ func NewMachineScope(params MachineScopeParams) (*MachineScope, error) {
 		core.SetLoggingLevel(core.LevelDebug)
 	}
 
+	auth, err := authenticator.GetAuthenticator()
+	if err != nil {
+		return nil, fmt.Errorf("error failed to create authenticator: %w", err)
+	}
+
 	// Create Global Tagging client.
-	gtOptions := globaltagging.ServiceOptions{}
+	gtOptions := globaltagging.ServiceOptions{
+		GlobalTaggingV1Options: &globaltaggingv1.GlobalTaggingV1Options{
+			Authenticator: auth,
+		},
+	}
 	// Override the Global Tagging endpoint if provided.
 	if gtEndpoint := endpoints.FetchEndpoints(string(endpoints.GlobalTagging), params.ServiceEndpoint); gtEndpoint != "" {
 		gtOptions.URL = gtEndpoint

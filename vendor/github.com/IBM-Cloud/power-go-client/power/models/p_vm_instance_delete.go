@@ -17,7 +17,7 @@ import (
 // swagger:model PVMInstanceDelete
 type PVMInstanceDelete struct {
 
-	// Indicates if the Virtual Serial Number attached to a PVM Instance is reserved or not
+	// Indicates if the Virtual Serial Number attached to a PVM Instance is retained or not
 	RetainVSN *bool `json:"retainVSN,omitempty"`
 }
 

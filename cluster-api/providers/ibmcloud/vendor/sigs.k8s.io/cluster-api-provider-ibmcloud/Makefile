@@ -63,7 +63,7 @@ RELEASE_DIR := out
 OUTPUT_TYPE ?= type=registry
 
 # Go
-GO_VERSION ?=1.22.12
+GO_VERSION ?=1.23.7
 GO_CONTAINER_IMAGE ?= golang:$(GO_VERSION)
 
 # kind

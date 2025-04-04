@@ -34,6 +34,9 @@ type PVMInstance struct {
 	// crn
 	Crn CRN `json:"crn,omitempty"`
 
+	// ID of the dedicated host where the PVM Instance is running, if applicable
+	DedicatedHostID string `json:"dedicatedHostID,omitempty"`
+
 	// The custom deployment type
 	DeploymentType string `json:"deploymentType,omitempty"`
 
