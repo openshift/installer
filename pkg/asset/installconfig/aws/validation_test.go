@@ -929,6 +929,16 @@ func TestValidate(t *testing.T) {
 		publicOnly:     "true",
 		expectErr:      `^\[platform\.aws\.vpc\.subnets: Required value: public subnets are required for a public-only subnets cluster, platform\.aws\.vpc\.subnets: Invalid value: \[\]aws\.Subnet\{aws\.Subnet\{ID:\"valid-private-subnet-a\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-private-subnet-b\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-private-subnet-c\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-public-subnet-a\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-public-subnet-b\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-public-subnet-c\", Roles:\[\]aws\.SubnetRole\(nil\)\}\}: No public subnet provided for zones \[a b c\]\]$`,
 	}, {
+		name: "no subnets specified for public-only subnets cluster",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.VPC.Subnets = []aws.Subnet{}
+			return c
+		}(),
+		availZones:   validAvailZones(),
+		availRegions: validAvailRegions(),
+		publicOnly:   "true",
+	}, {
 		name:           "valid public-only subnets install config",
 		installConfig:  validInstallConfig(),
 		privateSubnets: validPrivateSubnets(),
