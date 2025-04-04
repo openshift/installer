@@ -67,7 +67,7 @@ func FindRendezvouIPAndSSHKeyFromAssetStore(assetDir string) (string, string, er
 	installConfigAsset := &installconfig.InstallConfig{}
 	agentHostsAsset := &agentconfig.AgentHosts{}
 
-	assetStore, err := assetstore.NewStore(assetDir)
+	assetStore, err := assetstore.NewStore(assetDir, false)
 	if err != nil {
 		return "", "", errors.Wrap(err, "failed to create asset store")
 	}
@@ -123,7 +123,7 @@ func FindRendezvouIPAndSSHKeyFromAssetStore(assetDir string) (string, string, er
 func FindAuthTokenFromAssetStore(assetDir string) (string, error) {
 	authConfigAsset := &gencrypto.AuthConfig{}
 
-	assetStore, err := assetstore.NewStore(assetDir)
+	assetStore, err := assetstore.NewStore(assetDir, false)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to create asset store")
 	}
