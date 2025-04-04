@@ -17,6 +17,7 @@ import (
 	azic "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils/cidr"
+	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
 )
@@ -104,6 +105,48 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	}
 
 	virtualNetworkID := ""
+	lbip := capz.DefaultInternalLBIPAddress
+	lbip = getIPWithinCIDR(subnets, lbip)
+
+	if controlPlaneSub := installConfig.Config.Azure.ControlPlaneSubnet; controlPlaneSub != "" {
+		client, err := installConfig.Azure.Client()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get azure client: %w", err)
+		}
+		ctx := context.TODO()
+		controlPlaneSubnet, err := client.GetControlPlaneSubnet(ctx, installConfig.Config.Azure.NetworkResourceGroupName, installConfig.Config.Azure.VirtualNetwork, controlPlaneSub)
+		if err != nil || controlPlaneSubnet == nil {
+			return nil, fmt.Errorf("failed to get azure control plane subnet: %w", err)
+		} else if controlPlaneSubnet.AddressPrefixes == nil && controlPlaneSubnet.AddressPrefix == nil {
+			return nil, fmt.Errorf("failed to get azure control plane subnet addresses: %w", err)
+		}
+		subnetList := []*net.IPNet{}
+		if controlPlaneSubnet.AddressPrefixes != nil {
+			for _, sub := range *controlPlaneSubnet.AddressPrefixes {
+				_, ipnet, err := net.ParseCIDR(sub)
+				if err != nil {
+					return nil, fmt.Errorf("failed to get translate azure control plane subnet addresses: %w", err)
+				}
+				subnetList = append(subnetList, ipnet)
+			}
+		}
+
+		if controlPlaneSubnet.AddressPrefix != nil {
+			_, ipnet, err := net.ParseCIDR(*controlPlaneSubnet.AddressPrefix)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get translate azure control plane subnet address prefix: %w", err)
+			}
+			subnetList = append(subnetList, ipnet)
+		}
+		lbip = getIPWithinCIDR(subnetList, lbip)
+	}
+
+	apiServerLB.FrontendIPs = []capz.FrontendIP{{
+		Name: fmt.Sprintf("%s-internal-frontEnd", clusterID.InfraID),
+		FrontendIPClass: capz.FrontendIPClass{
+			PrivateIPAddress: lbip,
+		},
+	}}
 	if installConfig.Config.Azure.VirtualNetwork != "" {
 		client, err := installConfig.Azure.Client()
 		if err != nil {
@@ -117,16 +160,12 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		if virtualNetwork != nil {
 			virtualNetworkID = *virtualNetwork.ID
 		}
-		lbip, err := getNextAvailableIP(ctx, installConfig)
+		lbip, err := getNextAvailableIPForLoadBalancer(ctx, installConfig, lbip)
 		if err != nil {
 			return nil, err
 		}
-		apiServerLB.FrontendIPs = []capz.FrontendIP{{
-			Name: fmt.Sprintf("%s-internal-frontEnd", clusterID.InfraID),
-			FrontendIPClass: capz.FrontendIPClass{
-				PrivateIPAddress: lbip,
-			},
-		},
+		apiServerLB.FrontendIPs[0].FrontendIPClass = capz.FrontendIPClass{
+			PrivateIPAddress: lbip,
 		}
 	}
 
@@ -255,15 +294,71 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	}, nil
 }
 
-func getNextAvailableIP(ctx context.Context, installConfig *installconfig.InstallConfig) (string, error) {
-	lbip := capz.DefaultInternalLBIPAddress
-	machineCidr := installConfig.Config.MachineNetwork
+func getIPWithinCIDR(subnets []*net.IPNet, ip string) string {
+	if subnets == nil || ip == "" {
+		return ""
+	}
+	// Check if default lbip is within control plane network.
+	// If not in control plane network, assign the first non-reserved IP in the CIDR to lbip.
+	for _, subnet := range subnets {
+		if subnet == nil {
+			continue
+		}
+		if subnet.Contains(net.ParseIP(ip)) {
+			return ip
+		}
+	}
+	ipSubnets := make(net.IP, len(subnets[0].IP))
+	copy(ipSubnets, subnets[0].IP)
+	// Since the first 4 IP of the subnets are usually reserved[1], pick the next one that's available in the CIDR.
+	// [1] - https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/private-ip-addresses#allocation-method
+	ipSubnets[len(ipSubnets)-1] += 4
+	return ipSubnets.String()
+}
+
+func getNextAvailableIPForLoadBalancer(ctx context.Context, installConfig *installconfig.InstallConfig, lbip string) (string, error) {
 	client, err := installConfig.Azure.Client()
 	if err != nil {
 		return "", fmt.Errorf("failed to get azure client: %w", err)
 	}
+	networkResourceGroupName := installConfig.Config.Azure.NetworkResourceGroupName
+	virtualNetworkName := installConfig.Config.Azure.VirtualNetwork
+	machineCidr := installConfig.Config.MachineNetwork
+	if cpSubnet := installConfig.Config.Azure.ControlPlaneSubnet; cpSubnet != "" {
+		controlPlane, err := client.GetControlPlaneSubnet(ctx, networkResourceGroupName, virtualNetworkName, cpSubnet)
+		if err != nil {
+			return "", fmt.Errorf("failed to get control plane subnet: %w", err)
+		}
+		if controlPlane.AddressPrefix == nil && controlPlane.AddressPrefixes == nil {
+			return "", fmt.Errorf("failed to get control plane subnet addresses: %w", err)
+		}
+		prefixes := []*ipnet.IPNet{}
+		if controlPlane.AddressPrefixes != nil {
+			for _, sub := range *controlPlane.AddressPrefixes {
+				ipnet, err := ipnet.ParseCIDR(sub)
+				if err != nil {
+					return "", fmt.Errorf("failed to get translate azure control plane subnet addresses: %w", err)
+				}
+				prefixes = append(prefixes, ipnet)
+			}
+		}
 
-	availableIP, err := client.CheckIPAddressAvailability(ctx, installConfig.Config.Azure.NetworkResourceGroupName, installConfig.Config.Azure.VirtualNetwork, lbip)
+		if controlPlane.AddressPrefix != nil {
+			ipnet, err := ipnet.ParseCIDR(*controlPlane.AddressPrefix)
+			if err != nil {
+				return "", fmt.Errorf("failed to get translate azure control plane subnet address prefix: %w", err)
+			}
+			prefixes = append(prefixes, ipnet)
+		}
+		cidrRange := []types.MachineNetworkEntry{}
+		for _, prefix := range prefixes {
+			if prefix != nil {
+				cidrRange = append(cidrRange, types.MachineNetworkEntry{CIDR: *prefix})
+			}
+		}
+		machineCidr = cidrRange
+	}
+	availableIP, err := client.CheckIPAddressAvailability(ctx, networkResourceGroupName, virtualNetworkName, lbip)
 	if err != nil {
 		return "", fmt.Errorf("failed to get azure ip availability: %w", err)
 	}
@@ -273,11 +368,7 @@ func getNextAvailableIP(ctx context.Context, installConfig *installconfig.Instal
 	ipAvail := *availableIP
 	if ipAvail.Available != nil && *ipAvail.Available {
 		for _, cidrRange := range machineCidr {
-			_, ipnet, err := net.ParseCIDR(cidrRange.CIDR.String())
-			if err != nil {
-				return "", fmt.Errorf("failed to get machine network CIDR: %w", err)
-			}
-			if ipnet.Contains(net.ParseIP(lbip)) {
+			if cidrRange.CIDR.Contains(net.ParseIP(lbip)) {
 				return lbip, nil
 			}
 		}
@@ -287,11 +378,7 @@ func getNextAvailableIP(ctx context.Context, installConfig *installconfig.Instal
 	}
 	for _, ip := range *ipAvail.AvailableIPAddresses {
 		for _, cidrRange := range machineCidr {
-			_, ipnet, err := net.ParseCIDR(cidrRange.CIDR.String())
-			if err != nil {
-				return "", fmt.Errorf("failed to get machine network CIDR: %w", err)
-			}
-			if ipnet.Contains(net.ParseIP(ip)) {
+			if cidrRange.CIDR.Contains(net.ParseIP(lbip)) {
 				return ip, nil
 			}
 		}
