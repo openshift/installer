@@ -155,7 +155,7 @@ type ServiceEndpoint struct {
 type VPC struct {
 	// Subnets defines the subnets in an existing VPC and can optionally specify their intended roles.
 	// If no roles are specified on any subnet, then the subnet roles are decided automatically.
-	// In this case, the VPC must not contain any subnets without the kubernetes.io/cluster/<cluster-id> tag.
+	// In this case, the VPC must not contain any other non-cluster subnets without the kubernetes.io/cluster/<cluster-id> tag.
 	//
 	// For manually specified subnet role selection, each subnet must have at least one assigned role,
 	// and the ClusterNode, IngressControllerLB, ControlPlaneExternalLB, and ControlPlaneInternalLB roles must be assigned to at least one subnet.

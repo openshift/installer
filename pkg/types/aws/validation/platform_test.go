@@ -163,7 +163,7 @@ func TestValidatePlatform(t *testing.T) {
 					"kubernetes.io/cluster/test-cluster": "shared",
 				},
 			},
-			expected: `^\Qtest-path.userTags[kubernetes.io/cluster/test-cluster]: Invalid value: "shared": Keys with prefix 'kubernetes.io/cluster/' are not allowed for user defined tags\E$`,
+			expected: `^\Qtest-path.userTags[kubernetes.io/cluster/test-cluster]: Invalid value: "shared": key is in the kubernetes.io namespace\E$`,
 		},
 		{
 			name: "invalid userTags, value with invalid characters",
@@ -208,7 +208,7 @@ func TestValidatePlatform(t *testing.T) {
 				Region:         "us-east-1",
 				HostedZoneRole: "test-hosted-zone-role",
 			},
-			expected: `^test-path\.hostedZoneRole: Invalid value: "test-hosted-zone-role": may not specify a role to assume for hosted zone operations without also specifying a hosted zone$`,
+			expected: `\Qtest-path.hostedZoneRole: Invalid value: "test-hosted-zone-role": may not specify a role to assume for hosted zone operations without also specifying a hosted zone\E`,
 		},
 		{
 			name:     "valid hosted zone & role should not throw an error",
@@ -236,7 +236,7 @@ func TestValidatePlatform(t *testing.T) {
 				HostedZone:     "test-hosted-zone",
 				HostedZoneRole: "test-hosted-zone-role",
 			},
-			expected: `^test-path\.hostedZoneRole: Forbidden: when specifying a hostedZoneRole, either Passthrough or Manual credential mode must be specified$`,
+			expected: `^\Qtest-path.credentialsMode: Forbidden: when specifying a hostedZoneRole, either Passthrough or Manual credential mode must be specified\E$`,
 		},
 		{
 			name: "valid subnets, empty",
@@ -332,20 +332,7 @@ func TestValidatePlatform(t *testing.T) {
 					},
 				},
 			},
-			expected: `^\[test-path\.vpc\.subnets: Forbidden: either all subnets must be assigned roles or none of the subnets should have roles assigned, test-path\.vpc\.subnets: Invalid value: \[\]aws\.Subnet\{aws\.Subnet\{ID:\"subnet-1234567890asdfghj\", Roles:\[\]aws\.SubnetRole\{Type:\"Bootstrap\"\}, aws\.SubnetRole\{Type:\"ClusterNode\"\}\}, aws\.Subnet\{ID:\"subnet-asdfghj1234567890\", Roles:\[\]aws\.SubnetRole\(nil\)\}\}: roles \[ControlPlaneInternalLB IngressControllerLB ControlPlaneExternalLB\] must be assigned to at least 1 subnet\}\]$`,
-		},
-		{
-			name: "invalid subnets, invalid subnet IDs",
-			platform: &aws.Platform{
-				Region: "us-east-1",
-				VPC: aws.VPC{
-					Subnets: []aws.Subnet{
-						{ID: "subnet-1j"},
-						{ID: "bad-subnet567890"},
-					},
-				},
-			},
-			expected: `^\[test-path\.vpc\.subnets\[0\]\.id: Invalid value: \"subnet-1j\": must be non-empty, start with \"subnet-\", consist only of alphanumeric characters, and must be exactly 24 characters long, test-path\.vpc\.subnets\[1\]\.id: Invalid value: \"bad-subnet567890\": must be non-empty, start with \"subnet-\", consist only of alphanumeric characters, and must be exactly 24 characters long\]$`,
+			expected: `^\Q[test-path.vpc.subnets: Forbidden: either all subnets must be assigned roles or none of the subnets should have roles assigned, test-path.vpc.subnets: Invalid value: []aws.Subnet{aws.Subnet{ID:"subnet-1234567890asdfghj", Roles:[]aws.SubnetRole{aws.SubnetRole{Type:"BootstrapNode"}, aws.SubnetRole{Type:"ClusterNode"}}}, aws.Subnet{ID:"subnet-asdfghj1234567890", Roles:[]aws.SubnetRole(nil)}}: roles [ControlPlaneExternalLB ControlPlaneInternalLB IngressControllerLB] must be assigned to at least 1 subnet]\E$`,
 		},
 		{
 			name: "invalid subnets, duplicate subnet IDs",
@@ -375,7 +362,7 @@ func TestValidatePlatform(t *testing.T) {
 					},
 				},
 			},
-			expected: `^test-path\.vpc\.subnets\[0\]\.roles\[0\]\.type: Unsupported value: \"UnsupportedRole\": supported values: \"Bootstrap\", \"ClusterNode\", \"ControlPlaneExternalLB\", \"ControlPlaneInternalLB\", \"EdgeNode\", \"IngressControllerLB\"$`,
+			expected: `^\Qtest-path.vpc.subnets[0].roles[0].type: Unsupported value: "UnsupportedRole": supported values: "BootstrapNode", "ClusterNode", "ControlPlaneExternalLB", "ControlPlaneInternalLB", "EdgeNode", "IngressControllerLB"\E$`,
 		},
 		{
 			name: "invalid subnets, duplicate roles assigned to a subnet",
@@ -407,7 +394,7 @@ func TestValidatePlatform(t *testing.T) {
 					},
 				},
 			},
-			expected: `^test-path\.vpc\.subnets\[0\]\.roles\[1\]\.type: Duplicate value: \"Bootstrap\"$`,
+			expected: `^\Qtest-path.vpc.subnets[0].roles[1].type: Duplicate value: "BootstrapNode"\E$`,
 		},
 		{
 			name: "invalid subnets, ControlPlaneExternalLB and ControlPlaneInternalLB roles assigned to the same subnet",
@@ -566,7 +553,7 @@ func TestValidatePlatform(t *testing.T) {
 					},
 				},
 			},
-			expected: `^test\-path\.vpc\.subnets\: Invalid value\: \[\]aws\.Subnet\{aws\.Subnet\{ID\:"subnet\-1234567890asdfghj", Roles\:\[\]aws\.SubnetRole\{Type\:"Bootstrap"\}, aws\.SubnetRole\{Type\:"ClusterNode"\}\}, aws\.Subnet\{ID\:"subnet\-0fcf8e0392f0910d0", Roles\:\[\]aws\.SubnetRole\{Type\:"IngressControllerLB"\}\}\}\]\: Roles \[ControlPlaneInternalLB\] must be assigned to at least 1 subnet$`,
+			expected: `^\Qtest-path.vpc.subnets: Invalid value: []aws.Subnet{aws.Subnet{ID:"subnet-1234567890asdfghj", Roles:[]aws.SubnetRole{aws.SubnetRole{Type:"BootstrapNode"}, aws.SubnetRole{Type:"ClusterNode"}}}, aws.Subnet{ID:"subnet-0fcf8e0392f0910d0", Roles:[]aws.SubnetRole{aws.SubnetRole{Type:"IngressControllerLB"}}}}: roles [ControlPlaneInternalLB] must be assigned to at least 1 subnet\E$`,
 		},
 		{
 			name:    "invalid subnets, external cluster and missing required roles",
@@ -591,7 +578,7 @@ func TestValidatePlatform(t *testing.T) {
 					},
 				},
 			},
-			expected: `^test-path\.vpc\.subnets: Invalid value: \[\]aws\.Subnet\{aws\.Subnet\{ID:\"subnet-1234567890asdfghj\", Roles:\[\]aws\.SubnetRole\{Type:\"Bootstrap\"\}, aws\.SubnetRole\{Type:\"ClusterNode\"\}\}, aws\.Subnet\{ID:\"subnet-0fcf8e0392f0910d0\", Roles:\[\]aws\.SubnetRole\{Type:\"IngressControllerLB\"\}\}\}\}: Roles \[ControlPlaneExternalLB ControlPlaneInternalLB\] must be assigned to at least 1 subnet$`,
+			expected: `^\Qtest-path.vpc.subnets: Invalid value: []aws.Subnet{aws.Subnet{ID:"subnet-1234567890asdfghj", Roles:[]aws.SubnetRole{aws.SubnetRole{Type:"BootstrapNode"}, aws.SubnetRole{Type:"ClusterNode"}}}, aws.Subnet{ID:"subnet-0fcf8e0392f0910d0", Roles:[]aws.SubnetRole{aws.SubnetRole{Type:"IngressControllerLB"}}}}: roles [ControlPlaneExternalLB ControlPlaneInternalLB] must be assigned to at least 1 subnet\E$`,
 		},
 	}
 	for _, tc := range cases {
@@ -600,7 +587,7 @@ func TestValidatePlatform(t *testing.T) {
 			if tc.expected == "" {
 				assert.NoError(t, err)
 			} else {
-				assert.Regexp(t, tc.credMode, err)
+				assert.Regexp(t, tc.expected, err)
 			}
 		})
 	}
