@@ -1263,7 +1263,7 @@ github.com/opencontainers/image-spec/specs-go/v1
 # github.com/opencontainers/runtime-spec v1.2.0
 ## explicit
 github.com/opencontainers/runtime-spec/specs-go
-# github.com/openshift/api v0.0.0-20250313134101-8a7efbfb5316
+# github.com/openshift/api v0.0.0-20250313134101-8a7efbfb5316 => github.com/rvanderp3/api v0.0.0-20250403171257-3365d093f9bf
 ## explicit; go 1.23.0
 github.com/openshift/api/annotations
 github.com/openshift/api/config/v1
@@ -2791,3 +2791,4 @@ sigs.k8s.io/yaml/goyaml.v3
 # github.com/containerd/containerd => github.com/containerd/containerd v1.6.26
 # github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels v0.0.0-20240404200847-de75746a9505
 # sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.19.3
+# github.com/openshift/api => github.com/rvanderp3/api v0.0.0-20250403171257-3365d093f9bf
