@@ -262,6 +262,28 @@ func (m *Metadata) VPC(ctx context.Context) (string, error) {
 	return m.vpc, nil
 }
 
+// SubnetByID retrieves subnet metadata for a subnet ID.
+func (m *Metadata) SubnetByID(ctx context.Context, subnetID string) (subnet Subnet, err error) {
+	err = m.populateSubnets(ctx)
+	if err != nil {
+		return subnet, fmt.Errorf("error retrieving subnet for ID %s: %w", subnetID, err)
+	}
+
+	if subnet, ok := m.privateSubnets[subnetID]; ok {
+		return subnet, nil
+	}
+
+	if subnet, ok := m.publicSubnets[subnetID]; ok {
+		return subnet, nil
+	}
+
+	if subnet, ok := m.edgeSubnets[subnetID]; ok {
+		return subnet, nil
+	}
+
+	return subnet, fmt.Errorf("no subnet found for ID %s", subnetID)
+}
+
 func (m *Metadata) populateSubnets(ctx context.Context) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
