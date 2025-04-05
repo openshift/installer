@@ -186,6 +186,62 @@ func TestGenerateMachines(t *testing.T) {
 				return infraMachineFiles
 			}(),
 		},
+		{
+			name:      "public-only setup, managed vpc, public ip enabled",
+			clusterID: stubClusterID,
+			input: func() *MachineInput {
+				in := stubGetMachineManagedVpc()
+				in.Pool.Platform.AWS.Zones = []string{"A", "B"}
+				in.PublicIP = true
+				return in
+			}(),
+			// generate 3 AWSMachine manifests for control plane nodes using public subnets
+			wantInfraFiles: func() []*asset.RuntimeFile {
+				machineZoneMap := map[int]string{0: "A", 1: "B", 2: "A"}
+				infraMachineFiles := []*asset.RuntimeFile{}
+				for mid := 0; mid < 3; mid++ {
+					machineName := fmt.Sprintf("%s-%s-%d", stubClusterID, "master", mid)
+					machineZone := machineZoneMap[mid]
+					machine := &capa.AWSMachine{
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+							Kind:       "AWSMachine",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:   machineName,
+							Labels: map[string]string{"cluster.x-k8s.io/control-plane": ""},
+						},
+						Spec: capa.AWSMachineSpec{
+							InstanceMetadataOptions: &capa.InstanceMetadataOptions{
+								HTTPEndpoint: capa.InstanceMetadataEndpointStateEnabled,
+								HTTPTokens:   capa.HTTPTokensStateOptional,
+							},
+							AMI: capa.AMIReference{
+								ID: ptr.To(""),
+							},
+							IAMInstanceProfile: fmt.Sprintf("%s-%s-profile", stubClusterID, "master"),
+							PublicIP:           ptr.To(true),
+							Subnet: &capa.AWSResourceReference{
+								Filters: []capa.Filter{{Name: "tag:Name", Values: []string{
+									fmt.Sprintf("%s-subnet-public-%s", stubClusterID, machineZone),
+								}}},
+							},
+							SSHKeyName:           ptr.To(""),
+							RootVolume:           &capa.Volume{Encrypted: ptr.To(true)},
+							UncompressedUserData: ptr.To(true),
+							Ignition: &capa.Ignition{
+								StorageType: capa.IgnitionStorageTypeOptionUnencryptedUserData,
+							},
+						},
+					}
+					infraMachineFiles = append(infraMachineFiles, &asset.RuntimeFile{
+						File:   asset.File{Filename: fmt.Sprintf("10_inframachine_%s.yaml", machineName)},
+						Object: machine,
+					})
+				}
+				return infraMachineFiles
+			}(),
+		},
 		// Error's scenarios
 		{
 			name:      "error topology ha, byo vpc, no subnet for zones",

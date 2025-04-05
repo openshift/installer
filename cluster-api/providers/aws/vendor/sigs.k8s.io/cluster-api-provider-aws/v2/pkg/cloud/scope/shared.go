@@ -142,12 +142,7 @@ func getUnstructuredControlPlane(ctx context.Context, client client.Client, clus
 		return &unstructured.Unstructured{}, nil
 	}
 
-	namespace := cluster.Spec.ControlPlaneRef.Namespace
-	if namespace == "" {
-		namespace = cluster.Namespace
-	}
-
-	u, err := external.Get(ctx, client, cluster.Spec.ControlPlaneRef, namespace)
+	u, err := external.Get(ctx, client, cluster.Spec.ControlPlaneRef)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to retrieve control plane object %s/%s", cluster.Spec.ControlPlaneRef.Namespace, cluster.Spec.ControlPlaneRef.Name)
 	}

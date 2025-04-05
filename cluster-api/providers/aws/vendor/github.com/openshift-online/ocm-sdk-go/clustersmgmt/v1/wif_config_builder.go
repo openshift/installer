@@ -29,6 +29,7 @@ type WifConfigBuilder struct {
 	displayName  string
 	gcp          *WifGcpBuilder
 	organization *OrganizationLinkBuilder
+	wifTemplates []string
 }
 
 // NewWifConfig creates a new builder of 'wif_config' objects.
@@ -92,6 +93,14 @@ func (b *WifConfigBuilder) Organization(value *OrganizationLinkBuilder) *WifConf
 	return b
 }
 
+// WifTemplates sets the value of the 'wif_templates' attribute to the given values.
+func (b *WifConfigBuilder) WifTemplates(values ...string) *WifConfigBuilder {
+	b.wifTemplates = make([]string, len(values))
+	copy(b.wifTemplates, values)
+	b.bitmap_ |= 64
+	return b
+}
+
 // Copy copies the attributes of the given object into this builder, discarding any previous values.
 func (b *WifConfigBuilder) Copy(object *WifConfig) *WifConfigBuilder {
 	if object == nil {
@@ -110,6 +119,12 @@ func (b *WifConfigBuilder) Copy(object *WifConfig) *WifConfigBuilder {
 		b.organization = NewOrganizationLink().Copy(object.organization)
 	} else {
 		b.organization = nil
+	}
+	if object.wifTemplates != nil {
+		b.wifTemplates = make([]string, len(object.wifTemplates))
+		copy(b.wifTemplates, object.wifTemplates)
+	} else {
+		b.wifTemplates = nil
 	}
 	return b
 }
@@ -132,6 +147,10 @@ func (b *WifConfigBuilder) Build() (object *WifConfig, err error) {
 		if err != nil {
 			return
 		}
+	}
+	if b.wifTemplates != nil {
+		object.wifTemplates = make([]string, len(b.wifTemplates))
+		copy(object.wifTemplates, b.wifTemplates)
 	}
 	return
 }

@@ -43,6 +43,7 @@ type VersionBuilder struct {
 	enabled                   bool
 	hostedControlPlaneDefault bool
 	hostedControlPlaneEnabled bool
+	wifEnabled                bool
 }
 
 // NewVersion creates a new builder of 'version' objects.
@@ -177,6 +178,13 @@ func (b *VersionBuilder) ReleaseImages(value *ReleaseImagesBuilder) *VersionBuil
 	return b
 }
 
+// WifEnabled sets the value of the 'wif_enabled' attribute to the given value.
+func (b *VersionBuilder) WifEnabled(value bool) *VersionBuilder {
+	b.wifEnabled = value
+	b.bitmap_ |= 65536
+	return b
+}
+
 // Copy copies the attributes of the given object into this builder, discarding any previous values.
 func (b *VersionBuilder) Copy(object *Version) *VersionBuilder {
 	if object == nil {
@@ -211,6 +219,7 @@ func (b *VersionBuilder) Copy(object *Version) *VersionBuilder {
 	} else {
 		b.releaseImages = nil
 	}
+	b.wifEnabled = object.wifEnabled
 	return b
 }
 
@@ -246,5 +255,6 @@ func (b *VersionBuilder) Build() (object *Version, err error) {
 			return
 		}
 	}
+	object.wifEnabled = b.wifEnabled
 	return
 }

@@ -127,7 +127,7 @@ func (r *ROSAClusterReconciler) SetupWithManager(ctx context.Context, mgr ctrl.M
 	controller, err := ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options).
 		For(rosaCluster).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(ctrl.LoggerFrom(ctx), r.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), ctrl.LoggerFrom(ctx), r.WatchFilterValue)).
 		Build(r)
 
 	if err != nil {
@@ -138,7 +138,7 @@ func (r *ROSAClusterReconciler) SetupWithManager(ctx context.Context, mgr ctrl.M
 	if err = controller.Watch(
 		source.Kind[client.Object](mgr.GetCache(), &clusterv1.Cluster{},
 			handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, infrav1.GroupVersion.WithKind("ROSACluster"), mgr.GetClient(), &expinfrav1.ROSACluster{})),
-			predicates.ClusterUnpaused(log.GetLogger())),
+			predicates.ClusterUnpaused(mgr.GetScheme(), log.GetLogger())),
 	); err != nil {
 		return fmt.Errorf("failed adding a watch for ready clusters: %w", err)
 	}

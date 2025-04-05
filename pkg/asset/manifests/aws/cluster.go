@@ -14,7 +14,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
-	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
 
 // BootstrapSSHDescription is the description for the
@@ -252,12 +251,6 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 			PublicIpv4Pool:              ptr.To(ic.Config.Platform.AWS.PublicIpv4Pool),
 			PublicIpv4PoolFallBackOrder: ptr.To(capa.PublicIpv4PoolFallbackOrderAmazonPool),
 		}
-	}
-
-	if awstypes.IsPublicOnlySubnetsEnabled() {
-		// If we don't set the subnets for the internal LB, CAPA will try to use private subnets but there aren't any in
-		// public-only mode.
-		awsCluster.Spec.ControlPlaneLoadBalancer.Subnets = awsCluster.Spec.NetworkSpec.Subnets.IDs()
 	}
 
 	manifests = append(manifests, &asset.RuntimeFile{

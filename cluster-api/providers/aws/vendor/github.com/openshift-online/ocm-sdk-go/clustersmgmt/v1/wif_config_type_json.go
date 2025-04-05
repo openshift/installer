@@ -90,6 +90,15 @@ func writeWifConfig(object *WifConfig, stream *jsoniter.Stream) {
 		}
 		stream.WriteObjectField("organization")
 		writeOrganizationLink(object.organization, stream)
+		count++
+	}
+	present_ = object.bitmap_&64 != 0 && object.wifTemplates != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("wif_templates")
+		writeStringList(object.wifTemplates, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -138,6 +147,10 @@ func readWifConfig(iterator *jsoniter.Iterator) *WifConfig {
 			value := readOrganizationLink(iterator)
 			object.organization = value
 			object.bitmap_ |= 32
+		case "wif_templates":
+			value := readStringList(iterator)
+			object.wifTemplates = value
+			object.bitmap_ |= 64
 		default:
 			iterator.ReadAny()
 		}
