@@ -38,6 +38,8 @@ var computeReq = resourceRequirements{
 	minimumMemory: 8,
 }
 
+var installerAllowTag = "installer-allow-install"
+
 // Validate executes platform-specific validation.
 func Validate(client API, ic *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
@@ -711,8 +713,8 @@ func validateResourceGroup(client API, fieldPath *field.Path, platform *aztypes.
 		allErrs = append(allErrs, field.Invalid(fieldPath.Child("resourceGroupName"), platform.ResourceGroupName, fmt.Sprintf("resource group has conflicting tags %s", strings.Join(conflictingTagKeys, ", "))))
 	}
 
-	// ARO provisions Azure resources before resolving the asset graph.
-	if !platform.IsARO() {
+	// Adding a check to see if the user specified if it's ok to install cluster in a resource group that already has other resources.
+	if _, ok := group.Tags[installerAllowTag]; !ok {
 		ids, err := client.ListResourceIDsByGroup(context.TODO(), platform.ResourceGroupName)
 		if err != nil {
 			return append(allErrs, field.InternalError(fieldPath.Child("resourceGroupName"), fmt.Errorf("failed to list resources in the resource group: %w", err)))
@@ -724,6 +726,7 @@ func validateResourceGroup(client API, fieldPath *field.Path, platform *aztypes.
 			allErrs = append(allErrs, field.Invalid(fieldPath.Child("resourceGroupName"), platform.ResourceGroupName, fmt.Sprintf("resource group must be empty but it has %d resources like %s ...", l, strings.Join(ids, ", "))))
 		}
 	}
+
 	return allErrs
 }
 
