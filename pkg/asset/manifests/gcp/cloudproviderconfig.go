@@ -24,10 +24,17 @@ type global struct {
 	SubnetworkName string `gcfg:"subnetwork-name"`
 
 	NetworkProjectID string `gcfg:"network-project-id"`
+
+	// APIEndpoint is the compute API endpoint to use. If this is blank,
+	// then the default endpoint is used.
+	APIEndpoint string `gcfg:"api-endpoint"`
+	// ContainerAPIEndpoint is the container API endpoint to use. If this is blank,
+	// then the default endpoint is used.
+	ContainerAPIEndpoint string `gcfg:"container-api-endpoint"`
 }
 
 // CloudProviderConfig generates the cloud provider config for the GCP platform.
-func CloudProviderConfig(infraID, projectID, subnet, networkProjectID string) (string, error) {
+func CloudProviderConfig(infraID, projectID, subnet, networkProjectID, apiEndpoint, containerAPIEndpoint string) (string, error) {
 	config := &config{
 		Global: global{
 			ProjectID: projectID,
@@ -47,6 +54,10 @@ func CloudProviderConfig(infraID, projectID, subnet, networkProjectID string) (s
 
 			// Used for shared vpc installations,
 			NetworkProjectID: networkProjectID,
+
+			// Used for api endpoint overrides in the cloud provider.
+			APIEndpoint:          apiEndpoint,
+			ContainerAPIEndpoint: containerAPIEndpoint,
 		},
 	}
 
@@ -68,6 +79,8 @@ node-tags       = {{$tag}}
 node-instance-prefix = {{.Global.NodeInstancePrefix}}
 external-instance-groups-prefix = {{.Global.ExternalInstanceGroupsPrefix}}
 subnetwork-name = {{.Global.SubnetworkName}}
-{{ if ne .Global.NetworkProjectID "" }}network-project-id = {{.Global.NetworkProjectID}}{{end}}
+{{- if ne .Global.NetworkProjectID "" }}{{"\n"}}network-project-id = {{.Global.NetworkProjectID}}{{ end }}
+{{- if ne .Global.APIEndpoint "" }}{{"\n"}}api-endpoint = {{.Global.APIEndpoint}}{{ end }}
+{{- if ne .Global.ContainerAPIEndpoint "" }}{{"\n"}}container-api-endpoint = {{.Global.ContainerAPIEndpoint}}{{ end }}
 
 `
