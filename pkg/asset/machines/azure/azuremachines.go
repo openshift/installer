@@ -175,9 +175,8 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 						AcceleratedNetworking: ptr.To(mpool.VMNetworkingType == string(azure.VMnetworkingTypeAccelerated) || mpool.VMNetworkingType == string(azure.AcceleratedNetworkingEnabled)),
 					},
 				},
-				Identity:                   mpool.Identity.Type,
-				UserAssignedIdentities:     userAssignedIdentities,
-				SystemAssignedIdentityRole: mpool.Identity.SystemAssignedIdentityRole,
+				Identity:               mpool.Identity.Type,
+				UserAssignedIdentities: userAssignedIdentities,
 			},
 		}
 		azureMachine.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureMachine"))
@@ -234,7 +233,6 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 			SecurityProfile:            securityProfile,
 			Identity:                   mpool.Identity.Type,
 			UserAssignedIdentities:     userAssignedIdentities,
-			SystemAssignedIdentityRole: mpool.Identity.SystemAssignedIdentityRole,
 		},
 	}
 	bootstrapAzureMachine.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureMachine"))
