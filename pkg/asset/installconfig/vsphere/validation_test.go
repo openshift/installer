@@ -297,6 +297,35 @@ func simulatorHelper(t *testing.T, setVersionToSupported bool) (*validationConte
 	}, server, restClient, nil
 }
 
+func setupHostGroup(ctx context.Context, finder Finder, failureDomain *vsphere.FailureDomain) error {
+	clusterObj, err := finder.ClusterComputeResource(ctx, failureDomain.Topology.ComputeCluster)
+	if err != nil {
+		return err
+	}
+
+	clusterConfigSpec := &vim25types.ClusterConfigSpecEx{
+		GroupSpec: []vim25types.ClusterGroupSpec{
+			{
+				ArrayUpdateSpec: vim25types.ArrayUpdateSpec{
+					Operation: vim25types.ArrayUpdateOperation("add"),
+				},
+				Info: &vim25types.ClusterHostGroup{
+					ClusterGroupInfo: vim25types.ClusterGroupInfo{
+						Name: failureDomain.Topology.HostGroup,
+					},
+				},
+			},
+		},
+	}
+
+	task, err := clusterObj.Reconfigure(ctx, clusterConfigSpec, true)
+	if err != nil {
+		return err
+	}
+
+	return task.Wait(ctx)
+}
+
 func TestValidateFailureDomains(t *testing.T) {
 	validationCtx, server, restClient, err := simulatorHelper(t, true)
 	if err != nil {
@@ -453,6 +482,12 @@ func TestValidateFailureDomains(t *testing.T) {
 			var err error
 			if test.validationMethod != nil {
 				var tagMgr *vapitags.Manager
+
+				if test.failureDomain.Topology.HostGroup != "" {
+					if err := setupHostGroup(ctx, validationCtx.Finder, test.failureDomain); err != nil {
+						assert.NoError(t, err)
+					}
+				}
 
 				if test.tagTestMask != 0 {
 					tagMgr, err = setupTagAttachmentTest(ctx, restClient, validationCtx.Finder, test.tagTestMask)

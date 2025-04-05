@@ -226,7 +226,11 @@ func validateHostGroups(validationCtx *validationContext, cluster, hostGroup str
 		}
 	}
 
-	return allErrs
+	// this was originally missed
+	// if we reach here there are no vm-host groups by the name specified
+	// we need to add an error
+
+	return append(allErrs, field.NotFound(fldPath, hostGroup))
 }
 
 func validateVCenterVersion(validationCtx *validationContext, fldPath *field.Path) field.ErrorList {
