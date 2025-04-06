@@ -42,11 +42,11 @@ import (
 	"sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 type (
@@ -92,35 +92,28 @@ func (ampmr *AzureMachinePoolMachineController) SetupWithManager(ctx context.Con
 		r = coalescing.NewReconciler(ampmr, options.Cache, log)
 	}
 
-	c, err := ctrl.NewControllerManagedBy(mgr).
+	return ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options.Options).
 		For(&infrav1exp.AzureMachinePoolMachine{}).
 		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(log, ampmr.WatchFilterValue)).
-		Build(r)
-	if err != nil {
-		return errors.Wrapf(err, "error creating controller")
-	}
-
-	// Add a watch on AzureMachinePool for model changes
-	if err := c.Watch(
-		source.Kind(mgr.GetCache(), &infrav1exp.AzureMachinePool{}),
-		handler.EnqueueRequestsFromMapFunc(AzureMachinePoolToAzureMachinePoolMachines(ctx, mgr.GetClient(), log)),
-		MachinePoolModelHasChanged(log),
-		predicates.ResourceNotPausedAndHasFilterLabel(log, ampmr.WatchFilterValue),
-	); err != nil {
-		return errors.Wrapf(err, "failed adding a watch for AzureMachinePool model changes")
-	}
-
-	// Add a watch on CAPI Machines for MachinePool Machines
-	if err := c.Watch(
-		source.Kind(mgr.GetCache(), &clusterv1.Machine{}),
-		handler.EnqueueRequestsFromMapFunc(util.MachineToInfrastructureMapFunc(infrav1exp.GroupVersion.WithKind("AzureMachinePoolMachine"))),
-		predicates.ResourceNotPausedAndHasFilterLabel(log, ampmr.WatchFilterValue),
-	); err != nil {
-		return errors.Wrapf(err, "failed adding a watch for Machine model changes")
-	}
-
-	return nil
+		// Add a watch on AzureMachinePool for model changes
+		Watches(
+			&infrav1exp.AzureMachinePool{},
+			handler.EnqueueRequestsFromMapFunc(AzureMachinePoolToAzureMachinePoolMachines(ctx, mgr.GetClient(), log)),
+			builder.WithPredicates(
+				MachinePoolModelHasChanged(log),
+				predicates.ResourceNotPausedAndHasFilterLabel(log, ampmr.WatchFilterValue),
+			),
+		).
+		// Add a watch on CAPI Machines for MachinePool Machines
+		Watches(
+			&clusterv1.Machine{},
+			handler.EnqueueRequestsFromMapFunc(util.MachineToInfrastructureMapFunc(infrav1exp.GroupVersion.WithKind("AzureMachinePoolMachine"))),
+			builder.WithPredicates(
+				predicates.ResourceNotPausedAndHasFilterLabel(log, ampmr.WatchFilterValue),
+			),
+		).
+		Complete(r)
 }
 
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=azuremachinepools,verbs=get;list;watch
@@ -214,9 +207,14 @@ func (ampmr *AzureMachinePoolMachineController) Reconcile(ctx context.Context, r
 		return reconcile.Result{}, err
 	}
 
-	if machine != nil {
+	switch {
+	case machine != nil:
 		logger = logger.WithValues("machine", machine.Name)
-	} else {
+	case !azureMachinePool.ObjectMeta.DeletionTimestamp.IsZero():
+		logger.Info("AzureMachinePool is being deleted, removing finalizer")
+		controllerutil.RemoveFinalizer(azureMachine, infrav1exp.AzureMachinePoolMachineFinalizer)
+		return reconcile.Result{}, ampmr.Client.Update(ctx, azureMachine)
+	default:
 		logger.Info("Waiting for Machine Controller to set OwnerRef on AzureMachinePoolMachine")
 		return reconcile.Result{}, nil
 	}
@@ -297,8 +295,9 @@ func (ampmr *AzureMachinePoolMachineController) reconcileNormal(ctx context.Cont
 		machineScope.SetFailureReason(capierrors.UpdateMachineError)
 		machineScope.SetFailureMessage(errors.Errorf("Azure VM state is %s", state))
 	case infrav1.Deleting:
-		if err := ampmr.Client.Delete(ctx, machineScope.AzureMachinePoolMachine); err != nil {
-			return reconcile.Result{}, errors.Wrap(err, "machine pool machine failed to be deleted when deleting")
+		log.V(4).Info("deleting machine because state is Deleting", "machine", machineScope.Name())
+		if err := ampmr.Client.Delete(ctx, machineScope.Machine); err != nil {
+			return reconcile.Result{}, errors.Wrap(err, "machine failed to be deleted when deleting")
 		}
 	}
 

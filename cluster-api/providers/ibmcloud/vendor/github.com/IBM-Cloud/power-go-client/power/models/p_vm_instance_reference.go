@@ -34,6 +34,9 @@ type PVMInstanceReference struct {
 	// crn
 	Crn CRN `json:"crn,omitempty"`
 
+	// ID of the dedicated host where the PVM Instance is running, if applicable
+	DedicatedHostID string `json:"dedicatedHostID,omitempty"`
+
 	// Size of allocated disk (in GB)
 	// Required: true
 	DiskSize *float64 `json:"diskSize"`

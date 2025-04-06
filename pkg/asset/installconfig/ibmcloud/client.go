@@ -275,11 +275,10 @@ func (c *Client) CreateDNSServicesDNSRecord(ctx context.Context, dnsInstanceID s
 	if err != nil {
 		return fmt.Errorf("failed to create rdata cname record for dns services dns record: %w", err)
 	}
-	recordOptions := dnsService.NewCreateResourceRecordOptions(dnsInstanceID, zoneID)
+	recordOptions := dnsService.NewCreateResourceRecordOptions(dnsInstanceID, zoneID, dnssvcsv1.CreateResourceRecordOptions_Type_Cname)
 	recordOptions.SetName(recordName)
 	recordOptions.SetRdata(cnameRecord)
 	recordOptions.SetTTL(60)
-	recordOptions.SetType("CNAME")
 
 	// Create new DNS Record.
 	logrus.Debugf("creating dns services dns record: recordName=%s, cname=%s", recordName, cname)
@@ -299,12 +298,10 @@ func (c *Client) CreateDNSServicesPermittedNetwork(ctx context.Context, dnsInsta
 	}
 
 	// Build the new Permitted Network options.
-	permitOptions := dnsServices.NewCreatePermittedNetworkOptions(dnsInstanceID, dnsZoneID)
-	// Set the network type (to VPC) and VPC details
-	permitOptions.Type = ptr.To(dnssvcsv1.CreatePermittedNetworkOptions_Type_Vpc)
-	permitOptions.PermittedNetwork = &dnssvcsv1.PermittedNetworkVpc{
+	permittedNetwork := &dnssvcsv1.PermittedNetworkVpc{
 		VpcCrn: ptr.To(vpcCRN),
 	}
+	permitOptions := dnsServices.NewCreatePermittedNetworkOptions(dnsInstanceID, dnsZoneID, dnssvcsv1.CreatePermittedNetworkOptions_Type_Vpc, permittedNetwork)
 
 	// Create the new Permitted Network.
 	result, _, err := dnsServices.CreatePermittedNetworkWithContext(ctx, permitOptions)

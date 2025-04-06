@@ -42,6 +42,7 @@ func (amp *AzureMachinePool) SetDefaults(client client.Client) error {
 	}
 	amp.SetDiagnosticsDefaults()
 	amp.SetNetworkInterfacesDefaults()
+	amp.SetOSDiskDefaults()
 
 	return kerrors.NewAggregate(errs)
 }
@@ -157,5 +158,15 @@ func (amp *AzureMachinePool) SetNetworkInterfacesDefaults() {
 		if amp.Spec.Template.NetworkInterfaces[i].PrivateIPConfigs == 0 {
 			amp.Spec.Template.NetworkInterfaces[i].PrivateIPConfigs = 1
 		}
+	}
+}
+
+// SetOSDiskDefaults sets the defaults for the OSDisk.
+func (amp *AzureMachinePool) SetOSDiskDefaults() {
+	if amp.Spec.Template.OSDisk.OSType == "" {
+		amp.Spec.Template.OSDisk.OSType = "Linux"
+	}
+	if amp.Spec.Template.OSDisk.CachingType == "" {
+		amp.Spec.Template.OSDisk.CachingType = "None"
 	}
 }

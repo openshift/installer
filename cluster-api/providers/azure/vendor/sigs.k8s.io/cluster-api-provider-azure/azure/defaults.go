@@ -217,6 +217,11 @@ func VMID(subscriptionID, resourceGroup, vmName string) string {
 	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/virtualMachines/%s", subscriptionID, resourceGroup, vmName)
 }
 
+// VMSSID returns the azure resource ID for a given VMSS.
+func VMSSID(subscriptionID, resourceGroup, vmssName string) string {
+	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/virtualMachineScaleSets/%s", subscriptionID, resourceGroup, vmssName)
+}
+
 // VNetID returns the azure resource ID for a given VNet.
 func VNetID(subscriptionID, resourceGroup, vnetName string) string {
 	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/virtualNetworks/%s", subscriptionID, resourceGroup, vnetName)

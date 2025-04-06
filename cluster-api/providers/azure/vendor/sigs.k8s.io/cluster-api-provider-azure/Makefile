@@ -33,7 +33,7 @@ export GOPROXY
 export GO111MODULE=on
 
 # Kubebuilder.
-export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.29.0
+export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.31.0
 export KUBEBUILDER_CONTROLPLANE_START_TIMEOUT ?= 60s
 export KUBEBUILDER_CONTROLPLANE_STOP_TIMEOUT ?= 60s
 
@@ -69,11 +69,11 @@ ifneq ($(abspath $(ROOT_DIR)),$(GOPATH)/src/sigs.k8s.io/cluster-api-provider-azu
 endif
 
 # Binaries.
-CONTROLLER_GEN_VER := v0.14.0
+CONTROLLER_GEN_VER := v0.15.0
 CONTROLLER_GEN_BIN := controller-gen
 CONTROLLER_GEN := $(TOOLS_BIN_DIR)/$(CONTROLLER_GEN_BIN)-$(CONTROLLER_GEN_VER)
 
-CONVERSION_GEN_VER := v0.29.2
+CONVERSION_GEN_VER := v0.30.0
 CONVERSION_GEN_BIN := conversion-gen
 CONVERSION_GEN := $(TOOLS_BIN_DIR)/$(CONVERSION_GEN_BIN)-$(CONVERSION_GEN_VER)
 
@@ -101,7 +101,7 @@ RELEASE_NOTES_VER := v0.16.6-0.20240222112346-71feb57b59a4
 RELEASE_NOTES_BIN := release-notes
 RELEASE_NOTES := $(TOOLS_BIN_DIR)/$(RELEASE_NOTES_BIN)-$(RELEASE_NOTES_VER)
 
-KPROMO_VER := v4.0.4
+KPROMO_VER := v4.0.5
 KPROMO_BIN := kpromo
 KPROMO := $(TOOLS_BIN_DIR)/$(KPROMO_BIN)-$(KPROMO_VER)
 
@@ -151,8 +151,8 @@ ifeq (,$(shell command -v gcloud))
 else
     REGISTRY ?= localhost:5000
 endif
-STAGING_REGISTRY := gcr.io/k8s-staging-cluster-api-azure
-PROD_REGISTRY := registry.k8s.io/cluster-api-azure
+STAGING_REGISTRY ?= gcr.io/k8s-staging-cluster-api-azure
+PROD_REGISTRY ?= registry.k8s.io/cluster-api-azure
 IMAGE_NAME ?= cluster-api-azure-controller
 CONTROLLER_IMG ?= $(REGISTRY)/$(IMAGE_NAME)
 TAG ?= dev
@@ -165,7 +165,7 @@ CRD_ROOT ?= $(MANIFEST_ROOT)/crd/bases
 WEBHOOK_ROOT ?= $(MANIFEST_ROOT)/webhook
 RBAC_ROOT ?= $(MANIFEST_ROOT)/rbac
 ASO_CRDS_PATH := $(MANIFEST_ROOT)/aso/crds.yaml
-ASO_VERSION := v2.6.0
+ASO_VERSION := v2.8.0
 ASO_CRDS := resourcegroups.resources.azure.com natgateways.network.azure.com managedclusters.containerservice.azure.com managedclustersagentpools.containerservice.azure.com bastionhosts.network.azure.com virtualnetworks.network.azure.com virtualnetworkssubnets.network.azure.com privateendpoints.network.azure.com fleetsmembers.containerservice.azure.com extensions.kubernetesconfiguration.azure.com
 
 # Allow overriding the imagePullPolicy
@@ -307,17 +307,15 @@ create-management-cluster: $(KUSTOMIZE) $(ENVSUBST) $(KUBECTL) $(KIND) ## Create
 	# Install cert manager and wait for availability
 	./hack/install-cert-manager.sh
 
-	# Create secret for AzureClusterIdentity
-	./hack/create-identity-secret.sh
-
 	# Create customized cloud provider configs
+	AZURE_CLIENT_ID_USER_ASSIGNED_IDENTITY="$${AZURE_CLIENT_ID_USER_ASSIGNED_IDENTITY:-$$(cat $(AZURE_IDENTITY_ID_FILEPATH))}" \
 	./hack/create-custom-cloud-provider-config.sh
 
 	# Deploy CAPI
-	timeout --foreground 300 bash -c "until curl --retry $(CURL_RETRIES) -sSL https://github.com/kubernetes-sigs/cluster-api/releases/download/v1.7.3/cluster-api-components.yaml | $(ENVSUBST) | $(KUBECTL) apply -f -; do sleep 5; done"
+	timeout --foreground 300 bash -c "until curl --retry $(CURL_RETRIES) -sSL https://github.com/kubernetes-sigs/cluster-api/releases/download/v1.8.10/cluster-api-components.yaml | $(ENVSUBST) | $(KUBECTL) apply -f -; do sleep 5; done"
 
 	# Deploy CAAPH
-	timeout --foreground 300 bash -c "until curl --retry $(CURL_RETRIES) -sSL https://github.com/kubernetes-sigs/cluster-api-addon-provider-helm/releases/download/v0.1.0-alpha.10/addon-components.yaml | $(ENVSUBST) | $(KUBECTL) apply -f -; do sleep 5; done"
+	timeout --foreground 300 bash -c "until curl --retry $(CURL_RETRIES) -sSL https://github.com/kubernetes-sigs/cluster-api-addon-provider-helm/releases/download/v0.2.5/addon-components.yaml | $(ENVSUBST) | $(KUBECTL) apply -f -; do sleep 5; done"
 
 	# Deploy CAPZ
 	$(KIND) load docker-image $(CONTROLLER_IMG)-$(ARCH):$(TAG) --name=$(KIND_CLUSTER_NAME)
@@ -335,7 +333,7 @@ create-management-cluster: $(KUSTOMIZE) $(ENVSUBST) $(KUBECTL) $(KIND) ## Create
 	timeout --foreground 300 bash -c "until $(KUBECTL) get clusterresourcesets -A; do sleep 3; done"
 
 	# install Windows Calico cluster resource set
-	timeout --foreground 300 bash -c "until $(KUBECTL) create configmap calico-windows-addon --from-file="$(ADDONS_DIR)/windows/calico" --dry-run=client -o yaml | kubectl apply -f -; do sleep 5; done"
+	timeout --foreground 300 bash -c "until $(KUBECTL) create configmap calico-windows-addon -n default --from-file="$(ADDONS_DIR)/windows/calico" --dry-run=client -o yaml | kubectl apply -f -; do sleep 5; done"
 	timeout --foreground 300 bash -c "until $(KUBECTL) apply -f templates/addons/windows/calico-resource-set.yaml; do sleep 5; done"
 
 	# Wait for CAPZ deployments
@@ -363,10 +361,10 @@ create-workload-cluster: $(ENVSUBST) $(KUBECTL) ## Create a workload cluster.
 	fi
 
 	# Wait for the kubeconfig to become available.
-	timeout --foreground 300 bash -c "while ! $(KUBECTL) get secrets | grep $(CLUSTER_NAME)-kubeconfig; do sleep 1; done"
+	timeout --foreground 1800 bash -c "while ! $(KUBECTL) get secrets -n default | grep $(CLUSTER_NAME)-kubeconfig; do sleep 1; done"
 	# Get kubeconfig and store it locally.
-	$(KUBECTL) get secrets $(CLUSTER_NAME)-kubeconfig -o json | jq -r .data.value | base64 --decode > ./kubeconfig
-	$(KUBECTL) wait --for=condition=Ready --timeout=10m cluster "$(CLUSTER_NAME)"
+	$(KUBECTL) get secret/$(CLUSTER_NAME)-kubeconfig -n default -o json | jq -r .data.value | base64 --decode > ./kubeconfig
+	$(KUBECTL) -n default wait --for=condition=Ready --timeout=10m cluster "$(CLUSTER_NAME)"
 
 	@echo 'run "$(KUBECTL) --kubeconfig=./kubeconfig ..." to work with the new target cluster'
 
@@ -390,10 +388,14 @@ delete-workload-cluster: $(KUBECTL) ## Deletes the example workload Kubernetes c
 
 ##@ Docker:
 
+.PHONY: acr-login
+acr-login: ## Login to Azure Container Registry.
+	./hack/ensure-acr-login.sh
+
 .PHONY: docker-pull-prerequisites
 docker-pull-prerequisites: ## Pull prerequisites for building controller-manager.
 	docker pull docker/dockerfile:1.4
-	docker pull docker.io/library/golang:1.21
+	docker pull docker.io/library/golang:1.22
 	docker pull gcr.io/distroless/static:latest
 
 .PHONY: docker-build
@@ -473,7 +475,7 @@ generate-manifests: $(CONTROLLER_GEN) ## Generate manifests e.g. CRD, RBAC etc.
 		paths=./api/... \
 		paths=./$(EXP_DIR)/api/... \
 		crd:crdVersions=v1 \
-		rbac:roleName=manager-role \
+		rbac:roleName=base-manager-role \
 		output:crd:dir=$(CRD_ROOT) \
 		output:webhook:dir=$(WEBHOOK_ROOT) \
 		webhook
@@ -482,7 +484,7 @@ generate-manifests: $(CONTROLLER_GEN) ## Generate manifests e.g. CRD, RBAC etc.
 		paths=./controllers/... \
 		paths=./$(EXP_DIR)/controllers/... \
 		output:rbac:dir=$(RBAC_ROOT) \
-		rbac:roleName=manager-role
+		rbac:roleName=base-manager-role
 
 .PHONY: generate-flavors ## Generate template flavors.
 generate-flavors: $(KUSTOMIZE) generate-addons
@@ -562,7 +564,7 @@ help: ## Display this help.
 
 .PHONY: lint
 lint: $(GOLANGCI_LINT) lint-latest ## Lint codebase.
-	$(GOLANGCI_LINT) run -v $(GOLANGCI_LINT_EXTRA_ARGS)
+	$(GOLANGCI_LINT) run -v --timeout=8m0s --print-resources-usage $(GOLANGCI_LINT_EXTRA_ARGS)
 
 .PHONY: lint-fix
 lint-fix: $(GOLANGCI_LINT) ## Lint the codebase and run auto-fixers if supported by the linter.
@@ -647,7 +649,7 @@ release-binary: $(RELEASE_DIR) ## Compile and build release binaries.
 		-e GOARCH=$(GOARCH) \
 		-v "$$(pwd):/workspace" \
 		-w /workspace \
-		golang:1.21 \
+		golang:1.22 \
 		go build -a -ldflags '$(LDFLAGS) -extldflags "-static"' \
 		-o $(RELEASE_DIR)/$(notdir $(RELEASE_BINARY))-$(GOOS)-$(GOARCH) $(RELEASE_BINARY)
 
@@ -726,8 +728,12 @@ verify-container-images: ## Verify container images
 kind-create: $(KUBECTL) ## Create capz kind cluster if needed.
 	./scripts/kind-with-registry.sh
 
+.PHONY: aks-create
+aks-create: $(KUBECTL) ## Create aks cluster as mgmt cluster.
+	./scripts/aks-as-mgmt.sh
+
 .PHONY: tilt-up
-tilt-up: install-tools kind-create ## Start tilt and build kind cluster if needed.
+tilt-up: install-tools ## Start tilt and build kind cluster if needed.
 	@if [ -z "${AZURE_CLIENT_ID_USER_ASSIGNED_IDENTITY}" ]; then \
 		export AZURE_CLIENT_ID_USER_ASSIGNED_IDENTITY=$(shell cat $(AZURE_IDENTITY_ID_FILEPATH)); \
 	fi; \
@@ -765,6 +771,7 @@ yq: $(YQ) ## Build a local copy of yq.
 kind: $(KIND) ## Build a local copy of kind.
 setup-envtest: $(SETUP_ENVTEST) ## Build a local copy of setup-envtest.
 codespell : $(CODESPELL) ## Build a local copy of codespell.
+azwi: $(AZWI) ## Build a local copy of azwi.
 
 $(CONVERSION_VERIFIER): go.mod
 	cd $(TOOLS_DIR); go build -tags=tools -o $@ sigs.k8s.io/cluster-api/hack/tools/conversion-verifier

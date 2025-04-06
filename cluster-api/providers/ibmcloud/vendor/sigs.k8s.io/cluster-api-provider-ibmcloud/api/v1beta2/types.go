@@ -139,16 +139,16 @@ type VPCLoadBalancerBackendPoolProtocol string
 
 var (
 	// VPCLoadBalancerBackendPoolProtocolHTTP is the string representing the http protocol for load balancer backend pools.
-	VPCLoadBalancerBackendPoolProtocolHTTP VPCLoadBalancerBackendPoolProtocol = vpcv1.LoadBalancerPoolPrototypeProtocolHTTPConst
+	VPCLoadBalancerBackendPoolProtocolHTTP VPCLoadBalancerBackendPoolProtocol = vpcv1.LoadBalancerPoolPrototypeLoadBalancerContextProtocolHTTPConst
 
 	// VPCLoadBalancerBackendPoolProtocolHTTPS is the string representing the https protocol for load balancer backend pools.
-	VPCLoadBalancerBackendPoolProtocolHTTPS VPCLoadBalancerBackendPoolProtocol = vpcv1.LoadBalancerPoolPrototypeProtocolHTTPSConst
+	VPCLoadBalancerBackendPoolProtocolHTTPS VPCLoadBalancerBackendPoolProtocol = vpcv1.LoadBalancerPoolPrototypeLoadBalancerContextProtocolHTTPSConst
 
 	// VPCLoadBalancerBackendPoolProtocolTCP is the string representing the tcp protocol for load balancer backend pools.
-	VPCLoadBalancerBackendPoolProtocolTCP VPCLoadBalancerBackendPoolProtocol = vpcv1.LoadBalancerPoolPrototypeProtocolTCPConst
+	VPCLoadBalancerBackendPoolProtocolTCP VPCLoadBalancerBackendPoolProtocol = vpcv1.LoadBalancerPoolPrototypeLoadBalancerContextProtocolTCPConst
 
 	// VPCLoadBalancerBackendPoolProtocolUDP is the string representing the tudp protocol for load balancer backend pools.
-	VPCLoadBalancerBackendPoolProtocolUDP VPCLoadBalancerBackendPoolProtocol = vpcv1.LoadBalancerPoolPrototypeProtocolUDPConst
+	VPCLoadBalancerBackendPoolProtocolUDP VPCLoadBalancerBackendPoolProtocol = vpcv1.LoadBalancerPoolPrototypeLoadBalancerContextProtocolUDPConst
 )
 
 // VPCLoadBalancerListenerProtocol describes the protocol for load balancer listeners.

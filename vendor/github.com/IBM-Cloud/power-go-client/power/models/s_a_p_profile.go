@@ -28,6 +28,9 @@ type SAPProfile struct {
 	// Required: true
 	Cores *int64 `json:"cores"`
 
+	// System to use if not provided
+	DefaultSystem string `json:"defaultSystem,omitempty"`
+
 	// Requires full system for deployment
 	FullSystemProfile bool `json:"fullSystemProfile"`
 

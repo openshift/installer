@@ -25,7 +25,7 @@ func NewIBMPINetworkPeerClient(ctx context.Context, sess *ibmpisession.IBMPISess
 // Get network peers
 func (f *IBMPINetworkPeerClient) GetNetworkPeers() (*models.NetworkPeers, error) {
 	if !f.session.IsOnPrem() {
-		return nil, fmt.Errorf("not supported in off-prem location")
+		return nil, fmt.Errorf(helpers.NotOffPremSupported)
 	}
 	params := network_peers.NewV1NetworkPeersListParams().WithContext(f.ctx).
 		WithTimeout(helpers.PIGetTimeOut)

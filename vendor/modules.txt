@@ -76,7 +76,7 @@ github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2016-06-01/subscriptio
 github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2018-02-01/resources
 github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2018-05-01/resources
 github.com/Azure/azure-sdk-for-go/version
-# github.com/Azure/azure-sdk-for-go/sdk/azcore v1.12.0
+# github.com/Azure/azure-sdk-for-go/sdk/azcore v1.14.0
 ## explicit; go 1.18
 github.com/Azure/azure-sdk-for-go/sdk/azcore
 github.com/Azure/azure-sdk-for-go/sdk/azcore/arm
@@ -99,11 +99,11 @@ github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime
 github.com/Azure/azure-sdk-for-go/sdk/azcore/streaming
 github.com/Azure/azure-sdk-for-go/sdk/azcore/to
 github.com/Azure/azure-sdk-for-go/sdk/azcore/tracing
-# github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.6.0
+# github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.7.0
 ## explicit; go 1.18
 github.com/Azure/azure-sdk-for-go/sdk/azidentity
 github.com/Azure/azure-sdk-for-go/sdk/azidentity/internal
-# github.com/Azure/azure-sdk-for-go/sdk/internal v1.9.0
+# github.com/Azure/azure-sdk-for-go/sdk/internal v1.10.0
 ## explicit; go 1.18
 github.com/Azure/azure-sdk-for-go/sdk/internal/diag
 github.com/Azure/azure-sdk-for-go/sdk/internal/errorinfo
@@ -124,7 +124,7 @@ github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/dns/armdns
 # github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault v1.4.0
 ## explicit; go 1.18
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault
-# github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork v1.0.0
+# github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork v1.1.0
 ## explicit; go 1.18
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork
 # github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2 v2.2.1
@@ -139,7 +139,7 @@ github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resourcegraph/armresourceg
 # github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources v1.2.0
 ## explicit; go 1.18
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources
-# github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage v1.5.0
+# github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage v1.6.0
 ## explicit; go 1.18
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage
 # github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.2.1
@@ -168,7 +168,7 @@ github.com/Azure/go-autorest
 ## explicit; go 1.15
 github.com/Azure/go-autorest/autorest
 github.com/Azure/go-autorest/autorest/azure
-# github.com/Azure/go-autorest/autorest/adal v0.9.23
+# github.com/Azure/go-autorest/autorest/adal v0.9.24
 ## explicit; go 1.15
 github.com/Azure/go-autorest/autorest/adal
 # github.com/Azure/go-autorest/autorest/date v0.3.0
@@ -216,7 +216,7 @@ github.com/BurntSushi/toml/internal
 # github.com/IBM-Cloud/bluemix-go v0.0.0-20211102075456-ffc4e11dfb16
 ## explicit; go 1.13
 github.com/IBM-Cloud/bluemix-go/crn
-# github.com/IBM-Cloud/power-go-client v1.9.0
+# github.com/IBM-Cloud/power-go-client v1.11.0
 ## explicit; go 1.22.0
 github.com/IBM-Cloud/power-go-client/clients/instance
 github.com/IBM-Cloud/power-go-client/errors
@@ -230,6 +230,16 @@ github.com/IBM-Cloud/power-go-client/power/client/datacenters
 github.com/IBM-Cloud/power-go-client/power/client/hardware_platforms
 github.com/IBM-Cloud/power-go-client/power/client/host_groups
 github.com/IBM-Cloud/power-go-client/power/client/iaas_service_broker
+github.com/IBM-Cloud/power-go-client/power/client/internal_operations_dedicated_hosts
+github.com/IBM-Cloud/power-go-client/power/client/internal_operations_images
+github.com/IBM-Cloud/power-go-client/power/client/internal_operations_network_address_groups
+github.com/IBM-Cloud/power-go-client/power/client/internal_operations_network_interfaces
+github.com/IBM-Cloud/power-go-client/power/client/internal_operations_network_security_groups
+github.com/IBM-Cloud/power-go-client/power/client/internal_operations_networks
+github.com/IBM-Cloud/power-go-client/power/client/internal_operations_pvm_instances
+github.com/IBM-Cloud/power-go-client/power/client/internal_operations_shared_processor_pools
+github.com/IBM-Cloud/power-go-client/power/client/internal_operations_snapshots
+github.com/IBM-Cloud/power-go-client/power/client/internal_operations_volumes
 github.com/IBM-Cloud/power-go-client/power/client/internal_power_v_s_instances
 github.com/IBM-Cloud/power-go-client/power/client/internal_power_v_s_locations
 github.com/IBM-Cloud/power-go-client/power/client/internal_storage_regions
@@ -274,11 +284,11 @@ github.com/IBM-Cloud/power-go-client/power/client/storage_types
 github.com/IBM-Cloud/power-go-client/power/client/swagger_spec
 github.com/IBM-Cloud/power-go-client/power/client/workspaces
 github.com/IBM-Cloud/power-go-client/power/models
-# github.com/IBM/go-sdk-core/v5 v5.18.5
-## explicit; go 1.21
+# github.com/IBM/go-sdk-core/v5 v5.19.0
+## explicit; go 1.23.0
 github.com/IBM/go-sdk-core/v5/core
-# github.com/IBM/ibm-cos-sdk-go v1.12.1
-## explicit; go 1.21
+# github.com/IBM/ibm-cos-sdk-go v1.12.2
+## explicit; go 1.23.0
 github.com/IBM/ibm-cos-sdk-go/aws
 github.com/IBM/ibm-cos-sdk-go/aws/arn
 github.com/IBM/ibm-cos-sdk-go/aws/awserr
@@ -322,8 +332,8 @@ github.com/IBM/ibm-cos-sdk-go/service/s3
 ## explicit; go 1.15
 github.com/IBM/keyprotect-go-client
 github.com/IBM/keyprotect-go-client/iam
-# github.com/IBM/networking-go-sdk v0.45.0
-## explicit; go 1.19
+# github.com/IBM/networking-go-sdk v0.51.2
+## explicit; go 1.23.2
 github.com/IBM/networking-go-sdk/common
 github.com/IBM/networking-go-sdk/dnsrecordsv1
 github.com/IBM/networking-go-sdk/dnssvcsv1
@@ -331,8 +341,8 @@ github.com/IBM/networking-go-sdk/dnszonesv1
 github.com/IBM/networking-go-sdk/resourcerecordsv1
 github.com/IBM/networking-go-sdk/transitgatewayapisv1
 github.com/IBM/networking-go-sdk/zonesv1
-# github.com/IBM/platform-services-go-sdk v0.75.0
-## explicit; go 1.21
+# github.com/IBM/platform-services-go-sdk v0.79.0
+## explicit; go 1.23.0
 github.com/IBM/platform-services-go-sdk/common
 github.com/IBM/platform-services-go-sdk/globalcatalogv1
 github.com/IBM/platform-services-go-sdk/globalsearchv2
@@ -340,8 +350,8 @@ github.com/IBM/platform-services-go-sdk/iamidentityv1
 github.com/IBM/platform-services-go-sdk/iampolicymanagementv1
 github.com/IBM/platform-services-go-sdk/resourcecontrollerv2
 github.com/IBM/platform-services-go-sdk/resourcemanagerv2
-# github.com/IBM/vpc-go-sdk v0.64.0
-## explicit; go 1.21
+# github.com/IBM/vpc-go-sdk v0.65.0
+## explicit; go 1.23.0
 github.com/IBM/vpc-go-sdk/common
 github.com/IBM/vpc-go-sdk/vpcv1
 # github.com/MakeNowJust/heredoc v1.0.0
@@ -738,7 +748,7 @@ github.com/form3tech-oss/jwt-go
 # github.com/fxamacker/cbor/v2 v2.7.0
 ## explicit; go 1.17
 github.com/fxamacker/cbor/v2
-# github.com/gabriel-vasile/mimetype v1.4.3
+# github.com/gabriel-vasile/mimetype v1.4.8
 ## explicit; go 1.20
 github.com/gabriel-vasile/mimetype
 github.com/gabriel-vasile/mimetype/internal/charset
@@ -810,8 +820,8 @@ github.com/go-playground/locales/currency
 # github.com/go-playground/universal-translator v0.18.1
 ## explicit; go 1.18
 github.com/go-playground/universal-translator
-# github.com/go-playground/validator/v10 v10.19.0
-## explicit; go 1.18
+# github.com/go-playground/validator/v10 v10.24.0
+## explicit; go 1.20
 github.com/go-playground/validator/v10
 # github.com/gobuffalo/flect v1.0.3
 ## explicit; go 1.16
@@ -849,8 +859,8 @@ github.com/google/gnostic-models/extensions
 github.com/google/gnostic-models/jsonschema
 github.com/google/gnostic-models/openapiv2
 github.com/google/gnostic-models/openapiv3
-# github.com/google/go-cmp v0.6.0
-## explicit; go 1.13
+# github.com/google/go-cmp v0.7.0
+## explicit; go 1.21
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
@@ -1498,7 +1508,7 @@ github.com/shurcooL/vfsgen
 ## explicit; go 1.13
 github.com/sirupsen/logrus
 github.com/sirupsen/logrus/hooks/test
-# github.com/spf13/cobra v1.8.1
+# github.com/spf13/cobra v1.9.1
 ## explicit; go 1.15
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.6
@@ -1593,7 +1603,7 @@ github.com/yosida95/uritemplate/v3
 ## explicit; go 1.18
 github.com/zclconf/go-cty/cty
 github.com/zclconf/go-cty/cty/set
-# go.mongodb.org/mongo-driver v1.14.0
+# go.mongodb.org/mongo-driver v1.17.2
 ## explicit; go 1.18
 go.mongodb.org/mongo-driver/bson
 go.mongodb.org/mongo-driver/bson/bsoncodec
@@ -2560,7 +2570,7 @@ k8s.io/utils/trace
 # libvirt.org/go/libvirtxml v1.10002.0
 ## explicit; go 1.11
 libvirt.org/go/libvirtxml
-# sigs.k8s.io/cluster-api v1.9.4
+# sigs.k8s.io/cluster-api v1.9.5
 ## explicit; go 1.22.0
 sigs.k8s.io/cluster-api/api/v1beta1
 sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1
@@ -2584,8 +2594,8 @@ sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta1
 sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2
 sigs.k8s.io/cluster-api-provider-aws/v2/feature
 sigs.k8s.io/cluster-api-provider-aws/v2/iam/api/v1beta1
-# sigs.k8s.io/cluster-api-provider-azure v1.15.1-0.20240617212811-a52056dfb88c
-## explicit; go 1.21
+# sigs.k8s.io/cluster-api-provider-azure v1.17.5
+## explicit; go 1.22.7
 sigs.k8s.io/cluster-api-provider-azure/api/v1beta1
 sigs.k8s.io/cluster-api-provider-azure/feature
 sigs.k8s.io/cluster-api-provider-azure/util/azure
@@ -2595,8 +2605,8 @@ sigs.k8s.io/cluster-api-provider-azure/util/webhook
 # sigs.k8s.io/cluster-api-provider-gcp v1.8.1-0.20250225090028-d80bfabadd3f
 ## explicit; go 1.22.0
 sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1
-# sigs.k8s.io/cluster-api-provider-ibmcloud v0.10.0
-## explicit; go 1.22.0
+# sigs.k8s.io/cluster-api-provider-ibmcloud v0.11.0-alpha.0.0.20250319131234-d3cc59096981
+## explicit; go 1.23.2
 sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2
 sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/endpoints
 sigs.k8s.io/cluster-api-provider-ibmcloud/util

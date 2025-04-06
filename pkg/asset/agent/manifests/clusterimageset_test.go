@@ -62,7 +62,7 @@ func TestClusterImageSet_Generate(t *testing.T) {
 				getValidOptionalInstallConfig(),
 				&releaseimage.Image{},
 			},
-			expectedError: "invalid ClusterImageSet configuration: Spec.ReleaseImage: Invalid value: \"\": value must be equal to " + currentRelease,
+			expectedError: "invalid ClusterImageSet configuration: spec.releaseImage: Invalid value: \"\": value must be equal to " + currentRelease,
 		},
 		{
 			name: "valid configuration",
@@ -182,7 +182,7 @@ metadata:
   name: openshift-v4.10.0
 spec:
   releaseImage: 99.999`,
-			expectedError: fmt.Sprintf("invalid ClusterImageSet configuration: Spec.ReleaseImage: Invalid value: \"99.999\": value must be equal to %s", currentRelease),
+			expectedError: fmt.Sprintf("invalid ClusterImageSet configuration: spec.releaseImage: Invalid value: \"99.999\": value must be equal to %s", currentRelease),
 		},
 		{
 			name:          "not-yaml",
@@ -192,7 +192,7 @@ spec:
 		{
 			name:          "empty",
 			data:          "",
-			expectedError: fmt.Sprintf("invalid ClusterImageSet configuration: Spec.ReleaseImage: Invalid value: \"\": value must be equal to %s", currentRelease),
+			expectedError: fmt.Sprintf("invalid ClusterImageSet configuration: spec.releaseImage: Invalid value: \"\": value must be equal to %s", currentRelease),
 		},
 		{
 			name:       "file-not-found",

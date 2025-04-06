@@ -42,7 +42,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: Platform: Unsupported value: "aws": supported values: "baremetal", "vsphere", "nutanix", "none", "external"`,
+			expectedError: `invalid install-config configuration: platform: Unsupported value: "aws": supported values: "baremetal", "vsphere", "nutanix", "none", "external"`,
 		},
 		{
 			name: "apiVips not set for baremetal Compact platform",
@@ -527,7 +527,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: [platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, platform.vsphere.ingressVIPs: Required value: must specify at least one VIP for the Ingress, Platform.VSphere.failureDomains.topology.folder: Required value: must specify a folder for agent-based installs]`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, platform.vsphere.ingressVIPs: Required value: must specify at least one VIP for the Ingress, platform.vsphere.failureDomains[0].topology.folder: Required value: must specify a folder for agent-based installs]`,
 		},
 		{
 			name: "apiVIPs are missing for vsphere platform",
@@ -798,7 +798,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: [Platform.VSphere.username: Required value: All credential fields are required if any one is specified, Platform.VSphere.password: Required value: All credential fields are required if any one is specified, Platform.VSphere.datacenter: Required value: All credential fields are required if any one is specified, Platform.VSphere.failureDomains.topology.folder: Required value: must specify a folder for agent-based installs]`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.username: Required value: All credential fields are required if any one is specified, platform.vsphere.vcenters[0].password: Required value: All credential fields are required if any one is specified, platform.vsphere.vcenters[0].datacenter: Required value: All credential fields are required if any one is specified, platform.vsphere.failureDomains[0].topology.folder: Required value: must specify a folder for agent-based installs]`,
 		},
 		{
 			name: "All required vSphere fields must be entered if some of them are entered - vcenter fields",
@@ -823,7 +823,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: [Platform.VSphere.password: Required value: All credential fields are required if any one is specified, Platform.VSphere.datacenter: Required value: All credential fields are required if any one is specified, Platform.VSphere.failureDomains.topology.folder: Required value: must specify a folder for agent-based installs]`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.vcenters[0].password: Required value: All credential fields are required if any one is specified, platform.vsphere.vcenters[0].datacenter: Required value: All credential fields are required if any one is specified, platform.vsphere.failureDomains[0].topology.folder: Required value: must specify a folder for agent-based installs]`,
 		},
 		{
 			name: "ingressVIP missing for vSphere, credentials not provided and should not flag error",
@@ -865,7 +865,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: Compute.Replicas: Required value: Total number of Compute.Replicas must be 0 when ControlPlane.Replicas is 1 for platform none or external. Found 3",
+			expectedError: "invalid install-config configuration: compute.replicas: Forbidden: Total number of compute replicas must be 0 when controlPlane.replicas is 1 for platform none or external. Found 3",
 		},
 		{
 			name: "incorrect compute.replicas set",
@@ -889,7 +889,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: [controlPlane.fencing.credentials: Forbidden: there should be exactly two fencing credentials to support the two node cluster, instead 0 credentials were found, ControlPlane.Replicas: Invalid value: 2: ControlPlane.Replicas can only be set to 5, 4, 3, or 1. Found 2]",
+			expectedError: "invalid install-config configuration: [controlPlane.fencing.credentials: Forbidden: there should be exactly two fencing credentials to support the two node cluster, instead 0 credentials were found, controlPlane.replicas: Unsupported value: 2: supported values: \"3\", \"1\", \"4\", \"5\"]",
 		},
 		{
 			name: "invalid platform for SNO cluster",
@@ -918,7 +918,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: [Platform: Unsupported value: \"aws\": supported values: \"baremetal\", \"vsphere\", \"nutanix\", \"none\", \"external\", Platform: Invalid value: \"aws\": Only platform none and external supports 1 ControlPlane and 0 Compute nodes]",
+			expectedError: "invalid install-config configuration: [platform: Unsupported value: \"aws\": supported values: \"baremetal\", \"vsphere\", \"nutanix\", \"none\", \"external\", platform: Invalid value: \"aws\": Only platform none and external supports 1 ControlPlane and 0 Compute nodes]",
 		},
 		{
 			name: "invalid platform.baremetal for architecture ppc64le",
@@ -957,7 +957,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: Platform: Invalid value: \"baremetal\": CPU architecture \"ppc64le\" only supports platform \"none\".",
+			expectedError: "invalid install-config configuration: platform: Invalid value: \"baremetal\": CPU architecture \"ppc64le\" only supports platform \"none\".",
 		},
 		{
 			name: "invalid platform.baremetal for architecture s390x",
@@ -996,7 +996,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: Platform: Invalid value: \"baremetal\": CPU architecture \"s390x\" only supports platform \"none\".",
+			expectedError: "invalid install-config configuration: platform: Invalid value: \"baremetal\": CPU architecture \"s390x\" only supports platform \"none\".",
 		},
 		{
 			name: "generic platformName for external platform",
@@ -1084,7 +1084,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: Platform.External.CloudControllerManager: Invalid value: "": When using external oci platform, Platform.External.CloudControllerManager must be set to External`,
+			expectedError: `invalid install-config configuration: platform.external.cloudControllerManager: Invalid value: "": When using external oci platform, platform.external.cloudControllerManager must be set to External`,
 		},
 		{
 			name: "valid configuration for none platform for sno",
@@ -1731,7 +1731,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: [Platform.BareMetal.clusterProvisioningIP: Invalid value: "172.22.0.11": "172.22.0.11" overlaps with the allocated DHCP range, Platform.BareMetal.hosts[2].BMC.Address: Duplicate value: "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234"]`,
+			expectedError: `invalid install-config configuration: [platform.baremetal.clusterProvisioningIP: Invalid value: "172.22.0.11": "172.22.0.11" overlaps with the allocated DHCP range, platform.baremetal.hosts[2].bmc.address: Duplicate value: "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234"]`,
 		},
 	}
 	for _, tc := range cases {

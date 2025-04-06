@@ -121,7 +121,7 @@ linters-settings:
     - whyNoLint
     - wrapperFunc
   unused:
-    go: "1.22"
+    go: "1.23"
 issues:
   max-same-issues: 0
   max-issues-per-linter: 0
@@ -207,7 +207,7 @@ issues:
   - "zz_generated.*\\.go$"
 
 run:
-  go: "1.22"
+  go: "1.23"
   timeout: 10m
   build-tags:
   - tools

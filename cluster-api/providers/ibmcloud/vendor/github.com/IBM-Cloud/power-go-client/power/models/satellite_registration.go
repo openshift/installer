@@ -29,6 +29,10 @@ type SatelliteRegistration struct {
 	// CRN of satellite to register
 	// Required: true
 	SatelliteID *string `json:"satelliteID"`
+
+	// Usage mode to activate in the pod
+	// Required: true
+	UsageMode *string `json:"usageMode"`
 }
 
 // Validate validates this satellite registration
@@ -40,6 +44,10 @@ func (m *SatelliteRegistration) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateSatelliteID(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateUsageMode(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -61,6 +69,15 @@ func (m *SatelliteRegistration) validateOrderID(formats strfmt.Registry) error {
 func (m *SatelliteRegistration) validateSatelliteID(formats strfmt.Registry) error {
 
 	if err := validate.Required("satelliteID", "body", m.SatelliteID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *SatelliteRegistration) validateUsageMode(formats strfmt.Registry) error {
+
+	if err := validate.Required("usageMode", "body", m.UsageMode); err != nil {
 		return err
 	}
 

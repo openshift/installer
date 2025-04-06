@@ -2831,6 +2831,24 @@ func TestValidateTNF(t *testing.T) {
 		},
 		{
 			config: installConfig().
+				MachinePoolArbiter(machinePool()).
+				MachinePoolCP(machinePool().Credential(c1(), c2())).
+				ArbiterReplicas(1).
+				CpReplicas(2).build(),
+			name:     "skip_number_of_credentials_validation_for_arbiter_deployment",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				MachinePoolArbiter(machinePool()).
+				MachinePoolCP(machinePool().Credential(c1(), c2(), c3())).
+				ArbiterReplicas(1).
+				CpReplicas(2).build(),
+			name:     "skip_number_of_credentials_validation_for_arbiter_deployment_invalid_credentials_count",
+			expected: "",
+		},
+		{
+			config: installConfig().
 				MachinePoolCP(machinePool().
 					Credential(c1(), c2())).
 				CpReplicas(3).build(),
@@ -2845,7 +2863,7 @@ func TestValidateTNF(t *testing.T) {
 						c2().BMCAddress("ipmi://192.168.111.1"))).
 				CpReplicas(2).build(),
 			name:     "duplicate_bmc_address",
-			expected: "controlPlane.fencing.credentials\\[1\\].Address: Duplicate value: \"ipmi://192.168.111.1\"",
+			expected: "controlPlane.fencing.credentials\\[1\\].address: Duplicate value: \"ipmi://192.168.111.1\"",
 		},
 		{
 			config: installConfig().
@@ -2853,7 +2871,7 @@ func TestValidateTNF(t *testing.T) {
 					Credential(c1().BMCAddress(""), c2())).
 				CpReplicas(2).build(),
 			name:     "bmc_address_required",
-			expected: "controlPlane.fencing.credentials\\[0\\].Address: Required value: missing Address",
+			expected: "controlPlane.fencing.credentials\\[0\\].address: Required value: missing Address",
 		},
 		{
 			config: installConfig().
@@ -2861,7 +2879,7 @@ func TestValidateTNF(t *testing.T) {
 					Credential(c1(), c2().BMCUsername(""))).
 				CpReplicas(2).build(),
 			name:     "bmc_username_required",
-			expected: "controlPlane.fencing.credentials\\[1\\].Username: Required value: missing Username",
+			expected: "controlPlane.fencing.credentials\\[1\\].username: Required value: missing Username",
 		},
 		{
 			config: installConfig().
@@ -2869,7 +2887,7 @@ func TestValidateTNF(t *testing.T) {
 					Credential(c1().BMCPassword(""), c2())).
 				CpReplicas(2).build(),
 			name:     "bmc_password_required",
-			expected: "controlPlane.fencing.credentials\\[0\\].Password: Required value: missing Password",
+			expected: "controlPlane.fencing.credentials\\[0\\].password: Required value: missing Password",
 		},
 		{
 			config: installConfig().
@@ -2877,7 +2895,7 @@ func TestValidateTNF(t *testing.T) {
 					Credential(c1().HostName(""), c2())).
 				CpReplicas(2).build(),
 			name:     "host_name_required",
-			expected: "controlPlane.fencing.credentials\\[0\\].HostName: Required value: missing HostName",
+			expected: "controlPlane.fencing.credentials\\[0\\].hostName: Required value: missing HostName",
 		},
 		{
 			config: installConfig().
@@ -3069,6 +3087,19 @@ func (icb *installConfigBuilder) CpReplicas(numOfCpReplicas int64) *installConfi
 
 func (icb *installConfigBuilder) MachinePoolCP(builder *machinePoolBuilder) *installConfigBuilder {
 	icb.InstallConfig.ControlPlane = builder.build()
+	return icb
+}
+
+func (icb *installConfigBuilder) ArbiterReplicas(numOfCpReplicas int64) *installConfigBuilder {
+	if icb.InstallConfig.Arbiter == nil {
+		icb.InstallConfig.Arbiter = &types.MachinePool{}
+	}
+	icb.InstallConfig.Arbiter.Replicas = &numOfCpReplicas
+	return icb
+}
+
+func (icb *installConfigBuilder) MachinePoolArbiter(builder *machinePoolBuilder) *installConfigBuilder {
+	icb.InstallConfig.Arbiter = builder.build()
 	return icb
 }
 

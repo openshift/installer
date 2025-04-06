@@ -25,7 +25,7 @@ func NewIBMPISAPInstanceClient(ctx context.Context, sess *ibmpisession.IBMPISess
 // Create a SAP Instance
 func (f *IBMPISAPInstanceClient) Create(body *models.SAPCreate) (*models.PVMInstanceList, error) {
 	if f.session.IsOnPrem() {
-		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
+		return nil, fmt.Errorf(helpers.NotOnPremSupported)
 	}
 	params := p_cloud_s_a_p.NewPcloudSapPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
@@ -49,7 +49,7 @@ func (f *IBMPISAPInstanceClient) Create(body *models.SAPCreate) (*models.PVMInst
 // Get a SAP Profile
 func (f *IBMPISAPInstanceClient) GetSAPProfile(id string) (*models.SAPProfile, error) {
 	if f.session.IsOnPrem() {
-		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
+		return nil, fmt.Errorf(helpers.NotOnPremSupported)
 	}
 	params := p_cloud_s_a_p.NewPcloudSapGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -67,7 +67,7 @@ func (f *IBMPISAPInstanceClient) GetSAPProfile(id string) (*models.SAPProfile, e
 // Get All SAP Profiles
 func (f *IBMPISAPInstanceClient) GetAllSAPProfiles(cloudInstanceID string) (*models.SAPProfiles, error) {
 	if f.session.IsOnPrem() {
-		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
+		return nil, fmt.Errorf(helpers.NotOnPremSupported)
 	}
 	params := p_cloud_s_a_p.NewPcloudSapGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).

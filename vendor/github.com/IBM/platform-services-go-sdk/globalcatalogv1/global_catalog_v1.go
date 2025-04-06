@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2023.
+ * (C) Copyright IBM Corp. 2025.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.70.0-7df966bf-20230419-195904
+ * IBM OpenAPI SDK Code Generator Version: 3.102.0-615ec964-20250307-203034
  */
 
 // Package globalcatalogv1 : Operations and models for the GlobalCatalogV1 service
@@ -69,22 +69,26 @@ func NewGlobalCatalogV1UsingExternalConfig(options *GlobalCatalogV1Options) (glo
 	if options.Authenticator == nil {
 		options.Authenticator, err = core.GetAuthenticatorFromEnvironment(options.ServiceName)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "env-auth-error", common.GetComponentInfo())
 			return
 		}
 	}
 
 	globalCatalog, err = NewGlobalCatalogV1(options)
+	err = core.RepurposeSDKProblem(err, "new-client-error")
 	if err != nil {
 		return
 	}
 
 	err = globalCatalog.Service.ConfigureService(options.ServiceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client-config-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = globalCatalog.Service.SetServiceURL(options.URL)
+		err = core.RepurposeSDKProblem(err, "url-set-error")
 	}
 	return
 }
@@ -98,12 +102,14 @@ func NewGlobalCatalogV1(options *GlobalCatalogV1Options) (service *GlobalCatalog
 
 	baseService, err := core.NewBaseService(serviceOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "new-base-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = baseService.SetServiceURL(options.URL)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "set-url-error", common.GetComponentInfo())
 			return
 		}
 	}
@@ -117,7 +123,7 @@ func NewGlobalCatalogV1(options *GlobalCatalogV1Options) (service *GlobalCatalog
 
 // GetServiceURLForRegion returns the service URL to be used for the specified region
 func GetServiceURLForRegion(region string) (string, error) {
-	return "", fmt.Errorf("service does not support regional URLs")
+	return "", core.SDKErrorf(nil, "service does not support regional URLs", "no-regional-support", common.GetComponentInfo())
 }
 
 // Clone makes a copy of "globalCatalog" suitable for processing requests.
@@ -132,7 +138,11 @@ func (globalCatalog *GlobalCatalogV1) Clone() *GlobalCatalogV1 {
 
 // SetServiceURL sets the service URL
 func (globalCatalog *GlobalCatalogV1) SetServiceURL(url string) error {
-	return globalCatalog.Service.SetServiceURL(url)
+	err := globalCatalog.Service.SetServiceURL(url)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-set-error", common.GetComponentInfo())
+	}
+	return err
 }
 
 // GetServiceURL returns the service URL
@@ -169,13 +179,16 @@ func (globalCatalog *GlobalCatalogV1) DisableRetries() {
 // ListCatalogEntries : Returns parent catalog entries
 // Includes key information, such as ID, name, kind, CRN, tags, and provider. This endpoint is ETag enabled.
 func (globalCatalog *GlobalCatalogV1) ListCatalogEntries(listCatalogEntriesOptions *ListCatalogEntriesOptions) (result *EntrySearchResult, response *core.DetailedResponse, err error) {
-	return globalCatalog.ListCatalogEntriesWithContext(context.Background(), listCatalogEntriesOptions)
+	result, response, err = globalCatalog.ListCatalogEntriesWithContext(context.Background(), listCatalogEntriesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListCatalogEntriesWithContext is an alternate form of the ListCatalogEntries method which supports a Context parameter
 func (globalCatalog *GlobalCatalogV1) ListCatalogEntriesWithContext(ctx context.Context, listCatalogEntriesOptions *ListCatalogEntriesOptions) (result *EntrySearchResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(listCatalogEntriesOptions, "listCatalogEntriesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -184,6 +197,7 @@ func (globalCatalog *GlobalCatalogV1) ListCatalogEntriesWithContext(ctx context.
 	builder.EnableGzipCompression = globalCatalog.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(globalCatalog.Service.Options.URL, `/`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -230,17 +244,21 @@ func (globalCatalog *GlobalCatalogV1) ListCatalogEntriesWithContext(ctx context.
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = globalCatalog.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_catalog_entries", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalEntrySearchResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -254,17 +272,21 @@ func (globalCatalog *GlobalCatalogV1) ListCatalogEntriesWithContext(ctx context.
 // provided token. This API will return an ETag that can be used for standard ETag processing, except when depth query
 // is used.
 func (globalCatalog *GlobalCatalogV1) CreateCatalogEntry(createCatalogEntryOptions *CreateCatalogEntryOptions) (result *CatalogEntry, response *core.DetailedResponse, err error) {
-	return globalCatalog.CreateCatalogEntryWithContext(context.Background(), createCatalogEntryOptions)
+	result, response, err = globalCatalog.CreateCatalogEntryWithContext(context.Background(), createCatalogEntryOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateCatalogEntryWithContext is an alternate form of the CreateCatalogEntry method which supports a Context parameter
 func (globalCatalog *GlobalCatalogV1) CreateCatalogEntryWithContext(ctx context.Context, createCatalogEntryOptions *CreateCatalogEntryOptions) (result *CatalogEntry, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createCatalogEntryOptions, "createCatalogEntryOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createCatalogEntryOptions, "createCatalogEntryOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -273,6 +295,7 @@ func (globalCatalog *GlobalCatalogV1) CreateCatalogEntryWithContext(ctx context.
 	builder.EnableGzipCompression = globalCatalog.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(globalCatalog.Service.Options.URL, `/`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -325,27 +348,35 @@ func (globalCatalog *GlobalCatalogV1) CreateCatalogEntryWithContext(ctx context.
 	if createCatalogEntryOptions.Active != nil {
 		body["active"] = createCatalogEntryOptions.Active
 	}
+	if createCatalogEntryOptions.URL != nil {
+		body["url"] = createCatalogEntryOptions.URL
+	}
 	if createCatalogEntryOptions.Metadata != nil {
 		body["metadata"] = createCatalogEntryOptions.Metadata
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = globalCatalog.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_catalog_entry", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCatalogEntry)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -359,17 +390,21 @@ func (globalCatalog *GlobalCatalogV1) CreateCatalogEntryWithContext(ctx context.
 // `/_*service_name*?complete=true`. This endpoint is ETag enabled. This can be used by an unauthenticated user for
 // publicly available services.
 func (globalCatalog *GlobalCatalogV1) GetCatalogEntry(getCatalogEntryOptions *GetCatalogEntryOptions) (result *CatalogEntry, response *core.DetailedResponse, err error) {
-	return globalCatalog.GetCatalogEntryWithContext(context.Background(), getCatalogEntryOptions)
+	result, response, err = globalCatalog.GetCatalogEntryWithContext(context.Background(), getCatalogEntryOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetCatalogEntryWithContext is an alternate form of the GetCatalogEntry method which supports a Context parameter
 func (globalCatalog *GlobalCatalogV1) GetCatalogEntryWithContext(ctx context.Context, getCatalogEntryOptions *GetCatalogEntryOptions) (result *CatalogEntry, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getCatalogEntryOptions, "getCatalogEntryOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getCatalogEntryOptions, "getCatalogEntryOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -382,6 +417,7 @@ func (globalCatalog *GlobalCatalogV1) GetCatalogEntryWithContext(ctx context.Con
 	builder.EnableGzipCompression = globalCatalog.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(globalCatalog.Service.Options.URL, `/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -413,17 +449,21 @@ func (globalCatalog *GlobalCatalogV1) GetCatalogEntryWithContext(ctx context.Con
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = globalCatalog.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_catalog_entry", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCatalogEntry)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -436,17 +476,21 @@ func (globalCatalog *GlobalCatalogV1) GetCatalogEntryWithContext(ctx context.Con
 // Update a catalog entry. The visibility of the catalog entry cannot be modified with this endpoint. You must be an
 // administrator or editor in the scope of the provided token. This endpoint is ETag enabled.
 func (globalCatalog *GlobalCatalogV1) UpdateCatalogEntry(updateCatalogEntryOptions *UpdateCatalogEntryOptions) (result *CatalogEntry, response *core.DetailedResponse, err error) {
-	return globalCatalog.UpdateCatalogEntryWithContext(context.Background(), updateCatalogEntryOptions)
+	result, response, err = globalCatalog.UpdateCatalogEntryWithContext(context.Background(), updateCatalogEntryOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateCatalogEntryWithContext is an alternate form of the UpdateCatalogEntry method which supports a Context parameter
 func (globalCatalog *GlobalCatalogV1) UpdateCatalogEntryWithContext(ctx context.Context, updateCatalogEntryOptions *UpdateCatalogEntryOptions) (result *CatalogEntry, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateCatalogEntryOptions, "updateCatalogEntryOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateCatalogEntryOptions, "updateCatalogEntryOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -459,6 +503,7 @@ func (globalCatalog *GlobalCatalogV1) UpdateCatalogEntryWithContext(ctx context.
 	builder.EnableGzipCompression = globalCatalog.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(globalCatalog.Service.Options.URL, `/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -511,27 +556,35 @@ func (globalCatalog *GlobalCatalogV1) UpdateCatalogEntryWithContext(ctx context.
 	if updateCatalogEntryOptions.Active != nil {
 		body["active"] = updateCatalogEntryOptions.Active
 	}
+	if updateCatalogEntryOptions.URL != nil {
+		body["url"] = updateCatalogEntryOptions.URL
+	}
 	if updateCatalogEntryOptions.Metadata != nil {
 		body["metadata"] = updateCatalogEntryOptions.Metadata
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = globalCatalog.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_catalog_entry", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCatalogEntry)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -545,17 +598,21 @@ func (globalCatalog *GlobalCatalogV1) UpdateCatalogEntryWithContext(ctx context.
 // restored using the PUT restore API. After two weeks, it will be deleted and cannot be restored. You must have
 // administrator role in the scope of the provided token to modify it. This endpoint is ETag enabled.
 func (globalCatalog *GlobalCatalogV1) DeleteCatalogEntry(deleteCatalogEntryOptions *DeleteCatalogEntryOptions) (response *core.DetailedResponse, err error) {
-	return globalCatalog.DeleteCatalogEntryWithContext(context.Background(), deleteCatalogEntryOptions)
+	response, err = globalCatalog.DeleteCatalogEntryWithContext(context.Background(), deleteCatalogEntryOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteCatalogEntryWithContext is an alternate form of the DeleteCatalogEntry method which supports a Context parameter
 func (globalCatalog *GlobalCatalogV1) DeleteCatalogEntryWithContext(ctx context.Context, deleteCatalogEntryOptions *DeleteCatalogEntryOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteCatalogEntryOptions, "deleteCatalogEntryOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteCatalogEntryOptions, "deleteCatalogEntryOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -568,6 +625,7 @@ func (globalCatalog *GlobalCatalogV1) DeleteCatalogEntryWithContext(ctx context.
 	builder.EnableGzipCompression = globalCatalog.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(globalCatalog.Service.Options.URL, `/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -589,10 +647,16 @@ func (globalCatalog *GlobalCatalogV1) DeleteCatalogEntryWithContext(ctx context.
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = globalCatalog.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_catalog_entry", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -601,22 +665,26 @@ func (globalCatalog *GlobalCatalogV1) DeleteCatalogEntryWithContext(ctx context.
 // Fetch child catalog entries for a catalog entry with a specific id. This endpoint is ETag enabled. This can be used
 // by an unauthenticated user for publicly available services.
 func (globalCatalog *GlobalCatalogV1) GetChildObjects(getChildObjectsOptions *GetChildObjectsOptions) (result *EntrySearchResult, response *core.DetailedResponse, err error) {
-	return globalCatalog.GetChildObjectsWithContext(context.Background(), getChildObjectsOptions)
+	result, response, err = globalCatalog.GetChildObjectsWithContext(context.Background(), getChildObjectsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetChildObjectsWithContext is an alternate form of the GetChildObjects method which supports a Context parameter
 func (globalCatalog *GlobalCatalogV1) GetChildObjectsWithContext(ctx context.Context, getChildObjectsOptions *GetChildObjectsOptions) (result *EntrySearchResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getChildObjectsOptions, "getChildObjectsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getChildObjectsOptions, "getChildObjectsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"id": *getChildObjectsOptions.ID,
+		"id":   *getChildObjectsOptions.ID,
 		"kind": *getChildObjectsOptions.Kind,
 	}
 
@@ -625,6 +693,7 @@ func (globalCatalog *GlobalCatalogV1) GetChildObjectsWithContext(ctx context.Con
 	builder.EnableGzipCompression = globalCatalog.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(globalCatalog.Service.Options.URL, `/{id}/{kind}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -668,17 +737,21 @@ func (globalCatalog *GlobalCatalogV1) GetChildObjectsWithContext(ctx context.Con
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = globalCatalog.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_child_objects", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalEntrySearchResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -690,17 +763,21 @@ func (globalCatalog *GlobalCatalogV1) GetChildObjectsWithContext(ctx context.Con
 // RestoreCatalogEntry : Restore archived catalog entry
 // Restore an archived catalog entry. You must have an administrator role in the scope of the provided token.
 func (globalCatalog *GlobalCatalogV1) RestoreCatalogEntry(restoreCatalogEntryOptions *RestoreCatalogEntryOptions) (response *core.DetailedResponse, err error) {
-	return globalCatalog.RestoreCatalogEntryWithContext(context.Background(), restoreCatalogEntryOptions)
+	response, err = globalCatalog.RestoreCatalogEntryWithContext(context.Background(), restoreCatalogEntryOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // RestoreCatalogEntryWithContext is an alternate form of the RestoreCatalogEntry method which supports a Context parameter
 func (globalCatalog *GlobalCatalogV1) RestoreCatalogEntryWithContext(ctx context.Context, restoreCatalogEntryOptions *RestoreCatalogEntryOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(restoreCatalogEntryOptions, "restoreCatalogEntryOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(restoreCatalogEntryOptions, "restoreCatalogEntryOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -713,6 +790,7 @@ func (globalCatalog *GlobalCatalogV1) RestoreCatalogEntryWithContext(ctx context
 	builder.EnableGzipCompression = globalCatalog.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(globalCatalog.Service.Options.URL, `/{id}/restore`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -731,10 +809,16 @@ func (globalCatalog *GlobalCatalogV1) RestoreCatalogEntryWithContext(ctx context
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = globalCatalog.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "restore_catalog_entry", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -744,17 +828,21 @@ func (globalCatalog *GlobalCatalogV1) RestoreCatalogEntryWithContext(ctx context
 // and any further restrictions on this object. You must have an administrator role in the scope of the provided token.
 // This endpoint is ETag enabled.
 func (globalCatalog *GlobalCatalogV1) GetVisibility(getVisibilityOptions *GetVisibilityOptions) (result *Visibility, response *core.DetailedResponse, err error) {
-	return globalCatalog.GetVisibilityWithContext(context.Background(), getVisibilityOptions)
+	result, response, err = globalCatalog.GetVisibilityWithContext(context.Background(), getVisibilityOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetVisibilityWithContext is an alternate form of the GetVisibility method which supports a Context parameter
 func (globalCatalog *GlobalCatalogV1) GetVisibilityWithContext(ctx context.Context, getVisibilityOptions *GetVisibilityOptions) (result *Visibility, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getVisibilityOptions, "getVisibilityOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getVisibilityOptions, "getVisibilityOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -767,6 +855,7 @@ func (globalCatalog *GlobalCatalogV1) GetVisibilityWithContext(ctx context.Conte
 	builder.EnableGzipCompression = globalCatalog.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(globalCatalog.Service.Options.URL, `/{id}/visibility`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -786,17 +875,21 @@ func (globalCatalog *GlobalCatalogV1) GetVisibilityWithContext(ctx context.Conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = globalCatalog.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_visibility", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalVisibility)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -809,17 +902,21 @@ func (globalCatalog *GlobalCatalogV1) GetVisibilityWithContext(ctx context.Conte
 // Update an Object's Visibility. You must have an administrator role in the scope of the provided token. This endpoint
 // is ETag enabled.
 func (globalCatalog *GlobalCatalogV1) UpdateVisibility(updateVisibilityOptions *UpdateVisibilityOptions) (response *core.DetailedResponse, err error) {
-	return globalCatalog.UpdateVisibilityWithContext(context.Background(), updateVisibilityOptions)
+	response, err = globalCatalog.UpdateVisibilityWithContext(context.Background(), updateVisibilityOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateVisibilityWithContext is an alternate form of the UpdateVisibility method which supports a Context parameter
 func (globalCatalog *GlobalCatalogV1) UpdateVisibilityWithContext(ctx context.Context, updateVisibilityOptions *UpdateVisibilityOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateVisibilityOptions, "updateVisibilityOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateVisibilityOptions, "updateVisibilityOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -832,6 +929,7 @@ func (globalCatalog *GlobalCatalogV1) UpdateVisibilityWithContext(ctx context.Co
 	builder.EnableGzipCompression = globalCatalog.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(globalCatalog.Service.Options.URL, `/{id}/visibility`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -861,15 +959,22 @@ func (globalCatalog *GlobalCatalogV1) UpdateVisibilityWithContext(ctx context.Co
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = globalCatalog.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_visibility", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -878,17 +983,21 @@ func (globalCatalog *GlobalCatalogV1) UpdateVisibilityWithContext(ctx context.Co
 // This endpoint returns the pricing for an object. Static pricing is defined in the catalog. Dynamic pricing is stored
 // in IBM Cloud Pricing Catalog. This can be used by an unauthenticated user for publicly available services.
 func (globalCatalog *GlobalCatalogV1) GetPricing(getPricingOptions *GetPricingOptions) (result *PricingGet, response *core.DetailedResponse, err error) {
-	return globalCatalog.GetPricingWithContext(context.Background(), getPricingOptions)
+	result, response, err = globalCatalog.GetPricingWithContext(context.Background(), getPricingOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetPricingWithContext is an alternate form of the GetPricing method which supports a Context parameter
 func (globalCatalog *GlobalCatalogV1) GetPricingWithContext(ctx context.Context, getPricingOptions *GetPricingOptions) (result *PricingGet, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getPricingOptions, "getPricingOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getPricingOptions, "getPricingOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -901,6 +1010,7 @@ func (globalCatalog *GlobalCatalogV1) GetPricingWithContext(ctx context.Context,
 	builder.EnableGzipCompression = globalCatalog.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(globalCatalog.Service.Options.URL, `/{id}/pricing`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -917,20 +1027,27 @@ func (globalCatalog *GlobalCatalogV1) GetPricingWithContext(ctx context.Context,
 	if getPricingOptions.Account != nil {
 		builder.AddQuery("account", fmt.Sprint(*getPricingOptions.Account))
 	}
+	if getPricingOptions.DeploymentRegion != nil {
+		builder.AddQuery("deployment_region", fmt.Sprint(*getPricingOptions.DeploymentRegion))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = globalCatalog.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_pricing", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPricingGet)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -944,17 +1061,21 @@ func (globalCatalog *GlobalCatalogV1) GetPricingWithContext(ctx context.Context,
 // deployment object. Static pricing is defined in the catalog. Dynamic pricing is stored in IBM Cloud Pricing Catalog.
 // This can be used by an unauthenticated user for publicly available services.
 func (globalCatalog *GlobalCatalogV1) GetPricingDeployments(getPricingDeploymentsOptions *GetPricingDeploymentsOptions) (result *PricingSearchResult, response *core.DetailedResponse, err error) {
-	return globalCatalog.GetPricingDeploymentsWithContext(context.Background(), getPricingDeploymentsOptions)
+	result, response, err = globalCatalog.GetPricingDeploymentsWithContext(context.Background(), getPricingDeploymentsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetPricingDeploymentsWithContext is an alternate form of the GetPricingDeployments method which supports a Context parameter
 func (globalCatalog *GlobalCatalogV1) GetPricingDeploymentsWithContext(ctx context.Context, getPricingDeploymentsOptions *GetPricingDeploymentsOptions) (result *PricingSearchResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getPricingDeploymentsOptions, "getPricingDeploymentsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getPricingDeploymentsOptions, "getPricingDeploymentsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -967,6 +1088,7 @@ func (globalCatalog *GlobalCatalogV1) GetPricingDeploymentsWithContext(ctx conte
 	builder.EnableGzipCompression = globalCatalog.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(globalCatalog.Service.Options.URL, `/{id}/pricing/deployment`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -986,17 +1108,21 @@ func (globalCatalog *GlobalCatalogV1) GetPricingDeploymentsWithContext(ctx conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = globalCatalog.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_pricing_deployments", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPricingSearchResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1008,17 +1134,21 @@ func (globalCatalog *GlobalCatalogV1) GetPricingDeploymentsWithContext(ctx conte
 // GetAuditLogs : Get the audit logs for an object
 // This endpoint returns the audit logs for an object. Only administrators and editors can get logs.
 func (globalCatalog *GlobalCatalogV1) GetAuditLogs(getAuditLogsOptions *GetAuditLogsOptions) (result *AuditSearchResult, response *core.DetailedResponse, err error) {
-	return globalCatalog.GetAuditLogsWithContext(context.Background(), getAuditLogsOptions)
+	result, response, err = globalCatalog.GetAuditLogsWithContext(context.Background(), getAuditLogsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAuditLogsWithContext is an alternate form of the GetAuditLogs method which supports a Context parameter
 func (globalCatalog *GlobalCatalogV1) GetAuditLogsWithContext(ctx context.Context, getAuditLogsOptions *GetAuditLogsOptions) (result *AuditSearchResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getAuditLogsOptions, "getAuditLogsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getAuditLogsOptions, "getAuditLogsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1031,6 +1161,7 @@ func (globalCatalog *GlobalCatalogV1) GetAuditLogsWithContext(ctx context.Contex
 	builder.EnableGzipCompression = globalCatalog.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(globalCatalog.Service.Options.URL, `/{id}/logs`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1062,17 +1193,21 @@ func (globalCatalog *GlobalCatalogV1) GetAuditLogsWithContext(ctx context.Contex
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = globalCatalog.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_audit_logs", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAuditSearchResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1084,17 +1219,21 @@ func (globalCatalog *GlobalCatalogV1) GetAuditLogsWithContext(ctx context.Contex
 // ListArtifacts : Get artifacts
 // This endpoint returns a list of artifacts for an object.
 func (globalCatalog *GlobalCatalogV1) ListArtifacts(listArtifactsOptions *ListArtifactsOptions) (result *Artifacts, response *core.DetailedResponse, err error) {
-	return globalCatalog.ListArtifactsWithContext(context.Background(), listArtifactsOptions)
+	result, response, err = globalCatalog.ListArtifactsWithContext(context.Background(), listArtifactsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListArtifactsWithContext is an alternate form of the ListArtifacts method which supports a Context parameter
 func (globalCatalog *GlobalCatalogV1) ListArtifactsWithContext(ctx context.Context, listArtifactsOptions *ListArtifactsOptions) (result *Artifacts, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listArtifactsOptions, "listArtifactsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listArtifactsOptions, "listArtifactsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1107,6 +1246,7 @@ func (globalCatalog *GlobalCatalogV1) ListArtifactsWithContext(ctx context.Conte
 	builder.EnableGzipCompression = globalCatalog.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(globalCatalog.Service.Options.URL, `/{object_id}/artifacts`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1126,17 +1266,21 @@ func (globalCatalog *GlobalCatalogV1) ListArtifactsWithContext(ctx context.Conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = globalCatalog.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_artifacts", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalArtifacts)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1148,22 +1292,26 @@ func (globalCatalog *GlobalCatalogV1) ListArtifactsWithContext(ctx context.Conte
 // GetArtifact : Get artifact
 // This endpoint returns the binary of an artifact.
 func (globalCatalog *GlobalCatalogV1) GetArtifact(getArtifactOptions *GetArtifactOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	return globalCatalog.GetArtifactWithContext(context.Background(), getArtifactOptions)
+	result, response, err = globalCatalog.GetArtifactWithContext(context.Background(), getArtifactOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetArtifactWithContext is an alternate form of the GetArtifact method which supports a Context parameter
 func (globalCatalog *GlobalCatalogV1) GetArtifactWithContext(ctx context.Context, getArtifactOptions *GetArtifactOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getArtifactOptions, "getArtifactOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getArtifactOptions, "getArtifactOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"object_id": *getArtifactOptions.ObjectID,
+		"object_id":   *getArtifactOptions.ObjectID,
 		"artifact_id": *getArtifactOptions.ArtifactID,
 	}
 
@@ -1172,6 +1320,7 @@ func (globalCatalog *GlobalCatalogV1) GetArtifactWithContext(ctx context.Context
 	builder.EnableGzipCompression = globalCatalog.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(globalCatalog.Service.Options.URL, `/{object_id}/artifacts/{artifact_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1194,10 +1343,16 @@ func (globalCatalog *GlobalCatalogV1) GetArtifactWithContext(ctx context.Context
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = globalCatalog.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_artifact", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -1205,22 +1360,26 @@ func (globalCatalog *GlobalCatalogV1) GetArtifactWithContext(ctx context.Context
 // UploadArtifact : Upload artifact
 // This endpoint uploads the binary for an artifact. Only administrators and editors can upload artifacts.
 func (globalCatalog *GlobalCatalogV1) UploadArtifact(uploadArtifactOptions *UploadArtifactOptions) (response *core.DetailedResponse, err error) {
-	return globalCatalog.UploadArtifactWithContext(context.Background(), uploadArtifactOptions)
+	response, err = globalCatalog.UploadArtifactWithContext(context.Background(), uploadArtifactOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UploadArtifactWithContext is an alternate form of the UploadArtifact method which supports a Context parameter
 func (globalCatalog *GlobalCatalogV1) UploadArtifactWithContext(ctx context.Context, uploadArtifactOptions *UploadArtifactOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(uploadArtifactOptions, "uploadArtifactOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(uploadArtifactOptions, "uploadArtifactOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"object_id": *uploadArtifactOptions.ObjectID,
+		"object_id":   *uploadArtifactOptions.ObjectID,
 		"artifact_id": *uploadArtifactOptions.ArtifactID,
 	}
 
@@ -1229,6 +1388,7 @@ func (globalCatalog *GlobalCatalogV1) UploadArtifactWithContext(ctx context.Cont
 	builder.EnableGzipCompression = globalCatalog.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(globalCatalog.Service.Options.URL, `/{object_id}/artifacts/{artifact_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1250,15 +1410,22 @@ func (globalCatalog *GlobalCatalogV1) UploadArtifactWithContext(ctx context.Cont
 
 	_, err = builder.SetBodyContent(core.StringNilMapper(uploadArtifactOptions.ContentType), nil, nil, uploadArtifactOptions.Artifact)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-body-content-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = globalCatalog.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "upload_artifact", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -1266,22 +1433,26 @@ func (globalCatalog *GlobalCatalogV1) UploadArtifactWithContext(ctx context.Cont
 // DeleteArtifact : Delete artifact
 // This endpoint deletes an artifact. Only administrators and editors can delete artifacts.
 func (globalCatalog *GlobalCatalogV1) DeleteArtifact(deleteArtifactOptions *DeleteArtifactOptions) (response *core.DetailedResponse, err error) {
-	return globalCatalog.DeleteArtifactWithContext(context.Background(), deleteArtifactOptions)
+	response, err = globalCatalog.DeleteArtifactWithContext(context.Background(), deleteArtifactOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteArtifactWithContext is an alternate form of the DeleteArtifact method which supports a Context parameter
 func (globalCatalog *GlobalCatalogV1) DeleteArtifactWithContext(ctx context.Context, deleteArtifactOptions *DeleteArtifactOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteArtifactOptions, "deleteArtifactOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteArtifactOptions, "deleteArtifactOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"object_id": *deleteArtifactOptions.ObjectID,
+		"object_id":   *deleteArtifactOptions.ObjectID,
 		"artifact_id": *deleteArtifactOptions.ArtifactID,
 	}
 
@@ -1290,6 +1461,7 @@ func (globalCatalog *GlobalCatalogV1) DeleteArtifactWithContext(ctx context.Cont
 	builder.EnableGzipCompression = globalCatalog.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(globalCatalog.Service.Options.URL, `/{object_id}/artifacts/{artifact_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1308,12 +1480,21 @@ func (globalCatalog *GlobalCatalogV1) DeleteArtifactWithContext(ctx context.Cont
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = globalCatalog.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_artifact", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
+}
+func getServiceComponentInfo() *core.ProblemComponent {
+	return core.NewProblemComponent(DefaultServiceName, "1.0.3")
 }
 
 // AliasMetaData : Alias-related metadata.
@@ -1330,10 +1511,12 @@ func UnmarshalAliasMetaData(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(AliasMetaData)
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "plan_id", &obj.PlanID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "plan_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1357,14 +1540,17 @@ func UnmarshalAmount(m map[string]json.RawMessage, result interface{}) (err erro
 	obj := new(Amount)
 	err = core.UnmarshalPrimitive(m, "country", &obj.Country)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "country-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "currency", &obj.Currency)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "currency-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "prices", &obj.Prices, UnmarshalPrice)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "prices-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1394,22 +1580,27 @@ func UnmarshalArtifact(m map[string]json.RawMessage, result interface{}) (err er
 	obj := new(Artifact)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated", &obj.Updated)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "etag", &obj.Etag)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "etag-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "size", &obj.Size)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "size-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1430,10 +1621,12 @@ func UnmarshalArtifacts(m map[string]json.RawMessage, result interface{}) (err e
 	obj := new(Artifacts)
 	err = core.UnmarshalPrimitive(m, "count", &obj.Count)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalArtifact)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1475,38 +1668,47 @@ func UnmarshalAuditSearchResult(m map[string]json.RawMessage, result interface{}
 	obj := new(AuditSearchResult)
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "count", &obj.Count)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_count", &obj.ResourceCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "first", &obj.First)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last", &obj.Last)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "prev", &obj.Prev)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "prev-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "next", &obj.Next)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalMessage)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1527,10 +1729,12 @@ func UnmarshalBroker(m map[string]json.RawMessage, result interface{}) (err erro
 	obj := new(Broker)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "guid", &obj.GUID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "guid-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1557,18 +1761,22 @@ func UnmarshalBullets(m map[string]json.RawMessage, result interface{}) (err err
 	obj := new(Bullets)
 	err = core.UnmarshalPrimitive(m, "title", &obj.Title)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "title-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "icon", &obj.Icon)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "icon-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "quantity", &obj.Quantity)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "quantity-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1627,58 +1835,72 @@ func UnmarshalCfMetaData(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(CfMetaData)
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "iam_compatible", &obj.IamCompatible)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_compatible-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "unique_api_key", &obj.UniqueAPIKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unique_api_key-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "provisionable", &obj.Provisionable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "provisionable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "bindable", &obj.Bindable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "bindable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "async_provisioning_supported", &obj.AsyncProvisioningSupported)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "async_provisioning_supported-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "async_unprovisioning_supported", &obj.AsyncUnprovisioningSupported)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "async_unprovisioning_supported-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "requires", &obj.Requires)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "requires-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "plan_updateable", &obj.PlanUpdateable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "plan_updateable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "state", &obj.State)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "service_check_enabled", &obj.ServiceCheckEnabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "service_check_enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "test_check_interval", &obj.TestCheckInterval)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "test_check_interval-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "service_key_supported", &obj.ServiceKeySupported)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "service_key_supported-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cf_guid", &obj.CfGUID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cf_guid-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1723,42 +1945,52 @@ func UnmarshalCallbacks(m map[string]json.RawMessage, result interface{}) (err e
 	obj := new(Callbacks)
 	err = core.UnmarshalPrimitive(m, "controller_url", &obj.ControllerURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "controller_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "broker_url", &obj.BrokerURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "broker_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "broker_proxy_url", &obj.BrokerProxyURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "broker_proxy_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "dashboard_url", &obj.DashboardURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "dashboard_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "dashboard_data_url", &obj.DashboardDataURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "dashboard_data_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "dashboard_detail_tab_url", &obj.DashboardDetailTabURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "dashboard_detail_tab_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "dashboard_detail_tab_ext_url", &obj.DashboardDetailTabExtURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "dashboard_detail_tab_ext_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "service_monitor_api", &obj.ServiceMonitorAPI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "service_monitor_api-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "service_monitor_app", &obj.ServiceMonitorApp)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "service_monitor_app-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "api_endpoint", &obj.APIEndpoint)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "api_endpoint-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1800,6 +2032,9 @@ type CatalogEntry struct {
 	// Boolean value that describes whether the service is active.
 	Active *bool `json:"active,omitempty"`
 
+	// URL to get details about this object.
+	URL *string `json:"url,omitempty"`
+
 	// Model used to describe metadata object returned.
 	Metadata *CatalogEntryMetadata `json:"metadata,omitempty"`
 
@@ -1808,9 +2043,6 @@ type CatalogEntry struct {
 
 	// The CRN associated with the catalog entry.
 	CatalogCRN *string `json:"catalog_crn,omitempty"`
-
-	// URL to get details about this object.
-	URL *string `json:"url,omitempty"`
 
 	// URL to get details about children of this object.
 	ChildrenURL *string `json:"children_url,omitempty"`
@@ -1833,8 +2065,8 @@ type CatalogEntry struct {
 // object.
 const (
 	CatalogEntryKindDashboardConst = "dashboard"
-	CatalogEntryKindServiceConst = "service"
-	CatalogEntryKindTemplateConst = "template"
+	CatalogEntryKindServiceConst   = "service"
+	CatalogEntryKindTemplateConst  = "template"
 )
 
 // UnmarshalCatalogEntry unmarshals an instance of CatalogEntry from the specified map of raw messages.
@@ -1842,78 +2074,97 @@ func UnmarshalCatalogEntry(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(CatalogEntry)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "kind", &obj.Kind)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "kind-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "overview_ui", &obj.OverviewUI, UnmarshalOverview)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "overview_ui-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "images", &obj.Images, UnmarshalImage)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "images-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "parent_id", &obj.ParentID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parent_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "disabled", &obj.Disabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "disabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "tags", &obj.Tags)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tags-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "group", &obj.Group)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "group-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "provider", &obj.Provider, UnmarshalProvider)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "provider-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "active", &obj.Active)
 	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "metadata", &obj.Metadata, UnmarshalCatalogEntryMetadata)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "catalog_crn", &obj.CatalogCRN)
-	if err != nil {
+		err = core.SDKErrorf(err, "", "active-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "metadata", &obj.Metadata, UnmarshalCatalogEntryMetadata)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "metadata-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "catalog_crn", &obj.CatalogCRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "children_url", &obj.ChildrenURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "children_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "geo_tags", &obj.GeoTags)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "geo_tags-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pricing_tags", &obj.PricingTags)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pricing_tags-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created", &obj.Created)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated", &obj.Updated)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1970,58 +2221,72 @@ func UnmarshalCatalogEntryMetadata(m map[string]json.RawMessage, result interfac
 	obj := new(CatalogEntryMetadata)
 	err = core.UnmarshalPrimitive(m, "rc_compatible", &obj.RcCompatible)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rc_compatible-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "service", &obj.Service, UnmarshalCfMetaData)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "service-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "plan", &obj.Plan, UnmarshalPlanMetaData)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "plan-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "alias", &obj.Alias, UnmarshalAliasMetaData)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "alias-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "template", &obj.Template, UnmarshalTemplateMetaData)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "template-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "ui", &obj.UI, UnmarshalUIMetaData)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ui-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "compliance", &obj.Compliance)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "compliance-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "sla", &obj.SLA, UnmarshalSLAMetaData)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "sla-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "callbacks", &obj.Callbacks, UnmarshalCallbacks)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "callbacks-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "original_name", &obj.OriginalName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "original_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "other", &obj.Other)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "other-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "pricing", &obj.Pricing, UnmarshalCatalogEntryMetadataPricing)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pricing-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "deployment", &obj.Deployment, UnmarshalCatalogEntryMetadataDeployment)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deployment-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2063,38 +2328,47 @@ func UnmarshalCatalogEntryMetadataDeployment(m map[string]json.RawMessage, resul
 	obj := new(CatalogEntryMetadataDeployment)
 	err = core.UnmarshalPrimitive(m, "location", &obj.Location)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "location-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "location_url", &obj.LocationURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "location_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "original_location", &obj.OriginalLocation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "original_location-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target_crn", &obj.TargetCRN)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target_crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "service_crn", &obj.ServiceCRN)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "service_crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "mccp_id", &obj.MccpID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "mccp_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "broker", &obj.Broker, UnmarshalBroker)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "broker-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "supports_rc_migration", &obj.SupportsRcMigration)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "supports_rc_migration-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target_network", &obj.TargetNetwork)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target_network-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2124,6 +2398,9 @@ type CatalogEntryMetadataPricing struct {
 
 	// Plan-specific cost metric structure.
 	Metrics []Metrics `json:"metrics,omitempty"`
+
+	// List of regions where region pricing is available. Only set on global deployments if enabled by owner.
+	DeploymentRegions []string `json:"deployment_regions,omitempty"`
 }
 
 // UnmarshalCatalogEntryMetadataPricing unmarshals an instance of CatalogEntryMetadataPricing from the specified map of raw messages.
@@ -2131,30 +2408,42 @@ func UnmarshalCatalogEntryMetadataPricing(m map[string]json.RawMessage, result i
 	obj := new(CatalogEntryMetadataPricing)
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "origin", &obj.Origin)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "origin-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "starting_price", &obj.StartingPrice, UnmarshalStartingPrice)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "starting_price-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "deployment_id", &obj.DeploymentID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deployment_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "deployment_location", &obj.DeploymentLocation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deployment_location-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "deployment_location_no_price_available", &obj.DeploymentLocationNoPriceAvailable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deployment_location_no_price_available-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "metrics", &obj.Metrics, UnmarshalMetrics)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "metrics-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "deployment_regions", &obj.DeploymentRegions)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "deployment_regions-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2199,6 +2488,9 @@ type CreateCatalogEntryOptions struct {
 	// Boolean value that describes whether the service is active.
 	Active *bool `json:"active,omitempty"`
 
+	// Url of the object.
+	URL *string `json:"url,omitempty"`
+
 	// Model used to describe metadata object that can be set.
 	Metadata *ObjectMetadataSet `json:"metadata,omitempty"`
 
@@ -2207,7 +2499,7 @@ type CreateCatalogEntryOptions struct {
 	// `GET /?account=global`.
 	Account *string `json:"account,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -2216,21 +2508,21 @@ type CreateCatalogEntryOptions struct {
 // object.
 const (
 	CreateCatalogEntryOptionsKindDashboardConst = "dashboard"
-	CreateCatalogEntryOptionsKindServiceConst = "service"
-	CreateCatalogEntryOptionsKindTemplateConst = "template"
+	CreateCatalogEntryOptionsKindServiceConst   = "service"
+	CreateCatalogEntryOptionsKindTemplateConst  = "template"
 )
 
 // NewCreateCatalogEntryOptions : Instantiate CreateCatalogEntryOptions
 func (*GlobalCatalogV1) NewCreateCatalogEntryOptions(name string, kind string, overviewUI map[string]Overview, images *Image, disabled bool, tags []string, provider *Provider, id string) *CreateCatalogEntryOptions {
 	return &CreateCatalogEntryOptions{
-		Name: core.StringPtr(name),
-		Kind: core.StringPtr(kind),
+		Name:       core.StringPtr(name),
+		Kind:       core.StringPtr(kind),
 		OverviewUI: overviewUI,
-		Images: images,
-		Disabled: core.BoolPtr(disabled),
-		Tags: tags,
-		Provider: provider,
-		ID: core.StringPtr(id),
+		Images:     images,
+		Disabled:   core.BoolPtr(disabled),
+		Tags:       tags,
+		Provider:   provider,
+		ID:         core.StringPtr(id),
 	}
 }
 
@@ -2300,6 +2592,12 @@ func (_options *CreateCatalogEntryOptions) SetActive(active bool) *CreateCatalog
 	return _options
 }
 
+// SetURL : Allow user to set URL
+func (_options *CreateCatalogEntryOptions) SetURL(url string) *CreateCatalogEntryOptions {
+	_options.URL = core.StringPtr(url)
+	return _options
+}
+
 // SetMetadata : Allow user to set Metadata
 func (_options *CreateCatalogEntryOptions) SetMetadata(metadata *ObjectMetadataSet) *CreateCatalogEntryOptions {
 	_options.Metadata = metadata
@@ -2332,10 +2630,12 @@ func UnmarshalDrMetaData(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(DrMetaData)
 	err = core.UnmarshalPrimitive(m, "dr", &obj.Dr)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "dr-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2355,14 +2655,14 @@ type DeleteArtifactOptions struct {
 	// `GET /?account=global`.
 	Account *string `json:"account,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewDeleteArtifactOptions : Instantiate DeleteArtifactOptions
 func (*GlobalCatalogV1) NewDeleteArtifactOptions(objectID string, artifactID string) *DeleteArtifactOptions {
 	return &DeleteArtifactOptions{
-		ObjectID: core.StringPtr(objectID),
+		ObjectID:   core.StringPtr(objectID),
 		ArtifactID: core.StringPtr(artifactID),
 	}
 }
@@ -2405,7 +2705,7 @@ type DeleteCatalogEntryOptions struct {
 	// necessary.
 	Force *bool `json:"force,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -2475,38 +2775,47 @@ func UnmarshalDeploymentBase(m map[string]json.RawMessage, result interface{}) (
 	obj := new(DeploymentBase)
 	err = core.UnmarshalPrimitive(m, "location", &obj.Location)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "location-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "location_url", &obj.LocationURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "location_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "original_location", &obj.OriginalLocation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "original_location-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target_crn", &obj.TargetCRN)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target_crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "service_crn", &obj.ServiceCRN)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "service_crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "mccp_id", &obj.MccpID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "mccp_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "broker", &obj.Broker, UnmarshalBroker)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "broker-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "supports_rc_migration", &obj.SupportsRcMigration)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "supports_rc_migration-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target_network", &obj.TargetNetwork)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target_network-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2548,38 +2857,47 @@ func UnmarshalEntrySearchResult(m map[string]json.RawMessage, result interface{}
 	obj := new(EntrySearchResult)
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "count", &obj.Count)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_count", &obj.ResourceCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "first", &obj.First)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last", &obj.Last)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "prev", &obj.Prev)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "prev-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "next", &obj.Next)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalCatalogEntry)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2594,7 +2912,7 @@ type GetArtifactOptions struct {
 	// The artifact's ID.
 	ArtifactID *string `json:"artifact_id" validate:"required,ne="`
 
-	// The type of the response:  or *_/_*.
+	// The type of the response: *_/_*.
 	Accept *string `json:"Accept,omitempty"`
 
 	// This changes the scope of the request regardless of the authorization header. Example scopes are `account` and
@@ -2602,14 +2920,14 @@ type GetArtifactOptions struct {
 	// `GET /?account=global`.
 	Account *string `json:"account,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewGetArtifactOptions : Instantiate GetArtifactOptions
 func (*GlobalCatalogV1) NewGetArtifactOptions(objectID string, artifactID string) *GetArtifactOptions {
 	return &GetArtifactOptions{
-		ObjectID: core.StringPtr(objectID),
+		ObjectID:   core.StringPtr(objectID),
 		ArtifactID: core.StringPtr(artifactID),
 	}
 }
@@ -2670,7 +2988,7 @@ type GetAuditLogsOptions struct {
 	// Count of number of entries to return. The default is fifty. The maximum value is two hundred.
 	Limit *int64 `json:"_limit,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -2752,7 +3070,7 @@ type GetCatalogEntryOptions struct {
 	// of database accesses and can result in a large amount of data returned.
 	Depth *int64 `json:"depth,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -2848,14 +3166,14 @@ type GetChildObjectsOptions struct {
 	// Useful for pagination, specifies the maximum number of items to return in the response.
 	Limit *int64 `json:"_limit,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewGetChildObjectsOptions : Instantiate GetChildObjectsOptions
 func (*GlobalCatalogV1) NewGetChildObjectsOptions(id string, kind string) *GetChildObjectsOptions {
 	return &GetChildObjectsOptions{
-		ID: core.StringPtr(id),
+		ID:   core.StringPtr(id),
 		Kind: core.StringPtr(kind),
 	}
 }
@@ -2942,7 +3260,7 @@ type GetPricingDeploymentsOptions struct {
 	// `GET /?account=global`.
 	Account *string `json:"account,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -2981,7 +3299,11 @@ type GetPricingOptions struct {
 	// `GET /?account=global`.
 	Account *string `json:"account,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Specify a region to retrieve plan pricing for a global deployment. The value must match an entry in the
+	// `deployment_regions` list.
+	DeploymentRegion *string `json:"deployment_region,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3004,6 +3326,12 @@ func (_options *GetPricingOptions) SetAccount(account string) *GetPricingOptions
 	return _options
 }
 
+// SetDeploymentRegion : Allow user to set DeploymentRegion
+func (_options *GetPricingOptions) SetDeploymentRegion(deploymentRegion string) *GetPricingOptions {
+	_options.DeploymentRegion = core.StringPtr(deploymentRegion)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *GetPricingOptions) SetHeaders(param map[string]string) *GetPricingOptions {
 	options.Headers = param
@@ -3020,7 +3348,7 @@ type GetVisibilityOptions struct {
 	// `GET /?account=global`.
 	Account *string `json:"account,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3070,6 +3398,9 @@ func (*GlobalCatalogV1) NewImage(image string) (_model *Image, err error) {
 		Image: core.StringPtr(image),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -3078,18 +3409,22 @@ func UnmarshalImage(m map[string]json.RawMessage, result interface{}) (err error
 	obj := new(Image)
 	err = core.UnmarshalPrimitive(m, "image", &obj.Image)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "image-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "small_image", &obj.SmallImage)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "small_image-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "medium_image", &obj.MediumImage)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "medium_image-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "feature_image", &obj.FeatureImage)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "feature_image-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3106,7 +3441,7 @@ type ListArtifactsOptions struct {
 	// `GET /?account=global`.
 	Account *string `json:"account,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3182,7 +3517,7 @@ type ListCatalogEntriesOptions struct {
 	// Useful for pagination, specifies the maximum number of items to return in the response.
 	Limit *int64 `json:"_limit,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3298,46 +3633,57 @@ func UnmarshalMessage(m map[string]json.RawMessage, result interface{}) (err err
 	obj := new(Message)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "effective", &obj.Effective, UnmarshalVisibility)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "effective-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "time", &obj.Time)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "time-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "who_id", &obj.WhoID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "who_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "who_name", &obj.WhoName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "who_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "who_email", &obj.WhoEmail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "who_email-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "instance", &obj.Instance)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "instance-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "gid", &obj.Gid)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "gid-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "data", &obj.Data)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "data-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3391,54 +3737,67 @@ func UnmarshalMetrics(m map[string]json.RawMessage, result interface{}) (err err
 	obj := new(Metrics)
 	err = core.UnmarshalPrimitive(m, "part_ref", &obj.PartRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "part_ref-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "metric_id", &obj.MetricID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "metric_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "tier_model", &obj.TierModel)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tier_model-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "charge_unit", &obj.ChargeUnit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "charge_unit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "charge_unit_name", &obj.ChargeUnitName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "charge_unit_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "charge_unit_quantity", &obj.ChargeUnitQuantity)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "charge_unit_quantity-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_display_name", &obj.ResourceDisplayName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_display_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "charge_unit_display_name", &obj.ChargeUnitDisplayName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "charge_unit_display_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "usage_cap_qty", &obj.UsageCapQty)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "usage_cap_qty-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "display_cap", &obj.DisplayCap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "display_cap-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "effective_from", &obj.EffectiveFrom)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "effective_from-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "effective_until", &obj.EffectiveUntil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "effective_until-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "amounts", &obj.Amounts, UnmarshalAmount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "amounts-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3495,58 +3854,72 @@ func UnmarshalObjectMetadataSet(m map[string]json.RawMessage, result interface{}
 	obj := new(ObjectMetadataSet)
 	err = core.UnmarshalPrimitive(m, "rc_compatible", &obj.RcCompatible)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rc_compatible-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "service", &obj.Service, UnmarshalCfMetaData)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "service-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "plan", &obj.Plan, UnmarshalPlanMetaData)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "plan-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "alias", &obj.Alias, UnmarshalAliasMetaData)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "alias-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "template", &obj.Template, UnmarshalTemplateMetaData)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "template-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "ui", &obj.UI, UnmarshalUIMetaData)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ui-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "compliance", &obj.Compliance)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "compliance-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "sla", &obj.SLA, UnmarshalSLAMetaData)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "sla-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "callbacks", &obj.Callbacks, UnmarshalCallbacks)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "callbacks-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "original_name", &obj.OriginalName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "original_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "other", &obj.Other)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "other-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "pricing", &obj.Pricing, UnmarshalPricingSet)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pricing-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "deployment", &obj.Deployment, UnmarshalDeploymentBase)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deployment-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3571,11 +3944,14 @@ type Overview struct {
 // NewOverview : Instantiate Overview (Generic Model Constructor)
 func (*GlobalCatalogV1) NewOverview(displayName string, longDescription string, description string) (_model *Overview, err error) {
 	_model = &Overview{
-		DisplayName: core.StringPtr(displayName),
+		DisplayName:     core.StringPtr(displayName),
 		LongDescription: core.StringPtr(longDescription),
-		Description: core.StringPtr(description),
+		Description:     core.StringPtr(description),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -3584,18 +3960,22 @@ func UnmarshalOverview(m map[string]json.RawMessage, result interface{}) (err er
 	obj := new(Overview)
 	err = core.UnmarshalPrimitive(m, "display_name", &obj.DisplayName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "display_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "long_description", &obj.LongDescription)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "long_description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "featured_description", &obj.FeaturedDescription)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "featured_description-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3638,38 +4018,47 @@ func UnmarshalPlanMetaData(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(PlanMetaData)
 	err = core.UnmarshalPrimitive(m, "bindable", &obj.Bindable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "bindable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "reservable", &obj.Reservable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reservable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "allow_internal_users", &obj.AllowInternalUsers)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "allow_internal_users-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "async_provisioning_supported", &obj.AsyncProvisioningSupported)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "async_provisioning_supported-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "async_unprovisioning_supported", &obj.AsyncUnprovisioningSupported)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "async_unprovisioning_supported-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "test_check_interval", &obj.TestCheckInterval)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "test_check_interval-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "single_scope_instance", &obj.SingleScopeInstance)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "single_scope_instance-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "service_check_enabled", &obj.ServiceCheckEnabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "service_check_enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cf_guid", &obj.CfGUID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cf_guid-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3682,7 +4071,7 @@ type Price struct {
 	QuantityTier *int64 `json:"quantity_tier,omitempty"`
 
 	// Price in the selected currency.
-	Price *float64 `json:"Price,omitempty"`
+	Price *float64 `json:"price,omitempty"`
 }
 
 // UnmarshalPrice unmarshals an instance of Price from the specified map of raw messages.
@@ -3690,10 +4079,12 @@ func UnmarshalPrice(m map[string]json.RawMessage, result interface{}) (err error
 	obj := new(Price)
 	err = core.UnmarshalPrimitive(m, "quantity_tier", &obj.QuantityTier)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "quantity_tier-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "Price", &obj.Price)
+	err = core.UnmarshalPrimitive(m, "price", &obj.Price)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "price-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3723,6 +4114,9 @@ type PricingGet struct {
 
 	// Plan-specific cost metric structure.
 	Metrics []Metrics `json:"metrics,omitempty"`
+
+	// List of regions where region pricing is available. Only set on global deployments if enabled by owner.
+	DeploymentRegions []string `json:"deployment_regions,omitempty"`
 }
 
 // UnmarshalPricingGet unmarshals an instance of PricingGet from the specified map of raw messages.
@@ -3730,30 +4124,42 @@ func UnmarshalPricingGet(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(PricingGet)
 	err = core.UnmarshalPrimitive(m, "deployment_id", &obj.DeploymentID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deployment_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "deployment_location", &obj.DeploymentLocation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deployment_location-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "deployment_location_no_price_available", &obj.DeploymentLocationNoPriceAvailable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deployment_location_no_price_available-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "origin", &obj.Origin)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "origin-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "starting_price", &obj.StartingPrice, UnmarshalStartingPrice)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "starting_price-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "metrics", &obj.Metrics, UnmarshalMetrics)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "metrics-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "deployment_regions", &obj.DeploymentRegions)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "deployment_regions-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3795,38 +4201,47 @@ func UnmarshalPricingSearchResult(m map[string]json.RawMessage, result interface
 	obj := new(PricingSearchResult)
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "count", &obj.Count)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_count", &obj.ResourceCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "first", &obj.First)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last", &obj.Last)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "prev", &obj.Prev)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "prev-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "next", &obj.Next)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalPricingGet)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3850,14 +4265,17 @@ func UnmarshalPricingSet(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(PricingSet)
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "origin", &obj.Origin)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "origin-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "starting_price", &obj.StartingPrice, UnmarshalStartingPrice)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "starting_price-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3886,9 +4304,12 @@ type Provider struct {
 func (*GlobalCatalogV1) NewProvider(email string, name string) (_model *Provider, err error) {
 	_model = &Provider{
 		Email: core.StringPtr(email),
-		Name: core.StringPtr(name),
+		Name:  core.StringPtr(name),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -3897,22 +4318,27 @@ func UnmarshalProvider(m map[string]json.RawMessage, result interface{}) (err er
 	obj := new(Provider)
 	err = core.UnmarshalPrimitive(m, "email", &obj.Email)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "email-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "contact", &obj.Contact)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "contact-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "support_email", &obj.SupportEmail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "support_email-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "phone", &obj.Phone)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "phone-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3929,7 +4355,7 @@ type RestoreCatalogEntryOptions struct {
 	// `GET /?account=global`.
 	Account *string `json:"account,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3982,22 +4408,27 @@ func UnmarshalSLAMetaData(m map[string]json.RawMessage, result interface{}) (err
 	obj := new(SLAMetaData)
 	err = core.UnmarshalPrimitive(m, "terms", &obj.Terms)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "terms-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "tenancy", &obj.Tenancy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tenancy-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "provisioning", &obj.Provisioning)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "provisioning-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "responsiveness", &obj.Responsiveness)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "responsiveness-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "dr", &obj.Dr, UnmarshalDrMetaData)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "dr-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4021,14 +4452,17 @@ func UnmarshalSourceMetaData(m map[string]json.RawMessage, result interface{}) (
 	obj := new(SourceMetaData)
 	err = core.UnmarshalPrimitive(m, "path", &obj.Path)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "path-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4055,18 +4489,22 @@ func UnmarshalStartingPrice(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(StartingPrice)
 	err = core.UnmarshalPrimitive(m, "plan_id", &obj.PlanID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "plan_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "deployment_id", &obj.DeploymentID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deployment_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "unit", &obj.Unit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "amount", &obj.Amount, UnmarshalAmount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "amount-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4102,30 +4540,37 @@ func UnmarshalStrings(m map[string]json.RawMessage, result interface{}) (err err
 	obj := new(Strings)
 	err = core.UnmarshalModel(m, "bullets", &obj.Bullets, UnmarshalBullets)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "bullets-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "media", &obj.Media, UnmarshalUIMetaMedia)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "media-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "not_creatable_msg", &obj.NotCreatableMsg)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "not_creatable_msg-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "not_creatable__robot_msg", &obj.NotCreatableRobotMsg)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "not_creatable__robot_msg-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "deprecation_warning", &obj.DeprecationWarning)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deprecation_warning-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "popup_warning_message", &obj.PopupWarningMessage)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "popup_warning_message-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "instruction", &obj.Instruction)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "instruction-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4170,42 +4615,52 @@ func UnmarshalTemplateMetaData(m map[string]json.RawMessage, result interface{})
 	obj := new(TemplateMetaData)
 	err = core.UnmarshalPrimitive(m, "services", &obj.Services)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "services-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "default_memory", &obj.DefaultMemory)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "default_memory-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "start_cmd", &obj.StartCmd)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "start_cmd-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "source", &obj.Source, UnmarshalSourceMetaData)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "source-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "runtime_catalog_id", &obj.RuntimeCatalogID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "runtime_catalog_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cf_runtime_id", &obj.CfRuntimeID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cf_runtime_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "template_id", &obj.TemplateID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "executable_file", &obj.ExecutableFile)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "executable_file-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "buildpack", &obj.Buildpack)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "buildpack-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "environment_variables", &obj.EnvironmentVariables)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "environment_variables-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4226,10 +4681,12 @@ func UnmarshalUIMediaSourceMetaData(m map[string]json.RawMessage, result interfa
 	obj := new(UIMediaSourceMetaData)
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4283,54 +4740,67 @@ func UnmarshalUIMetaData(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(UIMetaData)
 	err = core.UnmarshalModel(m, "strings", &obj.Strings, UnmarshalStrings)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "strings-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "urls", &obj.Urls, UnmarshalUrls)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "urls-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "embeddable_dashboard", &obj.EmbeddableDashboard)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "embeddable_dashboard-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "embeddable_dashboard_full_width", &obj.EmbeddableDashboardFullWidth)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "embeddable_dashboard_full_width-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "navigation_order", &obj.NavigationOrder)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "navigation_order-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "not_creatable", &obj.NotCreatable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "not_creatable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "primary_offering_id", &obj.PrimaryOfferingID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "primary_offering_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "accessible_during_provision", &obj.AccessibleDuringProvision)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "accessible_during_provision-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "side_by_side_index", &obj.SideBySideIndex)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "side_by_side_index-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "end_of_service_time", &obj.EndOfServiceTime)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "end_of_service_time-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "hidden", &obj.Hidden)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "hidden-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "hide_lite_metering", &obj.HideLiteMetering)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "hide_lite_metering-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "no_upgrade_next_step", &obj.NoUpgradeNextStep)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "no_upgrade_next_step-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4360,22 +4830,27 @@ func UnmarshalUIMetaMedia(m map[string]json.RawMessage, result interface{}) (err
 	obj := new(UIMetaMedia)
 	err = core.UnmarshalPrimitive(m, "caption", &obj.Caption)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "caption-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "thumbnail_url", &obj.ThumbnailURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "thumbnail_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "URL", &obj.URL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "URL-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "source", &obj.Source, UnmarshalUIMediaSourceMetaData)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "source-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4426,50 +4901,62 @@ func UnmarshalUrls(m map[string]json.RawMessage, result interface{}) (err error)
 	obj := new(Urls)
 	err = core.UnmarshalPrimitive(m, "doc_url", &obj.DocURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "doc_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "instructions_url", &obj.InstructionsURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "instructions_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "api_url", &obj.APIURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "api_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "create_url", &obj.CreateURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "create_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "sdk_download_url", &obj.SdkDownloadURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "sdk_download_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "terms_url", &obj.TermsURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "terms_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "custom_create_page_url", &obj.CustomCreatePageURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "custom_create_page_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "catalog_details_url", &obj.CatalogDetailsURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_details_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "deprecation_doc_url", &obj.DeprecationDocURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deprecation_doc_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "dashboard_url", &obj.DashboardURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "dashboard_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "registration_url", &obj.RegistrationURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "registration_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "apidocsurl", &obj.Apidocsurl)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "apidocsurl-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4514,6 +5001,9 @@ type UpdateCatalogEntryOptions struct {
 	// Boolean value that describes whether the service is active.
 	Active *bool `json:"active,omitempty"`
 
+	// Url of the object.
+	URL *string `json:"url,omitempty"`
+
 	// Model used to describe metadata object that can be set.
 	Metadata *ObjectMetadataSet `json:"metadata,omitempty"`
 
@@ -4528,7 +5018,7 @@ type UpdateCatalogEntryOptions struct {
 	// accidental changing of parent.
 	Move *string `json:"move,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4537,21 +5027,21 @@ type UpdateCatalogEntryOptions struct {
 // object.
 const (
 	UpdateCatalogEntryOptionsKindDashboardConst = "dashboard"
-	UpdateCatalogEntryOptionsKindServiceConst = "service"
-	UpdateCatalogEntryOptionsKindTemplateConst = "template"
+	UpdateCatalogEntryOptionsKindServiceConst   = "service"
+	UpdateCatalogEntryOptionsKindTemplateConst  = "template"
 )
 
 // NewUpdateCatalogEntryOptions : Instantiate UpdateCatalogEntryOptions
 func (*GlobalCatalogV1) NewUpdateCatalogEntryOptions(id string, name string, kind string, overviewUI map[string]Overview, images *Image, disabled bool, tags []string, provider *Provider) *UpdateCatalogEntryOptions {
 	return &UpdateCatalogEntryOptions{
-		ID: core.StringPtr(id),
-		Name: core.StringPtr(name),
-		Kind: core.StringPtr(kind),
+		ID:         core.StringPtr(id),
+		Name:       core.StringPtr(name),
+		Kind:       core.StringPtr(kind),
 		OverviewUI: overviewUI,
-		Images: images,
-		Disabled: core.BoolPtr(disabled),
-		Tags: tags,
-		Provider: provider,
+		Images:     images,
+		Disabled:   core.BoolPtr(disabled),
+		Tags:       tags,
+		Provider:   provider,
 	}
 }
 
@@ -4621,6 +5111,12 @@ func (_options *UpdateCatalogEntryOptions) SetActive(active bool) *UpdateCatalog
 	return _options
 }
 
+// SetURL : Allow user to set URL
+func (_options *UpdateCatalogEntryOptions) SetURL(url string) *UpdateCatalogEntryOptions {
+	_options.URL = core.StringPtr(url)
+	return _options
+}
+
 // SetMetadata : Allow user to set Metadata
 func (_options *UpdateCatalogEntryOptions) SetMetadata(metadata *ObjectMetadataSet) *UpdateCatalogEntryOptions {
 	_options.Metadata = metadata
@@ -4664,7 +5160,7 @@ type UpdateVisibilityOptions struct {
 	// `GET /?account=global`.
 	Account *string `json:"account,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4729,14 +5225,14 @@ type UploadArtifactOptions struct {
 	// `GET /?account=global`.
 	Account *string `json:"account,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewUploadArtifactOptions : Instantiate UploadArtifactOptions
 func (*GlobalCatalogV1) NewUploadArtifactOptions(objectID string, artifactID string) *UploadArtifactOptions {
 	return &UploadArtifactOptions{
-		ObjectID: core.StringPtr(objectID),
+		ObjectID:   core.StringPtr(objectID),
 		ArtifactID: core.StringPtr(artifactID),
 	}
 }
@@ -4806,26 +5302,32 @@ func UnmarshalVisibility(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(Visibility)
 	err = core.UnmarshalPrimitive(m, "restrictions", &obj.Restrictions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "restrictions-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "owner", &obj.Owner)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "owner-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "extendable", &obj.Extendable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "extendable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "include", &obj.Include, UnmarshalVisibilityDetail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "include-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "exclude", &obj.Exclude, UnmarshalVisibilityDetail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "exclude-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "approved", &obj.Approved)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "approved-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4844,6 +5346,9 @@ func (*GlobalCatalogV1) NewVisibilityDetail(accounts *VisibilityDetailAccounts) 
 		Accounts: accounts,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -4852,6 +5357,7 @@ func UnmarshalVisibilityDetail(m map[string]json.RawMessage, result interface{})
 	obj := new(VisibilityDetail)
 	err = core.UnmarshalModel(m, "accounts", &obj.Accounts, UnmarshalVisibilityDetailAccounts)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "accounts-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4870,6 +5376,7 @@ func UnmarshalVisibilityDetailAccounts(m map[string]json.RawMessage, result inte
 	obj := new(VisibilityDetailAccounts)
 	err = core.UnmarshalPrimitive(m, "_accountid_", &obj.Accountid)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_accountid_-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))

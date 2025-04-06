@@ -305,8 +305,7 @@ func (c *Client) GetDNSCustomResolverIP(ctx context.Context, dnsID string, vpcID
 
 // CreateDNSCustomResolver creates a custom resolver associated with the specified VPC in the specified DNS zone.
 func (c *Client) CreateDNSCustomResolver(ctx context.Context, name string, dnsID string, vpcID string) (*dnssvcsv1.CustomResolver, error) {
-	createCustomResolverOptions := c.dnsServicesAPI.NewCreateCustomResolverOptions(dnsID)
-	createCustomResolverOptions.SetName(name)
+	createCustomResolverOptions := c.dnsServicesAPI.NewCreateCustomResolverOptions(dnsID, name)
 
 	subnets, err := c.GetVPCSubnets(ctx, vpcID)
 	if err != nil {
@@ -466,14 +465,12 @@ func (c *Client) GetDNSInstancePermittedNetworks(ctx context.Context, dnsID stri
 
 // AddVPCToPermittedNetworks adds the specified VPC to the specified DNS zone.
 func (c *Client) AddVPCToPermittedNetworks(ctx context.Context, vpcCRN string, dnsID string, dnsZone string) error {
-	createPermittedNetworkOptions := c.dnsServicesAPI.NewCreatePermittedNetworkOptions(dnsID, dnsZone)
 	permittedNetwork, err := c.dnsServicesAPI.NewPermittedNetworkVpc(vpcCRN)
 	if err != nil {
 		return err
 	}
 
-	createPermittedNetworkOptions.SetPermittedNetwork(permittedNetwork)
-	createPermittedNetworkOptions.SetType("vpc")
+	createPermittedNetworkOptions := c.dnsServicesAPI.NewCreatePermittedNetworkOptions(dnsID, dnsZone, dnssvcsv1.CreatePermittedNetworkOptions_Type_Vpc, permittedNetwork)
 
 	_, _, err = c.dnsServicesAPI.CreatePermittedNetworkWithContext(ctx, createPermittedNetworkOptions)
 	if err != nil {
@@ -562,11 +559,10 @@ func (c *Client) createPrivateDNSRecord(ctx context.Context, crnstr string, base
 	if err != nil {
 		return fmt.Errorf("NewResourceRecordInputRdataRdataCnameRecord failed: %w", err)
 	}
-	createOptions := c.dnsServicesAPI.NewCreateResourceRecordOptions(dnsCRN.ServiceInstance, zoneID)
+	createOptions := c.dnsServicesAPI.NewCreateResourceRecordOptions(dnsCRN.ServiceInstance, zoneID, dnssvcsv1.CreateResourceRecordOptions_Type_Cname)
 	createOptions.SetRdata(rdataCnameRecord)
 	createOptions.SetTTL(120)
 	createOptions.SetName(hostname)
-	createOptions.SetType("CNAME")
 	result, resp, err := c.dnsServicesAPI.CreateResourceRecord(createOptions)
 	if err != nil {
 		logrus.Errorf("dnsRecordService.CreateResourceRecord returns %v", err)

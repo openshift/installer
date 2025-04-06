@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/google/uuid"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
@@ -233,13 +232,9 @@ func validateIdentity(poolName string, p *azure.MachinePool, fldPath *field.Path
 		return append(errs, field.Required(fldPath.Child("type"), "type must be specified if using identity"))
 	}
 
-	if id.Type != capz.VMIdentityNone && id.Type != capz.VMIdentitySystemAssigned && id.Type != capz.VMIdentityUserAssigned {
-		supportedValues := []capz.VMIdentity{capz.VMIdentityNone, capz.VMIdentitySystemAssigned, capz.VMIdentityUserAssigned}
+	if id.Type != capz.VMIdentityNone && id.Type != capz.VMIdentityUserAssigned {
+		supportedValues := []capz.VMIdentity{capz.VMIdentityNone, capz.VMIdentityUserAssigned}
 		return append(errs, field.NotSupported(fldPath.Child("type"), id.Type, supportedValues))
-	}
-
-	if id.SystemAssignedIdentityRole != nil && id.Type != capz.VMIdentitySystemAssigned {
-		errs = append(errs, field.Invalid(fldPath.Child("type"), id.Type, "systemAssignedIdentityRole may only be used with type: SystemAssigned"))
 	}
 
 	if id.Type == capz.VMIdentityUserAssigned && len(id.UserAssignedIdentities) == 0 {
@@ -248,11 +243,6 @@ func validateIdentity(poolName string, p *azure.MachinePool, fldPath *field.Path
 
 	if id.UserAssignedIdentities != nil && id.Type != capz.VMIdentityUserAssigned {
 		errs = append(errs, field.Invalid(fldPath.Child("type"), id.Type, "userAssignedIdentities may only be used with type: UserAssigned"))
-	}
-
-	if s := id.SystemAssignedIdentityRole; s != nil && uuid.Validate(s.Name) != nil {
-		errMsg := "name must be a valid UUID, please provide a valid UUID or leave name black to have one generated for you"
-		errs = append(errs, field.Invalid(fldPath.Child("systemAssignedIdentityRole", "name"), s.Name, errMsg))
 	}
 
 	return errs

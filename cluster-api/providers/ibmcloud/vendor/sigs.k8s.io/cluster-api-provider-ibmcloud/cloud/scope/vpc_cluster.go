@@ -1944,7 +1944,7 @@ func (s *VPCClusterScope) createLoadBalancer(loadBalancer infrav1beta2.VPCLoadBa
 	}
 
 	// Build the load balancer's backend pools.
-	backendPools := make([]vpcv1.LoadBalancerPoolPrototype, 0)
+	backendPools := make([]vpcv1.LoadBalancerPoolPrototypeLoadBalancerContext, 0)
 	// If BackendPools is populated, use those. Otherwise, use default.
 	// TODO(cjschaef): Determine if a default Pool should be auto generated, or allow "empty" pools for LB's.
 	if loadBalancer.BackendPools != nil {
@@ -2082,7 +2082,7 @@ func (s *VPCClusterScope) getLoadBalancerSecurityGroupIDs(loadBalancer infrav1be
 }
 
 // buildLoadBalancerBackendPool will build a Load Balancer Pool based on the provided spec.
-func (s *VPCClusterScope) buildLoadBalancerBackendPool(pool infrav1beta2.VPCLoadBalancerBackendPoolSpec) vpcv1.LoadBalancerPoolPrototype {
+func (s *VPCClusterScope) buildLoadBalancerBackendPool(pool infrav1beta2.VPCLoadBalancerBackendPoolSpec) vpcv1.LoadBalancerPoolPrototypeLoadBalancerContext {
 	monitor := &vpcv1.LoadBalancerPoolHealthMonitorPrototype{
 		Delay:      ptr.To(pool.HealthMonitor.Delay),
 		MaxRetries: ptr.To(pool.HealthMonitor.Retries),
@@ -2095,7 +2095,7 @@ func (s *VPCClusterScope) buildLoadBalancerBackendPool(pool infrav1beta2.VPCLoad
 	if pool.HealthMonitor.URLPath != nil {
 		monitor.URLPath = pool.HealthMonitor.URLPath
 	}
-	backendPool := vpcv1.LoadBalancerPoolPrototype{
+	backendPool := vpcv1.LoadBalancerPoolPrototypeLoadBalancerContext{
 		Algorithm:     ptr.To(string(pool.Algorithm)),
 		HealthMonitor: monitor,
 		Protocol:      ptr.To(string(pool.Protocol)),
@@ -2109,8 +2109,8 @@ func (s *VPCClusterScope) buildLoadBalancerBackendPool(pool infrav1beta2.VPCLoad
 }
 
 // getDefaultBalancerBackendPools returns a list of default Load Balancer Backend Pools for a Load Balancer.
-func (s *VPCClusterScope) getDefaultLoadBalancerBackendPools() []vpcv1.LoadBalancerPoolPrototype {
-	defaultPools := make([]vpcv1.LoadBalancerPoolPrototype, 0)
+func (s *VPCClusterScope) getDefaultLoadBalancerBackendPools() []vpcv1.LoadBalancerPoolPrototypeLoadBalancerContext {
+	defaultPools := make([]vpcv1.LoadBalancerPoolPrototypeLoadBalancerContext, 0)
 
 	// For now, only one default pool is expected.
 	defaultPool := infrav1beta2.VPCLoadBalancerBackendPoolSpec{

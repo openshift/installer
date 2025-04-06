@@ -150,6 +150,7 @@ type PrivateEndpoint_Spec struct {
 	IpConfigurations                    []PrivateEndpointIPConfiguration `json:"ipConfigurations,omitempty"`
 	Location                            *string                          `json:"location,omitempty"`
 	ManualPrivateLinkServiceConnections []PrivateLinkServiceConnection   `json:"manualPrivateLinkServiceConnections,omitempty"`
+	OperatorSpec                        *PrivateEndpointOperatorSpec     `json:"operatorSpec,omitempty"`
 	OriginalVersion                     string                           `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
@@ -295,6 +296,13 @@ type PrivateEndpointIPConfiguration_STATUS struct {
 	Type             *string                `json:"type,omitempty"`
 }
 
+// Storage version of v1api20220701.PrivateEndpointOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type PrivateEndpointOperatorSpec struct {
+	ConfigMaps  *PrivateEndpointOperatorConfigMaps `json:"configMaps,omitempty"`
+	PropertyBag genruntime.PropertyBag             `json:"$propertyBag,omitempty"`
+}
+
 // Storage version of v1api20220701.PrivateLinkServiceConnection
 // PrivateLinkServiceConnection resource.
 type PrivateLinkServiceConnection struct {
@@ -337,6 +345,12 @@ type Subnet_PrivateEndpoint_SubResourceEmbedded struct {
 type Subnet_STATUS_PrivateEndpoint_SubResourceEmbedded struct {
 	Id          *string                `json:"id,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// Storage version of v1api20220701.PrivateEndpointOperatorConfigMaps
+type PrivateEndpointOperatorConfigMaps struct {
+	PrimaryNicPrivateIpAddress *genruntime.ConfigMapDestination `json:"primaryNicPrivateIpAddress,omitempty"`
+	PropertyBag                genruntime.PropertyBag           `json:"$propertyBag,omitempty"`
 }
 
 // Storage version of v1api20220701.PrivateLinkServiceConnectionState

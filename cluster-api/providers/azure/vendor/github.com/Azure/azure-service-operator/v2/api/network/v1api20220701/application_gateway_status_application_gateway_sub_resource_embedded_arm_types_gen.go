@@ -421,6 +421,14 @@ const (
 	ManagedServiceIdentity_Type_STATUS_UserAssigned               = ManagedServiceIdentity_Type_STATUS("UserAssigned")
 )
 
+// Mapping from string to ManagedServiceIdentity_Type_STATUS
+var managedServiceIdentity_Type_STATUS_Values = map[string]ManagedServiceIdentity_Type_STATUS{
+	"none":                         ManagedServiceIdentity_Type_STATUS_None,
+	"systemassigned":               ManagedServiceIdentity_Type_STATUS_SystemAssigned,
+	"systemassigned, userassigned": ManagedServiceIdentity_Type_STATUS_SystemAssignedUserAssigned,
+	"userassigned":                 ManagedServiceIdentity_Type_STATUS_UserAssigned,
+}
+
 type ManagedServiceIdentity_UserAssignedIdentities_STATUS_ARM struct {
 	// ClientId: The client id of user assigned identity.
 	ClientId *string `json:"clientId,omitempty"`

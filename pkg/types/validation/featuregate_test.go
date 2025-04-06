@@ -116,39 +116,6 @@ func TestFeatureGates(t *testing.T) {
 			}(),
 		},
 		{
-			name: "Azure system-assigned identities (control plane) requires MachineAPIMigration feature gate",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.AWS = nil // validInstallConfig defaults to AWS
-				c.Azure = &azure.Platform{}
-				c.ControlPlane.Platform.Azure = &azure.MachinePool{
-					Identity: &azure.VMIdentity{
-						Type:                       capz.VMIdentitySystemAssigned,
-						SystemAssignedIdentityRole: &capz.SystemAssignedIdentityRole{},
-					},
-				}
-				return c
-			}(),
-			expected: `^controlPlane.azure.identity.systemAssignedIdentityRole: Forbidden: this field is protected by the MachineAPIMigration feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set`,
-		},
-		{
-			name: "Azure system-assigned identities (default platform) requires MachineAPIMigration feature gate",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.AWS = nil // validInstallConfig defaults to AWS
-				c.Azure = &azure.Platform{
-					DefaultMachinePlatform: &azure.MachinePool{
-						Identity: &azure.VMIdentity{
-							Type:                       capz.VMIdentitySystemAssigned,
-							SystemAssignedIdentityRole: &capz.SystemAssignedIdentityRole{},
-						},
-					},
-				}
-				return c
-			}(),
-			expected: `^platform.azure.defaultMachinePlatform.identity.systemAssignedIdentityRole: Forbidden: this field is protected by the MachineAPIMigration feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set`,
-		},
-		{
 			name: "Azure user-assigned identities (control plane) > 1 requires MachineAPIMigration feature gate",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()

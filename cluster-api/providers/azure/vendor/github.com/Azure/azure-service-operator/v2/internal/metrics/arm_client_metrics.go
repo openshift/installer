@@ -22,7 +22,6 @@ type ARMClientMetrics struct {
 var _ Metrics = &ARMClientMetrics{}
 
 func NewARMClientMetrics() *ARMClientMetrics {
-
 	azureSuccessfulRequestsTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "azure_successful_requests_total",
 		Help: "Total number of successful requests to azure",

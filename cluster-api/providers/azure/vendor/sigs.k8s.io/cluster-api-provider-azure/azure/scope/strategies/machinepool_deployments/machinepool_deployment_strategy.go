@@ -129,6 +129,7 @@ func (rollingUpdateStrategy rollingUpdateStrategy) SelectMachinesToDelete(ctx co
 			}
 		}()
 		log                        = ctrl.LoggerFrom(ctx).V(4)
+		deleteAnnotatedMachines    = order(getDeleteAnnotatedMachines(machinesByProviderID))
 		failedMachines             = order(getFailedMachines(machinesByProviderID))
 		deletingMachines           = order(getDeletingMachines(machinesByProviderID))
 		readyMachines              = order(getReadyMachines(machinesByProviderID))
@@ -143,12 +144,10 @@ func (rollingUpdateStrategy rollingUpdateStrategy) SelectMachinesToDelete(ctx co
 		}()
 	)
 
-	// Order AzureMachinePoolMachines with the clutserv1.DeleteMachineAnnotation to the front so that they have delete priority.
+	// Order AzureMachinePoolMachines with the clusterv1.DeleteMachineAnnotation to the front so that they have delete priority.
 	// This allows MachinePool Machines to work with the autoscaler.
 	failedMachines = orderByDeleteMachineAnnotation(failedMachines)
 	deletingMachines = orderByDeleteMachineAnnotation(deletingMachines)
-	readyMachines = orderByDeleteMachineAnnotation(readyMachines)
-	machinesWithoutLatestModel = orderByDeleteMachineAnnotation(machinesWithoutLatestModel)
 
 	log.Info("selecting machines to delete",
 		"readyMachines", len(readyMachines),
@@ -156,6 +155,7 @@ func (rollingUpdateStrategy rollingUpdateStrategy) SelectMachinesToDelete(ctx co
 		"maxUnavailable", maxUnavailable,
 		"disruptionBudget", disruptionBudget,
 		"machinesWithoutTheLatestModel", len(machinesWithoutLatestModel),
+		"deleteAnnotatedMachines", len(deleteAnnotatedMachines),
 		"failedMachines", len(failedMachines),
 		"deletingMachines", len(deletingMachines),
 	)
@@ -164,6 +164,12 @@ func (rollingUpdateStrategy rollingUpdateStrategy) SelectMachinesToDelete(ctx co
 	if len(failedMachines) > 0 || len(deletingMachines) > 0 {
 		log.Info("failed or deleting machines", "desiredReplicaCount", desiredReplicaCount, "maxUnavailable", maxUnavailable, "failedMachines", getProviderIDs(failedMachines), "deletingMachines", getProviderIDs(deletingMachines))
 		return append(failedMachines, deletingMachines...), nil
+	}
+
+	// if we have machines annotated with delete machine, remove them
+	if len(deleteAnnotatedMachines) > 0 {
+		log.Info("delete annotated machines", "desiredReplicaCount", desiredReplicaCount, "maxUnavailable", maxUnavailable, "deleteAnnotatedMachines", getProviderIDs(deleteAnnotatedMachines))
+		return deleteAnnotatedMachines, nil
 	}
 
 	// if we have not yet reached our desired count, don't try to delete anything
@@ -222,6 +228,18 @@ func (rollingUpdateStrategy rollingUpdateStrategy) SelectMachinesToDelete(ctx co
 
 	log.Info("completed without filling toDelete", "toDelete", getProviderIDs(toDelete), "numToDelete", len(toDelete))
 	return toDelete, nil
+}
+
+func getDeleteAnnotatedMachines(machinesByProviderID map[string]infrav1exp.AzureMachinePoolMachine) []infrav1exp.AzureMachinePoolMachine {
+	var machines []infrav1exp.AzureMachinePoolMachine
+	for _, v := range machinesByProviderID {
+		if v.Annotations != nil {
+			if _, hasDeleteAnnotation := v.Annotations[clusterv1.DeleteMachineAnnotation]; hasDeleteAnnotation {
+				machines = append(machines, v)
+			}
+		}
+	}
+	return machines
 }
 
 func getFailedMachines(machinesByProviderID map[string]infrav1exp.AzureMachinePoolMachine) []infrav1exp.AzureMachinePoolMachine {

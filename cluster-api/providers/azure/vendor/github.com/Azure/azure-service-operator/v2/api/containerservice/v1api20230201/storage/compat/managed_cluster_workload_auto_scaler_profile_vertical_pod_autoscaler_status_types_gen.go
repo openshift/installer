@@ -4,7 +4,7 @@
 package compat
 
 import (
-	v20231001s "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/pkg/errors"
 )
@@ -18,7 +18,7 @@ type ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS struct 
 }
 
 // AssignProperties_From_ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS populates our ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS from the provided source ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS
-func (autoscaler *ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS) AssignProperties_From_ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS(source *v20231001s.ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS) error {
+func (autoscaler *ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS) AssignProperties_From_ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS(source *storage.ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -77,7 +77,7 @@ func (autoscaler *ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_S
 }
 
 // AssignProperties_To_ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS populates the provided destination ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS from our ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS
-func (autoscaler *ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS) AssignProperties_To_ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS(destination *v20231001s.ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS) error {
+func (autoscaler *ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS) AssignProperties_To_ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS(destination *storage.ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(autoscaler.PropertyBag)
 
@@ -124,6 +124,6 @@ func (autoscaler *ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_S
 }
 
 type augmentConversionForManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS interface {
-	AssignPropertiesFrom(src *v20231001s.ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS) error
-	AssignPropertiesTo(dst *v20231001s.ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS) error
+	AssignPropertiesFrom(src *storage.ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS) error
+	AssignPropertiesTo(dst *storage.ManagedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_STATUS) error
 }

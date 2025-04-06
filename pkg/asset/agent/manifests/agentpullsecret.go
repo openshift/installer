@@ -165,7 +165,7 @@ func (a *AgentPullSecret) validatePullSecret() field.ErrorList {
 		return err
 	}
 
-	fieldPath := field.NewPath("StringData")
+	fieldPath := field.NewPath("stringData")
 	dockerConfig := a.Config.StringData[pullSecretKey]
 	if err := validate.ImagePullSecret(dockerConfig); err != nil {
 		return field.ErrorList{field.Invalid(fieldPath, dockerConfig, err.Error())}
@@ -177,7 +177,7 @@ func (a *AgentPullSecret) validatePullSecret() field.ErrorList {
 func (a *AgentPullSecret) validateSecretIsNotEmpty() field.ErrorList {
 	var allErrs field.ErrorList
 
-	fieldPath := field.NewPath("StringData")
+	fieldPath := field.NewPath("stringData")
 
 	if len(a.Config.StringData) == 0 {
 		allErrs = append(allErrs, field.Required(fieldPath, "the pull secret is empty"))

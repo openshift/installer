@@ -2173,7 +2173,7 @@ func (s *PowerVSClusterScope) createLoadBalancer(lb infrav1beta2.VPCLoadBalancer
 		}
 		options.Subnets = append(options.Subnets, subnet)
 	}
-	options.SetPools([]vpcv1.LoadBalancerPoolPrototype{
+	options.SetPools([]vpcv1.LoadBalancerPoolPrototypeLoadBalancerContext{
 		{
 			Algorithm:     core.StringPtr("round_robin"),
 			HealthMonitor: &vpcv1.LoadBalancerPoolHealthMonitorPrototype{Delay: core.Int64Ptr(5), MaxRetries: core.Int64Ptr(2), Timeout: core.Int64Ptr(2), Type: core.StringPtr("tcp")},
@@ -2194,7 +2194,7 @@ func (s *PowerVSClusterScope) createLoadBalancer(lb infrav1beta2.VPCLoadBalancer
 	})
 
 	for _, additionalListeners := range lb.AdditionalListeners {
-		pool := vpcv1.LoadBalancerPoolPrototype{
+		pool := vpcv1.LoadBalancerPoolPrototypeLoadBalancerContext{
 			Algorithm:     core.StringPtr("round_robin"),
 			HealthMonitor: &vpcv1.LoadBalancerPoolHealthMonitorPrototype{Delay: core.Int64Ptr(5), MaxRetries: core.Int64Ptr(2), Timeout: core.Int64Ptr(2), Type: core.StringPtr("tcp")},
 			// Note: Appending port number to the name, it will be referenced to set target port while adding new pool member
