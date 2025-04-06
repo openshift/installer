@@ -1590,7 +1590,7 @@ func validateFencingCredentials(installConfig *types.InstallConfig) (errors fiel
 	allErrs := field.ErrorList{}
 	if fencingCredentials != nil {
 		allErrs = append(allErrs, common.ValidateUniqueAndRequiredFields(fencingCredentials.Credentials, fldPath.Child("credentials"), func([]byte) bool { return false })...)
-    allErrs = append(allErrs, validateFencingForPlatform(installConfig, fldPath)...)
+		allErrs = append(allErrs, validateFencingForPlatform(installConfig, fldPath)...)
 	}
 	allErrs = append(allErrs, validateCredentialsNumber(installConfig, fencingCredentials, fldPath.Child("credentials"))...)
 
@@ -1600,13 +1600,13 @@ func validateFencingCredentials(installConfig *types.InstallConfig) (errors fiel
 func validateFencingForPlatform(config *types.InstallConfig, fldPath *field.Path) field.ErrorList {
 	errs := field.ErrorList{}
 	switch {
-	case config.None != nil:
+	case config.None != nil, config.External != nil:
 	case config.BareMetal != nil:
 		if len(config.Platform.BareMetal.Hosts) > 0 {
 			errs = append(errs, field.Forbidden(fldPath, "fencing is mutually exclusive with hosts, please remove either of them"))
 		}
 	default:
-		errs = append(errs, field.Forbidden(fldPath, fmt.Sprintf("fencing is only supported on baremetal or none platforms, instead %s platform was found", config.Platform.Name())))
+		errs = append(errs, field.Forbidden(fldPath, fmt.Sprintf("fencing is only supported on baremetal, external or none platforms, instead %s platform was found", config.Platform.Name())))
 	}
 	return errs
 }

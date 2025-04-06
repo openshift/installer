@@ -2931,7 +2931,7 @@ func TestValidateTNF(t *testing.T) {
 				CpReplicas(2).
 				build(),
 			name:     "supported_platforms",
-			expected: "controlPlane.fencing: Forbidden: fencing is only supported on baremetal or none platforms, instead aws platform was found",
+			expected: "controlPlane.fencing: Forbidden: fencing is only supported on baremetal, external or none platforms, instead aws platform was found",
 		},
 	}
 	for _, tc := range cases {
