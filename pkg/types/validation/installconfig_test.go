@@ -2825,6 +2825,15 @@ func TestValidateTNF(t *testing.T) {
 		{
 			config: installConfig().
 				MachinePoolCP(machinePool().
+					Credential(c1().DisableCertificateVerification(true), c2())).
+				CpReplicas(2).
+				build(),
+			name:     "valid_with_disabled_cert_verification",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				MachinePoolCP(machinePool().
 					Credential(c1(), c2(), c3())).
 				CpReplicas(2).build(),
 			name:     "invalid_number_of_credentials_for_dual_replica",
@@ -3014,6 +3023,11 @@ func (hb *credentialBuilder) BMCUsername(value string) *credentialBuilder {
 
 func (hb *credentialBuilder) BMCPassword(value string) *credentialBuilder {
 	hb.Credential.Password = value
+	return hb
+}
+
+func (hb *credentialBuilder) DisableCertificateVerification(value bool) *credentialBuilder {
+	hb.Credential.DisableCertificateVerification = value
 	return hb
 }
 
