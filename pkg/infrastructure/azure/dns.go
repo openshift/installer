@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/dns/armdns"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/privatedns/armprivatedns"
 	"k8s.io/utils/ptr"
@@ -37,7 +36,7 @@ type recordPrivateList struct {
 }
 
 // Create DNS entries for azure.
-func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBFQDN string, resourceGroup string) error {
+func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBFQDN string, resourceGroup string, opts *arm.ClientOptions) error {
 	baseDomainResourceGroup := in.InstallConfig.Config.Azure.BaseDomainResourceGroupName
 	zone := in.InstallConfig.Config.BaseDomain
 	privatezone := in.InstallConfig.Config.ClusterDomain()
@@ -85,25 +84,13 @@ func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBF
 		return fmt.Errorf("failed to create session: %w", err)
 	}
 	subscriptionID := session.Credentials.SubscriptionID
-	cloudConfiguration := session.CloudConfig
 
-	recordSetClient, err := armdns.NewRecordSetsClient(subscriptionID, session.TokenCreds,
-		&arm.ClientOptions{
-			ClientOptions: policy.ClientOptions{
-				Cloud: cloudConfiguration,
-			},
-		},
-	)
+	opts.APIVersion = "2018-05-01" // Azure-Stack-compatible API version
+	recordSetClient, err := armdns.NewRecordSetsClient(subscriptionID, session.TokenCreds, opts)
 	if err != nil {
 		return fmt.Errorf("failed to create public record client: %w", err)
 	}
-	privateRecordSetClient, err := armprivatedns.NewRecordSetsClient(subscriptionID, session.TokenCreds,
-		&arm.ClientOptions{
-			ClientOptions: policy.ClientOptions{
-				Cloud: cloudConfiguration,
-			},
-		},
-	)
+	privateRecordSetClient, err := armprivatedns.NewRecordSetsClient(subscriptionID, session.TokenCreds, opts)
 	if err != nil {
 		return fmt.Errorf("failed to create private record client: %w", err)
 	}
