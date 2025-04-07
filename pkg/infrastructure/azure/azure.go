@@ -30,6 +30,7 @@ import (
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/azure"
 	aztypes "github.com/openshift/installer/pkg/types/azure"
 )
 
@@ -250,7 +251,8 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	logrus.Debugf("BlobContainer.ID=%s", *blobContainer.ID)
 
 	// Upload the image to the container
-	if _, ok := os.LookupEnv("OPENSHIFT_INSTALL_SKIP_IMAGE_UPLOAD"); !ok {
+	_, skipImageUpload := os.LookupEnv("OPENSHIFT_INSTALL_SKIP_IMAGE_UPLOAD")
+	if !(skipImageUpload || platform.CloudName == azure.StackCloud) {
 		_, err = CreatePageBlob(ctx, &CreatePageBlobInput{
 			StorageURL:         storageURL,
 			BlobURL:            blobURL,
