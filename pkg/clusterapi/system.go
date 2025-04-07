@@ -233,7 +233,7 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 
 		controllers = append(controllers,
 			c.getInfrastructureController(
-				&Azure,
+				&azProvider,
 				[]string{
 					"-v=2",
 					"--health-addr={{suggestHealthHostPort}}",
