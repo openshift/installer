@@ -215,6 +215,27 @@ func (ci *ClusterInfo) retrievePullSecret() error {
 	return nil
 }
 
+// filter out certificates that were erroneously included from CoreOS in 4.15
+// installations with the agent-based installer, which make the bundle huge and
+// cause a failure to create the InfraEnv.
+func filterCaBundleData(userCaBundle string) string {
+	certs := strings.SplitAfter(userCaBundle, "-----END CERTIFICATE-----")
+	filteredCerts := []string{}
+filtering:
+	for _, c := range certs {
+		if _, match := coreOS92CaCerts[strings.TrimLeft(c, "\n")]; !match {
+			// Ignore duplicates
+			for _, fc := range filteredCerts {
+				if strings.TrimSpace(fc) == strings.TrimSpace(c) {
+					continue filtering
+				}
+			}
+			filteredCerts = append(filteredCerts, c)
+		}
+	}
+	return strings.Join(filteredCerts, "")
+}
+
 func (ci *ClusterInfo) retrieveUserTrustBundle() error {
 	userCaBundle, err := ci.Client.CoreV1().ConfigMaps("openshift-config").Get(context.Background(), "user-ca-bundle", metav1.GetOptions{})
 	if err != nil {
@@ -223,7 +244,7 @@ func (ci *ClusterInfo) retrieveUserTrustBundle() error {
 		}
 		return err
 	}
-	ci.UserCaBundle = userCaBundle.Data["ca-bundle.crt"]
+	ci.UserCaBundle = filterCaBundleData(userCaBundle.Data["ca-bundle.crt"])
 
 	return nil
 }
