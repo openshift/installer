@@ -10,8 +10,6 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/streaming"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault"
@@ -44,7 +42,7 @@ type CreateStorageAccountInput struct {
 	CustomerManagedKey *aztypes.CustomerManagedKey
 	CloudName          aztypes.CloudEnvironment
 	TokenCredential    azcore.TokenCredential
-	CloudConfiguration cloud.Configuration
+	ClientOpts         *arm.ClientOptions
 }
 
 // CreateStorageAccountOutput contains the return values after creating a
@@ -59,7 +57,6 @@ type CreateStorageAccountOutput struct {
 // CreateStorageAccount creates a new storage account.
 func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*CreateStorageAccountOutput, error) {
 	minimumTLSVersion := armstorage.MinimumTLSVersionTLS10
-	cloudConfiguration := in.CloudConfiguration
 
 	/* XXX: Do we support other clouds? */
 	switch in.CloudName {
@@ -74,16 +71,7 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 		allowSharedKeyAccess = false
 	}
 
-	storageClientFactory, err := armstorage.NewClientFactory(
-		in.SubscriptionID,
-		in.TokenCredential,
-		&arm.ClientOptions{
-			ClientOptions: policy.ClientOptions{
-				Cloud: cloudConfiguration,
-				//Transport: ...,
-			},
-		},
-	)
+	storageClientFactory, err := armstorage.NewClientFactory(in.SubscriptionID, in.TokenCredential, in.ClientOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get storage account factory %w", err)
 	}
@@ -235,7 +223,7 @@ type CreatePageBlobInput struct {
 	BootstrapIgnData   []byte
 	ImageLength        int64
 	StorageAccountKeys []armstorage.AccountKey
-	CloudConfiguration cloud.Configuration
+	ClientOpts         *arm.ClientOptions
 }
 
 // CreatePageBlobOutput contains the return values after creating a page blob.
@@ -260,7 +248,7 @@ func CreatePageBlob(ctx context.Context, in *CreatePageBlobInput) (string, error
 		sharedKeyCredential,
 		&pageblob.ClientOptions{
 			ClientOptions: azcore.ClientOptions{
-				Cloud: in.CloudConfiguration,
+				Cloud: in.ClientOpts.Cloud,
 			},
 		},
 	)
@@ -450,7 +438,7 @@ type CreateBlockBlobInput struct {
 	StorageAccountName string
 	BootstrapIgnData   []byte
 	StorageAccountKeys []armstorage.AccountKey
-	CloudConfiguration cloud.Configuration
+	ClientOpts         *arm.ClientOptions
 }
 
 // CreateBlockBlobOutput contains the return values after creating a block
@@ -476,7 +464,7 @@ func CreateBlockBlob(ctx context.Context, in *CreateBlockBlobInput) (string, err
 		sharedKeyCredential,
 		&blockblob.ClientOptions{
 			ClientOptions: azcore.ClientOptions{
-				Cloud: in.CloudConfiguration,
+				Cloud: in.ClientOpts.Cloud,
 			},
 		},
 	)

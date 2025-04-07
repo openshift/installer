@@ -38,6 +38,9 @@ const (
 	retryCount       = 6
 	confidentialVMST = "ConfidentialVMSupported"
 	trustedLaunchST  = "TrustedLaunchsupported"
+
+	// stackAPIVersion is the Azure Stack compatible API version.
+	stackAPIVersion = "2019-06-01"
 )
 
 // Provider implements Azure CAPI installation.
@@ -53,6 +56,7 @@ type Provider struct {
 	CloudConfiguration    cloud.Configuration
 	TokenCredential       azcore.TokenCredential
 	Tags                  map[string]*string
+	clientOptions         *arm.ClientOptions
 }
 
 var _ clusterapi.InfraReadyProvider = (*Provider)(nil)
@@ -103,6 +107,16 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		tags[k] = ptr.To(v)
 	}
 	p.Tags = tags
+
+	opts := &arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			Cloud: cloudConfiguration,
+		},
+	}
+	if platform.CloudName == aztypes.StackCloud {
+		opts.APIVersion = stackAPIVersion
+	}
+	p.clientOptions = opts
 
 	// Creating a dummy nsg for existing vnets installation to appease the ingress operator.
 	if in.InstallConfig.Config.Azure.VirtualNetwork != "" {
@@ -197,7 +211,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		Tags:               tags,
 		CustomerManagedKey: platform.CustomerManagedKey,
 		TokenCredential:    tokenCredential,
-		CloudConfiguration: cloudConfiguration,
+		ClientOpts:         p.clientOptions,
 	})
 	if err != nil {
 		return err
@@ -235,7 +249,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			ImageLength:        imageLength,
 			StorageAccountName: storageAccountName,
 			StorageAccountKeys: storageAccountKeys,
-			CloudConfiguration: cloudConfiguration,
+			ClientOpts:         p.clientOptions,
 		})
 		if err != nil {
 			return err
@@ -243,13 +257,13 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 
 		// Create image gallery
 		createImageGalleryOutput, err := CreateImageGallery(ctx, &CreateImageGalleryInput{
-			SubscriptionID:     subscriptionID,
-			ResourceGroupName:  resourceGroupName,
-			GalleryName:        galleryName,
-			Region:             platform.Region,
-			Tags:               tags,
-			TokenCredential:    tokenCredential,
-			CloudConfiguration: cloudConfiguration,
+			SubscriptionID:    subscriptionID,
+			ResourceGroupName: resourceGroupName,
+			GalleryName:       galleryName,
+			Region:            platform.Region,
+			Tags:              tags,
+			TokenCredential:   tokenCredential,
+			ClientOpts:        p.clientOptions,
 		})
 		if err != nil {
 			return err
@@ -268,7 +282,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			SKU:                  "basic",
 			Tags:                 tags,
 			TokenCredential:      tokenCredential,
-			CloudConfiguration:   cloudConfiguration,
+			ClientOpts:           p.clientOptions,
 			Architecture:         architecture,
 			OSType:               armcompute.OperatingSystemTypesLinux,
 			OSState:              armcompute.OperatingSystemStateTypesGeneralized,
@@ -297,7 +311,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			SKU:                  "gen2",
 			Tags:                 tags,
 			TokenCredential:      tokenCredential,
-			CloudConfiguration:   cloudConfiguration,
+			ClientOpts:           p.clientOptions,
 			Architecture:         architecture,
 			OSType:               armcompute.OperatingSystemTypesLinux,
 			OSState:              armcompute.OperatingSystemStateTypesGeneralized,
@@ -341,13 +355,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		}
 	}
 
-	networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, session.TokenCreds,
-		&arm.ClientOptions{
-			ClientOptions: policy.ClientOptions{
-				Cloud: cloudConfiguration,
-			},
-		},
-	)
+	networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, session.TokenCreds, p.clientOptions)
 	if err != nil {
 		return fmt.Errorf("error creating network client factory: %w", err)
 	}
@@ -422,7 +430,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	p.NetworkClientFactory = networkClientFactory
 	p.lbBackendAddressPools = lbBaps
 
-	if err := createDNSEntries(ctx, in, extLBFQDN, resourceGroupName); err != nil {
+	if err := createDNSEntries(ctx, in, extLBFQDN, resourceGroupName, p.clientOptions); err != nil {
 		return fmt.Errorf("error creating DNS records: %w", err)
 	}
 
@@ -437,16 +445,11 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 		return fmt.Errorf("error retrieving Azure session: %w", err)
 	}
 	subscriptionID := ssn.Credentials.SubscriptionID
-	cloudConfiguration := ssn.CloudConfig
 
 	if in.InstallConfig.Config.PublicAPI() {
-		vmClient, err := armcompute.NewVirtualMachinesClient(subscriptionID, ssn.TokenCreds,
-			&arm.ClientOptions{
-				ClientOptions: policy.ClientOptions{
-					Cloud: cloudConfiguration,
-				},
-			},
-		)
+		opts := p.clientOptions
+		opts.APIVersion = "2020-06-01"
+		vmClient, err := armcompute.NewVirtualMachinesClient(subscriptionID, ssn.TokenCreds, p.clientOptions)
 		if err != nil {
 			return fmt.Errorf("error creating vm client: %w", err)
 		}
@@ -535,14 +538,22 @@ func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerI
 		return fmt.Errorf("failed to get session: %w", err)
 	}
 
+	// Construct client options here, rather than relying on p.clientOptions,
+	// as PostDestroy can be called as part of destroy bootstrap, in which case
+	// p.clientOption would not be populated.
+	opts := &arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			Cloud: session.CloudConfig,
+		},
+	}
+	if in.Metadata.Azure.CloudName == aztypes.StackCloud {
+		opts.APIVersion = stackAPIVersion
+	}
+
 	networkClientFactory, err := armnetwork.NewClientFactory(
 		session.Credentials.SubscriptionID,
 		session.TokenCreds,
-		&arm.ClientOptions{
-			ClientOptions: policy.ClientOptions{
-				Cloud: session.CloudConfig,
-			},
-		},
+		opts,
 	)
 	if err != nil {
 		return fmt.Errorf("error creating network client factory: %w", err)
@@ -667,7 +678,6 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 
 	bootstrapIgnData := in.BootstrapIgnData
 	subscriptionID := session.Credentials.SubscriptionID
-	cloudConfiguration := session.CloudConfig
 
 	ignitionContainerName := "ignition"
 	blobName := "bootstrap.ign"
@@ -698,7 +708,7 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 			BlobURL:            blobURL,
 			StorageAccountName: p.StorageAccountName,
 			StorageAccountKeys: p.StorageAccountKeys,
-			CloudConfiguration: cloudConfiguration,
+			ClientOpts:         p.clientOptions,
 			BootstrapIgnData:   bootstrapIgnData,
 		})
 		if err != nil {
@@ -719,7 +729,7 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 			BootstrapIgnData:   bootstrapIgnData,
 			ImageLength:        lengthBootstrapFile,
 			StorageAccountKeys: p.StorageAccountKeys,
-			CloudConfiguration: cloudConfiguration,
+			ClientOpts:         p.clientOptions,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create PageBlob for ignition shim: %w", err)

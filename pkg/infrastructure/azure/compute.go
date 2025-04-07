@@ -7,8 +7,6 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4"
@@ -18,13 +16,13 @@ import (
 // CreateImageGalleryInput contains the input parameters for creating a image
 // gallery.
 type CreateImageGalleryInput struct {
-	SubscriptionID     string
-	ResourceGroupName  string
-	GalleryName        string
-	Region             string
-	Tags               map[string]*string
-	TokenCredential    azcore.TokenCredential
-	CloudConfiguration cloud.Configuration
+	SubscriptionID    string
+	ResourceGroupName string
+	GalleryName       string
+	Region            string
+	Tags              map[string]*string
+	TokenCredential   azcore.TokenCredential
+	ClientOpts        *arm.ClientOptions
 }
 
 // CreateImageGalleryOutput contains the return values after creating a image
@@ -37,15 +35,7 @@ type CreateImageGalleryOutput struct {
 // CreateImageGallery creates a image gallery.
 func CreateImageGallery(ctx context.Context, in *CreateImageGalleryInput) (*CreateImageGalleryOutput, error) {
 	logrus.Debugf("Creating image gallery: %s", in.GalleryName)
-	computeClientFactory, err := armcompute.NewClientFactory(
-		in.SubscriptionID,
-		in.TokenCredential,
-		&arm.ClientOptions{
-			ClientOptions: policy.ClientOptions{
-				Cloud: in.CloudConfiguration,
-			},
-		},
-	)
+	computeClientFactory, err := armcompute.NewClientFactory(in.SubscriptionID, in.TokenCredential, in.ClientOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get compute client factory: %w", err)
 	}
@@ -93,7 +83,7 @@ type CreateGalleryImageInput struct {
 	SKU                  string
 	Tags                 map[string]*string
 	TokenCredential      azcore.TokenCredential
-	CloudConfiguration   cloud.Configuration
+	ClientOpts           *arm.ClientOptions
 	Architecture         armcompute.Architecture
 	OSType               armcompute.OperatingSystemTypes
 	OSState              armcompute.OperatingSystemStateTypes
