@@ -213,6 +213,10 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 		if err != nil {
 			return fmt.Errorf("unable to retrieve azure session: %w", err)
 		}
+		azProvider := Azure
+		if cloudName == azure.StackCloud {
+			azProvider = AzureStack
+		}
 
 		b, err := json.Marshal(session.Environment)
 		if err != nil {
@@ -223,7 +227,7 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 
 		controllers = append(controllers,
 			c.getInfrastructureController(
-				&Azure,
+				&azProvider,
 				[]string{
 					"-v=2",
 					"--health-addr={{suggestHealthHostPort}}",
