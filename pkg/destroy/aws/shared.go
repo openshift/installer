@@ -3,10 +3,10 @@ package aws
 import (
 	"context"
 	"fmt"
-	iamv2 "github.com/aws/aws-sdk-go-v2/service/iam"
 	"strings"
 	"time"
 
+	iamv2 "github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"

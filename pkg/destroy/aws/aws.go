@@ -3,12 +3,14 @@ package aws
 import (
 	"context"
 	"fmt"
-	iamv2 "github.com/aws/aws-sdk-go-v2/service/iam"
 	"strings"
 	"time"
 
 	configv2 "github.com/aws/aws-sdk-go-v2/config"
 	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
+	elb "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing"
+	elbv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
+	iamv2 "github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -72,6 +74,9 @@ type ClusterUninstaller struct {
 	EC2Client *ec2v2.Client
 
 	IAMClient *iamv2.Client
+
+	ElbBaseClient *elb.Client
+	Elbv2Client   *elbv2.Client
 }
 
 // New returns an AWS destroyer from ClusterMetadata.
@@ -113,6 +118,26 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		}
 	})
 
+	elbBaseClient := elb.NewFromConfig(cfg, func(options *elb.Options) {
+		options.Region = region
+
+		for _, endpoint := range metadata.AWS.ServiceEndpoints {
+			if strings.EqualFold(endpoint.Name, "elb") || strings.EqualFold(endpoint.Name, "elasticloadbalancing") {
+				options.BaseEndpoint = aws.String(endpoint.URL)
+			}
+		}
+	})
+
+	elbv2Client := elbv2.NewFromConfig(cfg, func(options *elbv2.Options) {
+		options.Region = region
+
+		for _, endpoint := range metadata.AWS.ServiceEndpoints {
+			if strings.EqualFold(endpoint.Name, "elb") || strings.EqualFold(endpoint.Name, "elasticloadbalancing") {
+				options.BaseEndpoint = aws.String(endpoint.URL)
+			}
+		}
+	})
+
 	return &ClusterUninstaller{
 		Filters:        filters,
 		Region:         region,
@@ -123,6 +148,8 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		HostedZoneRole: metadata.AWS.HostedZoneRole,
 		EC2Client:      ec2Client,
 		IAMClient:      iamClient,
+		ElbBaseClient:  elbBaseClient,
+		Elbv2Client:    elbv2Client,
 	}, nil
 }
 
@@ -555,7 +582,7 @@ func (o *ClusterUninstaller) DeleteARN(ctx context.Context, arn arn.ARN) error {
 	case "ec2":
 		return o.deleteEC2(ctx, o.EC2Client, arn, o.Logger)
 	case "elasticloadbalancing":
-		return deleteElasticLoadBalancing(ctx, o.Session, arn, o.Logger)
+		return o.deleteElasticLoadBalancing(ctx, arn, o.Logger)
 	case "iam":
 		return o.deleteIAM(ctx, arn)
 	case "route53":

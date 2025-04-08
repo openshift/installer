@@ -3,16 +3,17 @@ package aws
 import (
 	"context"
 	"fmt"
+
 	"time"
 
 	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2v2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	elb "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing"
+	elbv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
+	iamv2 "github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/service/elb"
-	"github.com/aws/aws-sdk-go/service/elbv2"
-	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -132,7 +133,7 @@ func (o *ClusterUninstaller) deleteEC2(ctx context.Context, client *ec2v2.Client
 	case "image":
 		return deleteEC2Image(ctx, client, id, logger)
 	case "instance":
-		return terminateEC2Instance(ctx, client, iam.New(o.Session), id, logger)
+		return terminateEC2Instance(ctx, client, o.IAMClient, id, logger)
 	case "internet-gateway":
 		return deleteEC2InternetGateway(ctx, client, id, logger)
 	case "carrier-gateway":
@@ -154,7 +155,7 @@ func (o *ClusterUninstaller) deleteEC2(ctx context.Context, client *ec2v2.Client
 	case "volume":
 		return deleteEC2Volume(ctx, client, id, logger)
 	case "vpc":
-		return deleteEC2VPC(ctx, client, elb.New(o.Session), elbv2.New(o.Session), id, logger)
+		return deleteEC2VPC(ctx, client, o.ElbBaseClient, o.Elbv2Client, id, logger)
 	case "vpc-endpoint":
 		return deleteEC2VPCEndpoint(ctx, client, id, logger)
 	case "vpc-peering-connection":
@@ -240,7 +241,7 @@ func deleteEC2ElasticIP(ctx context.Context, client *ec2v2.Client, id string, lo
 	return nil
 }
 
-func terminateEC2Instance(ctx context.Context, ec2Client *ec2v2.Client, iamClient *iam.IAM, id string, logger logrus.FieldLogger) error {
+func terminateEC2Instance(ctx context.Context, ec2Client *ec2v2.Client, iamClient *iamv2.Client, id string, logger logrus.FieldLogger) error {
 	response, err := ec2Client.DescribeInstances(ctx, &ec2v2.DescribeInstancesInput{
 		InstanceIds: []string{id},
 	})
@@ -262,7 +263,7 @@ func terminateEC2Instance(ctx context.Context, ec2Client *ec2v2.Client, iamClien
 	return nil
 }
 
-func terminateEC2InstanceByInstance(ctx context.Context, ec2Client *ec2v2.Client, iamClient *iam.IAM, instance *ec2v2types.Instance, logger logrus.FieldLogger) error {
+func terminateEC2InstanceByInstance(ctx context.Context, ec2Client *ec2v2.Client, iamClient *iamv2.Client, instance *ec2v2types.Instance, logger logrus.FieldLogger) error {
 	// Ignore instances that are already terminated
 	if instance.State == nil || instance.State.Name == "terminated" {
 		return nil
@@ -721,7 +722,7 @@ func deleteEC2Volume(ctx context.Context, client *ec2v2.Client, id string, logge
 	return nil
 }
 
-func deleteEC2VPC(ctx context.Context, ec2Client *ec2v2.Client, elbClient *elb.ELB, elbv2Client *elbv2.ELBV2, id string, logger logrus.FieldLogger) error {
+func deleteEC2VPC(ctx context.Context, ec2Client *ec2v2.Client, elbClient *elb.Client, elbv2Client *elbv2.Client, id string, logger logrus.FieldLogger) error {
 	// first delete any Load Balancers under this VPC (not all of them are tagged)
 	v1lbError := deleteElasticLoadBalancerClassicByVPC(ctx, elbClient, id, logger)
 	v2lbError := deleteElasticLoadBalancerV2ByVPC(ctx, elbv2Client, id, logger)
