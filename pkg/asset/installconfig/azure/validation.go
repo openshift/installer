@@ -23,6 +23,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	aztypes "github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/azure/defaults"
+	"github.com/openshift/installer/pkg/types/dns"
 )
 
 const (
@@ -643,7 +644,7 @@ func validateRegion(client API, fieldPath *field.Path, p *aztypes.Platform) fiel
 // api.zoneName. If a record exists, it's likely a cluster already exists.
 func ValidatePublicDNS(ic *types.InstallConfig, azureDNS *DNSConfig) error {
 	// If this is an internal cluster, this check is not necessary
-	if ic.Publish == types.InternalPublishingStrategy {
+	if ic.Publish == types.InternalPublishingStrategy || ic.Azure.UserProvisionedDNS == dns.UserProvisionedDNSEnabled {
 		return nil
 	}
 
@@ -652,6 +653,15 @@ func ValidatePublicDNS(ic *types.InstallConfig, azureDNS *DNSConfig) error {
 	rgName := ic.Azure.BaseDomainResourceGroupName
 	zoneName := ic.BaseDomain
 	fmtStr := "api.%s %s record already exists in %s and might be in use by another cluster, please remove it to continue"
+
+	// Verify the base domain exists in the base domain resource group
+	ret, err := azureDNS.DNSZoneExists(rgName, zoneName)
+	if err != nil {
+		return fmt.Errorf("failed to verify base domain %s in resource group %s: %w", zoneName, rgName, err)
+	}
+	if !ret {
+		return fmt.Errorf("base domain %s does not exist in resource group %s", zoneName, rgName)
+	}
 
 	// Look for an existing CNAME first
 	rs, err := azureDNS.GetDNSRecordSet(rgName, zoneName, record, azdns.CNAME)
