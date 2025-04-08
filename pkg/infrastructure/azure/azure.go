@@ -432,7 +432,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	p.NetworkClientFactory = networkClientFactory
 	p.lbBackendAddressPools = lbBaps
 
-	if err := createDNSEntries(ctx, in, extLBFQDN, resourceGroupName, p.clientOptions); err != nil {
+	if err := createDNSEntries(ctx, in, extLBFQDN, pubIPAddress, resourceGroupName, p.clientOptions); err != nil {
 		return fmt.Errorf("error creating DNS records: %w", err)
 	}
 
