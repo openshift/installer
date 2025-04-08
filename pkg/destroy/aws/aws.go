@@ -3,6 +3,7 @@ package aws
 import (
 	"context"
 	"fmt"
+	iamv2 "github.com/aws/aws-sdk-go-v2/service/iam"
 	"strings"
 	"time"
 
@@ -69,6 +70,8 @@ type ClusterUninstaller struct {
 	Session *session.Session
 
 	EC2Client *ec2v2.Client
+
+	IAMClient *iamv2.Client
 }
 
 // New returns an AWS destroyer from ClusterMetadata.
@@ -100,6 +103,16 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		}
 	})
 
+	iamClient := iamv2.NewFromConfig(cfg, func(options *iamv2.Options) {
+		options.Region = region
+
+		for _, endpoint := range metadata.AWS.ServiceEndpoints {
+			if strings.EqualFold(endpoint.Name, "iam") {
+				options.BaseEndpoint = aws.String(endpoint.URL)
+			}
+		}
+	})
+
 	return &ClusterUninstaller{
 		Filters:        filters,
 		Region:         region,
@@ -109,6 +122,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		Session:        session,
 		HostedZoneRole: metadata.AWS.HostedZoneRole,
 		EC2Client:      ec2Client,
+		IAMClient:      iamClient,
 	}, nil
 }
 
@@ -177,12 +191,12 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 
 	iamClient := iam.New(awsSession)
 	iamRoleSearch := &IamRoleSearch{
-		Client:  iamClient,
+		Client:  o.IAMClient,
 		Filters: o.Filters,
 		Logger:  o.Logger,
 	}
 	iamUserSearch := &IamUserSearch{
-		client:  iamClient,
+		client:  o.IAMClient,
 		filters: o.Filters,
 		logger:  o.Logger,
 	}
@@ -543,7 +557,7 @@ func (o *ClusterUninstaller) DeleteARN(ctx context.Context, arn arn.ARN) error {
 	case "elasticloadbalancing":
 		return deleteElasticLoadBalancing(ctx, o.Session, arn, o.Logger)
 	case "iam":
-		return deleteIAM(ctx, o.Session, arn, o.Logger)
+		return o.deleteIAM(ctx, arn)
 	case "route53":
 		return deleteRoute53(ctx, o.Session, arn, o.Logger)
 	case "s3":
