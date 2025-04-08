@@ -614,6 +614,11 @@ func ValidatePublicDNS(ic *types.InstallConfig, azureDNS *DNSConfig) error {
 	zoneName := ic.BaseDomain
 	fmtStr := "api.%s %s record already exists in %s and might be in use by another cluster, please remove it to continue"
 
+	// Verify the base domain exists in the base domain resource group
+	if azureDNS.DNSZoneExists(rgName, zoneName) == false {
+		return fmt.Errorf("base domain %s does not exist in resource group %s", zoneName, rgName)
+	}
+
 	// Look for an existing CNAME first
 	rs, err := azureDNS.GetDNSRecordSet(rgName, zoneName, record, azdns.CNAME)
 	if err == nil && rs.CnameRecord != nil {
