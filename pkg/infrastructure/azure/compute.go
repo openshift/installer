@@ -236,3 +236,41 @@ func CreateGalleryImageVersion(ctx context.Context, in *CreateGalleryImageVersio
 		GalleryImageVersion: to.Ptr(galleryImageVersionPollDone.GalleryImageVersion),
 	}, nil
 }
+
+// CreateManagedImageInput contains parameters for creating a managed image on Azure Stack.
+type CreateManagedImageInput struct {
+	VHDBlobURL        string
+	ResourceGroupName string
+	Region            string
+	InfraID           string
+	Tags              map[string]*string
+	Client            *armcompute.ImagesClient
+}
+
+// CreateManagedImage creates a managed image for nodes, which is only used on Azure Stack.
+func CreateManagedImage(ctx context.Context, in *CreateManagedImageInput) error {
+	params := armcompute.Image{
+		Location: to.Ptr(in.Region),
+		Tags:     in.Tags,
+		Properties: &armcompute.ImageProperties{
+			HyperVGeneration: to.Ptr(armcompute.HyperVGenerationTypesV1),
+			StorageProfile: &armcompute.ImageStorageProfile{
+				OSDisk: &armcompute.ImageOSDisk{
+					OSState: to.Ptr(armcompute.OperatingSystemStateTypesGeneralized),
+					OSType:  to.Ptr(armcompute.OperatingSystemTypesLinux),
+					BlobURI: to.Ptr(in.VHDBlobURL),
+				},
+			},
+		},
+	}
+	poll, err := in.Client.BeginCreateOrUpdate(ctx, in.ResourceGroupName, in.InfraID, params, nil)
+	if err != nil {
+		return fmt.Errorf("error beginning managed image creation: %w", err)
+	}
+	res, err := poll.PollUntilDone(ctx, &runtime.PollUntilDoneOptions{})
+	if err != nil {
+		return fmt.Errorf("failed during managed image creation: %w", err)
+	}
+	logrus.Debugf("Successfully created managed image: %s", *res.ID)
+	return nil
+}

@@ -30,7 +30,6 @@ import (
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/azure"
 	aztypes "github.com/openshift/installer/pkg/types/azure"
 )
 
@@ -171,7 +170,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	}
 
 	resourceGroupName := p.ResourceGroupName
-	storageAccountName := azure.GetStorageAccountName(in.InfraID)
+	storageAccountName := aztypes.GetStorageAccountName(in.InfraID)
 	containerName := "vhd"
 	blobName := fmt.Sprintf("rhcos%s.vhd", randomString(5))
 
@@ -210,49 +209,55 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	storageURL := fmt.Sprintf("https://%s.blob.%s", storageAccountName, session.Environment.StorageEndpointSuffix)
 	blobURL := fmt.Sprintf("%s/%s/%s", storageURL, containerName, blobName)
 
-	// Create storage account
-	createStorageAccountOutput, err := CreateStorageAccount(ctx, &CreateStorageAccountInput{
-		SubscriptionID:     subscriptionID,
-		ResourceGroupName:  resourceGroupName,
-		StorageAccountName: storageAccountName,
-		CloudName:          platform.CloudName,
-		Region:             platform.Region,
-		AuthType:           session.AuthType,
-		Tags:               tags,
-		CustomerManagedKey: platform.CustomerManagedKey,
-		TokenCredential:    tokenCredential,
-		ClientOpts:         p.clientOptions,
-	})
-	if err != nil {
-		return err
+	var storageAccount *armstorage.Account
+	var storageClientFactory *armstorage.ClientFactory
+	var storageAccountKeys []armstorage.AccountKey
+
+	var createStorageAccountOutput *CreateStorageAccountOutput
+	if platform.CloudName != aztypes.StackCloud {
+		// Create storage account
+		createStorageAccountOutput, err = CreateStorageAccount(ctx, &CreateStorageAccountInput{
+			SubscriptionID:     subscriptionID,
+			ResourceGroupName:  resourceGroupName,
+			StorageAccountName: storageAccountName,
+			CloudName:          platform.CloudName,
+			Region:             platform.Region,
+			AuthType:           session.AuthType,
+			Tags:               tags,
+			CustomerManagedKey: platform.CustomerManagedKey,
+			TokenCredential:    tokenCredential,
+			ClientOpts:         p.clientOptions,
+		})
+		if err != nil {
+			return err
+		}
+		storageAccount = createStorageAccountOutput.StorageAccount
+		storageClientFactory = createStorageAccountOutput.StorageClientFactory
+		storageAccountKeys = createStorageAccountOutput.StorageAccountKeys
+
+		logrus.Debugf("StorageAccount.ID=%s", *storageAccount.ID)
 	}
-
-	storageAccount := createStorageAccountOutput.StorageAccount
-	storageClientFactory := createStorageAccountOutput.StorageClientFactory
-	storageAccountKeys := createStorageAccountOutput.StorageAccountKeys
-
-	logrus.Debugf("StorageAccount.ID=%s", *storageAccount.ID)
-
-	// Create blob storage container
-	publicAccess := armstorage.PublicAccessNone
-	createBlobContainerOutput, err := CreateBlobContainer(ctx, &CreateBlobContainerInput{
-		SubscriptionID:       subscriptionID,
-		ResourceGroupName:    resourceGroupName,
-		StorageAccountName:   storageAccountName,
-		ContainerName:        containerName,
-		PublicAccess:         to.Ptr(publicAccess),
-		StorageClientFactory: storageClientFactory,
-	})
-	if err != nil {
-		return err
-	}
-
-	blobContainer := createBlobContainerOutput.BlobContainer
-	logrus.Debugf("BlobContainer.ID=%s", *blobContainer.ID)
 
 	// Upload the image to the container
 	_, skipImageUpload := os.LookupEnv("OPENSHIFT_INSTALL_SKIP_IMAGE_UPLOAD")
-	if !(skipImageUpload || platform.CloudName == azure.StackCloud) {
+	if !(skipImageUpload || platform.CloudName == aztypes.StackCloud) {
+		// Create vhd blob storage container
+		publicAccess := armstorage.PublicAccessNone
+		createBlobContainerOutput, err := CreateBlobContainer(ctx, &CreateBlobContainerInput{
+			SubscriptionID:       subscriptionID,
+			ResourceGroupName:    resourceGroupName,
+			StorageAccountName:   storageAccountName,
+			ContainerName:        containerName,
+			PublicAccess:         to.Ptr(publicAccess),
+			StorageClientFactory: storageClientFactory,
+		})
+		if err != nil {
+			return err
+		}
+
+		blobContainer := createBlobContainerOutput.BlobContainer
+		logrus.Debugf("BlobContainer.ID=%s", *blobContainer.ID)
+
 		_, err = CreatePageBlob(ctx, &CreatePageBlobInput{
 			StorageURL:         storageURL,
 			BlobURL:            blobURL,
@@ -366,6 +371,24 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		}
 	}
 
+	if installConfig.Azure.CloudName == aztypes.StackCloud {
+		client, err := armcompute.NewImagesClient(subscriptionID, tokenCredential, p.computeClientOptions)
+		if err != nil {
+			return fmt.Errorf("error creating stack managed images client: %w", err)
+		}
+		createManagedImageInput := CreateManagedImageInput{
+			VHDBlobURL:        platform.ClusterOSImage,
+			ResourceGroupName: resourceGroupName,
+			Region:            platform.Region,
+			InfraID:           in.InfraID,
+			Tags:              tags,
+			Client:            client,
+		}
+		if err = CreateManagedImage(ctx, &createManagedImageInput); err != nil {
+			return fmt.Errorf("error creating stack managed image: %w", err)
+		}
+	}
+
 	networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, session.TokenCreds, p.clientOptions)
 	if err != nil {
 		return fmt.Errorf("error creating network client factory: %w", err)
@@ -396,6 +419,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 
 	var lbBaps []*armnetwork.BackendAddressPool
 	var extLBFQDN string
+	var pubIPAddress string
 	if in.InstallConfig.Config.PublicAPI() {
 		publicIP, err := createPublicIP(ctx, &pipInput{
 			name:          fmt.Sprintf("%s-pip-v4", in.InfraID),
@@ -429,6 +453,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		logrus.Debugf("updated external load balancer: %s", *loadBalancer.ID)
 		lbBaps = loadBalancer.Properties.BackendAddressPools
 		extLBFQDN = *publicIP.Properties.DNSSettings.Fqdn
+		pubIPAddress = *publicIP.Properties.IPAddress
 	}
 
 	// Save context for other hooks
@@ -680,20 +705,22 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	blobURL := fmt.Sprintf("%s/%s/%s", p.StorageURL, ignitionContainerName, blobName)
 	publicAccess := armstorage.PublicAccessNone
 	// Create ignition blob storage container
-	createBlobContainerOutput, err := CreateBlobContainer(ctx, &CreateBlobContainerInput{
-		ContainerName:        ignitionContainerName,
-		SubscriptionID:       subscriptionID,
-		ResourceGroupName:    p.ResourceGroupName,
-		StorageAccountName:   p.StorageAccountName,
-		PublicAccess:         to.Ptr(publicAccess),
-		StorageClientFactory: p.StorageClientFactory,
-	})
-	if err != nil {
-		return nil, err
+	var blobIgnitionContainer *armstorage.BlobContainer
+	if in.InstallConfig.Azure.CloudName != aztypes.StackCloud {
+		createBlobContainerOutput, err := CreateBlobContainer(ctx, &CreateBlobContainerInput{
+			ContainerName:        ignitionContainerName,
+			SubscriptionID:       subscriptionID,
+			ResourceGroupName:    p.ResourceGroupName,
+			StorageAccountName:   p.StorageAccountName,
+			PublicAccess:         to.Ptr(publicAccess),
+			StorageClientFactory: p.StorageClientFactory,
+		})
+		if err != nil {
+			return nil, err
+		}
+		blobIgnitionContainer = createBlobContainerOutput.BlobContainer
+		logrus.Debugf("BlobIgnitionContainer.ID=%s", *blobIgnitionContainer.ID)
 	}
-
-	blobIgnitionContainer := createBlobContainerOutput.BlobContainer
-	logrus.Debugf("BlobIgnitionContainer.ID=%s", *blobIgnitionContainer.ID)
 
 	sasURL := ""
 
@@ -710,6 +737,11 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 			ContainerName:      ignitionContainerName,
 			BlobName:           blobName,
 			StorageSuffix:      session.Environment.StorageEndpointSuffix,
+			ARMEndpoint:        in.InstallConfig.Azure.ARMEndpoint,
+			Session:            session,
+			Region:             in.InstallConfig.Config.Azure.Region,
+			Tags:               p.Tags,
+			ResourceGroupName:  p.ResourceGroupName,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create BlockBlob for ignition shim: %w", err)
