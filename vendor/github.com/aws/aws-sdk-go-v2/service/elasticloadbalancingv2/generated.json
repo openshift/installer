@@ -43,6 +43,7 @@
         "api_op_GetTrustStoreCaCertificatesBundle.go",
         "api_op_GetTrustStoreRevocationContent.go",
         "api_op_ModifyCapacityReservation.go",
+        "api_op_ModifyIpPools.go",
         "api_op_ModifyListener.go",
         "api_op_ModifyListenerAttributes.go",
         "api_op_ModifyLoadBalancerAttributes.go",
@@ -71,12 +72,13 @@
         "protocol_test.go",
         "serializers.go",
         "snapshot_test.go",
+        "sra_operation_order_test.go",
         "types/enums.go",
         "types/errors.go",
         "types/types.go",
         "validators.go"
     ],
-    "go": "1.15",
+    "go": "1.22",
     "module": "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2",
     "unstable": false
 }
