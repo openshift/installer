@@ -136,6 +136,7 @@ aliases:
     - Johan-Liebert1
     - tlbueno
     - jcapiitao
+    - Roshan-R
   coreos-reviewers:
     - c4rt0
     - cgwalters
@@ -159,6 +160,7 @@ aliases:
     - Johan-Liebert1
     - tlbueno
     - jcapiitao
+    - Roshan-R
   agent-reviewers:
     - andfasano
     - bfournie
