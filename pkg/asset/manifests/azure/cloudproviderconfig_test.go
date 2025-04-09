@@ -29,7 +29,7 @@ func TestCloudProviderConfig(t *testing.T) {
 	"aadClientSecret": "",
 	"aadClientCertPath": "",
 	"aadClientCertPassword": "",
-	"useManagedIdentityExtension": true,
+	"useManagedIdentityExtension": false,
 	"userAssignedIdentityID": "",
 	"subscriptionId": "subID",
 	"resourceGroup": "clusterid-rg",
