@@ -27,9 +27,11 @@ type Metadata struct {
 	availableRegions  []string
 	edgeZones         []string
 	subnets           SubnetGroups
-	// vpcSubnets includes all subnets in the VPC.
-	// That is cluster subnets, which are provided in the install config and potentially other non-cluster subnets.
-	// Field subnets should be used to select only cluster subnets.
+	// vpcSubnets includes all cluster subnets (i.e. provided in the install config)
+	// and potentially other non-cluster subnets in the VPC.
+	// This field is only used for validation.
+	//
+	// Use field subnets to select only cluster subnets.
 	vpcSubnets    SubnetGroups
 	vpc           string
 	instanceTypes map[string]InstanceType
