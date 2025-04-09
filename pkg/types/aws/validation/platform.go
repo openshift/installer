@@ -255,7 +255,7 @@ func validateSubnets(subnets []aws.Subnet, publish types.PublishingStrategy, fld
 		// If the cluster is private, ControlPlaneExternalLB role is not allowed
 		// as only an internal control plane load balancer will be created.
 		if publish == types.InternalPublishingStrategy && len(subnetsForRole[aws.ControlPlaneExternalLBSubnetRole]) > 0 {
-			allErrs = append(allErrs, field.Forbidden(fldPath, "must not include subnets with the ControlPlaneExternalLBSubnetRole role in a private cluster"))
+			allErrs = append(allErrs, field.Forbidden(fldPath, "must not include subnets with the ControlPlaneExternalLB role in a private cluster"))
 		}
 
 		// ClusterNode, IngressControllerLB, ControlPlaneExternalLB, and ControlPlaneInternalLB
