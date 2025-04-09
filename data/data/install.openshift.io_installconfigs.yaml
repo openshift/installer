@@ -4282,11 +4282,11 @@ spec:
                                   type:
                                     description: |-
                                       Type specifies the type of role (aka function) that the subnet will provide in the cluster.
-                                      Role types include ClusterNode, EdgeNode, Bootstrap, IngressControllerLB, ControlPlaneExternalLB, and ControlPlaneInternalLB.
+                                      Role types include ClusterNode, EdgeNode, BootstrapNode, IngressControllerLB, ControlPlaneExternalLB, and ControlPlaneInternalLB.
                                     enum:
                                     - ClusterNode
                                     - EdgeNode
-                                    - Bootstrap
+                                    - BootstrapNode
                                     - IngressControllerLB
                                     - ControlPlaneExternalLB
                                     - ControlPlaneInternalLB

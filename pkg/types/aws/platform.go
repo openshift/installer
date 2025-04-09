@@ -191,7 +191,7 @@ type Subnet struct {
 // SubnetRole specifies the role (aka function) that the subnet will provide in the cluster.
 type SubnetRole struct {
 	// Type specifies the type of role (aka function) that the subnet will provide in the cluster.
-	// Role types include ClusterNode, EdgeNode, Bootstrap, IngressControllerLB, ControlPlaneExternalLB, and ControlPlaneInternalLB.
+	// Role types include ClusterNode, EdgeNode, BootstrapNode, IngressControllerLB, ControlPlaneExternalLB, and ControlPlaneInternalLB.
 	//
 	// +required
 	Type SubnetRoleType `json:"type"`
@@ -204,7 +204,7 @@ type SubnetRole struct {
 type AWSSubnetID string // nolint:revive
 
 // SubnetRoleType defines the type of role (aka function) that the subnet will provide in the cluster.
-// +kubebuilder:validation:Enum:="ClusterNode";"EdgeNode";"Bootstrap";"IngressControllerLB";"ControlPlaneExternalLB";"ControlPlaneInternalLB"
+// +kubebuilder:validation:Enum:="ClusterNode";"EdgeNode";"BootstrapNode";"IngressControllerLB";"ControlPlaneExternalLB";"ControlPlaneInternalLB"
 type SubnetRoleType string
 
 const (
