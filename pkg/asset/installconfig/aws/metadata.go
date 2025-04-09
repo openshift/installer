@@ -27,14 +27,9 @@ type Metadata struct {
 	availableRegions  []string
 	edgeZones         []string
 	subnets           SubnetGroups
-	// vpcSubnets includes all cluster subnets (i.e. provided in the install config)
-	// and potentially other non-cluster subnets in the VPC.
-	// This field is only used for validation.
-	//
-	// Use field subnets to select only cluster subnets.
-	vpcSubnets    SubnetGroups
-	vpc           string
-	instanceTypes map[string]InstanceType
+	vpcSubnets        SubnetGroups
+	vpc               string
+	instanceTypes     map[string]InstanceType
 
 	Region          string                     `json:"region,omitempty"`
 	ProvidedSubnets []typesaws.Subnet          `json:"subnets,omitempty"`
@@ -267,8 +262,10 @@ func (m *Metadata) Subnets(ctx context.Context) (SubnetGroups, error) {
 	return m.subnets, nil
 }
 
-// VPCSubnets retrieves a group of all subnet metadata that is indexed by subnet ID
-// in the VPC of the provided subnets.
+// VPCSubnets retrieves a group of all subnet metadata that is indexed by subnet ID in the VPC of the provided subnets.
+// These include cluster subnets (i.e. provided in the installconfig) and potentially other non-cluster subnets in the VPC.
+//
+// This func is only used for validations. Use func Subnets to select only cluster subnets.
 func (m *Metadata) VPCSubnets(ctx context.Context) (SubnetGroups, error) {
 	err := m.populateVPCSubnets(ctx)
 	if err != nil {

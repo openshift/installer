@@ -90,7 +90,7 @@ func subnets(ctx context.Context, client *ec2.Client, subnetIDs []string, vpcID 
 				return fmt.Errorf("%s has no VPC", *subnet.SubnetId)
 			}
 			if len(ptr.Deref(subnet.AvailabilityZone, "")) == 0 {
-				return fmt.Errorf("%s has not availability zone", *subnet.SubnetId)
+				return fmt.Errorf("%s has no availability zone", *subnet.SubnetId)
 			}
 			if subnetGroups.VPC == "" {
 				subnetGroups.VPC = *subnet.VpcId
