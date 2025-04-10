@@ -45,12 +45,15 @@ func (a *AgentPXEFiles) Dependencies() []asset.Asset {
 }
 
 // Generate generates the image files for PXE asset.
-func (a *AgentPXEFiles) Generate(_ context.Context, dependencies asset.Parents) error {
+func (a *AgentPXEFiles) Generate(ctx context.Context, dependencies asset.Parents) error {
 	agentArtifacts := &AgentArtifacts{}
 	agentWorkflow := &workflow.AgentWorkflow{}
 	dependencies.Get(agentArtifacts, agentWorkflow)
 
-	a.tmpPath = agentArtifacts.TmpPath
+	var err error
+	if a.tmpPath, err = agentArtifacts.PrepareArtifacts(ctx); err != nil {
+		return err
+	}
 
 	ignitionContent := &isoeditor.IgnitionContent{Config: agentArtifacts.IgnitionByte}
 	initrdImgPath := filepath.Join(a.tmpPath, "images", "pxeboot", "initrd.img")
