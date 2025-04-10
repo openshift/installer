@@ -34,20 +34,12 @@ var (
 	longTimeout    = 10 * time.Minute
 )
 
-type resourceScope string
-
 const (
 	// capgProviderOwnedLabelFmt is the format string for the label
 	// used for resources created by the Cluster API GCP provider.
 	capgProviderOwnedLabelFmt = "capg-cluster-%s"
 
-	// gcpGlobalResource is an identifier to indicate that the resource(s)
-	// that are being deleted are globally scoped.
-	gcpGlobalResource resourceScope = "global"
-
-	// gcpRegionalResource is an identifier to indicate that the resource(s)
-	// that are being deleted are regionally scoped.
-	gcpRegionalResource resourceScope = "regional"
+	ownedLabelValue = "owned"
 )
 
 // ClusterUninstaller holds the various options for the cluster we want to delete
@@ -259,8 +251,10 @@ func (o *ClusterUninstaller) clusterIDFilter() string {
 }
 
 func (o *ClusterUninstaller) clusterLabelFilter() string {
-	return fmt.Sprintf("(labels.%s = \"owned\") OR (labels.%s = \"owned\")",
-		fmt.Sprintf(gcpconsts.ClusterIDLabelFmt, o.ClusterID), fmt.Sprintf(capgProviderOwnedLabelFmt, o.ClusterID))
+	return fmt.Sprintf("(labels.%s = \"%s\") OR (labels.%s = \"%s\")",
+		fmt.Sprintf(gcpconsts.ClusterIDLabelFmt, o.ClusterID), ownedLabelValue,
+		fmt.Sprintf(capgProviderOwnedLabelFmt, o.ClusterID), ownedLabelValue,
+	)
 }
 
 func (o *ClusterUninstaller) clusterLabelOrClusterIDFilter() string {
