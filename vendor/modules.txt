@@ -2582,10 +2582,13 @@ sigs.k8s.io/cluster-api/feature
 sigs.k8s.io/cluster-api/util
 sigs.k8s.io/cluster-api/util/annotations
 sigs.k8s.io/cluster-api/util/certs
+sigs.k8s.io/cluster-api/util/conditions
+sigs.k8s.io/cluster-api/util/conditions/v1beta2
 sigs.k8s.io/cluster-api/util/contract
 sigs.k8s.io/cluster-api/util/conversion
 sigs.k8s.io/cluster-api/util/kubeconfig
 sigs.k8s.io/cluster-api/util/labels/format
+sigs.k8s.io/cluster-api/util/patch
 sigs.k8s.io/cluster-api/util/secret
 sigs.k8s.io/cluster-api/util/topology
 # sigs.k8s.io/cluster-api-provider-aws/v2 v2.6.1-0.20241026111253-5b4f7c1acb52
