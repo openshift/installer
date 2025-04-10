@@ -381,6 +381,16 @@ func getNextAvailableIPForLoadBalancer(ctx context.Context, installConfig *insta
 		}
 		machineCidr = cidrRange
 	}
+	// AzureStack does not support the call to CheckIPAddressAvailability.
+	if installConfig.Azure.CloudName == azure.StackCloud {
+		cidr := machineCidr[0]
+		if cidr.CIDR.Contains(net.IP(lbip)) {
+			return lbip, nil
+		}
+		ipSubnets := cidr.CIDR.IP
+		ipSubnets[len(ipSubnets)-1] += 4
+		return ipSubnets.String(), nil
+	}
 	availableIP, err := client.CheckIPAddressAvailability(ctx, networkResourceGroupName, virtualNetworkName, lbip)
 	if err != nil {
 		return "", fmt.Errorf("failed to get azure ip availability: %w", err)
