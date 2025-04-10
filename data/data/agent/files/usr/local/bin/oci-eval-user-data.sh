@@ -2,6 +2,13 @@
 
 set -euxo pipefail
 
+# dmidecode is not available on ppc64le/s390x
+if [ "$(arch)" == "ppc64le" ] || [ "$(arch)" == "s390x" ] 
+then
+    echo "Non OCI architecture... exiting early"
+    exit 0
+fi
+
 chassis_asset_tag="$(dmidecode --string chassis-asset-tag)"
 if [ "${chassis_asset_tag}" != "OracleCloud.com" ]
 then
