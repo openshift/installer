@@ -334,7 +334,7 @@ func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, p
 	allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, subnetDataGroups.Edge, "edge")...)
 
 	if len(subnetsWithRole) > 0 {
-		allErrs = append(allErrs, validateSubnetRoles(fldPath, meta, subnetsWithRole, subnetDataGroups, publish)...)
+		allErrs = append(allErrs, validateSubnetRoles(fldPath, subnetsWithRole, subnetDataGroups, publish)...)
 	} else {
 		allErrs = append(allErrs, validateUntaggedSubnets(ctx, fldPath, meta, subnetDataGroups)...)
 	}
@@ -552,8 +552,21 @@ func validateDuplicateSubnetZones(fldPath *field.Path, subnetDataGroup map[strin
 }
 
 // validateSubnetRoles ensures BYO subnets have valid roles assigned if roles are provided.
-func validateSubnetRoles(fldPath *field.Path, meta *Metadata, subnetsWithRole map[awstypes.SubnetRoleType][]subnetData, subnetDataGroups subnetDataGroups, publish types.PublishingStrategy) field.ErrorList {
+func validateSubnetRoles(fldPath *field.Path, subnetsWithRole map[awstypes.SubnetRoleType][]subnetData, subnetDataGroups subnetDataGroups, publish types.PublishingStrategy) field.ErrorList {
 	allErrs := field.ErrorList{}
+
+	// ClusterNode subnets must be assigned to private subnets
+	// unless cluster is public-only.
+	for _, cnSubnet := range subnetsWithRole[awstypes.ClusterNodeSubnetRole] {
+		// We validate edge subnets in subsequent validations.
+		if _, ok := subnetDataGroups.Edge[cnSubnet.ID]; ok {
+			continue
+		}
+		if cnSubnet.Public && !awstypes.IsPublicOnlySubnetsEnabled() {
+			allErrs = append(allErrs, field.Invalid(fldPath.Index(cnSubnet.Idx), cnSubnet.ID,
+				fmt.Sprintf("subnet %s has role %s, but is public, expected to be private", cnSubnet.ID, awstypes.ClusterNodeSubnetRole)))
+		}
+	}
 
 	// Type of ControlPlaneLB subnets must match its scope:
 	// - ControlPlaneInternalLB subnets must be private
