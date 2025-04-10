@@ -54,6 +54,11 @@ func (a *AgentPXEFiles) Generate(ctx context.Context, dependencies asset.Parents
 	if a.tmpPath, err = agentArtifacts.PrepareArtifacts(ctx); err != nil {
 		return err
 	}
+	defer func() {
+		if err != nil {
+			os.RemoveAll(a.tmpPath)
+		}
+	}()
 
 	ignitionContent := &isoeditor.IgnitionContent{Config: agentArtifacts.IgnitionByte}
 	initrdImgPath := filepath.Join(a.tmpPath, "images", "pxeboot", "initrd.img")
