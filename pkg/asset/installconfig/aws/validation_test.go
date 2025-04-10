@@ -785,6 +785,20 @@ func TestValidate(t *testing.T) {
 			expectErr: `^\[platform\.aws\.vpc\.subnets\[6\]: Invalid value: \"subnet-valid-public-a1\": public subnet subnet-valid-public-a is also in zone a, platform\.aws\.vpc\.subnets\[6\]: Invalid value: \"subnet-valid-public-a1\": subnet subnet-valid-public-a1 has role ControlPlaneInternalLB, but is public, expected to be private\]$`,
 		},
 		{
+			name: "valid byo subnets with roles, public subnet assigned ControlPlaneInternalLB, ClusterNode and public-only cluster",
+			installConfig: icBuild.build(
+				icBuild.withBaseBYO(),
+				icBuild.withVPCSubnets(byoPublicOnlySubnetsWithRoles(), true),
+			),
+			availRegions: validAvailRegions(),
+			subnets: SubnetGroups{
+				Public:  validSubnets("public"),
+				Private: validSubnets("public"),
+				VPC:     validVPCID,
+			},
+			publicOnly: true,
+		},
+		{
 			name: "invalid byo subnets with roles, public subnet assigned IngressControllerLB when publish is internal",
 			installConfig: icBuild.build(
 				icBuild.withBaseBYO(),
@@ -896,14 +910,24 @@ func TestValidate(t *testing.T) {
 				icBuild.withVPCSubnets(byoSubnetsWithRoles(), true),
 				icBuild.withVPCSubnets([]aws.Subnet{
 					{
-						ID:    "subnet-valid-public-f",
+						ID:    "subnet-valid-private-f",
 						Roles: []aws.SubnetRole{{Type: aws.ClusterNodeSubnetRole}},
+					},
+					{
+						ID:    "subnet-valid-public-f",
+						Roles: []aws.SubnetRole{{Type: aws.BootstrapNodeSubnetRole}},
 					},
 				}, false),
 			),
 			availRegions: validAvailRegions(),
 			subnets: SubnetGroups{
-				Private: validSubnets("private"),
+				Private: mergeSubnets(validSubnets("private"), Subnets{
+					"subnet-valid-private-f": {
+						ID:   "subnet-valid-private-f",
+						Zone: &Zone{Name: "f"},
+						CIDR: "10.0.6.0/24",
+					},
+				}),
 				Public: mergeSubnets(validSubnets("public"), Subnets{
 					"subnet-valid-public-f": {
 						ID:     "subnet-valid-public-f",
@@ -1343,6 +1367,8 @@ func validSubnets(subnetType string) Subnets {
 	return nil
 }
 
+// byoSubnetsWithRoles returns a valid collection of subnets
+// with assigned roles.
 func byoSubnetsWithRoles() []aws.Subnet {
 	return []aws.Subnet{
 		{
@@ -1388,6 +1414,39 @@ func byoSubnetsWithRoles() []aws.Subnet {
 	}
 }
 
+// byoPublicOnlySubnetsWithRoles returns a valid collection of subnets
+// with assigned roles for a public-only cluster.
+func byoPublicOnlySubnetsWithRoles() []aws.Subnet {
+	return []aws.Subnet{
+		{
+			ID: "subnet-valid-public-a",
+			Roles: []aws.SubnetRole{
+				{Type: aws.ClusterNodeSubnetRole},
+				{Type: aws.ControlPlaneInternalLBSubnetRole},
+				{Type: aws.ControlPlaneExternalLBSubnetRole},
+				{Type: aws.IngressControllerLBSubnetRole},
+			},
+		},
+		{
+			ID: "subnet-valid-public-b",
+			Roles: []aws.SubnetRole{
+				{Type: aws.ClusterNodeSubnetRole},
+				{Type: aws.ControlPlaneInternalLBSubnetRole},
+				{Type: aws.ControlPlaneExternalLBSubnetRole},
+				{Type: aws.IngressControllerLBSubnetRole},
+			},
+		},
+		{
+			ID: "subnet-valid-public-c",
+			Roles: []aws.SubnetRole{
+				{Type: aws.BootstrapNodeSubnetRole},
+			},
+		},
+	}
+}
+
+// byoEdgeSubnetsWithRoles returns a valid collection of edge subnets
+// with assigned EdgeNode roles.
 func byoEdgeSubnetsWithRoles() []aws.Subnet {
 	return []aws.Subnet{
 		{
