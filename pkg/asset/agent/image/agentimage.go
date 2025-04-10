@@ -69,6 +69,11 @@ func (a *AgentImage) Generate(ctx context.Context, dependencies asset.Parents) e
 		return err
 	}
 
+	var err error
+	if a.tmpPath, err = agentArtifacts.PrepareArtifacts(ctx, workflow.StageGenerateISO); err != nil {
+		return err
+	}
+
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
 		a.platform = agentManifests.AgentClusterInstall.Spec.PlatformType
@@ -88,7 +93,6 @@ func (a *AgentImage) Generate(ctx context.Context, dependencies asset.Parents) e
 
 	a.cpuArch = agentArtifacts.CPUArch
 	a.rendezvousIP = agentArtifacts.RendezvousIP
-	a.tmpPath = agentArtifacts.TmpPath
 	a.isoPath = agentArtifacts.ISOPath
 	a.bootArtifactsBaseURL = agentArtifacts.BootArtifactsBaseURL
 	a.minimalISO = agentArtifacts.MinimalISO

@@ -46,14 +46,17 @@ func (a *AgentPXEFiles) Dependencies() []asset.Asset {
 }
 
 // Generate generates the image files for PXE asset.
-func (a *AgentPXEFiles) Generate(_ context.Context, dependencies asset.Parents) error {
+func (a *AgentPXEFiles) Generate(ctx context.Context, dependencies asset.Parents) error {
 	agentArtifacts := &AgentArtifacts{}
 	agentWorkflow := &workflow.AgentWorkflow{}
 	dependencies.Get(agentArtifacts, agentWorkflow)
 
-	a.tmpPath = agentArtifacts.TmpPath
-
 	if err := workflowreport.GetReport(ctx).Stage(workflow.StageGeneratePXE); err != nil {
+		return err
+	}
+
+	var err error
+	if a.tmpPath, err = agentArtifacts.PrepareArtifacts(ctx, workflow.StageGeneratePXE); err != nil {
 		return err
 	}
 

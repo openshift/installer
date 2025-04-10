@@ -44,10 +44,6 @@ var (
 
 	// StageAgentArtifacts represents the agent artifact stage.
 	StageAgentArtifacts wr.StageID = wr.NewStageID("create-agent-artifacts", "Creating agent artifacts for the final image")
-	// StageAgentArtifactsAgentTUI represents the agent-tui embedding substage.
-	StageAgentArtifactsAgentTUI wr.StageID = wr.NewStageID("create-agent-artifacts.agent-tui", "Extracting required artifacts from release payload")
-	// StageAgentArtifactsPrepare represents the artifacts preparation substage.
-	StageAgentArtifactsPrepare wr.StageID = wr.NewStageID("create-agent-artifacts.prepare", "Preparing artifacts")
 
 	// StageGenerateISO represents the iso assembling stage.
 	StageGenerateISO wr.StageID = wr.NewStageID("generate-iso", "Assembling ISO image")
