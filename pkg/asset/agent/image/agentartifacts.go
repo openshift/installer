@@ -38,12 +38,15 @@ const (
 type AgentArtifacts struct {
 	CPUArch              string
 	RendezvousIP         string
-	TmpPath              string
 	IgnitionByte         []byte
 	Kargs                string
 	ISOPath              string
 	BootArtifactsBaseURL string
 	MinimalISO           bool
+	MirrorConfig         []mirror.RegistriesConfig
+	ExternalPlatformName string
+	ReleaseImage         string
+	PullSecret           string
 }
 
 // Dependencies returns the assets on which the AgentArtifacts asset depends.
@@ -71,7 +74,7 @@ func (a *AgentArtifacts) Generate(ctx context.Context, dependencies asset.Parent
 	registriesConf := &mirror.RegistriesConf{}
 	agentconfig := &config.AgentConfig{}
 	agentWorkflow := &workflow.AgentWorkflow{}
-	dependencies.Get(ignition, kargs, baseIso, agentManifests, agentClusterInstall, registriesConf, agentconfig, agentWorkflow)
+	dependencies.Get(ignition, kargs, baseIso, agentManifests, registriesConf, agentconfig, agentWorkflow)
 
 	if err := workflowreport.GetReport(ctx).Stage(workflow.StageAgentArtifacts); err != nil {
 		return err
@@ -87,6 +90,10 @@ func (a *AgentArtifacts) Generate(ctx context.Context, dependencies asset.Parent
 	a.IgnitionByte = ignitionByte
 	a.ISOPath = baseIso.File.Filename
 	a.Kargs = kargs.KernelCmdLine()
+	a.MirrorConfig = registriesConf.MirrorConfig
+	a.ExternalPlatformName = agentClusterInstall.GetExternalPlatformName()
+	a.ReleaseImage = agentManifests.ClusterImageSet.Spec.ReleaseImage
+	a.PullSecret = agentManifests.GetPullSecretData()
 
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
@@ -108,25 +115,6 @@ func (a *AgentArtifacts) Generate(ctx context.Context, dependencies asset.Parent
 		}
 	default:
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
-	}
-
-	var agentTuiFiles []string
-	if agentClusterInstall.GetExternalPlatformName() != agent.ExternalPlatformNameOci {
-		if err := workflowreport.GetReport(ctx).SubStage(workflow.StageAgentArtifactsAgentTUI); err != nil {
-			return err
-		}
-		agentTuiFiles, err = a.fetchAgentTuiFiles(agentManifests.ClusterImageSet.Spec.ReleaseImage, agentManifests.GetPullSecretData(), registriesConf.MirrorConfig)
-		if err != nil {
-			return err
-		}
-	}
-
-	if err := workflowreport.GetReport(ctx).SubStage(workflow.StageAgentArtifactsPrepare); err != nil {
-		return err
-	}
-	err = a.prepareAgentArtifacts(a.ISOPath, agentTuiFiles)
-	if err != nil {
-		return err
 	}
 
 	return nil
@@ -159,28 +147,46 @@ func (a *AgentArtifacts) fetchAgentTuiFiles(releaseImage string, pullSecret stri
 	return files, nil
 }
 
-func (a *AgentArtifacts) prepareAgentArtifacts(iso string, additionalFiles []string) error {
+// PrepareArtifacts extracts the contents of the ISO to a tempdir.
+func (a *AgentArtifacts) PrepareArtifacts(ctx context.Context) (string, error) {
+	var agentTuiFiles []string
+	var err error
+	if a.ExternalPlatformName != agent.ExternalPlatformNameOci {
+		if err := workflowreport.GetReport(ctx).SubStage(workflow.StageAgentArtifactsAgentTUI); err != nil {
+			return "", err
+		}
+		agentTuiFiles, err = a.fetchAgentTuiFiles(a.ReleaseImage, a.PullSecret, a.MirrorConfig)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	if err = workflowreport.GetReport(ctx).SubStage(workflow.StageAgentArtifactsPrepare); err != nil {
+		return "", err
+	}
+
 	// Create a tmp folder to store all the pieces required to generate the agent artifacts.
 	tmpPath, err := os.MkdirTemp("", "agent")
 	if err != nil {
-		return err
+		return "", err
 	}
-	a.TmpPath = tmpPath
 
-	err = isoeditor.Extract(iso, a.TmpPath)
+	err = isoeditor.Extract(a.ISOPath, tmpPath)
 	if err != nil {
-		return err
+		os.RemoveAll(tmpPath)
+		return "", err
 	}
 
-	err = a.appendAgentFilesToInitrd(additionalFiles)
+	err = a.appendAgentFilesToInitrd(tmpPath, agentTuiFiles)
 	if err != nil {
-		return err
+		os.Remove(tmpPath)
+		return "", err
 	}
 
-	return nil
+	return tmpPath, nil
 }
 
-func (a *AgentArtifacts) appendAgentFilesToInitrd(additionalFiles []string) error {
+func (a *AgentArtifacts) appendAgentFilesToInitrd(tmpPath string, additionalFiles []string) error {
 	ca := NewCpioArchive()
 
 	dstPath := "/agent-files/"
@@ -215,7 +221,7 @@ for i in $(find /agent-files/ -printf "%P\n"); do chcon system_u:object_r:bin_t:
 	}
 
 	// Append the archive to initrd.img
-	initrdImgPath := filepath.Join(a.TmpPath, "images", "pxeboot", "initrd.img")
+	initrdImgPath := filepath.Join(tmpPath, "images", "pxeboot", "initrd.img")
 	initrdImg, err := os.OpenFile(initrdImgPath, os.O_WRONLY|os.O_APPEND, 0)
 	if err != nil {
 		return err
