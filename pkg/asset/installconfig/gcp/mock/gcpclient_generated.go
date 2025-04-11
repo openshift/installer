@@ -130,7 +130,7 @@ func (m *MockAPI) GetKeyRing(ctx context.Context, keyRingName string) (*kmspb.Ke
 }
 
 // GetKeyRing indicates an expected call of GetKeyRing.
-func (mr *MockAPIMockRecorder) GetKeyRing(ctx, keyRingName interface{}) *gomock.Call {
+func (mr *MockAPIMockRecorder) GetKeyRing(ctx, keyRingName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetKeyRing", reflect.TypeOf((*MockAPI)(nil).GetKeyRing), ctx, keyRingName)
 }
