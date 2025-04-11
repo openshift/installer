@@ -2,12 +2,13 @@ package aws
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
+	iamv2 "github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -16,7 +17,7 @@ import (
 
 // IamRoleSearch holds data to search for IAM roles.
 type IamRoleSearch struct {
-	Client    *iam.IAM
+	Client    *iamv2.Client
 	Filters   []Filter
 	Logger    logrus.FieldLogger
 	Unmatched map[string]struct{}
@@ -28,67 +29,65 @@ func (search *IamRoleSearch) find(ctx context.Context) (arns []string, names []s
 	}
 
 	var lastError error
-	err := search.Client.ListRolesPagesWithContext(
-		ctx,
-		&iam.ListRolesInput{},
-		func(results *iam.ListRolesOutput, lastPage bool) bool {
-			search.Logger.Debugf("iterating over a page of %d IAM roles", len(results.Roles))
-			for _, role := range results.Roles {
-				if _, ok := search.Unmatched[*role.Arn]; ok {
-					continue
-				}
 
-				// Unfortunately role.Tags is empty from ListRoles, so we need to query each one
-				response, err := search.Client.GetRoleWithContext(ctx, &iam.GetRoleInput{RoleName: role.RoleName})
-				if err != nil {
-					var awsErr awserr.Error
-					if errors.As(err, &awsErr) {
-						switch {
-						case awsErr.Code() == iam.ErrCodeNoSuchEntityException:
-							// The role does not exist.
-							// Ignore this IAM Role and donot report this error via
-							// lastError
-							search.Unmatched[*role.Arn] = exists
-						case strings.Contains(err.Error(), "AccessDenied"):
-							// Installer does not have access to this IAM role
-							// Ignore this IAM Role and donot report this error via
-							// lastError
-							search.Unmatched[*role.Arn] = exists
-						default:
-							if lastError != nil {
-								search.Logger.Debug(lastError)
-							}
-							lastError = errors.Wrapf(err, "get tags for %s", *role.Arn)
-						}
-					}
-				} else {
-					role = response.Role
-					tags := make(map[string]string, len(role.Tags))
-					for _, tag := range role.Tags {
-						tags[*tag.Key] = *tag.Value
-					}
-					if tagMatch(search.Filters, tags) {
-						arns = append(arns, *role.Arn)
-						names = append(names, *role.RoleName)
-					} else {
-						search.Unmatched[*role.Arn] = exists
-					}
-				}
+	paginator := iamv2.NewListRolesPaginator(search.Client, &iamv2.ListRolesInput{})
+
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to list roles: %w", err)
+		}
+
+		for _, role := range page.Roles {
+			if _, ok := search.Unmatched[*role.Arn]; ok {
+				continue
 			}
 
-			return !lastPage
-		},
-	)
-
-	if lastError != nil {
-		return arns, names, lastError
+			// Unfortunately role.Tags is empty from ListRoles, so we need to query each one
+			response, err := search.Client.GetRole(ctx, &iamv2.GetRoleInput{RoleName: role.RoleName})
+			if err != nil {
+				var awsErr awserr.Error
+				if errors.As(err, &awsErr) {
+					switch {
+					case awsErr.Code() == iam.ErrCodeNoSuchEntityException:
+						// The role does not exist.
+						// Ignore this IAM Role and donot report this error via
+						// lastError
+						search.Unmatched[*role.Arn] = exists
+					case strings.Contains(err.Error(), "AccessDenied"):
+						// Installer does not have access to this IAM role
+						// Ignore this IAM Role and donot report this error via
+						// lastError
+						search.Unmatched[*role.Arn] = exists
+					default:
+						if lastError != nil {
+							search.Logger.Debug(lastError)
+						}
+						lastError = fmt.Errorf("get tags for %s: %w", *role.Arn, err)
+					}
+				}
+			} else {
+				role = *response.Role
+				tags := make(map[string]string, len(role.Tags))
+				for _, tag := range role.Tags {
+					tags[*tag.Key] = *tag.Value
+				}
+				if tagMatch(search.Filters, tags) {
+					arns = append(arns, *role.Arn)
+					names = append(names, *role.RoleName)
+				} else {
+					search.Unmatched[*role.Arn] = exists
+				}
+			}
+		}
 	}
-	return arns, names, err
+
+	return arns, names, lastError
 }
 
 // IamUserSearch holds data to search for IAM users.
 type IamUserSearch struct {
-	client    *iam.IAM
+	client    *iamv2.Client
 	filters   []Filter
 	logger    logrus.FieldLogger
 	unmatched map[string]struct{}
@@ -101,60 +100,57 @@ func (search *IamUserSearch) arns(ctx context.Context) ([]string, error) {
 
 	arns := []string{}
 	var lastError error
-	err := search.client.ListUsersPagesWithContext(
-		ctx,
-		&iam.ListUsersInput{},
-		func(results *iam.ListUsersOutput, lastPage bool) bool {
-			search.logger.Debugf("iterating over a page of %d IAM users", len(results.Users))
-			for _, user := range results.Users {
-				if _, ok := search.unmatched[*user.Arn]; ok {
-					continue
-				}
+	paginator := iamv2.NewListUsersPaginator(search.client, &iamv2.ListUsersInput{})
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list users: %w", err)
+		}
 
-				// Unfortunately user.Tags is empty from ListUsers, so we need to query each one
-				response, err := search.client.GetUserWithContext(ctx, &iam.GetUserInput{UserName: aws.String(*user.UserName)})
-				if err != nil {
-
-					var awsErr awserr.Error
-					if errors.As(err, &awsErr) {
-						switch {
-						case awsErr.Code() == iam.ErrCodeNoSuchEntityException:
-							// The role does not exist.
-							// Ignore this IAM Role and do not report this error via lastError.
-							search.unmatched[*user.Arn] = exists
-						case strings.Contains(err.Error(), "AccessDenied"):
-							// Installer does not have access to this IAM role.
-							// Ignore this IAM Role and do not report this error via lastError.
-							search.unmatched[*user.Arn] = exists
-						default:
-							if lastError != nil {
-								search.logger.Debug(lastError)
-							}
-							lastError = errors.Wrapf(err, "get tags for %s", *user.Arn)
-						}
-					}
-				} else {
-					user = response.User
-					tags := make(map[string]string, len(user.Tags))
-					for _, tag := range user.Tags {
-						tags[*tag.Key] = *tag.Value
-					}
-					if tagMatch(search.filters, tags) {
-						arns = append(arns, *user.Arn)
-					} else {
-						search.unmatched[*user.Arn] = exists
-					}
-				}
+		search.logger.Debugf("iterating over a page of %d IAM users", len(page.Users))
+		for _, user := range page.Users {
+			if _, ok := search.unmatched[*user.Arn]; ok {
+				continue
 			}
 
-			return !lastPage
-		},
-	)
+			// Unfortunately user.Tags is empty from ListUsers, so we need to query each one
+			response, err := search.client.GetUser(ctx, &iamv2.GetUserInput{UserName: aws.String(*user.UserName)})
+			if err != nil {
 
-	if lastError != nil {
-		return arns, lastError
+				var awsErr awserr.Error
+				if errors.As(err, &awsErr) {
+					switch {
+					case awsErr.Code() == iam.ErrCodeNoSuchEntityException:
+						// The role does not exist.
+						// Ignore this IAM Role and do not report this error via lastError.
+						search.unmatched[*user.Arn] = exists
+					case strings.Contains(err.Error(), "AccessDenied"):
+						// Installer does not have access to this IAM role.
+						// Ignore this IAM Role and do not report this error via lastError.
+						search.unmatched[*user.Arn] = exists
+					default:
+						if lastError != nil {
+							search.logger.Debug(lastError)
+						}
+						lastError = errors.Wrapf(err, "get tags for %s", *user.Arn)
+					}
+				}
+			} else {
+				user = *response.User
+				tags := make(map[string]string, len(user.Tags))
+				for _, tag := range user.Tags {
+					tags[*tag.Key] = *tag.Value
+				}
+				if tagMatch(search.filters, tags) {
+					arns = append(arns, *user.Arn)
+				} else {
+					search.unmatched[*user.Arn] = exists
+				}
+			}
+		}
 	}
-	return arns, err
+
+	return arns, lastError
 }
 
 // findIAMRoles returns the IAM roles for the cluster.
@@ -183,29 +179,27 @@ func findIAMUsers(ctx context.Context, search *IamUserSearch, deleted sets.Set[s
 	return sets.New[string](resources...).Difference(deleted), nil
 }
 
-func deleteIAM(ctx context.Context, session *session.Session, arn arn.ARN, logger logrus.FieldLogger) error {
-	client := iam.New(session)
-
+func (o *ClusterUninstaller) deleteIAM(ctx context.Context, arn arn.ARN) error {
 	resourceType, id, err := splitSlash("resource", arn.Resource)
 	if err != nil {
 		return err
 	}
-	logger = logger.WithField("id", id)
+	logger := o.Logger.WithField("id", id)
 
 	switch resourceType {
 	case "instance-profile":
-		return deleteIAMInstanceProfile(ctx, client, arn, logger)
+		return deleteIAMInstanceProfile(ctx, o.IAMClient, arn, logger)
 	case "role":
-		return deleteIAMRole(ctx, client, arn, logger)
+		return deleteIAMRole(ctx, o.IAMClient, arn, logger)
 	case "user":
-		return deleteIAMUser(ctx, client, id, logger)
+		return deleteIAMUser(ctx, o.IAMClient, id, logger)
 	default:
 		return errors.Errorf("unrecognized EC2 resource type %s", resourceType)
 	}
 }
 
-func deleteIAMInstanceProfileByName(ctx context.Context, client *iam.IAM, name *string, logger logrus.FieldLogger) error {
-	_, err := client.DeleteInstanceProfileWithContext(ctx, &iam.DeleteInstanceProfileInput{
+func deleteIAMInstanceProfileByName(ctx context.Context, client *iamv2.Client, name *string, logger logrus.FieldLogger) error {
+	_, err := client.DeleteInstanceProfile(ctx, &iamv2.DeleteInstanceProfileInput{
 		InstanceProfileName: name,
 	})
 	if err != nil {
@@ -218,7 +212,7 @@ func deleteIAMInstanceProfileByName(ctx context.Context, client *iam.IAM, name *
 	return err
 }
 
-func deleteIAMInstanceProfile(ctx context.Context, client *iam.IAM, profileARN arn.ARN, logger logrus.FieldLogger) error {
+func deleteIAMInstanceProfile(ctx context.Context, client *iamv2.Client, profileARN arn.ARN, logger logrus.FieldLogger) error {
 	resourceType, name, err := splitSlash("resource", profileARN.Resource)
 	if err != nil {
 		return err
@@ -228,7 +222,7 @@ func deleteIAMInstanceProfile(ctx context.Context, client *iam.IAM, profileARN a
 		return errors.Errorf("%s ARN passed to deleteIAMInstanceProfile: %s", resourceType, profileARN.String())
 	}
 
-	response, err := client.GetInstanceProfileWithContext(ctx, &iam.GetInstanceProfileInput{
+	response, err := client.GetInstanceProfile(ctx, &iamv2.GetInstanceProfileInput{
 		InstanceProfileName: &name,
 	})
 	if err != nil {
@@ -240,7 +234,7 @@ func deleteIAMInstanceProfile(ctx context.Context, client *iam.IAM, profileARN a
 	profile := response.InstanceProfile
 
 	for _, role := range profile.Roles {
-		_, err = client.RemoveRoleFromInstanceProfileWithContext(ctx, &iam.RemoveRoleFromInstanceProfileInput{
+		_, err = client.RemoveRoleFromInstanceProfile(ctx, &iamv2.RemoveRoleFromInstanceProfileInput{
 			InstanceProfileName: profile.InstanceProfileName,
 			RoleName:            role.RoleName,
 		})
@@ -258,7 +252,7 @@ func deleteIAMInstanceProfile(ctx context.Context, client *iam.IAM, profileARN a
 	return nil
 }
 
-func deleteIAMRole(ctx context.Context, client *iam.IAM, roleARN arn.ARN, logger logrus.FieldLogger) error {
+func deleteIAMRole(ctx context.Context, client *iamv2.Client, roleARN arn.ARN, logger logrus.FieldLogger) error {
 	resourceType, name, err := splitSlash("resource", roleARN.Resource)
 	if err != nil {
 		return err
@@ -270,167 +264,120 @@ func deleteIAMRole(ctx context.Context, client *iam.IAM, roleARN arn.ARN, logger
 	}
 
 	var lastError error
-	err = client.ListRolePoliciesPagesWithContext(
-		ctx,
-		&iam.ListRolePoliciesInput{RoleName: &name},
-		func(results *iam.ListRolePoliciesOutput, lastPage bool) bool {
-			for _, policy := range results.PolicyNames {
-				_, err := client.DeleteRolePolicyWithContext(ctx, &iam.DeleteRolePolicyInput{
-					RoleName:   &name,
-					PolicyName: policy,
-				})
-				if err != nil {
-					if lastError != nil {
-						logger.Debug(lastError)
-					}
-					lastError = errors.Wrapf(err, "deleting IAM role policy %s", *policy)
-				}
-				logger.WithField("policy", *policy).Info("Deleted")
-			}
+	paginator := iamv2.NewListRolePoliciesPaginator(client, &iamv2.ListRolePoliciesInput{
+		RoleName: aws.String(name),
+	})
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return fmt.Errorf("listing IAM role policies: %w", err)
+		}
 
-			return !lastPage
-		},
-	)
+		for _, policy := range page.PolicyNames {
+			_, err := client.DeleteRolePolicy(ctx, &iamv2.DeleteRolePolicyInput{
+				RoleName:   &name,
+				PolicyName: &policy,
+			})
+			if err != nil {
+				if lastError != nil {
+					logger.Debug(lastError)
+				}
+				lastError = fmt.Errorf("deleting IAM role policy %s: %w", policy, err)
+			}
+			logger.WithField("policy", policy).Info("Deleted")
+		}
+	}
 
 	if lastError != nil {
 		return lastError
 	}
-	if err != nil {
-		return errors.Wrap(err, "listing IAM role policies")
-	}
 
-	err = client.ListAttachedRolePoliciesPagesWithContext(
-		ctx,
-		&iam.ListAttachedRolePoliciesInput{RoleName: &name},
-		func(results *iam.ListAttachedRolePoliciesOutput, lastPage bool) bool {
-			for _, policy := range results.AttachedPolicies {
-				_, err := client.DetachRolePolicyWithContext(ctx, &iam.DetachRolePolicyInput{
-					RoleName:  &name,
-					PolicyArn: policy.PolicyArn,
-				})
-				if err != nil {
-					if lastError != nil {
-						logger.Debug(lastError)
-					}
-					lastError = errors.Wrapf(err, "detaching IAM role policy %s", *policy.PolicyName)
+	attachedPaginator := iamv2.NewListAttachedRolePoliciesPaginator(client, &iamv2.ListAttachedRolePoliciesInput{
+		RoleName: aws.String(name),
+	})
+	for attachedPaginator.HasMorePages() {
+		page, err := attachedPaginator.NextPage(ctx)
+		if err != nil {
+			return fmt.Errorf("listing attached IAM role policies: %w", err)
+		}
+
+		for _, policy := range page.AttachedPolicies {
+			_, err := client.DetachRolePolicy(ctx, &iamv2.DetachRolePolicyInput{
+				RoleName:  &name,
+				PolicyArn: policy.PolicyArn,
+			})
+			if err != nil {
+				if lastError != nil {
+					logger.Debug(lastError)
 				}
-				logger.WithField("policy", *policy.PolicyName).Info("Detached")
+				lastError = fmt.Errorf("detaching IAM role policy %s: %w", *policy.PolicyName, err)
 			}
-
-			return !lastPage
-		},
-	)
-
-	if lastError != nil {
-		return lastError
-	}
-	if err != nil {
-		return errors.Wrap(err, "listing attached IAM role policies")
+			logger.WithField("policy", *policy.PolicyName).Info("Detached")
+		}
 	}
 
-	err = client.ListInstanceProfilesForRolePagesWithContext(
-		ctx,
-		&iam.ListInstanceProfilesForRoleInput{RoleName: &name},
-		func(results *iam.ListInstanceProfilesForRoleOutput, lastPage bool) bool {
-			for _, profile := range results.InstanceProfiles {
-				parsed, err := arn.Parse(*profile.Arn)
-				if err != nil {
-					if lastError != nil {
-						logger.Debug(lastError)
-					}
-					lastError = errors.Wrap(err, "parse ARN for IAM instance profile")
-					continue
-				}
-
-				err = deleteIAMInstanceProfile(ctx, client, parsed, logger)
-				if err != nil {
-					if lastError != nil {
-						logger.Debug(lastError)
-					}
-					lastError = errors.Wrapf(err, "deleting %s", parsed.String())
-				}
-			}
-
-			return !lastPage
-		},
-	)
-
-	if lastError != nil {
-		return lastError
-	}
-	if err != nil {
-		return errors.Wrap(err, "listing IAM instance profiles")
-	}
-
-	_, err = client.DeleteRoleWithContext(ctx, &iam.DeleteRoleInput{RoleName: &name})
-	if err != nil {
-		return err
-	}
-
-	logger.Info("Deleted")
-	return nil
+	return lastError
 }
 
-func deleteIAMUser(ctx context.Context, client *iam.IAM, id string, logger logrus.FieldLogger) error {
+func deleteIAMUser(ctx context.Context, client *iamv2.Client, id string, logger logrus.FieldLogger) error {
 	var lastError error
-	err := client.ListUserPoliciesPagesWithContext(
-		ctx,
-		&iam.ListUserPoliciesInput{UserName: &id},
-		func(results *iam.ListUserPoliciesOutput, lastPage bool) bool {
-			for _, policy := range results.PolicyNames {
-				_, err := client.DeleteUserPolicyWithContext(ctx, &iam.DeleteUserPolicyInput{
-					UserName:   &id,
-					PolicyName: policy,
-				})
-				if err != nil {
-					if lastError != nil {
-						logger.Debug(lastError)
-					}
-					lastError = errors.Wrapf(err, "deleting IAM user policy %s", *policy)
-				}
-				logger.WithField("policy", *policy).Info("Deleted")
-			}
 
-			return !lastPage
-		},
-	)
+	policiesPaginator := iamv2.NewListUserPoliciesPaginator(client, &iamv2.ListUserPoliciesInput{
+		UserName: aws.String(id),
+	})
+	for policiesPaginator.HasMorePages() {
+		page, err := policiesPaginator.NextPage(ctx)
+		if err != nil {
+			return fmt.Errorf("listing IAM user policies for %s: %w", id, err)
+		}
+
+		for _, policy := range page.PolicyNames {
+			_, err := client.DeleteUserPolicy(ctx, &iamv2.DeleteUserPolicyInput{
+				UserName:   &id,
+				PolicyName: &policy,
+			})
+			if err != nil {
+				if lastError != nil {
+					logger.Debug(lastError)
+				}
+				lastError = fmt.Errorf("deleting IAM user policy %s: %w", policy, err)
+			}
+			logger.WithField("policy", policy).Info("Deleted")
+		}
+	}
 
 	if lastError != nil {
 		return lastError
 	}
-	if err != nil {
-		return errors.Wrap(err, "listing IAM user policies")
-	}
 
-	err = client.ListAccessKeysPagesWithContext(
-		ctx,
-		&iam.ListAccessKeysInput{UserName: &id},
-		func(results *iam.ListAccessKeysOutput, lastPage bool) bool {
-			for _, key := range results.AccessKeyMetadata {
-				_, err := client.DeleteAccessKeyWithContext(ctx, &iam.DeleteAccessKeyInput{
-					UserName:    &id,
-					AccessKeyId: key.AccessKeyId,
-				})
-				if err != nil {
-					if lastError != nil {
-						logger.Debug(lastError)
-					}
-					lastError = errors.Wrapf(err, "deleting IAM access key %s", *key.AccessKeyId)
+	keysPaginator := iamv2.NewListAccessKeysPaginator(client, &iamv2.ListAccessKeysInput{
+		UserName: aws.String(id),
+	})
+	for keysPaginator.HasMorePages() {
+		page, err := keysPaginator.NextPage(ctx)
+		if err != nil {
+			return fmt.Errorf("listing access keys for %s: %w", id, err)
+		}
+
+		for _, key := range page.AccessKeyMetadata {
+			_, err := client.DeleteAccessKey(ctx, &iamv2.DeleteAccessKeyInput{
+				UserName:    &id,
+				AccessKeyId: key.AccessKeyId,
+			})
+			if err != nil {
+				if lastError != nil {
+					logger.Debug(lastError)
 				}
+				lastError = fmt.Errorf("deleting IAM access key %s: %w", *key.AccessKeyId, err)
 			}
-
-			return !lastPage
-		},
-	)
+		}
+	}
 
 	if lastError != nil {
 		return lastError
 	}
-	if err != nil {
-		return errors.Wrap(err, "listing IAM access keys")
-	}
 
-	_, err = client.DeleteUserWithContext(ctx, &iam.DeleteUserInput{
+	_, err := client.DeleteUser(ctx, &iamv2.DeleteUserInput{
 		UserName: &id,
 	})
 	if err != nil {

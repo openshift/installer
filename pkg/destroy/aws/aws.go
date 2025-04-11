@@ -6,6 +6,11 @@ import (
 	"strings"
 	"time"
 
+	configv2 "github.com/aws/aws-sdk-go-v2/config"
+	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
+	elb "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing"
+	elbv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
+	iamv2 "github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -65,6 +70,13 @@ type ClusterUninstaller struct {
 	// new session will be created based on the usual credential
 	// configuration (AWS_PROFILE, AWS_ACCESS_KEY_ID, etc.).
 	Session *session.Session
+
+	EC2Client *ec2v2.Client
+
+	IAMClient *iamv2.Client
+
+	ElbBaseClient *elb.Client
+	Elbv2Client   *elbv2.Client
 }
 
 // New returns an AWS destroyer from ClusterMetadata.
@@ -82,6 +94,50 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		return nil, err
 	}
 
+	cfg, err := configv2.LoadDefaultConfig(context.TODO(), configv2.WithRegion(region))
+	if err != nil {
+		return nil, fmt.Errorf("failed loading default config: %w", err)
+	}
+	ec2Client := ec2v2.NewFromConfig(cfg, func(options *ec2v2.Options) {
+		options.Region = region
+
+		for _, endpoint := range metadata.AWS.ServiceEndpoints {
+			if strings.EqualFold(endpoint.Name, "ec2") {
+				options.BaseEndpoint = aws.String(endpoint.URL)
+			}
+		}
+	})
+
+	iamClient := iamv2.NewFromConfig(cfg, func(options *iamv2.Options) {
+		options.Region = region
+
+		for _, endpoint := range metadata.AWS.ServiceEndpoints {
+			if strings.EqualFold(endpoint.Name, "iam") {
+				options.BaseEndpoint = aws.String(endpoint.URL)
+			}
+		}
+	})
+
+	elbBaseClient := elb.NewFromConfig(cfg, func(options *elb.Options) {
+		options.Region = region
+
+		for _, endpoint := range metadata.AWS.ServiceEndpoints {
+			if strings.EqualFold(endpoint.Name, "elb") || strings.EqualFold(endpoint.Name, "elasticloadbalancing") {
+				options.BaseEndpoint = aws.String(endpoint.URL)
+			}
+		}
+	})
+
+	elbv2Client := elbv2.NewFromConfig(cfg, func(options *elbv2.Options) {
+		options.Region = region
+
+		for _, endpoint := range metadata.AWS.ServiceEndpoints {
+			if strings.EqualFold(endpoint.Name, "elb") || strings.EqualFold(endpoint.Name, "elasticloadbalancing") {
+				options.BaseEndpoint = aws.String(endpoint.URL)
+			}
+		}
+	})
+
 	return &ClusterUninstaller{
 		Filters:        filters,
 		Region:         region,
@@ -90,6 +146,10 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		ClusterDomain:  metadata.AWS.ClusterDomain,
 		Session:        session,
 		HostedZoneRole: metadata.AWS.HostedZoneRole,
+		EC2Client:      ec2Client,
+		IAMClient:      iamClient,
+		ElbBaseClient:  elbBaseClient,
+		Elbv2Client:    elbv2Client,
 	}, nil
 }
 
@@ -158,12 +218,12 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 
 	iamClient := iam.New(awsSession)
 	iamRoleSearch := &IamRoleSearch{
-		Client:  iamClient,
+		Client:  o.IAMClient,
 		Filters: o.Filters,
 		Logger:  o.Logger,
 	}
 	iamUserSearch := &IamUserSearch{
-		client:  iamClient,
+		client:  o.IAMClient,
 		filters: o.Filters,
 		logger:  o.Logger,
 	}
@@ -184,7 +244,7 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 	// Terminate EC2 instances. The instances need to be terminated first so that we can ensure that there is nothing
 	// running on the cluster creating new resources while we are attempting to delete resources, which could leak
 	// the new resources.
-	err = DeleteEC2Instances(ctx, o.Logger, awsSession, o.Filters, resourcesToDelete, deleted, tracker)
+	err = o.DeleteEC2Instances(ctx, resourcesToDelete, deleted, tracker)
 	if err != nil {
 		return resourcesToDelete.UnsortedList(), err
 	}
@@ -193,7 +253,7 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 	err = wait.PollImmediateUntil(
 		time.Second*10,
 		func() (done bool, err error) {
-			newlyDeleted, loopError := DeleteResources(ctx, o.Logger, awsSession, resourcesToDelete.UnsortedList(), tracker)
+			newlyDeleted, loopError := o.DeleteResources(ctx, resourcesToDelete.UnsortedList(), tracker)
 			// Delete from the resources-to-delete set so that the current state of the resources to delete can be
 			// returned if the context is completed.
 			resourcesToDelete = resourcesToDelete.Difference(newlyDeleted)
@@ -386,16 +446,16 @@ func findResourcesByTag(
 //	resources - the resources to be deleted.
 //
 // The first return is the ARNs of the resources that were successfully deleted.
-func DeleteResources(ctx context.Context, logger logrus.FieldLogger, awsSession *session.Session, resources []string, tracker *ErrorTracker) (sets.Set[string], error) {
+func (o *ClusterUninstaller) DeleteResources(ctx context.Context, resources []string, tracker *ErrorTracker) (sets.Set[string], error) {
 	deleted := sets.New[string]()
 	for _, arnString := range resources {
-		l := logger.WithField("arn", arnString)
+		l := o.Logger.WithField("arn", arnString)
 		parsedARN, err := arn.Parse(arnString)
 		if err != nil {
 			l.WithError(err).Debug("could not parse ARN")
 			continue
 		}
-		if err := deleteARN(ctx, awsSession, parsedARN, logger); err != nil {
+		if err := o.DeleteARN(ctx, parsedARN); err != nil {
 			tracker.suppressWarning(arnString, err, l)
 			if err := ctx.Err(); err != nil {
 				return deleted, err
@@ -517,20 +577,20 @@ func findPublicRoute53(ctx context.Context, client *route53.Route53, dnsName str
 	return "", nil
 }
 
-func deleteARN(ctx context.Context, session *session.Session, arn arn.ARN, logger logrus.FieldLogger) error {
+func (o *ClusterUninstaller) DeleteARN(ctx context.Context, arn arn.ARN) error {
 	switch arn.Service {
 	case "ec2":
-		return deleteEC2(ctx, session, arn, logger)
+		return o.deleteEC2(ctx, o.EC2Client, arn, o.Logger)
 	case "elasticloadbalancing":
-		return deleteElasticLoadBalancing(ctx, session, arn, logger)
+		return o.deleteElasticLoadBalancing(ctx, arn, o.Logger)
 	case "iam":
-		return deleteIAM(ctx, session, arn, logger)
+		return o.deleteIAM(ctx, arn)
 	case "route53":
-		return deleteRoute53(ctx, session, arn, logger)
+		return deleteRoute53(ctx, o.Session, arn, o.Logger)
 	case "s3":
-		return deleteS3(ctx, session, arn, logger)
+		return deleteS3(ctx, o.Session, arn, o.Logger)
 	case "elasticfilesystem":
-		return deleteElasticFileSystem(ctx, session, arn, logger)
+		return deleteElasticFileSystem(ctx, o.Session, arn, o.Logger)
 	default:
 		return errors.Errorf("unrecognized ARN service %s (%s)", arn.Service, arn)
 	}

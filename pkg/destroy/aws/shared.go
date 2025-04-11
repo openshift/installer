@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
+	iamv2 "github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/pkg/errors"
@@ -142,9 +142,8 @@ func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, session *sessi
 		tagClients = nextTagClients
 	}
 
-	iamClient := iam.New(session)
 	iamRoleSearch := &IamRoleSearch{
-		Client:  iamClient,
+		Client:  o.IAMClient,
 		Filters: []Filter{{key: sharedValue}},
 		Logger:  o.Logger,
 	}
@@ -160,11 +159,11 @@ func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, session *sessi
 			done := true
 			for _, role := range sharedRoles {
 				o.Logger.Debugf("Removing the shared tag from the %q IAM role", role)
-				input := &iam.UntagRoleInput{
+				input := &iamv2.UntagRoleInput{
 					RoleName: &role,
-					TagKeys:  []*string{&key},
+					TagKeys:  []string{key},
 				}
-				if _, err := iamClient.UntagRoleWithContext(ctx, input); err != nil {
+				if _, err := o.IAMClient.UntagRole(ctx, input); err != nil {
 					done = false
 					o.Logger.Infof("Could not remove the shared tag from the %q IAM role: %v", role, err)
 				}
