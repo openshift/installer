@@ -1,13 +1,13 @@
 package bootstrap
 
 import (
-	"k8s.io/apimachinery/pkg/util/validation/field"
+	"regexp"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
 
-	"regexp"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 const (
