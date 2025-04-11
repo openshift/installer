@@ -144,7 +144,10 @@ func writeAddonInstallation(object *AddonInstallation, stream *jsoniter.Stream) 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("parameters")
-		writeAddonInstallationParameters(object.parameters, stream)
+		stream.WriteObjectStart()
+		stream.WriteObjectField("items")
+		writeAddonInstallationParameterList(object.parameters.items, stream)
+		stream.WriteObjectEnd()
 		count++
 	}
 	present_ = object.bitmap_&4096 != 0
@@ -258,7 +261,24 @@ func readAddonInstallation(iterator *jsoniter.Iterator) *AddonInstallation {
 			object.operatorVersion = value
 			object.bitmap_ |= 1024
 		case "parameters":
-			value := readAddonInstallationParameters(iterator)
+			value := &AddonInstallationParameterList{}
+			for {
+				field := iterator.ReadObject()
+				if field == "" {
+					break
+				}
+				switch field {
+				case "kind":
+					text := iterator.ReadString()
+					value.link = text == AddonInstallationParameterListLinkKind
+				case "href":
+					value.href = iterator.ReadString()
+				case "items":
+					value.items = readAddonInstallationParameterList(iterator)
+				default:
+					iterator.ReadAny()
+				}
+			}
 			object.parameters = value
 			object.bitmap_ |= 2048
 		case "state":

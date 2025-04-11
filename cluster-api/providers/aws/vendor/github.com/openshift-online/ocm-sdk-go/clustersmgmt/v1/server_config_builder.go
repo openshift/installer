@@ -26,6 +26,7 @@ type ServerConfigBuilder struct {
 	bitmap_    uint32
 	id         string
 	href       string
+	awsShard   *AWSShardBuilder
 	kubeconfig string
 	server     string
 	topology   ProvisionShardTopology
@@ -61,24 +62,37 @@ func (b *ServerConfigBuilder) Empty() bool {
 	return b == nil || b.bitmap_&^1 == 0
 }
 
+// AWSShard sets the value of the 'AWS_shard' attribute to the given value.
+//
+// Config for AWS provision shards
+func (b *ServerConfigBuilder) AWSShard(value *AWSShardBuilder) *ServerConfigBuilder {
+	b.awsShard = value
+	if value != nil {
+		b.bitmap_ |= 8
+	} else {
+		b.bitmap_ &^= 8
+	}
+	return b
+}
+
 // Kubeconfig sets the value of the 'kubeconfig' attribute to the given value.
 func (b *ServerConfigBuilder) Kubeconfig(value string) *ServerConfigBuilder {
 	b.kubeconfig = value
-	b.bitmap_ |= 8
+	b.bitmap_ |= 16
 	return b
 }
 
 // Server sets the value of the 'server' attribute to the given value.
 func (b *ServerConfigBuilder) Server(value string) *ServerConfigBuilder {
 	b.server = value
-	b.bitmap_ |= 16
+	b.bitmap_ |= 32
 	return b
 }
 
 // Topology sets the value of the 'topology' attribute to the given value.
 func (b *ServerConfigBuilder) Topology(value ProvisionShardTopology) *ServerConfigBuilder {
 	b.topology = value
-	b.bitmap_ |= 32
+	b.bitmap_ |= 64
 	return b
 }
 
@@ -90,6 +104,11 @@ func (b *ServerConfigBuilder) Copy(object *ServerConfig) *ServerConfigBuilder {
 	b.bitmap_ = object.bitmap_
 	b.id = object.id
 	b.href = object.href
+	if object.awsShard != nil {
+		b.awsShard = NewAWSShard().Copy(object.awsShard)
+	} else {
+		b.awsShard = nil
+	}
 	b.kubeconfig = object.kubeconfig
 	b.server = object.server
 	b.topology = object.topology
@@ -102,6 +121,12 @@ func (b *ServerConfigBuilder) Build() (object *ServerConfig, err error) {
 	object.id = b.id
 	object.href = b.href
 	object.bitmap_ = b.bitmap_
+	if b.awsShard != nil {
+		object.awsShard, err = b.awsShard.Build()
+		if err != nil {
+			return
+		}
+	}
 	object.kubeconfig = b.kubeconfig
 	object.server = b.server
 	object.topology = b.topology

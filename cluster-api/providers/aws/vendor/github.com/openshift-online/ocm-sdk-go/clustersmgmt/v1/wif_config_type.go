@@ -41,6 +41,7 @@ type WifConfig struct {
 	displayName  string
 	gcp          *WifGcp
 	organization *OrganizationLink
+	wifTemplates []string
 }
 
 // Kind returns the name of the type of the object.
@@ -165,6 +166,29 @@ func (o *WifConfig) GetOrganization() (value *OrganizationLink, ok bool) {
 	ok = o != nil && o.bitmap_&32 != 0
 	if ok {
 		value = o.organization
+	}
+	return
+}
+
+// WifTemplates returns the value of the 'wif_templates' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Wif template(s) used to configure IAM resources
+func (o *WifConfig) WifTemplates() []string {
+	if o != nil && o.bitmap_&64 != 0 {
+		return o.wifTemplates
+	}
+	return nil
+}
+
+// GetWifTemplates returns the value of the 'wif_templates' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Wif template(s) used to configure IAM resources
+func (o *WifConfig) GetWifTemplates() (value []string, ok bool) {
+	ok = o != nil && o.bitmap_&64 != 0
+	if ok {
+		value = o.wifTemplates
 	}
 	return
 }

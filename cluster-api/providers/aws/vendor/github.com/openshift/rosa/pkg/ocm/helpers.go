@@ -658,13 +658,10 @@ func (c *Client) GetCredRequests(isHypershift bool) (map[string]*cmv1.STSOperato
 }
 
 func (c *Client) FindMissingOperatorRolesForUpgrade(cluster *cmv1.Cluster,
-	newMinorVersion string) (map[string]*cmv1.STSOperator, error) {
+	newMinorVersion string,
+	credRequests map[string]*cmv1.STSOperator) (map[string]*cmv1.STSOperator, error) {
 	missingRoles := make(map[string]*cmv1.STSOperator)
 
-	credRequests, err := c.GetCredRequests(cluster.Hypershift().Enabled())
-	if err != nil {
-		return nil, errors.Errorf("Error getting operator credential request from OCM %s", err)
-	}
 	for credRequest, operator := range credRequests {
 		if operator.MinVersion() != "" {
 			clusterUpgradeVersion, err := semver.NewVersion(newMinorVersion)

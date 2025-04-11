@@ -120,7 +120,7 @@ func (s *Service) DeleteBastion() error {
 	}
 
 	if err := s.TerminateInstanceAndWait(instance.ID); err != nil {
-		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.BastionHostReadyCondition, "DeletingFailed", clusterv1.ConditionSeverityWarning, err.Error())
+		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.BastionHostReadyCondition, "DeletingFailed", clusterv1.ConditionSeverityWarning, "%s", err.Error())
 		record.Warnf(s.scope.InfraCluster(), "FailedTerminateBastion", "Failed to terminate bastion instance %q: %v", instance.ID, err)
 		return errors.Wrap(err, "unable to delete bastion instance")
 	}

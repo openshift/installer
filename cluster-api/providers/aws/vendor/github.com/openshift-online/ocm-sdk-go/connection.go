@@ -57,6 +57,7 @@ const (
 	DefaultClientSecret = authentication.DefaultClientSecret
 	DefaultURL          = "https://api.openshift.com"
 	DefaultAgent        = "OCM-SDK/" + Version
+	FedRAMPURL          = "https://api.openshiftusgov.com"
 )
 
 // DefaultScopes is the ser of scopes used by default:

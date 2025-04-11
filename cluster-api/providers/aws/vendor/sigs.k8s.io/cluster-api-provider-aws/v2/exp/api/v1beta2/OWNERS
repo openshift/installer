@@ -4,4 +4,6 @@ filters:
   "^(rosa|zz_).*\\.go$":
     approvers:
       - muraee
-      - stevekuznetsov
+      - serngawy
+    reviewers:
+      - serngawy

@@ -256,7 +256,10 @@ func writeAddon(object *Addon, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("parameters")
-		writeAddonParameters(object.parameters, stream)
+		stream.WriteObjectStart()
+		stream.WriteObjectField("items")
+		writeAddonParameterList(object.parameters.items, stream)
+		stream.WriteObjectEnd()
 		count++
 	}
 	present_ = object.bitmap_&1048576 != 0 && object.requirements != nil
@@ -429,7 +432,24 @@ func readAddon(iterator *jsoniter.Iterator) *Addon {
 			object.operatorName = value
 			object.bitmap_ |= 262144
 		case "parameters":
-			value := readAddonParameters(iterator)
+			value := &AddonParameterList{}
+			for {
+				field := iterator.ReadObject()
+				if field == "" {
+					break
+				}
+				switch field {
+				case "kind":
+					text := iterator.ReadString()
+					value.link = text == AddonParameterListLinkKind
+				case "href":
+					value.href = iterator.ReadString()
+				case "items":
+					value.items = readAddonParameterList(iterator)
+				default:
+					iterator.ReadAny()
+				}
+			}
 			object.parameters = value
 			object.bitmap_ |= 524288
 		case "requirements":

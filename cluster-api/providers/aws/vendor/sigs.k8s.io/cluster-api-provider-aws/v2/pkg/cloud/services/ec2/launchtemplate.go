@@ -73,13 +73,13 @@ func (s *Service) ReconcileLaunchTemplate(
 	scope.Info("checking for existing launch template")
 	launchTemplate, launchTemplateUserDataHash, launchTemplateUserDataSecretKey, err := ec2svc.GetLaunchTemplate(scope.LaunchTemplateName())
 	if err != nil {
-		conditions.MarkUnknown(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateNotFoundReason, err.Error())
+		conditions.MarkUnknown(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateNotFoundReason, "%s", err.Error())
 		return err
 	}
 
 	imageID, err := ec2svc.DiscoverLaunchTemplateAMI(scope)
 	if err != nil {
-		conditions.MarkFalse(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateCreateFailedReason, clusterv1.ConditionSeverityError, err.Error())
+		conditions.MarkFalse(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateCreateFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
 		return err
 	}
 
@@ -87,7 +87,7 @@ func (s *Service) ReconcileLaunchTemplate(
 		scope.Info("no existing launch template found, creating")
 		launchTemplateID, err := ec2svc.CreateLaunchTemplate(scope, imageID, *bootstrapDataSecretKey, bootstrapData)
 		if err != nil {
-			conditions.MarkFalse(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateCreateFailedReason, clusterv1.ConditionSeverityError, err.Error())
+			conditions.MarkFalse(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateCreateFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
 			return err
 		}
 
@@ -100,7 +100,7 @@ func (s *Service) ReconcileLaunchTemplate(
 	if scope.GetLaunchTemplateIDStatus() == "" {
 		launchTemplateID, err := ec2svc.GetLaunchTemplateID(scope.LaunchTemplateName())
 		if err != nil {
-			conditions.MarkUnknown(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateNotFoundReason, err.Error())
+			conditions.MarkUnknown(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateNotFoundReason, "%s", err.Error())
 			return err
 		}
 		scope.SetLaunchTemplateIDStatus(launchTemplateID)
@@ -110,7 +110,7 @@ func (s *Service) ReconcileLaunchTemplate(
 	if scope.GetLaunchTemplateLatestVersionStatus() == "" {
 		launchTemplateVersion, err := ec2svc.GetLaunchTemplateLatestVersion(scope.GetLaunchTemplateIDStatus())
 		if err != nil {
-			conditions.MarkUnknown(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateNotFoundReason, err.Error())
+			conditions.MarkUnknown(scope.GetSetter(), expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateNotFoundReason, "%s", err.Error())
 			return err
 		}
 		scope.SetLaunchTemplateLatestVersionStatus(launchTemplateVersion)
@@ -180,7 +180,7 @@ func (s *Service) ReconcileLaunchTemplate(
 
 	if needsUpdate || tagsChanged || amiChanged || userDataSecretKeyChanged {
 		if err := runPostLaunchTemplateUpdateOperation(); err != nil {
-			conditions.MarkFalse(scope.GetSetter(), expinfrav1.PostLaunchTemplateUpdateOperationCondition, expinfrav1.PostLaunchTemplateUpdateOperationFailedReason, clusterv1.ConditionSeverityError, err.Error())
+			conditions.MarkFalse(scope.GetSetter(), expinfrav1.PostLaunchTemplateUpdateOperationCondition, expinfrav1.PostLaunchTemplateUpdateOperationFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
 			return err
 		}
 		conditions.MarkTrue(scope.GetSetter(), expinfrav1.PostLaunchTemplateUpdateOperationCondition)
@@ -519,7 +519,11 @@ func (s *Service) createLaunchTemplateData(scope scope.LaunchTemplateScope, imag
 	// set the AMI ID
 	data.ImageId = imageID
 
-	data.InstanceMarketOptions = getLaunchTemplateInstanceMarketOptionsRequest(scope.GetLaunchTemplate().SpotMarketOptions)
+	instanceMarketOptions, err := getLaunchTemplateInstanceMarketOptionsRequest(scope.GetLaunchTemplate())
+	if err != nil {
+		return nil, err
+	}
+	data.InstanceMarketOptions = instanceMarketOptions
 	data.PrivateDnsNameOptions = getLaunchTemplatePrivateDNSNameOptionsRequest(scope.GetLaunchTemplate().PrivateDNSName)
 
 	blockDeviceMappings := []*ec2.LaunchTemplateBlockDeviceMappingRequest{}
@@ -962,27 +966,54 @@ func (s *Service) getFilteredSecurityGroupIDs(securityGroup infrav1.AWSResourceR
 	return ids, nil
 }
 
-func getLaunchTemplateInstanceMarketOptionsRequest(spotMarketOptions *infrav1.SpotMarketOptions) *ec2.LaunchTemplateInstanceMarketOptionsRequest {
-	if spotMarketOptions == nil {
-		// Instance is not a Spot instance
-		return nil
+func getLaunchTemplateInstanceMarketOptionsRequest(i *expinfrav1.AWSLaunchTemplate) (*ec2.LaunchTemplateInstanceMarketOptionsRequest, error) {
+	if i.MarketType != "" && i.MarketType == infrav1.MarketTypeCapacityBlock && i.SpotMarketOptions != nil {
+		return nil, errors.New("can't create spot capacity-blocks, remove spot market request")
 	}
 
-	// Set required values for Spot instances
-	spotOptions := &ec2.LaunchTemplateSpotMarketOptionsRequest{}
-
-	// Persistent option is not available for EC2 autoscaling, EC2 makes a one-time request by default and setting request type should not be allowed.
-	// For one-time requests, only terminate option is available as interruption behavior, and default for spotOptions.SetInstanceInterruptionBehavior() is terminate, so it is not set here explicitly.
-
-	if maxPrice := aws.StringValue(spotMarketOptions.MaxPrice); maxPrice != "" {
-		spotOptions.SetMaxPrice(maxPrice)
+	// Infer MarketType if not explicitly set and SpotMarketOptions specified
+	if i.SpotMarketOptions != nil && i.MarketType == "" {
+		i.MarketType = infrav1.MarketTypeSpot
 	}
 
-	launchTemplateInstanceMarketOptionsRequest := &ec2.LaunchTemplateInstanceMarketOptionsRequest{}
-	launchTemplateInstanceMarketOptionsRequest.SetMarketType(ec2.MarketTypeSpot)
-	launchTemplateInstanceMarketOptionsRequest.SetSpotOptions(spotOptions)
+	// Infer MarketType if not explicitly set
+	if i.MarketType == "" {
+		i.MarketType = infrav1.MarketTypeOnDemand
+	}
 
-	return launchTemplateInstanceMarketOptionsRequest
+	switch i.MarketType {
+	case infrav1.MarketTypeCapacityBlock:
+		// Handle Capacity Block case.
+		if i.CapacityReservationID == nil {
+			return nil, errors.Errorf("capacityReservationID is required when CapacityBlock is enabled")
+		}
+		return &ec2.LaunchTemplateInstanceMarketOptionsRequest{
+			MarketType: aws.String(ec2.MarketTypeCapacityBlock),
+		}, nil
+
+	case infrav1.MarketTypeSpot:
+		// Set required values for Spot instances
+		spotOptions := &ec2.LaunchTemplateSpotMarketOptionsRequest{}
+
+		// Persistent option is not available for EC2 autoscaling, EC2 makes a one-time request by default and setting request type should not be allowed.
+		// For one-time requests, only terminate option is available as interruption behavior, and default for spotOptions.SetInstanceInterruptionBehavior() is terminate, so it is not set here explicitly.
+
+		if maxPrice := aws.StringValue(i.SpotMarketOptions.MaxPrice); maxPrice != "" {
+			spotOptions.SetMaxPrice(maxPrice)
+		}
+
+		launchTemplateInstanceMarketOptionsRequest := &ec2.LaunchTemplateInstanceMarketOptionsRequest{}
+		launchTemplateInstanceMarketOptionsRequest.SetMarketType(ec2.MarketTypeSpot)
+		launchTemplateInstanceMarketOptionsRequest.SetSpotOptions(spotOptions)
+
+		return launchTemplateInstanceMarketOptionsRequest, nil
+	case infrav1.MarketTypeOnDemand:
+		// Instance is on-demand
+		return nil, nil
+	default:
+		// Invalid MarketType provided
+		return nil, errors.Errorf("invalid MarketType %s, must be spot/capacity-block or empty", i.MarketType)
+	}
 }
 
 func getLaunchTemplatePrivateDNSNameOptionsRequest(privateDNSName *infrav1.PrivateDNSName) *ec2.LaunchTemplatePrivateDnsNameOptionsRequest {

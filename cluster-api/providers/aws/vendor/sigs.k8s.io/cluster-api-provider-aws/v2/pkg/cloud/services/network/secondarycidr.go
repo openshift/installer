@@ -50,8 +50,6 @@ func (s *Service) associateSecondaryCidrs() error {
 	// (i.e. disassociate what isn't listed in the spec).
 	existingAssociations := vpcs.Vpcs[0].CidrBlockAssociationSet
 	for _, desiredCidrBlock := range secondaryCidrBlocks {
-		desiredCidrBlock := desiredCidrBlock
-
 		found := false
 		for _, existing := range existingAssociations {
 			if *existing.CidrBlock == desiredCidrBlock.IPv4CidrBlock {
@@ -81,6 +79,11 @@ func (s *Service) associateSecondaryCidrs() error {
 }
 
 func (s *Service) disassociateSecondaryCidrs() error {
+	// If the VPC is unmanaged or not yet populated, return early.
+	if s.scope.VPC().IsUnmanaged(s.scope.Name()) || s.scope.VPC().ID == "" {
+		return nil
+	}
+
 	secondaryCidrBlocks := s.scope.AllSecondaryCidrBlocks()
 	if len(secondaryCidrBlocks) == 0 {
 		return nil

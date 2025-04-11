@@ -26,7 +26,7 @@ var (
 	// MutableGates is a mutable version of DefaultFeatureGate.
 	// Only top-level commands/options setup and the k8s.io/component-base/featuregate/testing package should make use of this.
 	// Tests that need to modify featuregate gates for the duration of their test should use:
-	//   defer featuregatetesting.SetFeatureGateDuringTest(t, utilfeature.DefaultFeatureGate, features.<FeatureName>, <value>)()
+	//   featuregatetesting.SetFeatureGateDuringTest(t, utilfeature.DefaultFeatureGate, features.<FeatureName>, <value>)
 	MutableGates featuregate.MutableFeatureGate = feature.MutableGates
 
 	// Gates is a shared global FeatureGate.
