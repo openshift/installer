@@ -50,7 +50,7 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 
 	allErrs = append(allErrs, validateAMI(ctx, meta, config)...)
 	allErrs = append(allErrs, validatePublicIpv4Pool(ctx, meta, field.NewPath("platform", "aws", "publicIpv4PoolId"), config)...)
-	allErrs = append(allErrs, validatePlatform(ctx, meta, field.NewPath("platform", "aws"), config.Platform.AWS, config.Networking, config.Publish)...)
+	allErrs = append(allErrs, validatePlatform(ctx, meta, field.NewPath("platform", "aws"), config)...)
 
 	if awstypes.IsPublicOnlySubnetsEnabled() {
 		logrus.Warnln("Public-only subnets install. Please be warned this is not supported")
@@ -98,8 +98,9 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 	return allErrs.ToAggregate()
 }
 
-func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, platform *awstypes.Platform, networking *types.Networking, publish types.PublishingStrategy) field.ErrorList {
+func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, config *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
+	platform := config.Platform.AWS
 
 	allErrs = append(allErrs, validateServiceEndpoints(fldPath.Child("serviceEndpoints"), platform.Region, platform.ServiceEndpoints)...)
 
@@ -109,7 +110,7 @@ func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, 
 	}
 
 	if len(platform.VPC.Subnets) > 0 {
-		allErrs = append(allErrs, validateSubnets(ctx, meta, fldPath.Child("vpc").Child("subnets"), platform.VPC.Subnets, networking, publish)...)
+		allErrs = append(allErrs, validateSubnets(ctx, meta, fldPath.Child("vpc").Child("subnets"), config)...)
 	} else if awstypes.IsPublicOnlySubnetsEnabled() {
 		allErrs = append(allErrs, field.Required(fldPath.Child("subnets"), "subnets must be specified for public-only subnets clusters"))
 	}
@@ -298,8 +299,11 @@ func (sdg *subnetDataGroups) From(ctx context.Context, meta *Metadata, providedS
 }
 
 // validateSubnets ensures BYO subnets are valid.
-func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, providedSubnets []awstypes.Subnet, networking *types.Networking, publish types.PublishingStrategy) field.ErrorList {
+func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, config *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
+	networking := config.Networking
+	providedSubnets := config.AWS.VPC.Subnets
+	publish := config.Publish
 
 	subnetDataGroups := subnetDataGroups{}
 	if err := subnetDataGroups.From(ctx, meta, providedSubnets); err != nil {
@@ -334,7 +338,7 @@ func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, p
 	allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, subnetDataGroups.Edge, "edge")...)
 
 	if len(subnetsWithRole) > 0 {
-		allErrs = append(allErrs, validateSubnetRoles(fldPath, subnetsWithRole, subnetDataGroups, publish)...)
+		allErrs = append(allErrs, validateSubnetRoles(fldPath, subnetsWithRole, subnetDataGroups, config)...)
 	} else {
 		allErrs = append(allErrs, validateUntaggedSubnets(ctx, fldPath, meta, subnetDataGroups)...)
 	}
@@ -552,8 +556,21 @@ func validateDuplicateSubnetZones(fldPath *field.Path, subnetDataGroup map[strin
 }
 
 // validateSubnetRoles ensures BYO subnets have valid roles assigned if roles are provided.
-func validateSubnetRoles(fldPath *field.Path, subnetsWithRole map[awstypes.SubnetRoleType][]subnetData, subnetDataGroups subnetDataGroups, publish types.PublishingStrategy) field.ErrorList {
+func validateSubnetRoles(fldPath *field.Path, subnetsWithRole map[awstypes.SubnetRoleType][]subnetData, subnetDataGroups subnetDataGroups, config *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
+
+	// BootstrapNode subnets must be assigned to public subnets
+	// in external cluster.
+	for _, bstrSubnet := range subnetsWithRole[awstypes.BootstrapNodeSubnetRole] {
+		// We validate edge subnets in subsequent validations.
+		if _, ok := subnetDataGroups.Edge[bstrSubnet.ID]; ok {
+			continue
+		}
+		if config.Publish == types.ExternalPublishingStrategy && !bstrSubnet.Public {
+			allErrs = append(allErrs, field.Invalid(fldPath.Index(bstrSubnet.Idx), bstrSubnet.ID,
+				fmt.Sprintf("subnet %s has role %s, but is private, expected to be public", bstrSubnet.ID, awstypes.BootstrapNodeSubnetRole)))
+		}
+	}
 
 	// ClusterNode subnets must be assigned to private subnets
 	// unless cluster is public-only.
@@ -602,13 +619,13 @@ func validateSubnetRoles(fldPath *field.Path, subnetsWithRole map[awstypes.Subne
 			continue
 		}
 
-		if ingressSubnet.Public != (publish == types.ExternalPublishingStrategy) {
+		if ingressSubnet.Public != config.PublicIngress() {
 			subnetType := "private"
 			if ingressSubnet.Public {
 				subnetType = "public"
 			}
 			allErrs = append(allErrs, field.Invalid(fldPath.Index(ingressSubnet.Idx), ingressSubnet.ID,
-				fmt.Sprintf("subnet %s has role %s and is %s, which is not allowed when publish is set to %s", ingressSubnet.ID, awstypes.IngressControllerLBSubnetRole, subnetType, publish)))
+				fmt.Sprintf("subnet %s has role %s and is %s, which is not allowed when publish is set to %s", ingressSubnet.ID, awstypes.IngressControllerLBSubnetRole, subnetType, config.Publish)))
 		}
 	}
 
@@ -628,7 +645,7 @@ func validateSubnetRoles(fldPath *field.Path, subnetsWithRole map[awstypes.Subne
 		awstypes.ControlPlaneInternalLBSubnetRole,
 		awstypes.IngressControllerLBSubnetRole,
 	}
-	if publish == types.ExternalPublishingStrategy {
+	if config.Publish == types.ExternalPublishingStrategy {
 		lbRoles = append(lbRoles, awstypes.ControlPlaneExternalLBSubnetRole)
 	}
 	for _, role := range lbRoles {
@@ -681,7 +698,7 @@ func validateUntaggedSubnets(ctx context.Context, fldPath *field.Path, meta *Met
 
 	if len(untaggedSubnetIDs) > 0 {
 		errMsg := fmt.Sprintf("additional subnets %v without tag prefix %s are found in vpc %s of provided subnets. %s", untaggedSubnetIDs, TagNameKubernetesClusterPrefix, vpcSubnets.VPC,
-			fmt.Sprintf("Please add a tag %s to those subnets to exclude them from cluster installation or explicitly assign roles to provided subnets", TagNameKubernetesUnmanaged))
+			fmt.Sprintf("Please add a tag %s to those subnets to exclude them from cluster installation or explicitly assign roles in the install-config to provided subnets", TagNameKubernetesUnmanaged))
 		allErrs = append(allErrs, field.Forbidden(fldPath, errMsg))
 	}
 
