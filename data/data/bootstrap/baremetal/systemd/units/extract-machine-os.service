@@ -18,7 +18,6 @@ TimeoutStartSec=20m
 ExecStop=/usr/bin/podman stop --ignore --cidfile=%t/%N.cid
 ExecStopPost=/usr/bin/podman rm --ignore --cidfile=%t/%N.cid
 ExecStopPost=-/bin/rm -f %t/%N.cid
-KillMode=none
 Type=oneshot
 RemainAfterExit=true
 Restart=on-failure
