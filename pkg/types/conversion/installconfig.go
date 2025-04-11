@@ -96,10 +96,13 @@ func convertNetworking(config *types.InstallConfig) {
 		netconf.NetworkType = netconf.DeprecatedType
 	}
 
-	// Recognize the OpenShiftSDN network plugin name regardless of capitalization, for
+	// Recognize the network plugin name regardless of capitalization, for
 	// backward compatibility
-	if strings.ToLower(netconf.NetworkType) == strings.ToLower(string(operv1.NetworkTypeOpenShiftSDN)) {
+	if strings.EqualFold(netconf.NetworkType, string(operv1.NetworkTypeOpenShiftSDN)) {
 		netconf.NetworkType = string(operv1.NetworkTypeOpenShiftSDN)
+	}
+	if strings.EqualFold(netconf.NetworkType, string(operv1.NetworkTypeOVNKubernetes)) {
+		netconf.NetworkType = string(operv1.NetworkTypeOVNKubernetes)
 	}
 
 	// Convert hostSubnetLength to hostPrefix

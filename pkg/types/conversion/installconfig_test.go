@@ -175,6 +175,25 @@ func TestConvertInstallConfig(t *testing.T) {
 			},
 		},
 		{
+			name: "OVNKubernetes spelling",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Networking: &types.Networking{
+					NetworkType: "OVNkubernetes",
+				},
+			},
+			expected: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Networking: &types.Networking{
+					NetworkType: "OVNKubernetes",
+				},
+			},
+		},
+		{
 			name: "deprecated OpenStack LbFloatingIP",
 			config: &types.InstallConfig{
 				TypeMeta: metav1.TypeMeta{
