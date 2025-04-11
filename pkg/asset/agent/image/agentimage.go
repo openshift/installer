@@ -86,9 +86,18 @@ func (a *AgentImage) Generate(ctx context.Context, dependencies asset.Parents) e
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
 	}
 
+	var err error
+	if a.tmpPath, err = agentArtifacts.PrepareArtifacts(ctx); err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			os.RemoveAll(a.tmpPath)
+		}
+	}()
+
 	a.cpuArch = agentArtifacts.CPUArch
 	a.rendezvousIP = agentArtifacts.RendezvousIP
-	a.tmpPath = agentArtifacts.TmpPath
 	a.isoPath = agentArtifacts.ISOPath
 	a.bootArtifactsBaseURL = agentArtifacts.BootArtifactsBaseURL
 	a.minimalISO = agentArtifacts.MinimalISO
